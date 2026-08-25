@@ -1,0 +1,43 @@
+{
+    "name":  "Storegrill",
+    "version":  "0.1.0",
+    "private":  true,
+    "workspaces":  [
+                       "packages/*",
+                       "apps/*"
+                   ],
+    "scripts":  {
+                    "dev":  "concurrently \"npm run dev -w apps/api\" \"npm run dev -w apps/web\" \"npm run dev -w apps/admin\" \"npm run dev -w apps/vendor-portal\"",
+                    "build":  "npm run build -w packages/shared \u0026\u0026 npm run build -w apps/api \u0026\u0026 npm run build -w apps/web \u0026\u0026 npm run build -w apps/admin \u0026\u0026 npm run build -w apps/vendor-portal",
+                    "lint":  "eslint . --ext .ts,.tsx \u0026\u0026 npm run lint -w apps/web",
+                    "gate:ui":  "node scripts/ui-gates.mjs",
+                    "typecheck":  "npm run typecheck -w packages/shared \u0026\u0026 npm run typecheck -w apps/api \u0026\u0026 npm run typecheck -w apps/web \u0026\u0026 npm run typecheck -w apps/admin \u0026\u0026 npm run typecheck -w apps/vendor-portal",
+                    "test":  "vitest run",
+                    "test:watch":  "vitest",
+                    "seed":  "tsx apps/api/seed.ts",
+                    "infra:validate":  "terraform -chdir=infra/terraform/modules/pod init -backend=false \u0026\u0026 terraform -chdir=infra/terraform/modules/pod validate \u0026\u0026 terraform -chdir=infra/terraform/live/global fmt -check",
+                    "infra:plan":  "terraform -chdir=infra/terraform/live/pods/%REGION% plan -input=false",
+                    "infra:apply":  "terraform -chdir=infra/terraform/live/pods/%REGION% apply -input=false -auto-approve",
+                    "test:e2e":  "playwright test",
+                    "test:e2e:ui":  "playwright test --ui"
+                },
+    "devDependencies":  {
+                            "@next/eslint-plugin-next":  "^16.3.2",
+                            "@next/swc-win32-x64-msvc":  "^14.2.33",
+                            "@playwright/test":  "1.59.0",
+                            "@types/node":  "^20.11.0",
+                            "@typescript-eslint/eslint-plugin":  "^6.21.0",
+                            "@typescript-eslint/parser":  "^6.21.0",
+                            "concurrently":  "^8.2.2",
+                            "eslint":  "^8.56.0",
+                            "eslint-config-next":  "^14.2.33",
+                            "eslint-plugin-next":  "^0.0.0",
+                            "tsx":  "^4.7.0",
+                            "typescript":  "^5.3.3",
+                            "vitest":  "^1.2.0",
+                            "esbuild":  "0.28.1"
+                        },
+    "engines":  {
+                    "node":  "\u003e=20.0.0"
+                }
+}

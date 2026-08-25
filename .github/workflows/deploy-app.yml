@@ -1,0 +1,195 @@
+name: Deploy app
+
+on:
+  workflow_dispatch:
+    inputs:
+      region_key:
+        description: 'Regional pod to deploy to'
+        required: true
+        default: UK
+        type: string
+      app:
+        description: 'Which app to deploy'
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - api
+          - web
+          - admin
+          - vendor-portal
+      run_migrations:
+        description: 'Run prisma migrate deploy against the pod database (requires DB firewall access from runners)'
+        required: true
+        default: false
+        type: boolean
+      bootstrap_admin:
+        description: 'Run scripts/bootstrap-prod.ts after migrations'
+        required: true
+        default: false
+        type: boolean
+
+env:
+  NODE_ENV: production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Resolve names
+        id: names
+        run: |
+          REGION="${{ inputs.region_key }}"
+          ENVIRONMENT="prod"
+          SUFFIX="${ENVIRONMENT}-${REGION}"
+          FLAT="$(echo "$SUFFIX" | tr -d '-' | tr '[:upper:]' '[:lower:]')"
+          echo "rg=rg-storegrill-$SUFFIX" >> "$GITHUB_OUTPUT"
+          echo "kv=kv-storegrill-$FLAT" >> "$GITHUB_OUTPUT"
+          echo "api_app=app-storegrill-api-$SUFFIX" >> "$GITHUB_OUTPUT"
+          echo "web_app=app-storegrill-web-$SUFFIX" >> "$GITHUB_OUTPUT"
+          echo "admin_app=app-storegrill-admin-$SUFFIX" >> "$GITHUB_OUTPUT"
+          echo "vendor_app=app-storegrill-vendor-$SUFFIX" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate --schema apps/api/prisma/schema.prisma
+
+      - name: Build API (bundled)
+        run: npx esbuild apps/api/src/index.ts --bundle --platform=node --target=node20 --outfile=deploy/api/index.js --external:@prisma/client
+
+      - name: Package API
+        run: |
+          mkdir -p deploy/api/node_modules/@prisma
+          cp -r node_modules/.prisma deploy/api/node_modules/.prisma
+          cp -r node_modules/@prisma/client deploy/api/node_modules/@prisma/client
+          cat > deploy/api/package.json <<'EOF'
+          {
+            "name": "storegrill-api",
+            "private": true,
+            "scripts": { "start": "node index.js" },
+            "engines": { "node": "20.x" }
+          }
+          EOF
+          cd deploy/api && zip -qr ../api.zip . && cd ..
+
+      - name: Build web
+        if: inputs.app == 'all' || inputs.app == 'web'
+        run: npm run build -w packages/shared && npm run build -w apps/web
+
+      - name: Package web
+        if: inputs.app == 'all' || inputs.app == 'web'
+        run: |
+          mkdir -p deploy/web
+          cp -r apps/web/.next/standalone/. deploy/web/
+          mkdir -p deploy/web/apps/web/.next
+          cp -r apps/web/.next/static deploy/web/apps/web/.next/static
+          [ -d apps/web/public ] && cp -r apps/web/public deploy/web/apps/web/public
+          cat > deploy/web/package.json <<'EOF'
+          { "scripts": { "start": "node apps/web/server.js" } }
+          EOF
+          cd deploy/web && zip -qr ../web.zip . && cd ..
+
+      - name: Build admin
+        if: inputs.app == 'all' || inputs.app == 'admin'
+        run: npm run build -w packages/shared && npm run build -w apps/admin
+
+      - name: Package admin
+        if: inputs.app == 'all' || inputs.app == 'admin'
+        run: |
+          mkdir -p deploy/admin
+          cp -r apps/admin/.next/standalone/. deploy/admin/
+          mkdir -p deploy/admin/apps/admin/.next
+          cp -r apps/admin/.next/static deploy/admin/apps/admin/.next/static
+          [ -d apps/admin/public ] && cp -r apps/admin/public deploy/admin/apps/admin/public
+          cat > deploy/admin/package.json <<'EOF'
+          { "scripts": { "start": "node apps/admin/server.js" } }
+          EOF
+          cd deploy/admin && zip -qr ../admin.zip . && cd ..
+
+      - name: Build vendor-portal
+        if: inputs.app == 'all' || inputs.app == 'vendor-portal'
+        run: npm run build -w packages/shared && npm run build -w apps/vendor-portal
+
+      - name: Package vendor-portal
+        if: inputs.app == 'all' || inputs.app == 'vendor-portal'
+        run: |
+          mkdir -p deploy/vendor
+          cp -r apps/vendor-portal/.next/standalone/. deploy/vendor/
+          mkdir -p deploy/vendor/apps/vendor-portal/.next
+          cp -r apps/vendor-portal/.next/static deploy/vendor/apps/vendor-portal/.next/static
+          [ -d apps/vendor-portal/public ] && cp -r apps/vendor-portal/public deploy/vendor/apps/vendor-portal/public
+          cat > deploy/vendor/package.json <<'EOF'
+          { "scripts": { "start": "node apps/vendor-portal/server.js" } }
+          EOF
+          cd deploy/vendor && zip -qr ../vendor.zip . && cd ..
+
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy API
+        if: inputs.app == 'all' || inputs.app == 'api'
+        run: |
+          az webapp deploy \
+            --resource-group "${{ steps.names.outputs.rg }}" \
+            --name "${{ steps.names.outputs.api_app }}" \
+            --src-path deploy/api.zip \
+            --type zip --async true --timeout 600
+
+      - name: Deploy web
+        if: inputs.app == 'all' || inputs.app == 'web'
+        run: |
+          az webapp deploy \
+            --resource-group "${{ steps.names.outputs.rg }}" \
+            --name "${{ steps.names.outputs.web_app }}" \
+            --src-path deploy/web.zip \
+            --type zip --async true --timeout 600
+
+      - name: Deploy admin
+        if: inputs.app == 'all' || inputs.app == 'admin'
+        run: |
+          az webapp deploy \
+            --resource-group "${{ steps.names.outputs.rg }}" \
+            --name "${{ steps.names.outputs.admin_app }}" \
+            --src-path deploy/admin.zip \
+            --type zip --async true --timeout 600
+
+      - name: Deploy vendor-portal
+        if: inputs.app == 'all' || inputs.app == 'vendor-portal'
+        run: |
+          az webapp deploy \
+            --resource-group "${{ steps.names.outputs.rg }}" \
+            --name "${{ steps.names.outputs.vendor_app }}" \
+            --src-path deploy/vendor.zip \
+            --type zip --async true --timeout 600
+
+      - name: Run database migrations
+        if: inputs.run_migrations == true
+        run: |
+          DATABASE_URL="$(az keyvault secret show \
+            --vault-name "${{ steps.names.outputs.kv }}" \
+            --name postgres-connection-string \
+            --query value -o tsv)" \
+          npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
+
+      - name: Bootstrap production admin + regions
+        if: inputs.bootstrap_admin == true
+        env:
+          BOOTSTRAP_ADMIN_EMAIL: ${{ secrets.BOOTSTRAP_ADMIN_EMAIL }}
+          BOOTSTRAP_ADMIN_PASSWORD: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD }}
+        run: |
+          export DATABASE_URL="$(az keyvault secret show \
+            --vault-name "${{ steps.names.outputs.kv }}" \
+            --name postgres-connection-string \
+            --query value -o tsv)"
+          npx tsx scripts/bootstrap-prod.ts

@@ -1,0 +1,59 @@
+name: infra
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Terraform target (validate | global | pod:<REGION>)'
+        required: true
+        default: 'validate'
+      action:
+        description: 'Action (plan | apply)'
+        required: false
+        default: 'plan'
+
+jobs:
+  validate:
+    if: github.event.inputs.target == 'validate'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.x
+      - name: fmt check
+        run: terraform -chdir=infra/terraform/modules/pod fmt -check -recursive && terraform -chdir=infra/terraform/live/global fmt -check
+      - name: init + validate module
+        run: terraform -chdir=infra/terraform/modules/pod init -backend=false && terraform -chdir=infra/terraform/modules/pod validate
+      - name: init + validate global
+        run: terraform -chdir=infra/terraform/live/global init -backend=false && terraform -chdir=infra/terraform/live/global validate
+
+  deploy:
+    if: startsWith(github.event.inputs.target, 'pod:') || github.event.inputs.target == 'global'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.action == 'apply' && 'production' || 'plan' }}
+    env:
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID_POD || secrets.ARM_SUBSCRIPTION_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.x
+      - name: Resolve working directory
+        id: dir
+        run: |
+          if [ "${{ github.event.inputs.target }}" = "global" ]; then
+            echo "path=infra/terraform/live/global" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=infra/terraform/live/pods/${{ github.event.inputs.target }}" | sed 's/pod://' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Init
+        run: terraform -chdir=${{ steps.dir.outputs.path }} init -input=false
+      - name: Plan
+        run: terraform -chdir=${{ steps.dir.outputs.path }} plan -input=false -out=tf.plan
+      - name: Apply
+        if: github.event.inputs.action == 'apply'
+        run: terraform -chdir=${{ steps.dir.outputs.path }} apply -input=false -auto-approve tf.plan

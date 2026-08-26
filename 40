@@ -1,0 +1,1 @@
+C:\Users\USER\Downloads\storegrill>  "C:\Program Files (x86)\Microsoft SDKs\Azure\CLI2\wbin\\..\python.exe" -IBm azure.cli webapp config appsettings list -g rg-storegrill-prod-UK -n app-storegrill-api-prod-UK --query [].{name:name,value:substring(value,0,iif(length(value),40,length(value)))} -o json

@@ -69,7 +69,7 @@ export function CategoryMegaMenu({ categories, language = 'en' }: CategoryMegaMe
         <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
-        {language === 'en' ? 'All Categories' : language === 'de' ? 'Alle Kategorien' : language === 'fr' ? 'Toutes catégories' : language === 'es' ? 'Todas las categorías' : language === 'it' ? 'Tutte le categorie' : language === 'nl' ? 'Alle categorieën' : language === 'pl' ? 'Wszystkie kategorie' : language === 'pt' ? 'Todas as categorias' : language === 'ja' ? 'すべてのカテゴリー' : language === 'ar' ? 'جميع الفئات' : 'All Categories'}
+        {language === 'en' ? 'Shop All' : language === 'de' ? 'Alle Kategorien' : language === 'fr' ? 'Toutes catégories' : language === 'es' ? 'Todas las categorías' : language === 'it' ? 'Tutte le categorie' : language === 'nl' ? 'Alle categorieën' : language === 'pl' ? 'Wszystkie kategorie' : language === 'pt' ? 'Todas as categorias' : language === 'ja' ? 'すべてのカテゴリー' : language === 'ar' ? 'جميع الفئات' : 'Shop All'}
       </button>
 
       {open && (

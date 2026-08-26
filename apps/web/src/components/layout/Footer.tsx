@@ -58,7 +58,7 @@ const FOOTER_NAV = [
 function PaymentLogos() {
   return (
     <div className="flex flex-wrap items-center justify-center gap-2" aria-label="Accepted payment methods">
-      <span className="h-6 px-2 rounded-xs bg-white grid place-items-center text-xs font-bold italic tracking-tight text-primary dark:text-[1a1f71]">VISA</span>
+      <span className="h-6 px-2 rounded-xs bg-white grid place-items-center text-xs font-bold italic tracking-tight text-text-primary dark:text-[1a1f71]">VISA</span>
       <span className="h-6 px-1.5 rounded-xs bg-white grid place-items-center">
         <svg viewBox="0 0 30 18" className="w-7 h-4" aria-label="Mastercard">
           <circle cx="11" cy="9" r="7.5" fill="#eb001b" />
@@ -71,10 +71,10 @@ function PaymentLogos() {
           <circle cx="19" cy="9" r="7.5" fill="#ed0006" fillOpacity="0.85" />
         </svg>
       </span>
-      <span className="h-6 px-2 rounded-xs bg-white grid place-items-center text-primary dark:text-[0a0a0a]">PayPal</span>
-      <span className="h-6 px-2 rounded-xs bg-[#ffb3c7] grid place-items-center text-primary dark:text-[0a0a0a]">Klarna.</span>
-      <span className="h-6 px-2 rounded-xs bg-white grid place-items-center text-primary font-bold dark:text-[5f6368]">G Pay</span>
-      <span className="h-6 px-2 rounded-xs bg-white grid place-items-center text-primary font-bold dark:text-[1d1d1f]">Mastercard</span>
+      <span className="h-6 px-2 rounded-xs bg-white grid place-items-center text-text-primary dark:text-[0a0a0a]">PayPal</span>
+      <span className="h-6 px-2 rounded-xs bg-[#ffb3c7] grid place-items-center text-text-primary dark:text-[0a0a0a]">Klarna.</span>
+      <span className="h-6 px-2 rounded-xs bg-white grid place-items-center text-text-primary font-bold dark:text-[5f6368]">G Pay</span>
+      <span className="h-6 px-2 rounded-xs bg-white grid place-items-center text-text-primary font-bold dark:text-[1d1d1f]">Mastercard</span>
     </div>
   );
 }

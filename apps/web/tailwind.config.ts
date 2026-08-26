@@ -2,6 +2,7 @@ import type { Config } from 'tailwindcss';
 import { colors, shadows, radii, typography, layout, motion } from './src/design-system/tokens';
 
 const SYSTEM_SANS = [
+  'var(--font-sans)',
   '-apple-system',
   'BlinkMacSystemFont',
   '"Segoe UI"',
@@ -31,6 +32,7 @@ const config: Config = {
         ember: colors.brand.ember,
         tealink: colors.brand.tealink,
         smoke: colors.smoke,
+        footerdark: colors.footer,
         surface: {
           DEFAULT: 'var(--color-surface)',
           raised: 'var(--color-surface-raised)',

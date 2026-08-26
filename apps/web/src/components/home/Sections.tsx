@@ -89,8 +89,8 @@ export function FeaturedCollections({ collections }: { collections: FeaturedColl
           {collections.map(col => (
             <div key={col.title} className="rounded-xs border border-border bg-surface p-6 md:p-8">
               <div className="flex items-center gap-5 mb-8">
-                <span className="w-16 h-16 rounded-full bg-action-primary/10 text-action-primary grid place-items-center shrink-0 shadow-inner">
-                  <Image src={col.icon} alt="" width={38} height={38} className="rounded-full object-cover" />
+                <span className="w-16 h-16 rounded-full grid place-items-center shrink-0" style={{ backgroundColor: 'var(--color-ember-light)' }}>
+                  <Image src={col.icon} alt="" width={38} height={38} className="rounded-full relative z-10" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-xl font-bold text-text-primary leading-tight mb-1">{col.title}</h3>
@@ -169,13 +169,13 @@ export function PromoSlider({ id, heading, subtitle, background = 'var(--color-s
 className="border-b border-border py-8 md:py-12"
       style={{ background }}
     >
-      <div>
-        <div className="mb-6">
-          <h2 id={`${id}-spotlight-heading`} className="text-2xl md:text-3xl font-bold text-center text-text-primary">
+      <div className="container-fluid">
+        <div className="mb-6 text-center">
+          <h2 id={`${id}-spotlight-heading`} className="text-2xl md:text-3xl font-bold text-text-primary">
             {heading}
           </h2>
           {subtitle && (
-            <p className="mt-1 text-body-md text-center text-text-secondary">
+            <p className="mt-1 text-body-md text-text-secondary">
               {subtitle}
             </p>
           )}
@@ -184,12 +184,12 @@ className="border-b border-border py-8 md:py-12"
           <ul
             ref={scroller}
             data-testid={`${id}-scroller`}
-            className="flex gap-4 px-4 pb-2 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-pl-4 sm:px-6 sm:scroll-pl-6 md:gap-6 md:scroll-pl-6 lg:gap-7 lg:scroll-pl-7"
+            className="flex gap-4 px-4 pb-2 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-pl-4 sm:px-6 sm:scroll-pl-6 md:gap-4 md:scroll-pl-6 lg:gap-4 lg:scroll-pl-6"
           >
             {tiles.map(tile => (
 <li
                 key={tile.src}
-                className="w-full sm:w-[calc(25%-8px)] md:w-[calc(25%-8px)] lg:w-[calc(25%-8px)]"
+                className="w-full shrink-0 snap-start sm:w-[calc(25%-12px)] md:w-[calc(25%-12px)] lg:w-[calc(25%-12px)]"
               >
                 <Link
                   href={tile.href}
@@ -201,7 +201,7 @@ className="border-b border-border py-8 md:py-12"
                       src={tile.src}
                       alt=""
                       fill
-                      sizes="(max-width:640px) 88vw, (max-width:768px) 50vw, (max-width:1024px) 33vw, 25vw"
+                      sizes="(max-width:640px) 88vw, (max-width:768px) 44vw, 25vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </span>
@@ -237,71 +237,186 @@ className="border-b border-border py-8 md:py-12"
 interface CampaignTile {
   href: string;
   title: string;
-  body: string;
-  cta: string;
-  className: string;
+  subtitle?: string;
+  description?: string;
+  cta?: string;
+  image: string;
+  timer?: boolean;
+  bgColor: string;
 }
 
-const CAMPAIGN_TILES: CampaignTile[] = [
-  {
+const CAMPAIGN_TILES = {
+  main: {
     href: '/deals',
-    title: 'Great deals on top brands',
-    body: 'Limited-time savings across tech, home and kitchen.',
-    cta: 'Shop Deals',
-    className: 'bg-ember-gradient text-white md:row-span-2',
+    title: 'Elevate Your Digital Lifestyle',
+    subtitle: 'The Ideal Electronics.',
+    description: 'We have prepared special discounts for you on the products you need. Don\'t miss these opportunities...',
+    cta: 'Shop Now',
+    image: '/banners/hero_campaign/banner-07.jpg',
+    timer: true,
+    bgColor: '#584F46',
   },
-  {
+  topLeft: {
     href: '/payments',
-    title: 'Spread the cost',
-    body: 'Flexible payment options on eligible orders.',
-    cta: 'Ways to pay',
-    className: 'bg-charcoal text-white',
+    title: 'We Will Take You Anywhere',
+    subtitle: 'The Ideal Electronics.',
+    image: '/banners/hero_campaign/banner-08.jpg',
+    bgColor: '#6C597C',
   },
-  {
+  topRight: {
     href: '/shipping',
-    title: 'Free delivery',
-    body: 'On eligible orders, straight to your door.',
-    cta: 'Delivery options',
-    className: 'bg-surface border border-border text-text-primary',
+    title: 'Micro Electrons Are What We Do',
+    subtitle: 'Regular And Stabler.',
+    image: '/banners/hero_campaign/banner-09.jpg',
+    bgColor: '#6C597C',
   },
-];
+  bottom: {
+    href: '/products',
+    title: 'Tech Trends, Unleashed',
+    subtitle: 'Order Of The Circuits',
+    description: 'Discover the latest in tech. Shop new arrivals, exclusive deals, and more.',
+    image: '/banners/hero_campaign/banner-10.jpg',
+    bgColor: '#746350',
+  },
+} as const;
 
-function CampaignCard({ tile }: { tile: CampaignTile }) {
-  const inverted = !tile.className.includes('border-border');
+function CampaignCard({ tile, large, small }: { tile: CampaignTile; large?: boolean; small?: boolean }) {
   return (
     <Link
       href={tile.href}
-      aria-label={`${tile.title} — ${tile.cta}`}
-      className={`group flex flex-col justify-between gap-6 rounded-xs p-6 md:p-8 transition-transform duration-normal hover:scale-[1.01] focus-visible:outline focus-visible:outline-2 focus-visible:outline-action-primary ${tile.className}`}
+      aria-label={tile.title}
+      className={`group block relative overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-action-primary ${small ? '' : 'h-full'}`}
     >
-      <div>
-        <h2 className={`text-heading-xl md:text-display-sm font-bold leading-tight ${inverted ? 'text-white' : 'text-text-primary'}`}>
-          {tile.title}
-        </h2>
-        <p className={`mt-2 text-sm md:text-body-md max-w-sm ${inverted ? 'text-white/75' : 'text-text-secondary'}`}>
-          {tile.body}
-        </p>
-      </div>
-      <span
-        className={`inline-flex w-fit items-center rounded-xs border px-4 py-2 text-sm font-bold transition-colors ${
-          inverted
-            ? 'border-white/70 text-white group-hover:bg-white group-hover:text-charcoal'
-            : 'border-text-primary text-text-primary group-hover:bg-action-primary group-hover:border-action-primary group-hover:text-white'
-        }`}
-      >
-        {tile.cta}
+      <span className={`relative block overflow-hidden ${large ? 'aspect-[4/3] md:aspect-[3/2]' : small ? 'aspect-square' : 'h-full'}`} style={{ backgroundColor: tile.bgColor }}>
+        <Image
+          src={tile.image}
+          alt={tile.title}
+          fill
+          sizes={large ? '(max-width:768px) 100vw, 880px' : '(max-width:768px) 50vw, 440px'}
+          className="object-cover transition-transform duration-700 group-hover:scale-105"
+          priority={large}
+        />
+      </span>
+      <span className={`absolute inset-0 flex flex-col text-white ${large ? 'justify-between p-5 md:p-6 lg:p-8' : small ? 'items-center justify-start text-center pt-5 md:pt-6 lg:pt-8' : 'justify-center p-5 md:p-6 lg:p-8'}`}>
+        <span className={`${large ? 'max-w-[60%]' : small ? 'max-w-full' : 'max-w-[55%]'}`}>
+          {tile.subtitle && (
+            <span className="block text-sm font-medium mb-2">{tile.subtitle}</span>
+          )}
+          {tile.title && (
+            <span className={`block font-bold tracking-tight ${large ? 'text-[26px] md:text-4xl lg:text-5xl' : small ? 'text-xl md:text-xl lg:text-2xl' : 'text-[26px] md:text-[40px] lg:text-5xl/tight'}`}>{tile.title}</span>
+          )}
+          {tile.description && (
+            <span className="block text-sm lg:text-base mt-2 max-w-sm">{tile.description}</span>
+          )}
+        </span>
+        {tile.cta && (
+          <span className={`inline-flex w-fit items-center rounded-xs bg-white px-5 py-2.5 text-sm font-semibold text-charcoal shadow-md transition-all group-hover:shadow-lg group-hover:bg-charcoal group-hover:text-white ${large ? 'mt-4' : 'mt-3'}`}>
+            {tile.cta}
+          </span>
+        )}
+        {tile.timer && (
+          <span className="mt-auto pt-4">
+            <span className="block text-xs font-medium mb-1.5">Remaining Time:</span>
+            <CountdownBanner />
+          </span>
+        )}
       </span>
     </Link>
   );
 }
 
+function CountdownBanner() {
+  const [target] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 3);
+    d.setHours(23, 59, 59, 0);
+    return d.getTime();
+  });
+  const [remaining, setRemaining] = useState<number | null>(null);
+
+  useEffect(() => {
+    setRemaining(target - Date.now());
+    const timer = setInterval(() => setRemaining(Math.max(0, target - Date.now())), 1000);
+    return () => clearInterval(timer);
+  }, [target]);
+
+  if (remaining === null) {
+    return (
+      <span className="inline-flex items-center bg-white rounded-xs px-2.5 py-1.5 text-xs font-bold tabular-nums text-charcoal gap-0.5">
+        <span>--</span><span className="text-charcoal/40 mx-0.5">:</span>
+        <span>--</span><span className="text-charcoal/40 mx-0.5">:</span>
+        <span>--</span><span className="text-charcoal/40 mx-0.5">:</span>
+        <span>--</span>
+      </span>
+    );
+  }
+
+  const totalSeconds = Math.floor(remaining / 1000);
+  const days = String(Math.floor(totalSeconds / 86400)).padStart(2, '0');
+  const hours = String(Math.floor((totalSeconds % 86400) / 3600)).padStart(2, '0');
+  const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+  const seconds = String(totalSeconds % 60).padStart(2, '0');
+
+  return (
+    <span suppressHydrationWarning className="inline-flex items-center bg-white rounded-xs px-2.5 py-1.5 text-xs font-bold tabular-nums text-charcoal gap-0.5">
+        <span>{days}</span><span className="text-charcoal/40 mx-0.5">:</span>
+        <span>{hours}</span><span className="text-charcoal/40 mx-0.5">:</span>
+        <span>{minutes}</span><span className="text-charcoal/40 mx-0.5">:</span>
+        <span>{seconds}</span>
+    </span>
+  );
+}
+
 export function CampaignHero() {
+  const { main, topLeft, topRight, bottom } = CAMPAIGN_TILES;
   return (
     <section aria-label="Featured campaigns" className="bg-surface border-b border-border">
-      <div className="container-fluid py-8 md:py-12">
-        <div className="grid md:grid-cols-2 gap-8 md:gap-12">
-          {CAMPAIGN_TILES.map(tile => (
-            <CampaignCard key={tile.href} tile={tile} />
+      <div className="p-4 md:p-5">
+        <div className="grid md:grid-cols-[1.4fr_1fr] gap-4 md:gap-5 items-stretch">
+          <CampaignCard tile={main} large />
+          <div className="grid grid-rows-[auto_1fr] gap-4 md:gap-5">
+            <div className="grid grid-cols-2 gap-4 md:gap-5">
+              <CampaignCard tile={topLeft} small />
+              <CampaignCard tile={topRight} small />
+            </div>
+            <CampaignCard tile={bottom} />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const BRAND_LOGOS = [
+  { src: '/banners/brand_logos/logo-02.png', alt: 'Brand', href: '/products' },
+  { src: '/banners/brand_logos/logo-03.png', alt: 'Brand', href: '/products' },
+  { src: '/banners/brand_logos/logo-04.png', alt: 'Brand', href: '/products' },
+  { src: '/banners/brand_logos/logo-05.png', alt: 'Brand', href: '/products' },
+  { src: '/banners/brand_logos/logo-06.png', alt: 'Brand', href: '/products' },
+  { src: '/banners/brand_logos/logo-07.png', alt: 'Brand', href: '/products' },
+  { src: '/banners/brand_logos/logo-08 (1).png', alt: 'Brand', href: '/products' },
+] as const;
+
+export function BrandLogos() {
+  return (
+    <section aria-label="Brand partners" className="border-b border-border bg-surface">
+      <div className="container-fluid py-8 md:py-10">
+        <div className="flex gap-8 md:gap-12 items-center justify-center flex-wrap">
+          {BRAND_LOGOS.map(logo => (
+            <Link
+              key={logo.src}
+              href={logo.href}
+              aria-label={logo.alt}
+              className="shrink-0 flex items-center justify-center h-10 md:h-12 opacity-50 hover:opacity-100 transition-opacity"
+            >
+              <Image
+                src={logo.src}
+                alt={logo.alt}
+                width={120}
+                height={48}
+                className="h-8 md:h-10 w-auto object-contain"
+              />
+            </Link>
           ))}
         </div>
       </div>
@@ -309,23 +424,49 @@ export function CampaignHero() {
   );
 }
 
-export function CategoryQuickNav({ items }: { items: QuickNavItem[] }) {
+const CATEGORY_IMAGES = [
+  { name: 'Mobiles', slug: 'mobiles', image: '/banners/category/top-cat-hp-mobile.png' },
+  { name: 'Laptops', slug: 'computers', image: '/banners/category/top-cat-hp-laptops.png' },
+  { name: 'Televisions', slug: 'tvs', image: '/banners/category/top-cat-hp-televisions.png' },
+  { name: 'Console Gaming', slug: 'gaming', image: '/banners/category/top-cat-hp-console-gaming.png' },
+  { name: 'Console Games', slug: 'games', image: '/banners/category/top-cat-hp-console-games.png' },
+  { name: 'Camera', slug: 'camera', image: '/banners/category/top-cat-hp-camera.png' },
+  { name: 'Washing Machines', slug: 'washing-machines', image: '/banners/category/top-cat-hp-washing-machine.png' },
+  { name: 'Refrigeration', slug: 'refrigeration', image: '/banners/category/top-cat-hp-refrigeration.png' },
+  { name: 'Health & Beauty', slug: 'beauty', image: '/banners/category/top-cat-hp-health-beauty.png' },
+  { name: 'Drinks & Treat Makers', slug: 'kitchen', image: '/banners/category/top-cat-hp-drinks-treat-makers.png' },
+  { name: 'E-Mobility', slug: 'mobility', image: '/banners/category/top-cat-hp-e-mobility.png' },
+  { name: 'Sports & Fitness', slug: 'sports', image: '/banners/category/top-cat-hp-sports-fitness.png' },
+] as const;
+
+export function CategoryQuickNav() {
   return (
     <nav aria-label="Shop by category" className="border-b border-border">
       <div className="container-fluid py-6 md:py-8">
-      <ul className="flex gap-3 overflow-x-auto scrollbar-none pb-1 snap-x" role="list">
-        {items.map(item => (
-          <li key={item.slug} className="snap-start shrink-0">
-            <Link
-              href={`/products?category=${item.slug}`}
-              className="group flex h-11 items-center gap-2.5 whitespace-nowrap rounded-xs border border-border bg-surface px-4 text-sm font-bold text-text-primary transition-colors hover:border-action-primary hover:text-action-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-action-primary"
-            >
-              <span aria-hidden="true" className="text-lg leading-none">{item.icon}</span>
-              {item.name}
-            </Link>
-          </li>
-        ))}
-      </ul>
+        <ul className="flex gap-3 md:gap-4 overflow-x-auto scrollbar-none pb-1 snap-x" role="list">
+          {CATEGORY_IMAGES.map(cat => (
+            <li key={cat.slug} className="snap-start shrink-0">
+              <Link
+                href={`/products?category=${cat.slug}`}
+                aria-label={cat.name}
+                className="group block w-[100px] md:w-[120px] text-center"
+              >
+                <span className="relative block w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full overflow-hidden border border-border bg-surface-sunken mx-auto mb-2 transition-all group-hover:border-action-primary group-hover:shadow-md">
+                  <Image
+                    src={cat.image}
+                    alt=""
+                    fill
+                    sizes="120px"
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                </span>
+                <span className="block text-xs md:text-sm font-bold text-text-primary group-hover:text-action-primary transition-colors leading-tight">
+                  {cat.name}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </div>
     </nav>
   );
@@ -406,7 +547,7 @@ export function DealsOfTheDay({ deals }: { deals: DealCardData[] }) {
             const savingMinorUnits = deal.listPriceMinorUnits && deal.listPriceMinorUnits > deal.priceMinorUnits ? deal.listPriceMinorUnits - deal.priceMinorUnits : 0;
             return (
               <li key={deal.id} className="snap-start shrink-0 w-full sm:w-[calc(33.333%-12px)] lg:w-[calc(25%-12px)]">
-                <Link href={deal.productId ? `/products/${deal.productId}` : '/deals'} className="group block bg-surface border border-border rounded-lg p-4 hover:shadow-elevated hover:border-action-primary transition-all h-full flex flex-col">
+                <Link href={deal.productId ? `/products/${deal.productId}` : '/deals'} className="group block bg-surface border border-border rounded-lg p-4 hover:shadow-elevated hover:border-action-primary transition-all h-full flex flex-col" suppressHydrationWarning>
                   <div className="relative w-full aspect-square bg-surface mb-3 shrink-0 rounded-md overflow-hidden">
                     {deal.image && (
                       <Image src={storefrontImage(deal.image) || '/product-placeholder.svg'} alt="" fill sizes="240px" className="object-contain p-2 group-hover:scale-105 transition-transform duration-500" />
@@ -418,15 +559,15 @@ export function DealsOfTheDay({ deals }: { deals: DealCardData[] }) {
                   <p className="text-sm font-bold line-clamp-2 leading-snug text-text-primary group-hover:text-action-primary transition-colors mb-3">{deal.productName}</p>
                   
                   <div className="mt-auto">
-                    <span className="block text-xl font-extrabold text-text-primary">
+                    <span className="block text-xl font-extrabold text-text-primary" suppressHydrationWarning>
                       {new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(deal.priceMinorUnits / 100)}
                     </span>
                     {savingMinorUnits > 0 && deal.listPriceMinorUnits && (
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-text-tertiary line-through">
+                        <span className="text-xs text-text-tertiary line-through" suppressHydrationWarning>
                           Was {new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(deal.listPriceMinorUnits / 100)}
                         </span>
-                        <span className="text-xs text-action-primary font-bold bg-action-primary/10 px-1.5 py-0.5 rounded-sm">
+                        <span className="text-xs text-action-primary font-bold bg-action-primary/10 px-1.5 py-0.5 rounded-sm" suppressHydrationWarning>
                           Save {new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(savingMinorUnits / 100)}
                         </span>
                       </div>

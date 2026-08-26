@@ -13,6 +13,7 @@ import {
   RecentlyViewed,
   VendorSpotlight,
   CampaignHero,
+  BrandLogos,
   PromoSlider,
   FeaturedCollections,
   TrendingSlider,
@@ -36,17 +37,6 @@ export async function generateMetadata(_props: PageProps): Promise<Metadata> {
   });
   return meta;
 }
-
-const QUICK_NAV = [
-  { name: 'Electronics', slug: 'electronics', icon: '🎧' },
-  { name: 'Computers', slug: 'computers', icon: '💻' },
-  { name: 'Home & Kitchen', slug: 'home', icon: '🍳' },
-  { name: 'Fashion', slug: 'fashion', icon: '👕' },
-  { name: 'Beauty', slug: 'beauty', icon: '💄' },
-  { name: 'Sports', slug: 'sports', icon: '🏋️' },
-  { name: 'Books', slug: 'books', icon: '📚' },
-  { name: 'Toys & Games', slug: 'toys', icon: '🧸' },
-];
 
 interface FeaturedProduct {
   id: string;
@@ -97,8 +87,10 @@ export default async function HomePage() {
 
       <CampaignHero />
 
+      <BrandLogos />
+
       <TrustBar />
-      <CategoryQuickNav items={QUICK_NAV} />
+      <CategoryQuickNav />
 
       <RecentlyViewed />
 
@@ -214,7 +206,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="pb-10 md:pb-12" aria-labelledby="sponsored-heading">
+      <section className="pt-10 md:pt-12 pb-10 md:pb-12" aria-labelledby="sponsored-heading">
         <div className="container-fluid">
           <div className="flex items-end justify-between mb-6">
             <h2 id="sponsored-heading" className="text-2xl md:text-3xl font-bold text-text-primary">Sponsored products</h2>

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { JetBrains_Mono } from 'next/font/google';
+import { JetBrains_Mono, Outfit } from 'next/font/google';
 import './globals.css';
 import { ToastProvider } from '@/components/feedback/Toast';
 import { CartProvider } from '@/components/providers/CartContext';
@@ -19,6 +19,12 @@ import { colors } from '@/design-system/tokens';
 const fontMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
+  display: 'swap',
+});
+
+const fontSans = Outfit({
+  subsets: ['latin'],
+  variable: '--font-sans',
   display: 'swap',
 });
 
@@ -71,7 +77,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { regionKey, language } = await getRequestContext();
 
   return (
-    <html lang="en" className={`${fontMono.variable}`}>
+    <html lang="en" className={`${fontSans.variable} ${fontMono.variable}`}>
       <body className="min-h-screen flex flex-col antialiased bg-surface-page text-primary">
         <AnalyticsProvider>
           <UserContextProvider>

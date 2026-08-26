@@ -97,7 +97,7 @@ function RegionDeliverTo({
         aria-expanded={open}
         className={HEADER_TRIGGER}
       >
-        <PinIcon className="w-4 h-4 shrink-0 text-text-secondary" />
+        <PinIcon className="w-5 h-5 shrink-0 text-text-secondary" />
         <span className={HEADER_TRIGGER_LABEL_WRAPPER}>
           <span className={HEADER_TRIGGER_TOP_LINE}>{t(language, 'deliverTo')}</span>
           <span className={HEADER_TRIGGER_BOTTOM_LINE}>
@@ -189,7 +189,7 @@ function AccountMenu({ language }: { language: string }) {
         aria-expanded={open}
         className={HEADER_TRIGGER}
       >
-        <UserIcon className="w-4 h-4 shrink-0 text-text-secondary" />
+        <UserIcon className="w-5 h-5 shrink-0 text-text-secondary" />
         <span className={HEADER_TRIGGER_LABEL_WRAPPER}>
           <span className={HEADER_TRIGGER_TOP_LINE}>
             {t(language, 'hello')}, {t(language, 'signIn').toLowerCase()}
@@ -312,7 +312,7 @@ function MobileMenu({
             onClick={onClose}
             className="block px-4 py-2.5 text-sm hover:bg-surface-sunset"
           >
-            Deals
+            Today&apos;s Deal
           </Link>
           <Link
             href="/vendors"
@@ -422,7 +422,7 @@ function Header({ announcementMessages }: HeaderProps) {
               size="sm"
               label="Wishlist"
               href="/account/wishlist"
-              icon={<HeartIcon className="w-5 h-5 text-text-primary" />}
+              icon={<HeartIcon className="w-6 h-6 text-text-primary" />}
               badge={
                 <CounterBadge
                   count={wishlist.items.length}
@@ -436,7 +436,7 @@ function Header({ announcementMessages }: HeaderProps) {
               variant="header-action"
               size="sm"
               label="Basket"
-              icon={<CartIcon className="w-5 h-5 text-text-primary" />}
+              icon={<CartIcon className="w-6 h-6 text-text-primary" />}
               badge={
                 <CounterBadge
                   count={cart.count}
@@ -459,14 +459,8 @@ function Header({ announcementMessages }: HeaderProps) {
           aria-label="Categories"
           className="bg-surface-page border-b border-border hidden lg:block"
         >
-          <div className="container-site flex items-center gap-8 h-11 overflow-x-auto scrollbar-none text-sm font-bold text-text-primary">
+          <div className="container-site flex items-center gap-8 h-11 overflow-x-auto scrollbar-none text-base font-bold text-text-primary">
             <CategoryMegaMenuTrigger language={language} categories={MEGA_MENU_CATEGORIES} />
-            <Link
-              href="/deals"
-              className="text-action-primary hover:underline transition-colors inline-flex items-center gap-1.5"
-            >
-              Deals
-            </Link>
             {CATEGORY_LINKS.map(([label, slug]) => (
               <Link
                 key={slug}
@@ -476,6 +470,12 @@ function Header({ announcementMessages }: HeaderProps) {
                 {label}
               </Link>
             ))}
+            <Link
+              href="/deals"
+              className="ml-auto text-action-primary hover:underline transition-colors inline-flex items-center gap-1.5 shrink-0"
+            >
+              Today&apos;s Deal
+            </Link>
           </div>
         </nav>
       </header>

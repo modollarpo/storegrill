@@ -36,7 +36,7 @@ export interface SearchBarProps {
   placeholder?: string;
 }
 
-export function SearchBar({ regionKey, placeholder = 'Search Storegrill' }: SearchBarProps) {
+export function SearchBar({ regionKey, placeholder = 'Search our products, brands & services ....' }: SearchBarProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [query, setQuery] = useState('');
@@ -174,8 +174,8 @@ export function SearchBar({ regionKey, placeholder = 'Search Storegrill' }: Sear
           go(query);
         }}
         className={cn(
-          'flex items-center rounded-xl overflow-hidden transition-all duration-fast',
-          expanded ? 'border-action-primary shadow-md bg-surface relative z-10' : 'border-subtle bg-surface hover:border-action-primary'
+          'flex items-center rounded-xl overflow-hidden transition-all duration-fast border',
+          expanded ? 'border-action-primary shadow-md bg-surface relative z-10' : 'border-border bg-surface hover:border-action-primary'
         )}
       >
         <label htmlFor="sg-search" className="sr-only">{placeholder}</label>

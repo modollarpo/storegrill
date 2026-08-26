@@ -1,0 +1,1 @@
+﻿{ "scripts": { "start": "node apps/web/server.js" } }

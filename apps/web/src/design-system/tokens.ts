@@ -9,7 +9,7 @@ export const colors = {
     200: '#d4d4d4', 300: '#b8b8b8', 400: '#949494', 500: '#717171',
     600: '#525252', 700: '#3d3d3d', 800: '#292929', 900: '#141414', 950: '#0a0a0a',
   },
-  footer: '#3d454a',
+  footer: '#33434A',
 } as const;
 
 export const semantic = {
@@ -59,20 +59,20 @@ export const semantic = {
 } as const;
 
 export const typography = {
-  display2xl: '72px/78px -0.04em 800',
-  displayXl: '56px/62px -0.03em 700',
-  displayLg: '44px/50px -0.025em 700',
-  displayMd: '34px/40px -0.02em 600',
-  displaySm: '26px/32px -0.015em 600',
-  headingXl: '22px/28px 700',
-  headingLg: '18px/24px 700',
-  headingMd: '16px/22px 600',
-  labelLg: '500 0.875rem/1.25rem 0.01em', // uppercase typically
-  labelMd: '500 0.8125rem/1.125rem',
-  bodyLg: '400 1rem/1.625rem',
-  bodyMd: '400 0.9375rem/1.5rem',
-  bodySm: '400 0.875rem/1.375rem',
-  caption: '400 0.75rem/1.125rem',
+  display2xl: '80px/86px -0.04em 800',
+  displayXl: '62px/68px -0.03em 700',
+  displayLg: '50px/56px -0.025em 700',
+  displayMd: '38px/44px -0.02em 600',
+  displaySm: '30px/36px -0.015em 600',
+  headingXl: '24px/30px 700',
+  headingLg: '22px/28px 700',
+  headingMd: '18px/24px 600',
+  labelLg: '500 0.9375rem/1.375rem 0.01em',
+  labelMd: '500 0.875rem/1.25rem',
+  bodyLg: '400 1.125rem/1.75rem',
+  bodyMd: '400 1.0625rem/1.625rem',
+  bodySm: '400 1rem/1.5rem',
+  caption: '400 0.875rem/1.25rem',
   mono: "'JetBrains Mono', 'Fira Code', monospace",
 } as const;
 

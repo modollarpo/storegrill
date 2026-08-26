@@ -193,3 +193,4 @@ jobs:
             --name postgres-connection-string \
             --query value -o tsv)"
           npx tsx scripts/bootstrap-prod.ts
+# deploy

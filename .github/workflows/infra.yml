@@ -57,3 +57,4 @@ jobs:
       - name: Apply
         if: github.event.inputs.action == 'apply'
         run: terraform -chdir=${{ steps.dir.outputs.path }} apply -input=false -auto-approve tf.plan
+# infra

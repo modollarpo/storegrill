@@ -7,9 +7,14 @@ import { useCart, CartItemLine } from '@/components/providers/CartContext';
 import { useRegion } from '@/components/providers/RegionContext';
 import { useToast } from '@/components/feedback/Toast';
 import { PriceDisplay } from '@/components/commerce/PriceDisplay';
-import { API_BASE, api, ApiError } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 import { DEFAULT_REGIONS, PAYMENT_METHOD_PROVIDER, paymentMethodLabel, PaymentMethodId } from '@Storegrill/shared';
 import { cn } from '@/lib/utils';
+import { CheckoutOrderSummary } from '@/components/checkout/CheckoutOrderSummary';
+import { CheckoutCoupon } from '@/components/checkout/CheckoutCoupon';
+import { CheckoutShippingMethod } from '@/components/checkout/CheckoutShippingMethod';
+import { CheckoutPaymentMethod } from '@/components/checkout/CheckoutPaymentMethod';
+import { CheckoutNotes } from '@/components/checkout/CheckoutNotes';
 
 type Step = 1 | 2 | 3;
 
@@ -44,9 +49,8 @@ export default function CheckoutPage() {
   const [step, setStep] = useState<Step>(1);
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState<AddressForm>(EMPTY_ADDRESS);
-  const [shippingMethod, setShippingMethod] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<string>('');
-  const [billingSame, setBillingSame] = useState(true);
+  const [notes, setNotes] = useState('');
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sandboxNotice, setSandboxNotice] = useState(false);
@@ -101,7 +105,7 @@ export default function CheckoutPage() {
           paymentMethod: activePayment === 'cod' ? 'cod' : PAYMENT_METHOD_PROVIDER[activePayment as PaymentMethodId] === 'paypal' ? 'paypal' : 'stripe',
           regionKey,
           email,
-          notes: `language=${language};displayMethod=${activePayment}`,
+          notes: `language=${language};displayMethod=${activePayment};notes=${notes}`,
         }),
       });
 
@@ -131,49 +135,23 @@ export default function CheckoutPage() {
 
   if (cart.items.length === 0) {
     return (
-      <div className="container-site py-16 text-center">
-        <h1 className="text-displaysm font-semibold">Nothing to check out</h1>
+      <div className="container mx-auto max-w-[1460px] px-[30px] py-16 text-center">
+        <h1 className="text-3xl font-extrabold text-gray-900">Nothing to check out</h1>
         <Link href="/products" className="btn btn-primary mt-4">Browse products</Link>
       </div>
     );
   }
 
   return (
-    <div className="container-site py-6 max-w-content" data-testid="checkout">
-      <ol className="flex items-center gap-2 mb-6" aria-label="Checkout progress">
-        {(['Contact & Delivery', 'Payment', 'Review'] as const).map((label, i) => {
-          const n = (i + 1) as Step;
-          const done = step > n;
-          const current = step === n;
-          return (
-            <li key={label} className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => n < step && setStep(n)}
-                disabled={n >= step}
-                aria-current={current ? 'step' : undefined}
-                className={cn(
-                  'w-7 h-7 rounded-full text-2xs font-bold grid place-items-center border transition-colors',
-                  done && 'bg-feedback-success text-white border-feedback-success cursor-pointer',
-                  current && 'bg-ember text-white border-ember',
-                  !done && !current && 'bg-smoke-100 text-smoke-500 border-smoke-200'
-                )}
-              >
-                {done ? '✓' : n}
-              </button>
-              <span className={cn('text-xs font-semibold hidden sm:block', current ? 'text-charcoal' : 'text-smoke-500')}>{label}</span>
-              {i < 2 && <span aria-hidden="true" className="w-8 h-px bg-smoke-300 mx-1" />}
-            </li>
-          );
-        })}
-      </ol>
+    <div className="container mx-auto max-w-[1460px] px-[30px] py-6" data-testid="checkout">
+      <h1 className="text-2xl font-extrabold text-gray-900 mb-6">Checkout</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-[30px] items-start">
         <div className="space-y-5">
           <Section title="Contact & Delivery" step={1} currentStep={step} onEdit={() => setStep(1)}>
             <div className="space-y-3.5">
               <label className="block">
-                <span className="block text-xs font-semibold mb-1.5">Email</span>
+                <span className="block text-xs font-semibold mb-1.5 text-gray-900">Email</span>
                 <input
                   type="email"
                   required
@@ -182,13 +160,11 @@ export default function CheckoutPage() {
                   onChange={e => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   className="input"
-                  aria-describedby="email-hint"
                 />
-                <span id="email-hint" className="sr-only">Order confirmation will be sent to this email</span>
               </label>
 
               <fieldset className="space-y-3">
-                <legend className="text-xs font-semibold mb-1.5">Shipping address</legend>
+                <legend className="text-xs font-semibold mb-1.5 text-gray-900">Shipping address</legend>
                 <input
                   required
                   autoComplete="address-line1"
@@ -235,31 +211,9 @@ export default function CheckoutPage() {
                   ))}
                 </select>
               </fieldset>
-
-              <fieldset>
-                <legend className="text-xs font-semibold mb-2">Shipping method</legend>
-                <label className="flex items-start gap-3 p-3 rounded-md border border-smoke-200 hover:border-charcoal cursor-pointer transition-colors">
-                  <input
-                    type="radio"
-                    name="shipping"
-                    checked
-                    readOnly
-                    className="mt-0.5 accent-[var(--color-action-primary)]"
-                  />
-                  <span className="flex-1">
-                    <span className="flex justify-between text-xs font-semibold">
-                      <span>{zone.name} — {zone.carriers[0]}</span>
-                      <span>{shippingCost === 0 ? 'FREE' : <PriceDisplay amountMinorUnits={shippingCost} currencyCode={currency} size="sm" />}</span>
-                    </span>
-                    <span className="block text-2xs text-smoke-500 mt-0.5">
-                      Estimated delivery in {zone.estimatedDaysMin}–{zone.estimatedDaysMax} business days
-                    </span>
-                  </span>
-                </label>
-              </fieldset>
-
+              
               {step === 1 && (
-                <button type="button" disabled={!stepValid} onClick={() => setStep(2)} className="btn btn-primary btn-lg w-full sm:w-auto">
+                <button type="button" disabled={!stepValid} onClick={() => setStep(2)} className="btn btn-primary w-full sm:w-auto">
                   Continue to Payment
                 </button>
               )}
@@ -267,49 +221,9 @@ export default function CheckoutPage() {
           </Section>
 
           <Section title="Payment" step={2} currentStep={step} onEdit={() => setStep(2)}>
-            <fieldset className="space-y-2">
-              <legend className="text-xs font-semibold mb-2">Payment method for your region ({regionConfig.name})</legend>
-              {methods.map(method => {
-                const provider = PAYMENT_METHOD_PROVIDER[method];
-                return (
-                  <label
-                    key={method}
-                    className={cn(
-                      'flex items-center gap-3 p-3 rounded-md border cursor-pointer transition-colors',
-                      activePayment === method ? 'border-ember bg-ember-pale' : 'border-smoke-200 hover:border-charcoal'
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="payment"
-                      value={method}
-                      checked={activePayment === method}
-                      onChange={() => setPaymentMethod(method)}
-                      className="accent-[var(--color-action-primary)]"
-                    />
-                    <span className="flex-1 text-xs font-semibold">{paymentMethodLabel(method)}</span>
-                    <span className="text-2xs uppercase text-smoke-400 font-bold">{provider}</span>
-                  </label>
-                );
-              })}
-            </fieldset>
-
-            {activePayment !== 'cod' && PAYMENT_METHOD_PROVIDER[activePayment as PaymentMethodId] !== 'paypal' && (
-              <p className="mt-3 text-2xs text-smoke-500 flex items-center gap-1.5">
-                Card details are collected securely by Stripe Elements on the next screen. Storegrill never stores card numbers.
-              </p>
-            )}
-            {PAYMENT_METHOD_PROVIDER[activePayment as PaymentMethodId] === 'paypal' && (
-              <p className="mt-3 text-2xs text-smoke-500">You will be redirected to PayPal to authorize this payment.</p>
-            )}
-
-            <label className="flex items-center gap-2 mt-4 text-xs cursor-pointer">
-              <input type="checkbox" checked={billingSame} onChange={e => setBillingSame(e.target.checked)} className="accent-[var(--color-action-primary)] w-3.5 h-3.5" />
-              Billing address same as shipping
-            </label>
-
+            <CheckoutPaymentMethod selectedId={activePayment} onSelect={setPaymentMethod} />
             {step === 2 && (
-              <button type="button" onClick={() => setStep(3)} className="btn btn-primary btn-lg w-full sm:w-auto mt-4">
+              <button type="button" onClick={() => setStep(3)} className="btn btn-primary w-full sm:w-auto mt-4">
                 Review Order
               </button>
             )}
@@ -318,13 +232,8 @@ export default function CheckoutPage() {
           <Section title="Review & Place Order" step={3} currentStep={step} onEdit={() => setStep(3)}>
             <div aria-live="assertive">
               {error && (
-                <p role="alert" className="mb-3 rounded-md bg-feedback-danger/10 border border-feedback-danger/30 text-feedback-danger text-xs font-medium px-3 py-2.5">
-                  {'\u26A0'} {error}{' '}
-                  {error.includes('sign in') && (
-                    <>
-<Link href="/auth/signin?next=/checkout" className="underline font-bold">Sign in →</Link>
-                    </>
-                  )}
+                <p role="alert" className="mb-3 rounded-md bg-red-50 border border-red-200 text-red-600 text-xs font-medium px-3 py-2.5">
+                  {'\u26A0'} {error}
                 </p>
               )}
             </div>
@@ -333,48 +242,26 @@ export default function CheckoutPage() {
               onClick={placeOrder}
               disabled={placing || !stepValid}
               data-testid="place-order"
-              className="btn btn-primary btn-lg w-full"
-              aria-busy={placing}
+              className="btn btn-primary w-full"
             >
-              {placing ? (
-                'Placing your order…'
-              ) : (
-                <>
-                  Place Order ·{' '}
-                  <PriceDisplay amountMinorUnits={total} currencyCode={currency} size="lg" />
-                </>
-              )}
+              {placing ? 'Placing your order…' : 'Place Order'}
             </button>
-            {sandboxNotice && (
-              <p className="text-2xs text-smoke-500 mt-2" role="note">
-                Sandbox payment mode — no live charge will be made. Add STRIPE_SECRET_KEY or PayPal credentials to go live.
-              </p>
-            )}
-            <p className="text-2xs text-smoke-500 mt-2">
-              By placing your order you agree to Storegrill&apos;s terms and privacy notice.
-            </p>
           </Section>
         </div>
 
-        <aside className="card p-5 lg:sticky lg:top-32 space-y-3" aria-label="Order summary">
-          <h2 className="text-sm font-bold">Order Summary</h2>
-          <ul className="divide-y divide-smoke-100 text-xs">
-            {(cart.items as CartItemLine[]).map(line => (
-              <li key={`${line.productId}-${line.variantId ?? ''}`} className="py-2 flex justify-between gap-3">
-                <span className="min-w-0"><span className="font-semibold">{line.quantity} Ã—</span> <span className="truncate">{line.name}</span></span>
-                <PriceDisplay amountMinorUnits={line.unitPriceMinorUnits * line.quantity} currencyCode={line.currencyCode} size="sm" />
-              </li>
-            ))}
-          </ul>
-          <dl className="space-y-1 pt-2 border-t border-smoke-150 text-xs">
-            <SummaryRow label="Subtotal"><PriceDisplay amountMinorUnits={subtotal} currencyCode={currency} size="sm" /></SummaryRow>
-            <SummaryRow label="Shipping">{shippingCost === 0 ? 'FREE' : <PriceDisplay amountMinorUnits={shippingCost} currencyCode={currency} size="sm" />}</SummaryRow>
-            <SummaryRow label={`Tax (${regionConfig.taxRules[0]?.name})`}><PriceDisplay amountMinorUnits={tax} currencyCode={currency} size="sm" /></SummaryRow>
-            <div className="pt-1.5 mt-1.5 border-t border-smoke-150 flex justify-between font-bold text-sm">
-              <dt>Total</dt>
-              <dd><PriceDisplay amountMinorUnits={total} currencyCode={currency} size="lg" /></dd>
-            </div>
-          </dl>
+        <aside className="space-y-5 lg:sticky lg:top-28">
+            <CheckoutOrderSummary 
+                items={(cart.items as CartItemLine[]).map(i => ({id: i.productId+i.variantId, name: i.name, quantity: i.quantity, unitPriceMinorUnits: i.unitPriceMinorUnits, currencyCode: i.currencyCode, thumbnail: i.image}))}
+                subtotal={subtotal} 
+                currency={currency} 
+            />
+            <CheckoutCoupon onApply={(code) => console.log('apply', code)} />
+            <CheckoutShippingMethod 
+                methods={[{id: 'std', name: 'Standard', description: `${zone.estimatedDaysMin}-${zone.estimatedDaysMax} business days`, priceMinorUnits: shippingCost, currencyCode: currency}]}
+                selectedId="std"
+                onSelect={() => {}}
+            />
+            <CheckoutNotes value={notes} onChange={setNotes} />
         </aside>
       </div>
     </div>
@@ -396,24 +283,15 @@ function Section({
 }) {
   const isCurrent = currentStep === step;
   return (
-    <section className={cn('card p-5 transition-opacity', !isCurrent && 'opacity-80')} aria-current={isCurrent ? 'step' : undefined}>
+    <section className={cn('card p-5 bg-white border border-gray-200 rounded-lg shadow-sm', !isCurrent && 'opacity-60')}>
       <header className="flex items-center justify-between mb-3">
-        <h2 className={cn('text-sm font-bold', isCurrent ? 'text-charcoal' : 'text-smoke-500')}>{title}</h2>
-        {!isCurrent && (
+        <h2 className={cn('text-sm font-bold', isCurrent ? 'text-gray-900' : 'text-gray-500')}>{title}</h2>
+        {currentStep > step && (
           <button type="button" onClick={onEdit} className="btn btn-link text-xs">Edit</button>
         )}
       </header>
-      {isCurrent ? children : <p className="text-xs text-smoke-400">Completed.</p>}
+      {isCurrent ? children : null}
     </section>
-  );
-}
-
-function SummaryRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex justify-between gap-2">
-      <dt className="text-smoke-600">{label}</dt>
-      <dd>{children}</dd>
-    </div>
   );
 }
 
@@ -421,9 +299,9 @@ function mapPaymentError(code: string, message: string): string {
   const map: Record<string, string> = {
     CARD_DECLINED: 'Your card was declined. Try another payment method.',
     INSUFFICIENT_FUNDS: 'Insufficient funds on the selected card.',
-    PAYMENT_PROVIDER_ERROR: 'The payment provider had an issue. Your data is safe — please retry.',
-    VALIDATION_ERROR: 'Some details need attention. Review your information and retry.',
-    OUT_OF_STOCK: 'An item just went out of stock. Adjust quantities to continue.',
+    PAYMENT_PROVIDER_ERROR: 'The payment provider had an issue. Please retry.',
+    VALIDATION_ERROR: 'Some details need attention.',
+    OUT_OF_STOCK: 'An item just went out of stock.',
   };
   return map[code] ?? message;
 }

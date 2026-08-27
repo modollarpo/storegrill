@@ -1,9 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { Children, useEffect, useRef, useState } from 'react';
+import { Children, useEffect, useRef, useState, useCallback } from 'react';
 import Image from 'next/image';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, Pagination } from 'swiper/modules';
+import type { Swiper as SwiperType } from 'swiper';
+import 'swiper/css';
+import 'swiper/css/pagination';
+import { cn } from '@/lib/utils';
 import { storefrontImage } from '@/lib/images';
+import { ProductCard, type ProductCardData } from '@/components/commerce/ProductCard';
 
 export interface QuickNavItem {
   name: string;
@@ -40,11 +47,11 @@ export function TrendingSlider({ children }: { children: React.ReactNode[] }) {
       <ul
         ref={scroller}
         data-testid="trending-scroller"
-        className="flex gap-4 px-4 pb-2 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-pl-4 sm:px-6 sm:scroll-pl-6 lg:gap-6 lg:scroll-pl-6"
+        className="flex gap-6 px-4 pb-2 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-pl-4 sm:px-6 sm:scroll-pl-6"
       >
         {Children.map(children, child =>
           child ? (
-            <li className="w-full sm:w-[calc(50%-12px)] md:w-[calc(33.333%-12px)] lg:w-[calc(25%-12px)] shrink-0 snap-start">
+            <li className="w-[75%] sm:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] shrink-0 snap-start">
               {child}
             </li>
           ) : null
@@ -54,7 +61,7 @@ export function TrendingSlider({ children }: { children: React.ReactNode[] }) {
         type="button"
         onClick={() => step(-1)}
         aria-label="Previous popular products"
-        className="absolute left-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface-raised opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+        className="absolute left-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
       </button>
@@ -62,10 +69,96 @@ export function TrendingSlider({ children }: { children: React.ReactNode[] }) {
         type="button"
         onClick={() => step(1)}
         aria-label="Next popular products"
-        className="absolute right-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface-raised opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+        className="absolute right-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
       </button>
+    </div>
+  );
+}
+
+export interface TabbedProductTab {
+  label: string;
+  products: React.ReactNode[];
+}
+
+export function TabbedProductCarousel({ tabs }: { tabs: TabbedProductTab[] }) {
+  const [active, setActive] = useState(0);
+  const scroller = useRef<HTMLUListElement>(null);
+
+  function step(dir: 1 | -1) {
+    const el = scroller.current;
+    if (!el || el.children.length === 0) return;
+    const nodes = Array.from(el.children) as HTMLElement[];
+    const max = el.scrollWidth - el.clientWidth;
+    const pad = parseFloat(getComputedStyle(el).scrollPaddingLeft) || 0;
+    const stopOf = (node: HTMLElement) => Math.min(max, Math.max(0, Math.round(node.offsetLeft - pad)));
+    let best = 0;
+    let bestDist = Infinity;
+    nodes.forEach((node, i) => {
+      const d = Math.abs(stopOf(node) - el.scrollLeft);
+      if (d < bestDist) { bestDist = d; best = i; }
+    });
+    let next = (best + dir + nodes.length) % nodes.length;
+    let guard = 0;
+    while (next !== best && Math.abs(stopOf(nodes[next]) - stopOf(nodes[best])) < 4 && guard++ < nodes.length) {
+      next = (best + dir + nodes.length) % nodes.length;
+    }
+    el.scrollTo({ left: stopOf(nodes[next]), behavior: 'smooth' });
+  }
+
+  const activeProducts = tabs[active]?.products ?? [];
+
+  return (
+    <div>
+      {/* Tabs - Bevesi style: centered, border-bottom */}
+      <div className="flex flex-wrap justify-center gap-0 border-b border-gray-200 mb-6">
+        {tabs.map((tab, i) => (
+          <button
+            key={tab.label}
+            type="button"
+            onClick={() => setActive(i)}
+            className={cn(
+              'px-5 py-3 text-sm font-bold border-b-2 transition-colors',
+              i === active
+                ? 'border-[#0071DC] text-[#0071DC]'
+                : 'border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-200-strong'
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Carousel */}
+      <div className="relative group/slider">
+        <ul
+          ref={scroller}
+          className="flex gap-6 px-0 pb-2 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-pl-0"
+        >
+          {activeProducts.map((child, i) => (
+            <li key={i} className="w-[75%] sm:w-[calc(33.333%-16px)] lg:w-[calc(25%-18px)] shrink-0 snap-start">
+              {child}
+            </li>
+          ))}
+        </ul>
+        <button
+          type="button"
+          onClick={() => step(-1)}
+          aria-label="Previous"
+          className="absolute left-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => step(1)}
+          aria-label="Next"
+          className="absolute right-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+        </button>
+      </div>
     </div>
   );
 }
@@ -80,21 +173,21 @@ export interface FeaturedCollection {
 
 export function FeaturedCollections({ collections }: { collections: FeaturedCollection[] }) {
   return (
-    <section aria-labelledby="featured-collections-heading" className="border-b border-border py-10 md:py-12">
+    <section aria-labelledby="featured-collections-heading" className="border-b border-gray-200 py-10 md:py-12">
       <div className="container-fluid">
-        <h2 id="featured-collections-heading" className="text-2xl md:text-3xl font-bold text-text-primary mb-6">
+        <h2 id="featured-collections-heading" className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
           Featured collections
         </h2>
         <div className="grid md:grid-cols-2 gap-8 md:gap-12">
           {collections.map(col => (
-            <div key={col.title} className="rounded-xs border border-border bg-surface p-6 md:p-8">
+            <div key={col.title} className="rounded-xs border border-gray-200 bg-white p-6 md:p-8">
               <div className="flex items-center gap-5 mb-8">
-                <span className="w-16 h-16 rounded-full grid place-items-center shrink-0" style={{ backgroundColor: 'var(--color-ember-light)' }}>
+                <span className="w-16 h-16 rounded-full grid place-items-center shrink-0" style={{ backgroundColor: '#dbeafe' }}>
                   <Image src={col.icon} alt="" width={38} height={38} className="rounded-full relative z-10" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-xl font-bold text-text-primary leading-tight mb-1">{col.title}</h3>
-                  <p className="text-sm text-text-secondary leading-snug">{col.subtitle}</p>
+                  <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1">{col.title}</h3>
+                  <p className="text-sm text-gray-500 leading-snug">{col.subtitle}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -103,9 +196,9 @@ export function FeaturedCollections({ collections }: { collections: FeaturedColl
                     key={tile.src}
                     href={tile.href}
                     aria-label={tile.label}
-                    className="group block overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-action-primary"
+                    className="group block overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0071DC]"
                   >
-                    <span className={`relative block ${col.aspect ?? 'aspect-[3/2]'} bg-surface-sunken overflow-hidden`}>
+                    <span className={`relative block ${col.aspect ?? 'aspect-[3/2]'} bg-gray-50 overflow-hidden`}>
                       <Image
                         src={tile.src}
                         alt=""
@@ -114,7 +207,7 @@ export function FeaturedCollections({ collections }: { collections: FeaturedColl
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     </span>
-                    <span className="flex items-center min-h-[64px] bg-surface-raised px-4 py-3 text-sm font-bold leading-snug text-text-primary group-hover:text-action-primary transition-colors">
+                    <span className="flex items-center min-h-[64px] bg-white px-4 py-3 text-sm font-bold leading-snug text-gray-900 group-hover:text-[#0071DC] transition-colors">
                       {tile.label}
                     </span>
                   </Link>
@@ -142,7 +235,7 @@ export interface PromoSliderProps {
   tiles: PromoTile[];
 }
 
-export function PromoSlider({ id, heading, subtitle, background = 'var(--color-surface)', tiles }: PromoSliderProps) {
+export function PromoSlider({ id, heading, subtitle, background = '#ffffff', tiles }: PromoSliderProps) {
   const scroller = useRef<HTMLUListElement>(null);
 
   function scrollTiles(dir: 1 | -1) {
@@ -166,16 +259,16 @@ export function PromoSlider({ id, heading, subtitle, background = 'var(--color-s
   return (
     <section
       aria-labelledby={`${id}-spotlight-heading`}
-className="border-b border-border py-8 md:py-12"
+className="border-b border-gray-200 py-8 md:py-12"
       style={{ background }}
     >
       <div className="container-fluid">
         <div className="mb-6 text-center">
-          <h2 id={`${id}-spotlight-heading`} className="text-2xl md:text-3xl font-bold text-text-primary">
+          <h2 id={`${id}-spotlight-heading`} className="text-2xl md:text-3xl font-bold text-gray-900">
             {heading}
           </h2>
           {subtitle && (
-            <p className="mt-1 text-body-md text-text-secondary">
+            <p className="mt-1 text-body-md text-gray-500">
               {subtitle}
             </p>
           )}
@@ -194,9 +287,9 @@ className="border-b border-border py-8 md:py-12"
                 <Link
                   href={tile.href}
                   aria-label={tile.label}
-                  className="group block overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-action-primary shadow-sm hover:shadow-elevated transition-shadow"
+                  className="group block overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0071DC] shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <span className="relative block aspect-[510/440] bg-surface-sunken overflow-hidden">
+                  <span className="relative block aspect-[510/440] bg-gray-50 overflow-hidden">
                     <Image
                       src={tile.src}
                       alt=""
@@ -205,7 +298,7 @@ className="border-b border-border py-8 md:py-12"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </span>
-                  <span className="flex items-center justify-center min-h-[56px] bg-surface px-4 py-3 text-center text-sm font-bold leading-snug text-text-primary group-hover:text-action-primary transition-colors">
+                  <span className="flex items-center justify-center min-h-[56px] bg-white px-4 py-3 text-center text-sm font-bold leading-snug text-gray-900 group-hover:text-[#0071DC] transition-colors">
                     {tile.label}
                   </span>
                 </Link>
@@ -216,7 +309,7 @@ className="border-b border-border py-8 md:py-12"
             type="button"
             onClick={() => scrollTiles(-1)}
             aria-label={`Previous ${id} offers`}
-            className="absolute left-2 top-[40%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface-raised opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+            className="absolute left-2 top-[40%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
           </button>
@@ -224,7 +317,7 @@ className="border-b border-border py-8 md:py-12"
             type="button"
             onClick={() => scrollTiles(1)}
             aria-label={`Next ${id} offers`}
-            className="absolute right-2 top-[40%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface-raised opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+            className="absolute right-2 top-[40%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
           </button>
@@ -285,7 +378,7 @@ function CampaignCard({ tile, large, small }: { tile: CampaignTile; large?: bool
     <Link
       href={tile.href}
       aria-label={tile.title}
-      className={`group block relative overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-action-primary ${small ? '' : 'h-full'}`}
+      className={`group block relative overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0071DC] ${small ? '' : 'h-full'}`}
     >
       <span className={`relative block overflow-hidden ${large ? 'aspect-[4/3] md:aspect-[3/2]' : small ? 'aspect-square' : 'h-full'}`} style={{ backgroundColor: tile.bgColor }}>
         <Image
@@ -310,7 +403,7 @@ function CampaignCard({ tile, large, small }: { tile: CampaignTile; large?: bool
           )}
         </span>
         {tile.cta && (
-          <span className={`inline-flex w-fit items-center rounded-xs bg-white px-5 py-2.5 text-sm font-semibold text-charcoal shadow-md transition-all group-hover:shadow-lg group-hover:bg-charcoal group-hover:text-white ${large ? 'mt-4' : 'mt-3'}`}>
+          <span className={`inline-flex w-fit items-center rounded-xs bg-white px-[1.375rem] h-[44px] text-[14px] font-semibold text-gray-900 shadow-[0_0.125rem_0.1875rem_rgba(2,6,23,0.04)] transition-all ${large ? 'mt-4' : 'mt-3'}`}>
             {tile.cta}
           </span>
         )}
@@ -342,11 +435,14 @@ function CountdownBanner() {
 
   if (remaining === null) {
     return (
-      <span className="inline-flex items-center bg-white rounded-xs px-2.5 py-1.5 text-xs font-bold tabular-nums text-charcoal gap-0.5">
-        <span>--</span><span className="text-charcoal/40 mx-0.5">:</span>
-        <span>--</span><span className="text-charcoal/40 mx-0.5">:</span>
-        <span>--</span><span className="text-charcoal/40 mx-0.5">:</span>
-        <span>--</span>
+      <span className="inline-flex items-center bg-white rounded-xs gap-1">
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">--</span>
+        <span className="text-gray-900/40 font-semibold">:</span>
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">--</span>
+        <span className="text-gray-900/40 font-semibold">:</span>
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">--</span>
+        <span className="text-gray-900/40 font-semibold">:</span>
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">--</span>
       </span>
     );
   }
@@ -358,22 +454,81 @@ function CountdownBanner() {
   const seconds = String(totalSeconds % 60).padStart(2, '0');
 
   return (
-    <span suppressHydrationWarning className="inline-flex items-center bg-white rounded-xs px-2.5 py-1.5 text-xs font-bold tabular-nums text-charcoal gap-0.5">
-        <span>{days}</span><span className="text-charcoal/40 mx-0.5">:</span>
-        <span>{hours}</span><span className="text-charcoal/40 mx-0.5">:</span>
-        <span>{minutes}</span><span className="text-charcoal/40 mx-0.5">:</span>
-        <span>{seconds}</span>
+    <span suppressHydrationWarning className="inline-flex items-center bg-white rounded-xs gap-1">
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">{days}</span>
+        <span className="text-gray-900/40 font-semibold">:</span>
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">{hours}</span>
+        <span className="text-gray-900/40 font-semibold">:</span>
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">{minutes}</span>
+        <span className="text-gray-900/40 font-semibold">:</span>
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">{seconds}</span>
     </span>
   );
 }
 
 export function CampaignHero() {
   const { main, topLeft, topRight, bottom } = CAMPAIGN_TILES;
+  const sliderRef = useRef<SwiperType | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const handlePrev = useCallback(() => {
+    if (!sliderRef.current) return;
+    sliderRef.current.slidePrev();
+  }, []);
+
+  const handleNext = useCallback(() => {
+    if (!sliderRef.current) return;
+    sliderRef.current.slideNext();
+  }, []);
+
   return (
-    <section aria-label="Featured campaigns" className="bg-surface border-b border-border">
+    <section aria-label="Featured campaigns" className="bg-white border-b border-gray-200">
       <div className="p-4 md:p-5">
         <div className="grid md:grid-cols-[1.4fr_1fr] gap-4 md:gap-5 items-stretch">
-          <CampaignCard tile={main} large />
+          <div className="relative rounded-lg overflow-hidden bg-gray-100">
+            {isClient ? (
+              <Swiper
+                modules={[Autoplay, Pagination]}
+                spaceBetween={0}
+                slidesPerView={1}
+                autoplay={{ delay: 4000, disableOnInteraction: false }}
+                pagination={{ clickable: true }}
+                onSwiper={swiper => { sliderRef.current = swiper; }}
+                className="hero-carousel w-full"
+              >
+                {[main].map((tile, i) => (
+                  <SwiperSlide key={i}>
+                    <CampaignCard tile={tile} large />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            ) : (
+              <div className="aspect-[4/3] md:aspect-[2.1/1]" />
+            )}
+            {/* Navigation arrows */}
+            {isClient && (
+              <>
+                <button
+                  onClick={handlePrev}
+                  aria-label="Previous slide"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 shadow-md flex items-center justify-center text-gray-900 hover:bg-white transition-colors"
+                >
+                  <svg className="fill-current" width="20" height="20" viewBox="0 0 24 24"><path fillRule="evenodd" clipRule="evenodd" d="M15.4881 4.43057C15.8026 4.70014 15.839 5.17361 15.5694 5.48811L9.98781 12L15.5694 18.5119C15.839 18.8264 15.8026 19.2999 15.4881 19.5695C15.1736 19.839 14.7001 19.8026 14.4306 19.4881L8.43056 12.4881C8.18981 12.2072 8.18981 11.7928 8.43056 11.5119L14.4306 4.51192C14.7001 4.19743 15.1736 4.161 15.4881 4.43057Z" fill="" /></svg>
+                </button>
+                <button
+                  onClick={handleNext}
+                  aria-label="Next slide"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 shadow-md flex items-center justify-center text-gray-900 hover:bg-white transition-colors"
+                >
+                  <svg className="fill-current" width="20" height="20" viewBox="0 0 24 24"><path fillRule="evenodd" clipRule="evenodd" d="M8.51192 4.43057C8.82641 4.161 9.29989 4.19743 9.56946 4.51192L15.5695 11.5119C15.8102 11.7928 15.8102 12.2072 15.5695 12.4881L9.56946 19.4881C9.29989 19.8026 8.82641 19.839 8.51192 19.5695C8.19743 19.2999 8.161 18.8264 8.43057 18.5119L14.0122 12L8.43057 5.48811C8.161 5.17361 8.19743 4.70014 8.51192 4.43057Z" fill="" /></svg>
+                </button>
+              </>
+            )}
+          </div>
           <div className="grid grid-rows-[auto_1fr] gap-4 md:gap-5">
             <div className="grid grid-cols-2 gap-4 md:gap-5">
               <CampaignCard tile={topLeft} small />
@@ -387,7 +542,7 @@ export function CampaignHero() {
   );
 }
 
-const BRAND_LOGOS = [
+export const BRAND_LOGOS = [
   { src: '/banners/brand_logos/logo-02.png', alt: 'Brand', href: '/products' },
   { src: '/banners/brand_logos/logo-03.png', alt: 'Brand', href: '/products' },
   { src: '/banners/brand_logos/logo-04.png', alt: 'Brand', href: '/products' },
@@ -397,27 +552,50 @@ const BRAND_LOGOS = [
   { src: '/banners/brand_logos/logo-08 (1).png', alt: 'Brand', href: '/products' },
 ] as const;
 
+const TRIPLE_LOGOS = [...BRAND_LOGOS, ...BRAND_LOGOS, ...BRAND_LOGOS];
+
 export function BrandLogos() {
   return (
-    <section aria-label="Brand partners" className="border-b border-border bg-surface">
-      <div className="container-fluid py-8 md:py-10">
-        <div className="flex gap-8 md:gap-12 items-center justify-center flex-wrap">
-          {BRAND_LOGOS.map(logo => (
-            <Link
-              key={logo.src}
-              href={logo.href}
-              aria-label={logo.alt}
-              className="shrink-0 flex items-center justify-center h-10 md:h-12 opacity-50 hover:opacity-100 transition-opacity"
-            >
-              <Image
-                src={logo.src}
-                alt={logo.alt}
-                width={120}
-                height={48}
-                className="h-8 md:h-10 w-auto object-contain"
-              />
-            </Link>
-          ))}
+    <section aria-label="Brand partners" className="border-b border-gray-200 bg-white overflow-hidden">
+      <div className="py-5 md:py-6">
+        <div className="flex w-max animate-marquee hover:[animation-play-state:paused]" style={{ animationDuration: '90s' }}>
+          <div className="flex gap-10 md:gap-14 pr-10 md:pr-14 shrink-0">
+            {TRIPLE_LOGOS.map((logo, i) => (
+              <Link
+                key={`a-${i}`}
+                href={logo.href}
+                aria-label={logo.alt}
+                className="shrink-0 flex items-center justify-center h-12 md:h-16 opacity-50 hover:opacity-100 transition-opacity"
+              >
+                <Image
+                  src={logo.src}
+                  alt={logo.alt}
+                  width={160}
+                  height={64}
+                  className="h-10 md:h-14 w-auto object-contain"
+                />
+              </Link>
+            ))}
+          </div>
+          <div className="flex gap-10 md:gap-14 pr-10 md:pr-14 shrink-0" aria-hidden="true">
+            {TRIPLE_LOGOS.map((logo, i) => (
+              <Link
+                key={`b-${i}`}
+                href={logo.href}
+                tabIndex={-1}
+                aria-hidden="true"
+                className="shrink-0 flex items-center justify-center h-12 md:h-16 opacity-50 hover:opacity-100 transition-opacity"
+              >
+                <Image
+                  src={logo.src}
+                  alt=""
+                  width={160}
+                  height={64}
+                  className="h-10 md:h-14 w-auto object-contain"
+                />
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -440,35 +618,304 @@ const CATEGORY_IMAGES = [
 ] as const;
 
 export function CategoryQuickNav() {
+  const scroller = useRef<HTMLUListElement>(null);
+
+  function step(dir: 1 | -1) {
+    const el = scroller.current;
+    if (!el || el.children.length === 0) return;
+    const nodes = Array.from(el.children) as HTMLElement[];
+    const max = el.scrollWidth - el.clientWidth;
+    const pad = parseFloat(getComputedStyle(el).scrollPaddingLeft) || 0;
+    const stopOf = (node: HTMLElement) => Math.min(max, Math.max(0, Math.round(node.offsetLeft - pad)));
+    let best = 0;
+    let bestDist = Infinity;
+    nodes.forEach((node, i) => {
+      const d = Math.abs(stopOf(node) - el.scrollLeft);
+      if (d < bestDist) { bestDist = d; best = i; }
+    });
+    let next = (best + dir + nodes.length) % nodes.length;
+    let guard = 0;
+    while (next !== best && Math.abs(stopOf(nodes[next]) - stopOf(nodes[best])) < 4 && guard++ < nodes.length) {
+      next = (next + dir + nodes.length) % nodes.length;
+    }
+    el.scrollTo({ left: stopOf(nodes[next]), behavior: 'smooth' });
+  }
+
   return (
-    <nav aria-label="Shop by category" className="border-b border-border">
-      <div className="container-fluid py-6 md:py-8">
-        <ul className="flex gap-3 md:gap-4 overflow-x-auto scrollbar-none pb-1 snap-x" role="list">
-          {CATEGORY_IMAGES.map(cat => (
-            <li key={cat.slug} className="snap-start shrink-0">
-              <Link
-                href={`/products?category=${cat.slug}`}
-                aria-label={cat.name}
-                className="group block w-[100px] md:w-[120px] text-center"
-              >
-                <span className="relative block w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full overflow-hidden border border-border bg-surface-sunken mx-auto mb-2 transition-all group-hover:border-action-primary group-hover:shadow-md">
-                  <Image
-                    src={cat.image}
-                    alt=""
-                    fill
-                    sizes="120px"
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                </span>
-                <span className="block text-xs md:text-sm font-bold text-text-primary group-hover:text-action-primary transition-colors leading-tight">
-                  {cat.name}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+    <nav aria-label="Shop by category" className="border-b border-gray-200">
+      <div className="py-10 md:py-12">
+        <div className="relative group/cat">
+          <ul
+            ref={scroller}
+            className="flex gap-5 md:gap-6 px-4 pb-2 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-pl-4 sm:px-6 sm:scroll-pl-6"
+            role="list"
+          >
+            {CATEGORY_IMAGES.map(cat => (
+              <li key={cat.slug} className="snap-start shrink-0">
+                <Link
+                  href={`/products?category=${cat.slug}`}
+                  aria-label={cat.name}
+                  className="group block w-[120px] md:w-[140px] text-center"
+                >
+                  <span className="relative block w-[120px] h-[120px] md:w-[140px] md:h-[140px] rounded-full overflow-hidden border border-gray-200 bg-gray-50 mx-auto mb-2 transition-all group-hover:border-[#0071DC] group-hover:shadow-md">
+                    <Image
+                      src={cat.image}
+                      alt=""
+                      fill
+                      sizes="140px"
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                  </span>
+                  <span className="block text-xs md:text-sm font-bold text-gray-900 group-hover:text-[#0071DC] transition-colors leading-tight">
+                    {cat.name}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            onClick={() => step(-1)}
+            aria-label="Previous categories"
+            className="absolute left-2 top-[40%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/cat:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => step(1)}
+            aria-label="Next categories"
+            className="absolute right-2 top-[40%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/cat:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+          </button>
+      </div>
       </div>
     </nav>
+  );
+}
+
+export interface CouponBannerProps {
+  title: string;
+  couponCode: string;
+  description: string;
+  ctaLabel: string;
+  ctaHref: string;
+}
+
+export function CouponBanner({ title, couponCode, description, ctaLabel, ctaHref }: CouponBannerProps) {
+  return (
+    <section className="bg-gray-50 border-b border-gray-200">
+      <div className="container-fluid py-10 md:py-14">
+        <div className="relative flex flex-col items-center text-center gap-4 px-6 py-10 md:py-12 rounded-lg overflow-hidden bg-white border border-gray-200">
+          <span className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, currentColor 0, currentColor 1px, transparent 1px, transparent 12px)', backgroundSize: '20px 20px' }} aria-hidden="true" />
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 relative z-10">{title}</h2>
+          <div className="inline-flex items-center gap-3 relative z-10">
+            <span className="px-4 py-2 bg-[#0071DC] text-white font-bold text-lg rounded-md tracking-wide">{couponCode}</span>
+          </div>
+          <p className="text-gray-500 max-w-lg relative z-10">{description}</p>
+          <Link href={ctaHref} className="relative z-10 inline-flex items-center gap-2 px-4 h-[38px] text-[14px] font-semibold text-[#0071DC] border border-[#0071DC] bg-transparent rounded-xs hover:bg-[#0071DC] hover:text-white transition-colors">
+            {ctaLabel}
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export interface ThreeColumnBannerItem {
+  href: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  cta?: string;
+  image: string;
+  bgColor: string;
+}
+
+export function ThreeColumnBanners({ items }: { items: ThreeColumnBannerItem[] }) {
+  return (
+    <section className="border-b border-gray-200">
+      <div className="container-fluid py-8 md:py-10">
+        <div className="grid md:grid-cols-3 gap-4 md:gap-5">
+          {items.map(item => (
+            <Link
+              key={item.title}
+              href={item.href}
+              aria-label={item.title}
+              className="group block relative overflow-hidden rounded-xs h-[260px] md:h-[300px]"
+              style={{ backgroundColor: item.bgColor }}
+            >
+              <Image
+                src={item.image}
+                alt={item.title}
+                fill
+                sizes="(max-width:768px) 100vw, 33vw"
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+              <span className="absolute inset-0 flex flex-col justify-center p-6 md:p-8 text-white">
+                {item.subtitle && <span className="text-sm font-medium mb-2">{item.subtitle}</span>}
+                <span className="text-xl md:text-2xl font-bold tracking-tight leading-tight max-w-[80%]">{item.title}</span>
+                {item.description && <span className="text-sm mt-2 max-w-xs opacity-90">{item.description}</span>}
+                {item.cta && (
+                  <span className="inline-flex w-fit items-center mt-4 pb-0.5 border-b border-current text-sm font-semibold text-white transition-all">
+                    {item.cta}
+                  </span>
+                )}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export interface CashBackBannerProps {
+  title: string;
+  description: string;
+  ctaLabel: string;
+  ctaHref: string;
+}
+
+export function CashBackBanner({ title, description, ctaLabel, ctaHref }: CashBackBannerProps) {
+  return (
+    <section className="bg-white border-b border-gray-200">
+      <div className="container-fluid py-10 md:py-14">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+          <div className="max-w-xl">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-2">{title}</h2>
+            <p className="text-gray-500">{description}</p>
+          </div>
+          <Link href={ctaHref} className="shrink-0 inline-flex items-center gap-2 px-3 h-[32px] text-[13px] font-semibold text-[#0071DC] border border-[#0071DC] bg-transparent rounded-xs hover:bg-[#0071DC] hover:text-white transition-colors">
+            {ctaLabel}
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export interface CategoryBannerWithProductsProps {
+  title: string;
+  subtitle?: string;
+  description?: string;
+  ctaLabel: string;
+  ctaHref: string;
+  bannerImage: string;
+  bannerBg: string;
+  products: ProductCardData[];
+}
+
+export function CategoryBannerWithProducts({ title, subtitle, description, ctaLabel, ctaHref, bannerImage, bannerBg, products }: CategoryBannerWithProductsProps) {
+  return (
+    <section className="border-b border-gray-200">
+      <div className="container-fluid py-8 md:py-10">
+        <div className="grid lg:grid-cols-[1fr_2fr] gap-6 md:gap-8">
+          <Link href={ctaHref} className="group block relative overflow-hidden rounded-xs min-h-[280px] lg:min-h-0" style={{ backgroundColor: bannerBg }}>
+            <Image src={bannerImage} alt={title} fill sizes="(max-width:1024px) 100vw, 33vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+            <span className="absolute inset-0 flex flex-col justify-end p-6 md:p-8 text-white">
+              {subtitle && <span className="text-sm font-medium mb-1">{subtitle}</span>}
+              <span className="text-xl md:text-2xl font-bold tracking-tight leading-tight max-w-[85%]">{title}</span>
+              {description && <span className="text-sm mt-2 max-w-xs opacity-90">{description}</span>}
+              <span className="inline-flex w-fit items-center mt-4 px-5 py-2.5 bg-white text-gray-900 text-sm font-semibold rounded-xs shadow-md group-hover:bg-[#111827] group-hover:text-white transition-all">
+                {ctaLabel}
+              </span>
+            </span>
+          </Link>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {products.map(product => (
+              <ProductCard key={product.id} product={{ ...product, vendor: product.vendor ?? undefined }} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export interface PromoBlockImage {
+  src: string;
+  alt: string;
+}
+
+export interface PromoBlockWithImagesProps {
+  leftImage: PromoBlockImage;
+  rightImage: PromoBlockImage;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  ctaLabel: string;
+  ctaHref: string;
+}
+
+export function PromoBlockWithImages({ leftImage, rightImage, title, subtitle, description, ctaLabel, ctaHref }: PromoBlockWithImagesProps) {
+  return (
+    <section className="border-b border-gray-200">
+      <div className="container-fluid py-8 md:py-10">
+        <div className="grid md:grid-cols-[1fr_2fr_1fr] gap-4 md:gap-6 items-center">
+          <div className="relative aspect-[3/4] rounded-xs overflow-hidden hidden md:block">
+            <Image src={leftImage.src} alt={leftImage.alt} fill sizes="25vw" className="object-cover" />
+          </div>
+          <div className="flex flex-col items-center text-center gap-4 px-4 py-8">
+            {subtitle && <span className="text-sm font-medium text-gray-500">{subtitle}</span>}
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">{title}</h2>
+            {description && <p className="text-gray-500 max-w-md">{description}</p>}
+            <Link href={ctaHref} className="inline-flex items-center gap-2 px-6 py-3 bg-[#0071DC] text-white font-bold text-sm rounded-md hover:bg-[#005BBB] transition-colors">
+              {ctaLabel}
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+            </Link>
+          </div>
+          <div className="relative aspect-[3/4] rounded-xs overflow-hidden hidden md:block">
+            <Image src={rightImage.src} alt={rightImage.alt} fill sizes="25vw" className="object-cover" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  excerpt: string;
+  date: string;
+  image?: string;
+  href: string;
+}
+
+export function BlogPosts({ posts }: { posts: BlogPost[] }) {
+  if (posts.length === 0) return null;
+  return (
+    <section className="border-b border-gray-200">
+      <div className="container-fluid py-10 md:py-12">
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Our News</h2>
+            <p className="text-sm text-gray-500 mt-1">Some of the new products arriving this week</p>
+          </div>
+          <Link href="/blog" className="text-sm font-bold text-[#0071DC] hover:underline underline-offset-4">View All Posts</Link>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {posts.map(post => (
+            <Link key={post.id} href={post.href} className="group block rounded-xs border border-gray-200 bg-white overflow-hidden hover:border-[#0071DC] hover:shadow-md transition-all">
+              {post.image && (
+                <span className="relative block aspect-[16/10] overflow-hidden">
+                  <Image src={post.image} alt={post.title} fill sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                </span>
+              )}
+              <span className="flex flex-col p-5">
+                <span className="text-xs text-gray-400 font-medium">{post.date}</span>
+                <span className="text-base font-bold text-gray-900 group-hover:text-[#0071DC] transition-colors mt-1 line-clamp-2">{post.title}</span>
+                <span className="text-sm text-gray-500 mt-2 line-clamp-2">{post.excerpt}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -512,7 +959,7 @@ function Countdown({ endsAt }: { endsAt?: string }) {
   const time = useCountdown(endsAt);
   if (!time) return null;
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-ember rounded-xs px-2 py-1 tabular-nums mt-2" role="timer" aria-label={`Deal ends in ${time.hours} hours ${time.minutes} minutes`}>
+    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#0071DC] rounded-xs px-2 py-1 tabular-nums mt-2" role="timer" aria-label={`Deal ends in ${time.hours} hours ${time.minutes} minutes`}>
       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
       {time.hours}:{time.minutes}:{time.seconds}
     </span>
@@ -523,51 +970,68 @@ export function DealsOfTheDay({ deals }: { deals: DealCardData[] }) {
   const scroller = useRef<HTMLUListElement>(null);
 
   function scroll(dir: 1 | -1) {
-    scroller.current?.scrollBy({ left: dir * 600, behavior: 'smooth' });
+    const el = scroller.current;
+    if (!el || el.children.length === 0) return;
+    const nodes = Array.from(el.children) as HTMLElement[];
+    const max = el.scrollWidth - el.clientWidth;
+    const pad = parseFloat(getComputedStyle(el).scrollPaddingLeft) || 0;
+    const stopOf = (node: HTMLElement) => Math.min(max, Math.max(0, Math.round(node.offsetLeft - pad)));
+    let best = 0;
+    let bestDist = Infinity;
+    nodes.forEach((node, i) => {
+      const d = Math.abs(stopOf(node) - el.scrollLeft);
+      if (d < bestDist) { bestDist = d; best = i; }
+    });
+    let next = (best + dir + nodes.length) % nodes.length;
+    let guard = 0;
+    while (next !== best && Math.abs(stopOf(nodes[next]) - stopOf(nodes[best])) < 4 && guard++ < nodes.length) {
+      next = (next + dir + nodes.length) % nodes.length;
+    }
+    el.scrollTo({ left: stopOf(nodes[next]), behavior: 'smooth' });
   }
 
   if (deals.length === 0) return null;
 
   return (
-    <section className="border-b border-border py-10 md:py-12" aria-label="Deals of the day">
+    <section className="border-b border-gray-200 py-10 md:py-12" aria-label="Deals of the day">
       <div className="container-fluid">
         <header className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold text-text-primary">Deals Of The Day</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Deals Of The Day</h2>
           <div className="hidden sm:flex gap-3">
-            <button type="button" onClick={() => scroll(-1)} aria-label="Scroll deals left" className="w-10 h-10 grid place-items-center rounded-full bg-surface border border-border shadow-sm hover:border-action-primary hover:text-action-primary transition-all">
+            <button type="button" onClick={() => scroll(-1)} aria-label="Scroll deals left" className="w-10 h-10 grid place-items-center rounded-full bg-white border border-gray-200 shadow-sm hover:border-[#0071DC] hover:text-[#0071DC] transition-all">
               <svg className="w-5 h-5 icon-directional" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
             </button>
-            <button type="button" onClick={() => scroll(1)} aria-label="Scroll deals right" className="w-10 h-10 grid place-items-center rounded-full bg-surface border border-border shadow-sm hover:border-action-primary hover:text-action-primary transition-all">
+            <button type="button" onClick={() => scroll(1)} aria-label="Scroll deals right" className="w-10 h-10 grid place-items-center rounded-full bg-white border border-gray-200 shadow-sm hover:border-[#0071DC] hover:text-[#0071DC] transition-all">
               <svg className="w-5 h-5 icon-directional" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
             </button>
           </div>
         </header>
-        <ul ref={scroller} className="flex gap-5 overflow-x-auto scrollbar-none snap-x pb-4" role="list">
+        <ul ref={scroller} className="flex gap-4 px-4 pb-2 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-pl-4 sm:px-6 sm:scroll-pl-6" role="list">
           {deals.map(deal => {
             const savingMinorUnits = deal.listPriceMinorUnits && deal.listPriceMinorUnits > deal.priceMinorUnits ? deal.listPriceMinorUnits - deal.priceMinorUnits : 0;
             return (
-              <li key={deal.id} className="snap-start shrink-0 w-full sm:w-[calc(33.333%-12px)] lg:w-[calc(25%-12px)]">
-                <Link href={deal.productId ? `/products/${deal.productId}` : '/deals'} className="group block bg-surface border border-border rounded-lg p-4 hover:shadow-elevated hover:border-action-primary transition-all h-full flex flex-col" suppressHydrationWarning>
-                  <div className="relative w-full aspect-square bg-surface mb-3 shrink-0 rounded-md overflow-hidden">
+              <li key={deal.id} className="snap-start shrink-0 w-[75%] sm:w-[calc(33.333%-12px)] lg:w-[calc(25%-12px)]">
+                <Link href={deal.productId ? `/products/${deal.productId}` : '/deals'} className="group block bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-[#0071DC] transition-all h-full flex flex-col" suppressHydrationWarning>
+                  <div className="relative w-full aspect-square bg-white mb-3 shrink-0 rounded-md overflow-hidden">
                     {deal.image && (
                       <Image src={storefrontImage(deal.image) || '/product-placeholder.svg'} alt="" fill sizes="240px" className="object-contain p-2 group-hover:scale-105 transition-transform duration-500" />
                     )}
                     <span className="absolute top-2 left-2">
-                      <span className="inline-flex items-center rounded-sm bg-action-primary text-white text-[11px] font-bold px-2 py-1 uppercase tracking-wider">{deal.dealLabel}</span>
+                      <span className="inline-flex items-center rounded-sm bg-[#0071DC] text-white text-[11px] font-bold px-2 py-1 uppercase tracking-wider">{deal.dealLabel}</span>
                     </span>
                   </div>
-                  <p className="text-sm font-bold line-clamp-2 leading-snug text-text-primary group-hover:text-action-primary transition-colors mb-3">{deal.productName}</p>
+                  <p className="text-sm font-bold line-clamp-2 leading-snug text-gray-900 group-hover:text-[#0071DC] transition-colors mb-3">{deal.productName}</p>
                   
                   <div className="mt-auto">
-                    <span className="block text-xl font-extrabold text-text-primary" suppressHydrationWarning>
+                    <span className="block text-xl font-extrabold text-gray-900" suppressHydrationWarning>
                       {new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(deal.priceMinorUnits / 100)}
                     </span>
                     {savingMinorUnits > 0 && deal.listPriceMinorUnits && (
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-text-tertiary line-through" suppressHydrationWarning>
+                        <span className="text-xs text-gray-400 line-through" suppressHydrationWarning>
                           Was {new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(deal.listPriceMinorUnits / 100)}
                         </span>
-                        <span className="text-xs text-action-primary font-bold bg-action-primary/10 px-1.5 py-0.5 rounded-sm" suppressHydrationWarning>
+                        <span className="text-xs text-[#0071DC] font-bold bg-[#0071DC]/10 px-1.5 py-0.5 rounded-sm" suppressHydrationWarning>
                           Save {new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(savingMinorUnits / 100)}
                         </span>
                       </div>
@@ -586,43 +1050,54 @@ export function DealsOfTheDay({ deals }: { deals: DealCardData[] }) {
 
 const TRUST_ITEMS = [
   {
-    title: 'Fast Delivery',
-    body: 'Regional warehouses ship in 24h',
+    title: 'Free Shipping',
+    body: 'Free shipping on order over $50',
     iconPath: 'M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12',
   },
   {
-    title: 'Secure Payment',
-    body: 'Stripe & PayPal buyer protection',
+    title: 'Money Back',
+    body: '30 days money back guarantee',
     iconPath: 'M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z',
   },
   {
-    title: 'Easy Returns',
-    body: '30-day no-question returns',
-    iconPath: 'M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99',
+    title: 'Next Day Delivery',
+    body: 'Next day delivery free – spend over $99',
+    iconPath: 'M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z',
   },
   {
-    title: '24/7 Support',
-    body: 'Help in your language',
-    iconPath: 'M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155',
+    title: 'Free Returns',
+    body: '60-Day free returns, All shipping method',
+    iconPath: 'M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99',
   },
 ];
 
-export function TrustBar() {
+export function TrustBar({ freeShippingThreshold, currency }: { freeShippingThreshold: number; currency: string }) {
+  const formattedThreshold = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(freeShippingThreshold / 100);
+
+  const items = [
+    { ...TRUST_ITEMS[0], body: `Free shipping on order over ${formattedThreshold}` },
+    TRUST_ITEMS[1],
+    { ...TRUST_ITEMS[2], body: `Next day delivery free – spend over ${formattedThreshold}` },
+    TRUST_ITEMS[3],
+  ];
+
   return (
-    <section aria-label="Why shop with Storegrill" className="border-b border-border">
-      <div className="container-fluid py-10 md:py-12">
-      <ul className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6" role="list">
-        {TRUST_ITEMS.map(item => (
-          <li key={item.title} className="flex items-start gap-4 p-5 rounded-xs bg-surface border border-border hover:border-action-primary transition-colors">
-            <span aria-hidden="true" className="w-11 h-11 shrink-0 grid place-items-center rounded-xs bg-ember-pale text-action-primary">
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <section aria-label="Why shop with Storegrill" className="bg-[#F0F9FF] border-b border-gray-200">
+      <div className="container-fluid py-1.5 md:py-2">
+      <ul className="grid grid-cols-2 md:grid-cols-4 gap-0.5 md:gap-1" role="list">
+        {items.map(item => (
+          <li key={item.title} className="flex items-center gap-2 py-1">
+            <span aria-hidden="true" className="w-8 h-8 shrink-0 grid place-items-center rounded-xs text-[#075985]">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path strokeLinecap="round" strokeLinejoin="round" d={item.iconPath} />
               </svg>
             </span>
-            <div>
-              <h3 className="text-sm font-bold text-text-primary">{item.title}</h3>
-              <p className="text-xs text-text-secondary mt-1">{item.body}</p>
-            </div>
+            <p className="text-[15px] text-[#075985] leading-tight">{item.body}</p>
           </li>
         ))}
       </ul>
@@ -689,9 +1164,9 @@ export function RecentlyViewed() {
   if (items.length === 0) return null;
 
   return (
-    <section className="border-b border-border" aria-label="Pick up where you left off">
+    <section className="border-b border-gray-200" aria-label="Pick up where you left off">
       <div className="container-fluid py-10 md:py-12">
-        <h2 className="text-2xl md:text-3xl font-bold text-text-primary mb-6">Pick up where you left off</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Pick up where you left off</h2>
         <div className="relative group/recent">
           <ul
             ref={scrollerRef}
@@ -700,9 +1175,9 @@ export function RecentlyViewed() {
             role="list"
           >
             {items.map(item => (
-              <li key={item.slug} className="snap-start shrink-0 w-full sm:w-[calc(20%-8px)] lg:w-[calc(25%-12px)]">
-                <Link href={`/products/${item.slug}`} className="group flex h-full flex-col rounded-xs border border-border bg-surface overflow-hidden hover:border-action-primary hover:shadow-elevated transition-all">
-                  <span className="relative block aspect-square bg-surface-sunken overflow-hidden">
+              <li key={item.slug} className="snap-start shrink-0 w-[75%] sm:w-[calc(33.333%-12px)] lg:w-[calc(25%-12px)]">
+                <Link href={`/products/${item.slug}`} className="group flex h-full flex-col rounded-xs border border-gray-200 bg-white overflow-hidden hover:border-[#0071DC] hover:shadow-md transition-all">
+                  <span className="relative block aspect-square bg-gray-50 overflow-hidden">
                     {item.thumbnail && (
                       <Image
                         src={storefrontImage(item.thumbnail) || '/product-placeholder.svg'}
@@ -714,7 +1189,7 @@ export function RecentlyViewed() {
                     )}
                   </span>
                   <span className="flex flex-col p-4 grow">
-                    <span className="text-sm font-medium leading-snug text-text-primary line-clamp-2 min-h-[2.5rem] group-hover:text-action-primary transition-colors">{item.name}</span>
+                    <span className="text-sm font-medium leading-snug text-gray-900 line-clamp-2 min-h-[2.5rem] group-hover:text-[#0071DC] transition-colors">{item.name}</span>
                     <span className="text-base font-bold mt-2">
                       {new Intl.NumberFormat('en-US', { style: 'currency', currency: item.currencyCode }).format(item.unitPriceMinorUnits / 100)}
                     </span>
@@ -729,7 +1204,7 @@ export function RecentlyViewed() {
                 type="button"
                 onClick={() => step(-1)}
                 aria-label="Previous recently viewed items"
-                className="absolute left-2 top-[38%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface-raised opacity-0 group-hover/recent:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+                className="absolute left-2 top-[38%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/recent:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
               </button>
@@ -737,7 +1212,7 @@ export function RecentlyViewed() {
                 type="button"
                 onClick={() => step(1)}
                 aria-label="Next recently viewed items"
-                className="absolute right-2 top-[38%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface-raised opacity-0 group-hover/recent:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+                className="absolute right-2 top-[38%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/recent:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
               </button>
@@ -761,16 +1236,16 @@ export interface VendorSpotlightItem {
 export function VendorSpotlight({ vendors }: { vendors: VendorSpotlightItem[] }) {
   if (vendors.length === 0) return null;
   return (
-    <section className="border-b border-border" aria-labelledby="vendor-spotlight-heading">
+    <section className="border-b border-gray-200" aria-labelledby="vendor-spotlight-heading">
       <div className="container-fluid py-10 md:py-12">
       <div className="flex items-end justify-between mb-6">
-        <h2 id="vendor-spotlight-heading" className="text-2xl md:text-3xl font-bold text-text-primary">Featured Vendors</h2>
-        <Link href="/vendors" className="text-sm font-bold text-action-primary hover:underline underline-offset-4">All vendors</Link>
+        <h2 id="vendor-spotlight-heading" className="text-2xl md:text-3xl font-bold text-gray-900">Featured Vendors</h2>
+        <Link href="/vendors" className="text-sm font-bold text-[#0071DC] hover:underline underline-offset-4">All vendors</Link>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         {vendors.slice(0, 3).map(v => (
-          <Link key={v.slug} href={`/vendors/${v.slug}`} className="rounded-xs bg-surface border border-border p-4 flex items-center gap-5 hover:border-action-primary transition-colors group">
-            <span className="w-16 h-16 rounded-full bg-gradient-to-br from-action-primary to-ember-dark text-white grid place-items-center font-bold text-lg shrink-0 overflow-hidden">
+          <Link key={v.slug} href={`/vendors/${v.slug}`} className="rounded-xs bg-white border border-gray-200 p-4 flex items-center gap-5 hover:border-[#0071DC] transition-colors group">
+            <span className="w-16 h-16 rounded-full bg-gradient-to-br from-[#0071DC] to-[#005BBB] text-white grid place-items-center font-bold text-lg shrink-0 overflow-hidden">
               {v.logo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={v.logo} alt="" className="w-full h-full object-cover" />
@@ -779,17 +1254,91 @@ export function VendorSpotlight({ vendors }: { vendors: VendorSpotlightItem[] })
               )}
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-base font-bold text-text-primary group-hover:text-action-primary transition-colors truncate">{v.storeName}</span>
-              <span className="block text-xs font-medium text-text-secondary mt-1">
+              <span className="block text-base font-bold text-gray-900 group-hover:text-[#0071DC] transition-colors truncate">{v.storeName}</span>
+              <span className="block text-xs font-medium text-gray-500 mt-1">
                 ★ {v.rating > 0 ? v.rating.toFixed(1) : 'New'} · {v.reviewCount.toLocaleString()} reviews
               </span>
             </span>
-            <span className="shrink-0 text-border-strong group-hover:text-action-primary transition-colors">
+            <span className="shrink-0 text-gray-400 group-hover:text-[#0071DC] transition-colors">
               <svg className="w-5 h-5 icon-directional" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
             </span>
           </Link>
         ))}
       </div>
+      </div>
+    </section>
+  );
+}
+
+const TESTIMONIALS = [
+  {
+    name: 'Sarah Johnson',
+    role: 'Tech Enthusiast',
+    avatar: '/users/user-01.jpg',
+    quote: 'Absolutely love the variety of products on Storegrill! The hero carousel makes it so easy to spot the best deals.',
+  },
+  {
+    name: 'Mark Davis',
+    role: 'Gamer',
+    avatar: '/users/user-02.jpg',
+    quote: 'Fast shipping and great customer service. Definitely my go-to for gaming gear.',
+  },
+  {
+    name: 'Emily Chen',
+    role: 'Home Decorator',
+    avatar: '/users/user-03.jpg',
+    quote: 'The deals are unbeatable and the website is so user-friendly. Highly recommended!',
+  },
+];
+
+export function Testimonials() {
+  const [isClient, setIsClient] = useState(false);
+  const sliderRef = useRef<SwiperType | null>(null);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) return <section className="border-b border-gray-200 py-10 md:py-16 bg-gray-50"><div className="container-fluid"><div className="h-64" /></div></section>;
+
+  return (
+    <section className="border-b border-gray-200 py-10 md:py-16 bg-gray-50">
+      <div className="container-fluid">
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 text-center">What Our Customers Say</h2>
+        <div className="relative group/slider">
+          <Swiper
+            modules={[Autoplay, Pagination]}
+            spaceBetween={24}
+            slidesPerView={1}
+            breakpoints={{
+              640: { slidesPerView: 2 },
+              1024: { slidesPerView: 3 },
+            }}
+            autoplay={{ delay: 5000, disableOnInteraction: false }}
+            pagination={{ clickable: true }}
+            onSwiper={swiper => { sliderRef.current = swiper; }}
+            className="px-2">
+            {TESTIMONIALS.map((t, i) => (
+              <SwiperSlide key={i} className="h-auto">
+                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(5)].map((_, j) => (
+                      <Image key={j} src="/icons/icon-star.svg" alt="star" width={16} height={16} />
+                    ))}
+                  </div>
+                  <p className="text-gray-600 mb-6 flex-grow">{t.quote}</p>
+                  <div className="flex items-center gap-3">
+                    <Image src={t.avatar} alt={t.name} width={40} height={40} className="rounded-full" />
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">{t.name}</p>
+                      <p className="text-xs text-gray-500">{t.role}</p>
+                    </div>
+                  </div>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
       </div>
     </section>
   );

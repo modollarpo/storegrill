@@ -1,164 +1,155 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { Newsletter } from '../home/Newsletter';
 
 const FOOTER_NAV = [
   {
-    heading: 'Help & support',
+    heading: 'Categories',
     links: [
-      ['Contact us', '/contact'] as const,
-      ['Order tracker', '/track'] as const,
-      ['Delivery information', '/shipping'] as const,
-      ['Returns & refunds', '/returns'] as const,
-      ['Help centre', '/help'] as const,
-      ['Product recalls', '/recalls'] as const,
+      ['New arrivals', '/products?sort=new'],
+      ['Best Sellers', '/products?sort=best'],
+      ['Sale items', '/products?sort=sale'],
     ],
   },
   {
-    heading: 'Services',
+    heading: 'Features',
     links: [
-      ['Repair', '/help'] as const,
-      ['Protection plans', '/payments'] as const,
-      ['Installation', '/help'] as const,
-      ['Recycling', '/about'] as const,
+      ['Today\'s Deal', '/deals'],
+      ['Vendors', '/vendors'],
+      ['Regions', '/regions'],
+      ['Sell on Storegrill', '/vendor/apply'],
     ],
   },
   {
-    heading: 'Shopping with us',
+    heading: 'Customer Services',
     links: [
-      ['All products', '/products'] as const,
-      ['Deals', '/deals'] as const,
-      ['Spread the cost', '/payments'] as const,
-      ['Vendors', '/vendors'] as const,
-      ['Choose your region', '/regions'] as const,
+      ['Help Centre', '/help'],
+      ['Track Order', '/track'],
+      ['Returns & Refunds', '/returns'],
+      ['Delivery Information', '/shipping'],
     ],
   },
-  {
-    heading: 'About Storegrill',
-    links: [
-      ['About us', '/about'] as const,
-      ['Sell on Storegrill', '/sell'] as const,
-      ['Careers', '/about'] as const,
-      ['Environment', '/about'] as const,
-    ],
-  },
-  {
-    heading: 'Legal',
-    links: [
-      ['Terms & conditions', '/terms'] as const,
-      ['Privacy & cookies policy', '/privacy'] as const,
-      ['Cookie settings', '/cookies'] as const,
-      ['Accessibility', '/help'] as const,
-      ['Sitemap', '/sitemap'] as const,
-    ],
-  },
-];
+] as const;
 
 function PaymentLogos() {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2" aria-label="Accepted payment methods">
-      <span className="h-6 px-2 rounded-xs bg-white grid place-items-center text-xs font-bold italic tracking-tight text-text-primary dark:text-[1a1f71]">VISA</span>
-      <span className="h-6 px-1.5 rounded-xs bg-white grid place-items-center">
+    <div className="flex flex-wrap items-center gap-2" aria-label="Accepted payment methods">
+      <span className="h-6 px-2 rounded-sm bg-white grid place-items-center text-[10px] font-bold italic text-gray-900">
+        VISA
+      </span>
+      <span className="h-6 px-1.5 rounded-sm bg-white grid place-items-center">
         <svg viewBox="0 0 30 18" className="w-7 h-4" aria-label="Mastercard">
           <circle cx="11" cy="9" r="7.5" fill="#eb001b" />
           <circle cx="19" cy="9" r="7.5" fill="#f79e1b" fillOpacity="0.9" />
         </svg>
       </span>
-      <span className="h-6 px-1.5 rounded-xs bg-white grid place-items-center">
+      <span className="h-6 px-1.5 rounded-sm bg-white grid place-items-center">
         <svg viewBox="0 0 30 18" className="w-7 h-4" aria-label="Maestro">
           <circle cx="11" cy="9" r="7.5" fill="#0099df" />
           <circle cx="19" cy="9" r="7.5" fill="#ed0006" fillOpacity="0.85" />
         </svg>
       </span>
-      <span className="h-6 px-2 rounded-xs bg-white grid place-items-center text-text-primary dark:text-[0a0a0a]">PayPal</span>
-      <span className="h-6 px-2 rounded-xs bg-[#ffb3c7] grid place-items-center text-text-primary dark:text-[0a0a0a]">Klarna.</span>
-      <span className="h-6 px-2 rounded-xs bg-white grid place-items-center text-text-primary font-bold dark:text-[5f6368]">G Pay</span>
-      <span className="h-6 px-2 rounded-xs bg-white grid place-items-center text-text-primary font-bold dark:text-[1d1d1f]">Mastercard</span>
+      <span className="h-6 px-2 rounded-sm bg-white grid place-items-center text-[10px] font-semibold text-gray-900">
+        PayPal
+      </span>
+      <span className="h-6 px-2 rounded-sm bg-[#ffb3c7] grid place-items-center text-[10px] font-semibold text-gray-900">
+        Klarna.
+      </span>
+      <span className="h-6 px-2 rounded-sm bg-white grid place-items-center text-[10px] font-bold text-gray-600">
+        G Pay
+      </span>
     </div>
   );
 }
 
 export function Footer() {
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSubscribed(true);
-    setEmail('');
-  }
-
   return (
-    <footer className="bg-footerdark text-text-inverse">
-      <div className="border-b border-white/10 py-10">
-        <div className="container-site flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div>
-            <h2 className="text-heading-lg font-bold text-white">Sign up to our emails</h2>
-            <p className="text-body-sm text-white/70 mt-1">Be the first to hear about the latest offers, new products and exclusive events.</p>
-          </div>
-          {subscribed ? (
-            <p role="status" className="text-sm font-semibold text-stockgreen bg-white rounded-xs px-4 py-3">
-              You&apos;re signed up — look out for great deals in your inbox.
-            </p>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center shrink-0">
-              <label htmlFor="footer-email" className="sr-only">Email address</label>
-              <input
-                id="footer-email"
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="Enter your email address"
-                className="input sm:w-80 h-11 border-transparent"
-              />
-              <button type="submit" className="btn btn-primary h-11 px-8">
-                Sign up
-              </button>
-            </form>
-          )}
-        </div>
-      </div>
-
-      <div className="container-site py-12 lg:py-14">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-8 gap-y-12">
-          {FOOTER_NAV.map(col => (
-            <div key={col.heading}>
-              <h3 className="text-body-sm font-bold text-white mb-4 uppercase tracking-wider">{col.heading}</h3>
-              <ul className="space-y-3">
-                {col.links.map(([label, href]) => (
-                  <li key={label}>
-                    <Link href={href} className="inline-block text-sm text-white/70 hover:text-white hover:underline underline-offset-4 transition-colors">
-                      {label}
-                    </Link>
-                  </li>
-                ))}
+    <footer className="site-footer" style={{ backgroundColor: '#0071DC', color: '#fff' }}>
+      {/* ═══ MAIN FOOTER ═══ */}
+      <div className="storegrill-footer-main">
+        <div className="container-fluid">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 pt-16 pb-2">
+            {/* Column 1: Contact */}
+            <div>
+              <h3 className="text-[14px] font-bold mb-5">Contact</h3>
+              <ul className="space-y-3.5 text-[15px] font-medium">
+                <li className="flex items-start gap-2.5">
+                  <svg className="w-5 h-5 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                  </svg>
+                  <span>Store Name, 123 Street, New York, USA</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <svg className="w-5 h-5 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                  </svg>
+                  <span>+1 (555) 000-0000</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <svg className="w-5 h-5 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                  </svg>
+                  <span>storegrill@email.com</span>
+                </li>
               </ul>
             </div>
-          ))}
+
+            {/* Column 2: Categories */}
+            <div>
+              <h3 className="text-[14px] font-bold mb-5">Categories</h3>
+              <ul className="space-y-3.5 text-[15px] font-medium">
+                <li><Link href="/products?sort=new" className="hover:opacity-70 transition-opacity">New arrivals</Link></li>
+                <li><Link href="/products?sort=best" className="hover:opacity-70 transition-opacity">Best Sellers</Link></li>
+                <li><Link href="/products?sort=sale" className="hover:opacity-70 transition-opacity">Sale items</Link></li>
+                <li><Link href="/blog" className="hover:opacity-70 transition-opacity">Blog</Link></li>
+              </ul>
+            </div>
+
+            {/* Column 3: Features */}
+            <div>
+              <h3 className="text-[14px] font-bold mb-5">Features</h3>
+              <ul className="space-y-3.5 text-[15px] font-medium">
+                <li><Link href="/deals" className="hover:opacity-70 transition-opacity">Today&apos;s Deal</Link></li>
+                <li><Link href="/vendors" className="hover:opacity-70 transition-opacity">Vendors</Link></li>
+                <li><Link href="/regions" className="hover:opacity-70 transition-opacity">Regions</Link></li>
+                <li><Link href="/vendor/apply" className="hover:opacity-70 transition-opacity">Sell on Storegrill</Link></li>
+              </ul>
+            </div>
+
+            {/* Column 4: Customer Services + Newsletter */}
+            <div>
+              <h3 className="text-[14px] font-bold mb-5">Customer Services</h3>
+              <ul className="space-y-3.5 text-[15px] font-medium mb-6">
+                <li><Link href="/help" className="hover:opacity-70 transition-opacity">Help Centre</Link></li>
+                <li><Link href="/track" className="hover:opacity-70 transition-opacity">Track Order</Link></li>
+                <li><Link href="/returns" className="hover:opacity-70 transition-opacity">Returns &amp; Refunds</Link></li>
+                <li><Link href="/shipping" className="hover:opacity-70 transition-opacity">Delivery Information</Link></li>
+              </ul>
+
+              <Newsletter />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="border-t border-white/10">
-        <div className="container-site py-8 flex flex-col items-center gap-6">
-          <nav aria-label="Legal" className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-white/60">
-            <Link href="/terms" className="hover:text-white transition-colors">Terms &amp; conditions</Link>
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy &amp; cookies policy</Link>
-            <Link href="/cookies" className="hover:text-white transition-colors">Cookie settings</Link>
-            <Link href="/recalls" className="hover:text-white transition-colors">Product recalls</Link>
-            <Link href="/sitemap" className="hover:text-white transition-colors">Sitemap</Link>
-          </nav>
-
-          <PaymentLogos />
-        </div>
-
-        <div className="container-site pb-8">
-          <p className="text-xs text-white/40 leading-relaxed text-center">
-            © {new Date().getFullYear()} Storegrill Inc Ltd (Company No. 14581073). Registered in England &amp; Wales.
+      {/* ═══ COPYRIGHT BAR ═══ */}
+      <div className="border-t border-white/20">
+        <div className="container-fluid py-5 flex flex-col lg:flex-row items-center justify-between gap-5">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-medium">
+            <Link href="/terms" className="hover:opacity-70 transition-opacity">Terms &amp; Conditions</Link>
+            <Link href="/privacy" className="hover:opacity-70 transition-opacity">Privacy Policy</Link>
+            <Link href="/sitemap" className="hover:opacity-70 transition-opacity">Sitemap</Link>
+          </div>
+          <p className="text-[13px] font-medium text-center lg:text-right">
+            © {new Date().getFullYear()} Storegrill Inc Ltd. All rights reserved.
           </p>
+          <PaymentLogos />
         </div>
       </div>
     </footer>
   );
 }
+
+export default Footer;

@@ -98,12 +98,23 @@ export default async function ListingPage({ searchParams }: ListingProps) {
 
   const q = single(sp.q);
   const heading = q ? `Results for “${q}”` : single(sp.category)?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'All Products';
+  const currencyCode = localized[0]?.currencyCode || 'USD';
+  const currencySymbol =
+    new Intl.NumberFormat('en', { style: 'currency', currency: currencyCode, currencyDisplay: 'narrowSymbol' })
+      .formatToParts(0)
+      .find(part => part.type === 'currency')?.value || '';
+  const realMax = Math.max(0, ...localized.map(p => Number(p.price) || 0));
+  // Round the slider ceiling up to a clean step above the priciest item on this page
+  // (e.g. $327 -> $500, $1,240 -> $1,500) rather than a fixed, currency-agnostic guess.
+  const step = realMax < 10000 ? 1000 : realMax < 100000 ? 10000 : 100000;
+  const maxPriceMinorUnits = realMax > 0 ? Math.ceil((realMax + 1) / step) * step : 10000;
+
   const facets = {
     categories: FACET_CATEGORIES,
     brands: [...new Set(products.map(p => p.vendor?.storeName).filter((v): v is string => Boolean(v)))].slice(0, 12),
     vendors: [...new Map(products.filter(p => p.vendor).map(p => [p.vendor!.slug, { id: p.vendor!.slug, name: p.vendor!.storeName }])).values()],
-    maxPriceMinorUnits: 100000000,
-    currencySymbol: '',
+    maxPriceMinorUnits,
+    currencySymbol,
   };
 
   function makeHref(page: number): string {

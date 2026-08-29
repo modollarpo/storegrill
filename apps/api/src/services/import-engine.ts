@@ -222,7 +222,7 @@ async function planChanges(vendorId: string, products: NormalizedProduct[]): Pro
       tags: row.tags,
       attributes: row.attributes,
       sourceUrl: row.sourceUrl,
-      variants: row.variants.map(v => ({
+      variants: row.variants.map((v: any) => ({
         id: v.id,
         sku: v.sku,
         name: v.name,
@@ -233,7 +233,7 @@ async function planChanges(vendorId: string, products: NormalizedProduct[]): Pro
   }
 
   const categories = await prisma.category.findMany();
-  const categoryById = new Map(categories.map(c => [c.id, c]));
+  const categoryById = new Map(categories.map((c: any) => [c.id, c]));
   const categoryPathOf = (categoryId: string): string => {
     const chain: string[] = [];
     let current = categoryById.get(categoryId);
@@ -331,7 +331,7 @@ async function executePlan(
     include: { variants: true },
   });
   for (const candidate of candidates) {
-    if (candidate.variants.every(v => !feedSkus.has(v.sku))) archiveIds.push(candidate.id);
+    if (candidate.variants.every((v: any) => !feedSkus.has(v.sku))) archiveIds.push(candidate.id);
   }
   if (dryRun) counts.archived = archiveIds.length;
 
@@ -397,7 +397,7 @@ async function executePlan(
       where: { vendorId, sku: { in: [...oosSkus] } },
       select: { id: true, sku: true },
     });
-    const existingBySku = new Map(existingOos.map(p => [p.sku, p.id]));
+    const existingBySku = new Map(existingOos.map((p: any) => [p.sku, p.id]));
     for (const product of outOfStockProducts) {
       const productId = existingBySku.get(product.variants[0].sku);
       if (!productId) continue;
@@ -464,7 +464,7 @@ async function syncFlashSaleDeals(vendorId: string, profile: AdapterProfile): Pr
     where: { vendorId, status: 'ACTIVE', tags: { contains: `"${profile.flashSaleTag}"` } },
     select: { id: true },
   });
-  const productIds = products.map(p => p.id);
+  const productIds = products.map((p: any) => p.id);
 
   const startsAt = new Date(Date.now() - 3600 * 1000);
   const endsAt = new Date(Date.now() + 48 * 3600 * 1000);
@@ -492,10 +492,10 @@ async function syncFlashSaleDeals(vendorId: string, profile: AdapterProfile): Pr
 
   await prisma.dealVariant.deleteMany({ where: { dealId: deal.id, productId: { notIn: productIds } } });
   const linked = await prisma.dealVariant.findMany({ where: { dealId: deal.id }, select: { productId: true } });
-  const linkedIds = new Set(linked.map(l => l.productId));
-  const missing = productIds.filter(id => !linkedIds.has(id));
+  const linkedIds = new Set(linked.map((l: any) => l.productId));
+  const missing = productIds.filter((id: any) => !linkedIds.has(id));
   if (missing.length > 0) {
-    await prisma.dealVariant.createMany({ data: missing.map(productId => ({ dealId: deal.id, productId })) });
+    await prisma.dealVariant.createMany({ data: missing.map((productId: any) => ({ dealId: deal.id, productId })) });
   }
   return productIds.length;
 }

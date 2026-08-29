@@ -11,7 +11,7 @@ interface OrderSummaryItem {
   thumbnail?: string;
 }
 
-export function CheckoutOrderSummary({ items, subtotal, currency }: { items: OrderSummaryItem[], subtotal: number, currency: string }) {
+export function CheckoutOrderSummary({ items, subtotal, currency, discount = 0, shipping = 0, tax = 0, total, couponCode }: { items: OrderSummaryItem[], subtotal: number, currency: string, discount?: number, shipping?: number, tax?: number, total?: number, couponCode?: string | null }) {
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
       <h2 className="text-base font-extrabold text-gray-900 mb-4">Order Summary</h2>
@@ -37,6 +37,38 @@ export function CheckoutOrderSummary({ items, subtotal, currency }: { items: Ord
           <PriceDisplay amountMinorUnits={subtotal} currencyCode={currency} size="sm" />
         </dd>
       </div>
+      {discount > 0 && (
+        <div className="flex justify-between items-baseline gap-2">
+          <dt className="text-base font-bold text-green-600">Discount{couponCode ? ` (${couponCode})` : ''}</dt>
+          <dd className="text-base font-bold text-green-600">
+            −<PriceDisplay amountMinorUnits={discount} currencyCode={currency} size="sm" />
+          </dd>
+        </div>
+      )}
+      {shipping !== undefined && (
+        <div className="flex justify-between items-baseline">
+          <dt className="text-base font-bold text-gray-900">Shipping</dt>
+          <dd className="text-base font-bold text-gray-900">
+            {shipping === 0 ? <span className="text-green-600">FREE</span> : <PriceDisplay amountMinorUnits={shipping} currencyCode={currency} size="sm" />}
+          </dd>
+        </div>
+      )}
+      {tax !== undefined && (
+        <div className="flex justify-between items-baseline">
+          <dt className="text-base font-bold text-gray-900">Tax</dt>
+          <dd className="text-base font-bold text-gray-900">
+            <PriceDisplay amountMinorUnits={tax} currencyCode={currency} size="sm" />
+          </dd>
+        </div>
+      )}
+      {total !== undefined && (
+        <div className="border-t border-gray-200 pt-4 mt-2 flex justify-between items-baseline">
+          <dt className="text-xl font-extrabold text-gray-900">Total</dt>
+          <dd className="text-xl font-extrabold text-gray-900">
+            <PriceDisplay amountMinorUnits={total} currencyCode={currency} size="xl" />
+          </dd>
+        </div>
+      )}
     </div>
   );
 }

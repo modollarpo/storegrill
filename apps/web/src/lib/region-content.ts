@@ -54,3 +54,22 @@ export function lawFor(regionKey: string): LawInfo {
 export function supportEmailFor(regionKey: string): string {
   return `${regionKey.toLowerCase()}@support.storegrill.net`;
 }
+
+export interface RegionPromoContent {
+  currency: string;
+  freeShippingThresholdMinorUnits: number;
+  couponCode: string;
+  couponDiscountPercent: number;
+  cashbackPercent: number;
+}
+
+export function regionPromoContent(regionKey: string): RegionPromoContent {
+  const config = regionConfig(regionKey);
+  return {
+    currency: config.defaultCurrency,
+    freeShippingThresholdMinorUnits: config.freeShippingThresholdMinorUnits,
+    couponCode: `SAVE20-${config.key}`,
+    couponDiscountPercent: 20,
+    cashbackPercent: 5,
+  };
+}

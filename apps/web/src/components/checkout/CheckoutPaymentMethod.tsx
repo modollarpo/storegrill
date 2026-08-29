@@ -22,13 +22,13 @@ export function CheckoutPaymentMethod({
             key={method.id}
             className={cn(
               'flex items-center gap-3 p-4 border-2 rounded-md cursor-pointer transition-all',
-              selectedId === method.id ? 'border-[#0071DC] bg-[#0071DC]/5 shadow-sm' : 'border-gray-200 hover:border-[#0071DC]'
+              selectedId === method.id ? 'border-ember bg-ember/5 shadow-sm' : 'border-gray-200 hover:border-ember'
             )}
           >
             <input
               type="radio"
               name="paymentMethod"
-              className="w-4 h-4 accent-[#0071DC]"
+              className="w-4 h-4 accent-ember"
               checked={selectedId === method.id}
               onChange={() => onSelect(method.id)}
             />

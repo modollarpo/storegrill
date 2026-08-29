@@ -58,7 +58,7 @@ export function ProgressBar({
         aria-valuemax={max}
         aria-label={label}
         className={cn(
-          'w-full bg-surface-200 rounded-full overflow-hidden',
+          'w-full bg-gray-200 rounded-full overflow-hidden',
           SIZE_CLASS[size]
         )}
       >
@@ -96,7 +96,7 @@ export function FreeShippingBar({
     `${currencySymbol}${(minor / 100).toFixed(2)}`;
 
   return (
-    <div className={cn('p-4 rounded-xl bg-surface-50 border border-surface-200', className)}>
+    <div className={cn('p-4 rounded-xl bg-gray-50 border border-gray-200', className)}>
       <div className="flex items-center gap-2 mb-2">
         <svg className={cn('w-4 h-4 shrink-0', done ? 'text-feedback-success' : 'text-text-tertiary')} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           {done

@@ -1,4 +1,4 @@
-import { createMoney, roundUpTo99 } from '@storegrill/shared';
+import { createMoney, roundUpTo99 } from '@Storegrill/shared';
 import {
   cleanSourceUrl,
   httpsify,

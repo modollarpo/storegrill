@@ -5,7 +5,7 @@ import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { prisma } from '../index.js';
 import { generateTokens, authenticate, AuthRequest } from '../middleware/auth.js';
-import { RegisterSchema, LoginSchema, ForgotPasswordSchema, ResetPasswordSchema } from '@storegrill/shared';
+import { RegisterSchema, LoginSchema, ForgotPasswordSchema, ResetPasswordSchema } from '@Storegrill/shared';
 import { sendMail } from '../lib/mailer.js';
 
 const router = Router();

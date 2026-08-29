@@ -49,23 +49,23 @@ export function WaitingRoomClient({ children }: { children: ReactNode }) {
   if (inQueue) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center bg-surface-page p-6 text-center animate-fade-in">
-        <div className="max-w-md w-full bg-surface border border-surface-200 rounded-2xl p-10 shadow-elevated">
-          <div className="mx-auto w-16 h-16 mb-6 rounded-full border-4 border-surface-200 border-t-action-primary animate-spin" />
-          <h1 className="text-2xl font-black text-surface-900 mb-3">You are in the virtual queue</h1>
-          <p className="text-surface-600 font-medium mb-8 leading-relaxed">
+        <div className="max-w-md w-full bg-surface border border-gray-200 rounded-2xl p-10 shadow-xl">
+          <div className="mx-auto w-16 h-16 mb-6 rounded-full border-4 border-gray-200 border-t-action-primary animate-spin" />
+          <h1 className="text-2xl font-black text-gray-900 mb-3">You are in the virtual queue</h1>
+          <p className="text-gray-600 font-medium mb-8 leading-relaxed">
             Due to extremely high demand for Today&apos;s Deals, we have placed you in a waiting room to ensure a smooth shopping experience.
           </p>
           
-          <div className="bg-surface-50 border border-surface-200 rounded-xl p-6 mb-8">
-            <p className="text-sm font-bold text-surface-500 uppercase tracking-widest mb-2">People ahead of you</p>
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-8">
+            <p className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-2">People ahead of you</p>
             <p className="text-4xl font-black text-action-primary tabular-nums flip-digit">
               <span>{position}</span>
             </p>
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm text-surface-500 font-bold">Please do not refresh this page.</p>
-            <p className="text-xs text-surface-400">Queue ID: {Math.random().toString(36).substring(2, 10).toUpperCase()}</p>
+            <p className="text-sm text-gray-500 font-bold">Please do not refresh this page.</p>
+            <p className="text-xs text-gray-400">Queue ID: {Math.random().toString(36).substring(2, 10).toUpperCase()}</p>
           </div>
         </div>
       </div>

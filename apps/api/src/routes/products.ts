@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../index.js';
 import { authenticate, optionalAuth, authorize, AuthRequest } from '../middleware/auth.js';
 import { cache, TTL } from '../lib/cache.js';
-import { ProductFilterSchema } from '@storegrill/shared';
+import { ProductFilterSchema } from '@Storegrill/shared';
 import { slugify } from '../utils/slugify.js';
 
 const router = Router();
@@ -67,23 +67,23 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
         vendor: { select: { id: true, storeName: true, slug: true } },
         category: { select: { id: true, name: true, slug: true } },
         regionPrices: { where: { regionKey }, take: 1 },
-        variants: { select: { id: true, stock: true }, take: 1 },
+        _count: { select: { variants: { where: { stock: { gt: 0 } } } } },
       },
     }),
     prisma.product.count({ where }),
   ]);
 
-  const enriched = products.map(p => ({
+  const enriched = products.map((p: any) => ({
     ...p,
     images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
     tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
     basePriceMinorUnits: Number(p.basePriceMinorUnits),
     price: p.regionPrices[0] ? Number(p.regionPrices[0].priceMinorUnits) : Number(p.basePriceMinorUnits),
     currencyCode: p.regionPrices[0]?.currencyCode || p.currencyCode,
-    inStock: p.variants.some(v => v.stock > 0) || true,
+    inStock: p._count.variants > 0,
     rating: Number(p.rating),
     regionPrices: undefined,
-    variants: undefined,
+    _count: undefined,
   }));
 
   res.json({
@@ -112,7 +112,7 @@ router.get('/featured', optionalAuth, async (req: AuthRequest, res: Response) =>
   });
 
   res.json({
-    products: products.map(p => ({
+    products: products.map((p: any) => ({
       ...p,
       images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
       tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
@@ -171,13 +171,14 @@ router.get('/:identifier', optionalAuth, async (req: AuthRequest, res: Response)
         : Number(product.basePriceMinorUnits),
       currencyCode: product.regionPrices[0]?.currencyCode || product.currencyCode,
       rating: Number(product.rating),
-      variants: product.variants.map(v => ({
+      inventoryCount: product.variants.reduce((sum: number, v: { stock: number }) => sum + v.stock, 0),
+      variants: product.variants.map((v: any) => ({
         ...v,
         basePriceMinorUnits: Number(v.basePriceMinorUnits),
         images: typeof v.images === 'string' ? JSON.parse(v.images) : v.images,
         attributes: typeof v.attributes === 'string' ? JSON.parse(v.attributes) : v.attributes,
       })),
-      reviews: product.reviews.map(r => ({
+      reviews: product.reviews.map((r: any) => ({
         ...r,
         user: r.user,
       })),
@@ -288,13 +289,13 @@ router.post('/', authenticate, authorize('VENDOR', 'ADMIN'), async (req: AuthReq
       tags: typeof product.tags === 'string' ? JSON.parse(product.tags) : product.tags,
       attributes: typeof product.attributes === 'string' ? JSON.parse(product.attributes) : product.attributes,
       basePriceMinorUnits: Number(product.basePriceMinorUnits),
-      variants: product.variants.map(v => ({
+      variants: product.variants.map((v: any) => ({
         ...v,
         basePriceMinorUnits: Number(v.basePriceMinorUnits),
         images: typeof v.images === 'string' ? JSON.parse(v.images) : v.images,
         attributes: typeof v.attributes === 'string' ? JSON.parse(v.attributes) : v.attributes,
       })),
-      regionPrices: product.regionPrices.map(rp => ({
+      regionPrices: product.regionPrices.map((rp: any) => ({
         ...rp,
         priceMinorUnits: Number(rp.priceMinorUnits),
       })),
@@ -371,7 +372,7 @@ router.put('/:id', authenticate, authorize('VENDOR', 'ADMIN'), async (req: AuthR
       tags: typeof product.tags === 'string' ? JSON.parse(product.tags) : product.tags,
       attributes: typeof product.attributes === 'string' ? JSON.parse(product.attributes) : product.attributes,
       basePriceMinorUnits: Number(product.basePriceMinorUnits),
-      variants: product.variants.map(v => ({
+      variants: product.variants.map((v: any) => ({
         ...v,
         basePriceMinorUnits: Number(v.basePriceMinorUnits),
         images: typeof v.images === 'string' ? JSON.parse(v.images) : v.images,

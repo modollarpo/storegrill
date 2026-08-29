@@ -38,7 +38,7 @@ router.get('/dashboard', async (_req: AuthRequest, res: Response) => {
       totalRevenue: Number(totalRevenue._sum.totalMinorUnits || 0),
       pendingVendors,
       pendingProducts,
-      recentOrders: recentOrders.map(o => ({
+      recentOrders: recentOrders.map((o: any) => ({
         id: o.id,
         orderNumber: o.orderNumber,
         status: o.status,
@@ -74,7 +74,7 @@ router.get('/vendors', async (req: AuthRequest, res: Response) => {
   ]);
 
   res.json({
-    vendors: vendors.map(v => ({
+    vendors: vendors.map((v: any) => ({
       ...v,
       rating: Number(v.rating),
       productCount: v._count.products,
@@ -341,7 +341,7 @@ router.get('/products', async (req: AuthRequest, res: Response) => {
   ]);
 
   res.json({
-    products: products.map(p => ({
+    products: products.map((p: any) => ({
       ...p,
       basePriceMinorUnits: Number(p.basePriceMinorUnits),
       rating: Number(p.rating),
@@ -388,7 +388,7 @@ router.get('/orders', async (req: AuthRequest, res: Response) => {
   ]);
 
   res.json({
-    orders: orders.map(o => ({
+    orders: orders.map((o: any) => ({
       ...o,
       subtotalMinorUnits: Number(o.subtotalMinorUnits),
       taxMinorUnits: Number(o.taxMinorUnits),
@@ -438,7 +438,7 @@ router.get('/reviews', async (req: AuthRequest, res: Response) => {
   ]);
 
   res.json({
-    reviews: reviews.map(r => ({
+    reviews: reviews.map((r: any) => ({
       ...r,
       userName: r.user.name,
       productName: r.product.name,

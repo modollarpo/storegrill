@@ -7,7 +7,7 @@ import { useCart, CartItemLine } from '@/components/providers/CartContext';
 import { useRegion } from '@/components/providers/RegionContext';
 import { useToast } from '@/components/feedback/Toast';
 import { PriceDisplay } from '@/components/commerce/PriceDisplay';
-import { api, ApiError } from '@/lib/api';
+import { api, ApiError, API_BASE } from '@/lib/api';
 import { DEFAULT_REGIONS, PAYMENT_METHOD_PROVIDER, paymentMethodLabel, PaymentMethodId } from '@Storegrill/shared';
 import { cn } from '@/lib/utils';
 import { CheckoutOrderSummary } from '@/components/checkout/CheckoutOrderSummary';
@@ -67,14 +67,39 @@ export default function CheckoutPage() {
     zone.freeShippingThresholdMinorUnits && subtotal >= zone.freeShippingThresholdMinorUnits
       ? 0
       : (zone.baseRateMinorUnits ?? 599) + (zone.perKgRateMinorUnits ? 0 : 0);
-  const tax = Math.round(subtotal * (regionConfig.taxRules[0]?.rate ?? 0));
-  const total = subtotal + shippingCost + tax;
+  const discount = Math.min(cart.appliedCoupon?.discountMinorUnits ?? 0, subtotal);
+  const discountedSubtotal = Math.max(0, subtotal - discount);
+  const tax = Math.round(discountedSubtotal * (regionConfig.taxRules[0]?.rate ?? 0));
+  const total = discountedSubtotal + shippingCost + tax;
 
   const stepValid = useMemo(() => {
     if (step === 1) return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) && address.street.length > 2 && address.city.length > 1 && address.zip.length > 2;
     if (step === 2) return Boolean(activePayment);
     return true;
   }, [step, email, address, activePayment]);
+
+  async function applyCoupon(code: string) {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/deals/apply-coupon`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, regionKey, subtotalMinorUnits: subtotal }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        cart.setAppliedCoupon(null);
+        toast({ variant: 'error', title: 'Invalid code', description: data?.error?.message });
+        return;
+      }
+      cart.setAppliedCoupon({
+        code: data.coupon.code,
+        dealName: data.coupon.dealName,
+        discountMinorUnits: data.coupon.discountMinorUnits,
+      });
+    } catch {
+      cart.setAppliedCoupon(null);
+    }
+  }
 
   async function placeOrder() {
     setPlacing(true);
@@ -104,6 +129,7 @@ export default function CheckoutPage() {
           },
           paymentMethod: activePayment === 'cod' ? 'cod' : PAYMENT_METHOD_PROVIDER[activePayment as PaymentMethodId] === 'paypal' ? 'paypal' : 'stripe',
           regionKey,
+          couponCode: cart.appliedCoupon?.code,
           email,
           notes: `language=${language};displayMethod=${activePayment};notes=${notes}`,
         }),
@@ -253,9 +279,14 @@ export default function CheckoutPage() {
             <CheckoutOrderSummary 
                 items={(cart.items as CartItemLine[]).map(i => ({id: i.productId+i.variantId, name: i.name, quantity: i.quantity, unitPriceMinorUnits: i.unitPriceMinorUnits, currencyCode: i.currencyCode, thumbnail: i.image}))}
                 subtotal={subtotal} 
-                currency={currency} 
+                currency={currency}
+                discount={discount}
+                shipping={shippingCost}
+                tax={tax}
+                total={total}
+                couponCode={cart.appliedCoupon?.code}
             />
-            <CheckoutCoupon onApply={(code) => console.log('apply', code)} />
+            <CheckoutCoupon onApply={applyCoupon} />
             <CheckoutShippingMethod 
                 methods={[{id: 'std', name: 'Standard', description: `${zone.estimatedDaysMin}-${zone.estimatedDaysMax} business days`, priceMinorUnits: shippingCost, currencyCode: currency}]}
                 selectedId="std"

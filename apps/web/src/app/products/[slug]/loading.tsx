@@ -40,7 +40,7 @@ export default function ProductDetailLoading() {
             </div>
           </div>
 
-          <hr className="border-surface-200" />
+          <hr className="border-gray-200" />
 
           {/* Price */}
           <div className="space-y-2">
@@ -59,7 +59,7 @@ export default function ProductDetailLoading() {
           </div>
 
           {/* Buy Box */}
-          <div className="bg-surface border border-surface-200 p-6 rounded-2xl shadow-sm space-y-4">
+          <div className="bg-surface border border-gray-200 p-6 rounded-2xl shadow-sm space-y-4">
             {/* Qty + Add to cart */}
             <div className="flex gap-4">
               <Skeleton width={120} height={52} rounded="xl" />
@@ -77,7 +77,7 @@ export default function ProductDetailLoading() {
 
       {/* Tabs */}
       <div className="mt-16 md:mt-24">
-        <div className="flex gap-2 border-b border-surface-200 mb-8 overflow-x-auto">
+        <div className="flex gap-2 border-b border-gray-200 mb-8 overflow-x-auto">
           {[160, 120, 140, 180].map((w, i) => (
             <Skeleton key={i} width={w} height={44} rounded="lg" className="shrink-0" />
           ))}
@@ -89,7 +89,7 @@ export default function ProductDetailLoading() {
       </div>
 
       {/* Related products */}
-      <div className="mt-16 md:mt-24 border-t border-surface-200 pt-16">
+      <div className="mt-16 md:mt-24 border-t border-gray-200 pt-16">
         <Skeleton width={240} height={32} className="mb-8" rounded="sm" />
         <SkeletonProductGrid count={4} />
       </div>

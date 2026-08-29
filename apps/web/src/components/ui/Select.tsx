@@ -127,7 +127,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select
           role="listbox"
           aria-label={label}
           className={cn(
-            'absolute z-[var(--z-tooltip)] left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white rounded-md border border-smoke-150 shadow-menu py-1 transition-all duration-fast',
+            'absolute z-[var(--z-tooltip)] left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white rounded-md border border-smoke-150 shadow-lg py-1 transition-all duration-fast',
             open ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-1 pointer-events-none'
           )}
         >

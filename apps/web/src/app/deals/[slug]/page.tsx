@@ -99,7 +99,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ slu
                   </p>
                 </div>
                 {isExpired && (
-                  <span className="ml-auto text-sm font-extrabold text-feedback-error">This deal has ended</span>
+                  <span className="ml-auto text-sm font-extrabold text-feedback-danger">This deal has ended</span>
                 )}
               </div>
             )}

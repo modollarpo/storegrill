@@ -129,8 +129,7 @@ function Header({ announcementMessages }: HeaderProps) {
         {/* ═══ ROW 1: TOPBAR ═══ */}
         <div
           id="header-top"
-          className="hidden lg:block"
-          style={{ backgroundColor: '#0071DC', color: '#fff' }}
+          className="hidden lg:block bg-ember-deep text-white"
         >
           <div className="container-fluid">
             <div className="flex items-center justify-between h-10">
@@ -176,8 +175,7 @@ function Header({ announcementMessages }: HeaderProps) {
         {/* ═══ ROW 2: MAIN HEADER ═══ */}
         <div
           id="header-main"
-          style={{ backgroundColor: '#0071DC', color: '#fff' }}
-          className="border-t border-white/20"
+          className="bg-ember text-white border-t border-white/20"
         >
           <div className="container-fluid">
             <div className="flex items-center h-[74px] gap-4 lg:gap-6">
@@ -186,8 +184,7 @@ function Header({ announcementMessages }: HeaderProps) {
                 type="button"
                 onClick={() => setMobileOpen(true)}
                 aria-label="Open menu"
-                className="lg:hidden p-2 -ml-2 hover:opacity-80 transition-opacity"
-                style={{ color: '#fff' }}
+                className="lg:hidden p-2 -ml-2 hover:opacity-80 transition-opacity text-white"
               >
                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path strokeLinecap="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -223,7 +220,7 @@ function Header({ announcementMessages }: HeaderProps) {
               {/* Icons row */}
               <div className="flex items-center gap-1 lg:gap-3 shrink-0">
                 {/* Mobile: Region + Wishlist + Account */}
-                <div className="flex items-center gap-1 lg:hidden" style={{ color: '#fff' }}>
+                <div className="flex items-center gap-1 lg:hidden text-white">
                   <button
                     type="button"
                     onClick={() => setRegionOpen(true)}
@@ -260,7 +257,7 @@ function Header({ announcementMessages }: HeaderProps) {
                 </div>
 
                 {/* Desktop: Wishlist + Account + Cart */}
-                <div className="hidden lg:flex items-center gap-3" style={{ color: '#fff' }}>
+                <div className="hidden lg:flex items-center gap-3 text-white">
                   <button
                     type="button"
                     onClick={() => setRegionOpen(true)}
@@ -305,8 +302,7 @@ function Header({ announcementMessages }: HeaderProps) {
                 <button
                   type="button"
                   onClick={() => setCartOpen(true)}
-                  className="relative flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity"
-                  style={{ color: '#fff' }}
+                  className="relative flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity text-white"
                   aria-label={`Open cart, ${cart.count} items`}
                   data-testid="cart-button"
                 >
@@ -314,7 +310,7 @@ function Header({ announcementMessages }: HeaderProps) {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                   </svg>
                   {cart.count > 0 && (
-                    <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-white text-[#0071DC] text-[10px] font-bold rounded-full px-1">
+                    <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-white text-ember text-[10px] font-bold rounded-full px-1">
                       {cart.count}
                     </span>
                   )}
@@ -329,8 +325,7 @@ function Header({ announcementMessages }: HeaderProps) {
         <nav
           id="header-bottom"
           aria-label="Categories"
-          className="hidden lg:block"
-          style={{ backgroundColor: '#0071DC', color: '#fff' }}
+          className="hidden lg:block bg-ember-deep text-white"
         >
           <div className="container-fluid">
             <div className="flex items-center h-[56px] gap-6">

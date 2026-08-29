@@ -4,6 +4,7 @@ import { localizeProducts } from '@/lib/server-translate';
 import { API_BASE } from '@/lib/api';
 import { buildMetadata, organizationJsonLd, webSiteJsonLd } from '@/lib/seo';
 import { regionPromoContent } from '@/lib/region-content';
+import { promoPalette } from '@/design-system/tokens';
 
 import { ProductCard } from '@/components/commerce/ProductCard';
 import {
@@ -11,15 +12,11 @@ import {
   TrustBar,
   VendorSpotlight,
   CampaignHero,
-  BrandLogos,
   TabbedProductCarousel,
-  CouponBanner,
-  ThreeColumnBanners,
-  CashBackBanner,
   CategoryBannerWithProducts,
-  PromoBlockWithImages,
-  BlogPosts,
+  DealsOfTheDay,
   Testimonials,
+  type DealCardData,
 } from '@/components/home/Sections';
 
 export const revalidate = 60;
@@ -39,6 +36,61 @@ export async function generateMetadata(_props: PageProps): Promise<Metadata> {
     ogImage: '/banners/bannerOne.jpg',
   });
   return meta;
+}
+
+interface RawDealVariant {
+  product: {
+    id: string;
+    name: string;
+    slug: string;
+    thumbnail?: string | null;
+    basePriceMinorUnits: number;
+    currencyCode: string;
+    rating: number;
+  };
+}
+
+interface RawDeal {
+  id: string;
+  name: string;
+  type: string;
+  value: number;
+  maxDiscount?: number | null;
+  endsAt: string;
+  variants: RawDealVariant[];
+}
+
+function dealsToCards(deals: Array<Record<string, unknown>>): DealCardData[] {
+  const cards: DealCardData[] = [];
+  for (const raw of deals as unknown as RawDeal[]) {
+    const label = raw.type === 'PERCENTAGE_OFF' ? `${raw.value}% OFF` : 'DEAL';
+    for (const { product } of raw.variants) {
+      const listPriceMinorUnits = product.basePriceMinorUnits;
+      let discount = 0;
+      if (raw.type === 'PERCENTAGE_OFF') {
+        discount = Math.round((listPriceMinorUnits * raw.value) / 100);
+        if (raw.maxDiscount) discount = Math.min(discount, raw.maxDiscount);
+      } else if (raw.type === 'FIXED_AMOUNT') {
+        discount = raw.value * 100;
+      }
+      const priceMinorUnits = Math.max(0, listPriceMinorUnits - discount);
+      cards.push({
+        id: `${raw.id}-${product.id}`,
+        slug: product.slug,
+        productId: product.id,
+        productName: product.name,
+        image: product.thumbnail ?? undefined,
+        priceMinorUnits,
+        listPriceMinorUnits,
+        currencyCode: product.currencyCode,
+        endsAt: raw.endsAt,
+        dealLabel: label,
+      });
+    }
+  }
+  return cards
+    .sort((a, b) => new Date(a.endsAt ?? 0).getTime() - new Date(b.endsAt ?? 0).getTime())
+    .slice(0, 8);
 }
 
 interface FeaturedProduct {
@@ -89,6 +141,7 @@ export default async function HomePage() {
   const { products, deals, vendors } = await fetchHome(regionKey);
   const localized = await localizeProducts(products.slice(0, 8), language);
   const promo = regionPromoContent(regionKey);
+  const dealCards = dealsToCards(deals);
 
   return (
     <div className="bg-white">
@@ -97,30 +150,19 @@ export default async function HomePage() {
 
       <h1 className="sr-only">Storegrill — Shop millions of products from verified vendors</h1>
 
-      {/* 1. Trust/USP Strip */}
+      {/* 1. Trust/USP strip */}
       <TrustBar freeShippingThreshold={promo.freeShippingThresholdMinorUnits} currency={promo.currency} />
 
-      {/* 2. Hero Banners */}
+      {/* 2. Hero */}
       <CampaignHero />
 
-      {/* 3. Brand Logo Carousel */}
-      <BrandLogos />
+      {/* 3. Category navigation — surfaces marketplace breadth immediately */}
+      <CategoryQuickNav />
 
-      {/* Percent pattern divider */}
-      <div className="w-full overflow-hidden leading-none" aria-hidden="true">
-        <img src="/patter-percent-gray.svg" alt="" className="w-full h-auto" />
-      </div>
+      {/* 4. Live deals with real countdowns (renders nothing if none are active) */}
+      <DealsOfTheDay deals={dealCards} />
 
-      {/* 4. Coupon Banner (Bevesi "Winter Sale" slot) */}
-      <CouponBanner
-        title="Summer Sale"
-        couponCode={promo.couponCode}
-        description={`Up to ${promo.couponDiscountPercent}% discount offers along with unlimited campaigns and deals`}
-        ctaLabel="Discover More"
-        ctaHref="/deals"
-      />
-
-      {/* 5. Limited Campaign: Tabbed Product Carousel */}
+      {/* 5. Merchandising carousel — New Arrivals / Best Sellers / Top Rated / On Sale */}
       <section className="py-8 md:py-10" aria-labelledby="products-heading">
         <div className="container-fluid">
           <TabbedProductCarousel
@@ -160,68 +202,15 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 6. Three-Column Promo Banners */}
-      <ThreeColumnBanners
-        items={[
-          {
-            href: '/products?category=electronics',
-            title: 'Where Innovation Meets Electronics',
-            subtitle: 'Only this week. Don\'t miss...',
-            description: 'Spark the Future Shop the Latest in Electronics',
-            cta: 'Shop Now',
-            image: '/banners/home4/banner-34.jpg',
-            bgColor: '#5F1616',
-          },
-          {
-            href: '/products?category=computers',
-            title: 'Your Gateway to Tech Excellence',
-            subtitle: 'Only This Week',
-            description: 'There Is No Sore It Will Not Heal, No Electronics We Cannot Fix',
-            cta: 'Shop Now',
-            image: '/banners/home4/banner-35.jpg',
-            bgColor: '#26525C',
-          },
-          {
-            href: '/products?category=electronics',
-            title: 'The Too Good To Hurry Electronics.',
-            subtitle: 'Only this week. Don\'t miss...',
-            description: 'Spark the Future Shop the Latest in Electronics',
-            cta: 'Shop Now',
-            image: '/banners/home4/banner-36.jpg',
-            bgColor: '#323E4D',
-          },
-        ]}
-      />
-
-      {/* 7. Cash-Back Text Banner */}
-      <CashBackBanner
-        title="Return Cash Back"
-        description={`Earn ${promo.cashbackPercent}% cash back on Storegrill. See if you're pre-approved with no credit risk.`}
-        ctaLabel="Discover More"
-        ctaHref="/payments"
-      />
-
-      {/* 8. Vendor Carousel */}
-      <VendorSpotlight
-        vendors={vendors.map(v => ({
-          storeName: String(v.storeName),
-          slug: String(v.slug),
-          rating: Number(v.rating || 0),
-          reviewCount: Number(v.reviewCount || 0),
-          logo: v.logo ? String(v.logo) : undefined,
-          description: v.description ? String(v.description) : undefined,
-        }))}
-      />
-
-      {/* 10. Category Banner + Product Grid */}
+      {/* 6. Category deep-dive: Mobile Phones & Tablets */}
       <CategoryBannerWithProducts
-        title="Elevating Tech Solutions, Every Step of the Way"
-        subtitle="Only this week. Don't miss..."
-        description="Electrify Your World. Unleash the Power of Technology!"
-        ctaLabel="Shop Now"
-        ctaHref="/products?category=electronics"
+        title="Mobile Phones & Tablets"
+        subtitle="Verified vendors · buyer protection included"
+        description="Flagship devices backed by Storegrill's 30-day returns and secure checkout."
+        ctaLabel="Shop mobile & tablets"
+        ctaHref="/products?category=mobiles"
         bannerImage="/banners/home4/banner-37.jpg"
-        bannerBg="#1a3a4a"
+        bannerBg={promoPalette.harbor}
         products={localized.slice(0, 6).map(p => ({
           id: p.id,
           name: p.name,
@@ -236,51 +225,19 @@ export default async function HomePage() {
         }))}
       />
 
-      {/* 11. Promo Block with Dual Images */}
-      <PromoBlockWithImages
-        leftImage={{ src: '/banners/home4/banner-38.jpg', alt: 'Electronics promo' }}
-        rightImage={{ src: '/banners/home4/banner-39.jpg', alt: 'Smart glasses' }}
-        title="For the ultimate electronic repair experience"
-        subtitle="Electronics Can Do."
-        description="Discover our wide range of electronics repair services and accessories. Quality guaranteed."
-        ctaLabel="Shop Now"
-        ctaHref="/products?category=electronics"
+      {/* 7. Vendor spotlight — the marketplace differentiator */}
+      <VendorSpotlight
+        vendors={vendors.map(v => ({
+          storeName: String(v.storeName),
+          slug: String(v.slug),
+          rating: Number(v.rating || 0),
+          reviewCount: Number(v.reviewCount || 0),
+          logo: v.logo ? String(v.logo) : undefined,
+          description: v.description ? String(v.description) : undefined,
+        }))}
       />
 
-      {/* 12. Product Categories Carousel */}
-      <CategoryQuickNav />
-
-      {/* 13. Latest Blog Posts */}
-      <BlogPosts
-        posts={[
-          {
-            id: '1',
-            title: 'Top 10 Gadgets You Need in 2026',
-            excerpt: 'From smart home devices to wearables, these are the must-have gadgets of the year.',
-            date: 'Aug 25, 2026',
-            image: '/banners/offers/wk16-block-Sony-TVC.png',
-            href: '/blog/top-gadgets-2026',
-          },
-          {
-            id: '2',
-            title: 'How to Choose the Right Laptop for Work',
-            excerpt: 'A comprehensive guide to picking the perfect laptop based on your workflow needs.',
-            date: 'Aug 22, 2026',
-            image: '/banners/laptops/wk16-block-New-Term-HP.png',
-            href: '/blog/choose-right-laptop',
-          },
-          {
-            id: '3',
-            title: 'Summer Tech Deals: What to Expect',
-            excerpt: 'A preview of the biggest tech deals coming this summer across all categories.',
-            date: 'Aug 18, 2026',
-            image: '/banners/offers/wk16-block-Samsung-S26-watch-GWP.jpeg',
-            href: '/blog/summer-tech-deals',
-          },
-        ]}
-      />
-
-      {/* 14. Testimonials */}
+      {/* 8. Social proof */}
       <Testimonials />
 
     </div>

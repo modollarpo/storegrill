@@ -134,7 +134,7 @@ export default async function ProductPage({ params }: PdpProps) {
                 reviewCount: product.reviewCount,
                 vendorName: product.vendor?.storeName,
                 slug: product.slug,
-                inStock: true,
+                inStock: (product.inventoryCount ?? 0) > 0,
               },
               regionKey
             )
@@ -151,7 +151,7 @@ export default async function ProductPage({ params }: PdpProps) {
       />
 
       <ProductDetailClient
-        product={{ ...product, inventoryCount: 25 }}
+        product={product}
         shipping={shipping}
         locale={language}
         tabs={{

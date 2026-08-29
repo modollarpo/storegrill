@@ -7,6 +7,7 @@ import { useCart } from '@/components/providers/CartContext';
 import { useRegion } from '@/components/providers/RegionContext';
 import { PriceDisplay } from '@/components/commerce/PriceDisplay';
 import { DEFAULT_REGIONS } from '@Storegrill/shared';
+import { API_BASE } from '@/lib/api';
 import { storefrontImage } from '@/lib/images';
 import { cn } from '@/lib/utils';
 
@@ -16,7 +17,8 @@ export default function CartPage() {
   const cart = useCart();
   const { regionKey } = useRegion();
   const [coupon, setCoupon] = useState('');
-  const [couponState, setCouponState] = useState<'idle' | 'open' | 'valid' | 'invalid'>('idle');
+  const [couponState, setCouponState] = useState<'idle' | 'open' | 'checking' | 'valid' | 'invalid'>(cart.appliedCoupon ? 'valid' : 'idle');
+  const [couponError, setCouponError] = useState('');
   const [payMethod, setPayMethod] = useState<'card' | 'credit'>('card');
 
   const regionConfig = DEFAULT_REGIONS.find(r => r.key === regionKey);
@@ -27,9 +29,44 @@ export default function CartPage() {
   const freeThreshold = zone?.freeShippingThresholdMinorUnits ?? 3500;
   const shipping = subtotal === 0 || subtotal >= freeThreshold ? 0 : (zone?.baseRateMinorUnits ?? 599);
   const taxRate = regionConfig?.taxRules[0]?.rate ?? 0;
-  const tax = Math.round(subtotal * taxRate);
-  const total = subtotal + shipping + tax;
+  const discount = Math.min(cart.appliedCoupon?.discountMinorUnits ?? 0, subtotal);
+  const tax = Math.round((subtotal - discount) * taxRate);
+  const total = Math.max(0, subtotal - discount) + shipping + tax;
   const toFreeShipping = freeThreshold - subtotal;
+
+  async function applyCoupon() {
+    setCouponState('checking');
+    setCouponError('');
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/deals/apply-coupon`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: coupon, regionKey, subtotalMinorUnits: subtotal }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCouponState('invalid');
+        setCouponError(data?.error?.message || 'Invalid promo code');
+        return;
+      }
+      cart.setAppliedCoupon({
+        code: data.coupon.code,
+        dealName: data.coupon.dealName,
+        discountMinorUnits: data.coupon.discountMinorUnits,
+      });
+      setCouponState('valid');
+    } catch {
+      setCouponState('invalid');
+      setCouponError('Could not validate this code right now — please try again');
+    }
+  }
+
+  function removeCoupon() {
+    cart.setAppliedCoupon(null);
+    setCoupon('');
+    setCouponState('idle');
+    setCouponError('');
+  }
 
   if (cart.items.length === 0) {
     return (
@@ -42,10 +79,10 @@ export default function CartPage() {
         <h1 className="text-3xl font-extrabold text-gray-900">Your basket is empty</h1>
         <p className="text-base text-gray-500 mt-3">Looking for inspiration? Browse our latest offers.</p>
         <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
-          <Link href="/deals" className="h-12 px-8 rounded-md bg-[#0071DC] text-white font-bold text-base hover:bg-[#005BBB] transition-colors inline-flex items-center">
+          <Link href="/deals" className="h-12 px-8 rounded-md bg-ember text-white font-bold text-base hover:bg-ember-dark transition-colors inline-flex items-center">
             Shop Deals
           </Link>
-          <Link href="/products" className="h-12 px-8 rounded-md border border-gray-300 text-gray-900 font-bold text-base hover:border-[#0071DC] hover:text-[#0071DC] transition-all inline-flex items-center">
+          <Link href="/products" className="h-12 px-8 rounded-md border border-gray-300 text-gray-900 font-bold text-base hover:border-ember hover:text-ember transition-all inline-flex items-center">
             Browse all products
           </Link>
         </div>
@@ -64,7 +101,7 @@ export default function CartPage() {
         {/* Free shipping progress bar */}
         {toFreeShipping > 0 && subtotal > 0 && (
           <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 flex items-center gap-4">
-            <svg className="w-5 h-5 text-[#0071DC] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>
+            <svg className="w-5 h-5 text-ember shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-gray-900">
                 Add <PriceDisplay amountMinorUnits={toFreeShipping} currencyCode={currency} size="sm" /> more for <strong className="text-green-600">FREE delivery</strong>
@@ -102,7 +139,7 @@ export default function CartPage() {
                             <Link href={`/products/${line.slug || line.productId}`} className="relative w-16 h-16 shrink-0 rounded-xs overflow-hidden border border-gray-200 bg-white">
                               {line.image && <Image src={storefrontImage(line.image) || '/product-placeholder.svg'} alt="" fill sizes="64px" className="object-contain p-1.5 mix-blend-multiply" />}
                             </Link>
-                            <Link href={`/products/${line.slug || line.productId}`} className="font-medium text-gray-900 hover:text-[#0071DC] hover:underline underline-offset-2">
+                            <Link href={`/products/${line.slug || line.productId}`} className="font-medium text-gray-900 hover:text-ember hover:underline underline-offset-2">
                               {line.name}
                             </Link>
                           </div>
@@ -116,7 +153,7 @@ export default function CartPage() {
                               type="button"
                               onClick={() => cart.setQuantity(line.productId, line.variantId, line.quantity - 1)}
                               aria-label="Decrease quantity"
-                              className="w-8 h-8 grid place-items-center font-bold hover:bg-white hover:text-[#0071DC] transition-colors"
+                              className="w-8 h-8 grid place-items-center font-bold hover:bg-white hover:text-ember transition-colors"
                             >
                               −
                             </button>
@@ -125,7 +162,7 @@ export default function CartPage() {
                               type="button"
                               onClick={() => cart.setQuantity(line.productId, line.variantId, Math.min(line.quantity + 1, line.stock ?? 99))}
                               aria-label="Increase quantity"
-                              className="w-8 h-8 grid place-items-center font-bold hover:bg-white hover:text-[#0071DC] transition-colors"
+                              className="w-8 h-8 grid place-items-center font-bold hover:bg-white hover:text-ember transition-colors"
                             >
                               +
                             </button>
@@ -179,7 +216,7 @@ export default function CartPage() {
                   checked={payMethod === 'credit'}
                   onChange={() => setPayMethod('credit')}
                   title="Spread the cost"
-                  description="Pay monthly from 24.9% APR representative"
+                  description="Pay-in-instalments options shown at checkout, subject to eligibility"
                 />
               </div>
             </div>
@@ -190,6 +227,13 @@ export default function CartPage() {
                 <SummaryRow label="Subtotal">
                   <PriceDisplay amountMinorUnits={subtotal} currencyCode={currency} size="sm" />
                 </SummaryRow>
+                {cart.appliedCoupon && discount > 0 && (
+                  <SummaryRow label={`Discount (${cart.appliedCoupon.code})`}>
+                    <span className="text-green-600 font-extrabold">
+                      −<PriceDisplay amountMinorUnits={discount} currencyCode={currency} size="sm" />
+                    </span>
+                  </SummaryRow>
+                )}
                 <SummaryRow label="Delivery">
                   {shipping === 0
                     ? <span className="text-green-600 font-extrabold">FREE</span>
@@ -218,14 +262,14 @@ export default function CartPage() {
               <div className="mt-6 space-y-3">
                 <Link
                   href="/checkout"
-                  className="flex items-center justify-center w-full h-13 py-3.5 bg-[#0071DC] text-white font-extrabold rounded-md hover:bg-[#005BBB] active:bg-[#004A9C] transition-colors gap-2 text-base"
+                  className="flex items-center justify-center w-full h-13 py-3.5 bg-ember text-white font-extrabold rounded-md hover:bg-ember-dark active:bg-ember-deep transition-colors gap-2 text-base"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                   Checkout securely
                 </Link>
                 <Link
                   href="/products"
-                  className="flex items-center justify-center w-full h-11 border border-gray-300 text-gray-900 font-bold rounded-md hover:border-[#0071DC] hover:text-[#0071DC] transition-all text-sm"
+                  className="flex items-center justify-center w-full h-11 border border-gray-300 text-gray-900 font-bold rounded-md hover:border-ember hover:text-ember transition-all text-sm"
                 >
                   Continue shopping
                 </Link>
@@ -239,38 +283,47 @@ export default function CartPage() {
                   onClick={() => setCouponState(s => s === 'idle' ? 'open' : 'idle')}
                 >
                   Add a promo code
-                  <span className={cn('text-gray-400 group-hover:text-[#0071DC] transition-colors text-lg font-bold', couponState !== 'idle' && 'text-[#0071DC]')}>
+                  <span className={cn('text-gray-400 group-hover:text-ember transition-colors text-lg font-bold', couponState !== 'idle' && 'text-ember')}>
                     {couponState !== 'idle' ? '−' : '+'}
                   </span>
                 </button>
                 {couponState !== 'idle' && (
                   <div className="mt-3 space-y-2">
-                    <div className="flex gap-2">
-                      <input
-                        value={coupon}
-                        onChange={e => setCoupon(e.target.value.toUpperCase())}
-                        placeholder="Enter promo code"
-                        className="input flex-1 h-10 text-sm border-gray-300 bg-white rounded-md focus:border-[#0071DC]"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setCouponState(/^[A-Z0-9-]{4,}$/.test(coupon) ? 'valid' : 'invalid')}
-                        className="h-10 px-5 shrink-0 rounded-md border border-gray-300 text-sm font-bold text-gray-900 hover:border-[#0071DC] hover:text-[#0071DC] transition-all"
-                      >
-                        Apply
-                      </button>
-                    </div>
-                    {couponState === 'valid' && (
-                      <p className="text-xs text-green-600 font-bold flex items-center gap-1">
-                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        Code accepted
-                      </p>
-                    )}
-                    {couponState === 'invalid' && coupon && (
-                      <p className="text-xs text-red-600 font-bold flex items-center gap-1">
-                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                        Invalid promo code
-                      </p>
+                    {cart.appliedCoupon ? (
+                      <div className="flex items-center justify-between gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2.5">
+                        <p className="text-xs font-bold text-green-700">
+                          ✓ {cart.appliedCoupon.dealName} applied ({cart.appliedCoupon.code})
+                        </p>
+                        <button type="button" onClick={removeCoupon} className="text-xs font-bold text-gray-500 hover:text-red-600 underline underline-offset-2 shrink-0">
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex gap-2">
+                          <input
+                            value={coupon}
+                            onChange={e => { setCoupon(e.target.value.toUpperCase()); setCouponState('open'); setCouponError(''); }}
+                            placeholder="Enter promo code"
+                            disabled={couponState === 'checking'}
+                            className="input flex-1 h-10 text-sm border-gray-300 bg-white rounded-md focus:border-ember disabled:opacity-60"
+                          />
+                          <button
+                            type="button"
+                            onClick={applyCoupon}
+                            disabled={!coupon.trim() || couponState === 'checking'}
+                            className="h-10 px-5 shrink-0 rounded-md border border-gray-300 text-sm font-bold text-gray-900 hover:border-ember hover:text-ember transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {couponState === 'checking' ? 'Checking…' : 'Apply'}
+                          </button>
+                        </div>
+                        {couponState === 'invalid' && (
+                          <p className="text-xs text-red-600 font-bold flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                            {couponError || 'Invalid promo code'}
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
@@ -305,14 +358,14 @@ function PayMethodOption({
       htmlFor={id}
       className={cn(
         'flex items-start gap-3 p-4 border-2 rounded-md cursor-pointer transition-all',
-        checked ? 'border-[#0071DC] bg-[#0071DC]/5 shadow-sm' : 'border-gray-200 hover:border-[#0071DC]'
+        checked ? 'border-ember bg-ember/5 shadow-sm' : 'border-gray-200 hover:border-ember'
       )}
     >
       <input
         id={id}
         type="radio"
         name={name}
-        className="mt-0.5 w-4 h-4 accent-[#0071DC] shrink-0"
+        className="mt-0.5 w-4 h-4 accent-ember shrink-0"
         checked={checked}
         onChange={onChange}
       />

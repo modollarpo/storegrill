@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../index.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
-import { createMoney, formatMoney } from '@storegrill/shared';
+import { createMoney, formatMoney } from '@Storegrill/shared';
 
 const router = Router();
 
@@ -36,7 +36,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     return res.json({ cart: { items: [], totalItems: 0 } });
   }
 
-  const items = cart.items.map(item => ({
+  const items = cart.items.map((item: any) => ({
     id: item.id,
     productId: item.productId,
     variantId: item.variantId,
@@ -61,13 +61,13 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     currencyCode: item.product.currencyCode,
   }));
 
-  const subtotal = items.reduce((sum, item) => sum + item.lineTotalMinorUnits, 0);
+  const subtotal = items.reduce((sum: any, item: any) => sum + item.lineTotalMinorUnits, 0);
 
   res.json({
     cart: {
       id: cart.id,
       items,
-      totalItems: items.reduce((sum, item) => sum + item.quantity, 0),
+      totalItems: items.reduce((sum: any, item: any) => sum + item.quantity, 0),
       subtotalMinorUnits: subtotal,
       currencyCode: items[0]?.currencyCode || 'USD',
     },

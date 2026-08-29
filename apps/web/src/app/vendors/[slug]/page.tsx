@@ -56,7 +56,7 @@ export default async function VendorStorefront({ params }: VendorPageProps) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd()) }} />
       <Breadcrumb items={[{ name: 'Vendors', path: '/vendors' }, { name: String(vendor.storeName), path: '' }]} regionKey={regionKey} />
 
-      <section className="relative overflow-hidden rounded-2xl bg-text-primary p-8 md:p-12 mb-10 shadow-elevated">
+      <section className="relative overflow-hidden rounded-2xl bg-text-primary p-8 md:p-12 mb-10 shadow-xl">
         <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/40 to-transparent" />
         <span aria-hidden="true" className="absolute -right-16 -top-16 w-72 h-72 rounded-full bg-action-primary/30 blur-3xl mix-blend-screen" />
         
@@ -70,7 +70,7 @@ export default async function VendorStorefront({ params }: VendorPageProps) {
           </h1>
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium text-white/80">
             <span className="flex items-center gap-1.5">
-              <svg className="w-4 h-4 text-feedback-warning-fg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              <svg className="w-4 h-4 text-feedback-warning" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               {Number(vendor.rating || 0).toFixed(1)} ({Number(vendor.reviewCount || 0).toLocaleString()} reviews)
             </span>
             {products.length > 0 && <span className="flex items-center gap-1.5"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg> {products.length.toLocaleString()} products</span>}

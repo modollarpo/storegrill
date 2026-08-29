@@ -99,7 +99,7 @@ export default async function DealsPage() {
         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" role="list">
           {deals.map(deal => (
             <li key={deal.id}>
-              <article className="group relative h-full flex flex-col bg-surface border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-elevated hover:border-action-primary transition-all duration-300">
+              <article className="group relative h-full flex flex-col bg-surface border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-card-hover hover:border-action-primary transition-all duration-300">
                 {/* Deal image band */}
                 {deal.image && (
                   <div className="relative aspect-[16/7] w-full bg-surface-sunken overflow-hidden">
@@ -153,7 +153,7 @@ Shop the deal →
       )}
 
       {/* Promotional hero banner */}
-      <section className="mt-14 rounded-2xl overflow-hidden relative h-64 bg-text-primary shadow-elevated" aria-label="Deal of the day promo">
+      <section className="mt-14 rounded-2xl overflow-hidden relative h-64 bg-text-primary shadow-xl" aria-label="Deal of the day promo">
         <Image
           src="/banners/bannerTwo.jpg"
           alt=""

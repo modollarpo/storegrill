@@ -251,10 +251,7 @@ export function RangeSlider({ min, max, minValue, maxValue, symbol, onChange }: 
   const pctHi = ((localMax - min) / Math.max(1, max - min)) * 100;
 
   function format(v: number): string {
-    if (max >= 100000000) return `${symbol}${Math.round(v / 100000000)}Cr`;
-    if (max >= 10000000) return `${symbol}${Math.round(v / 10000000)}M`;
-    if (max >= 100000) return `${symbol}${Math.round(v / 100000)}L`;
-    return `${symbol}${Math.round(v / 100)}`;
+    return `${symbol}${Math.round(v / 100).toLocaleString()}`;
   }
 
   function commit() {

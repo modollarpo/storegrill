@@ -1,4 +1,4 @@
-import { createMoney, roundUpTo99 } from '@storegrill/shared';
+import { createMoney, roundUpTo99 } from '@Storegrill/shared';
 
 export const COSTWAY_FEED_URL =
   'https://www.costway.co.uk/media/feed/costway_uk_dropship_products.csv';

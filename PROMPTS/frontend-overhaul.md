@@ -39,9 +39,14 @@ grey canvas, dense utilitarian commerce UI, strong single brand color, flat card
   warning #B45309, info #1954B8. Errors are NEVER brand-colored.
 - Neutrals: charcoal text scale (#1c1c1c → #a9adaf), surfaces white/#f3f3f3 canvas/
   #EDEDED sunken, borders #e0e0e0 / strong #c9c9c9.
-- Type: system sans stack (-apple-system, Segoe UI, Roboto, Helvetica Neue, Arial).
-  JetBrains Mono only for code/IDs. Fluid type scale, min body 14px desktop,
-  16px forms (prevents iOS zoom).
+- Type: Outfit (self-hosted variable font, `@fontsource-variable/outfit`,
+  weights 100–900, subset latin + latin-ext, `font-display: swap`). Self-hosted
+  rather than Google Fonts CDN: zero external request at runtime (Google Fonts'
+  CDN is a documented GDPR concern for EU regions) and zero network dependency
+  at build time. Falls back to system sans stack (-apple-system, Segoe UI,
+  Roboto, Helvetica Neue, Arial) if the font asset fails to load.
+  JetBrains Mono only for code/IDs (system monospace stack fallback).
+  Fluid type scale, min body 14px desktop, 16px forms (prevents iOS zoom).
 - Radii: 4px everywhere (xs–lg). 6px max for oversized surfaces. No pills except
   true chip/badge contexts where a pill is semantically intentional.
 - Elevation policy: flat by default. Borders over shadows. Shadows reserved for
@@ -125,7 +130,8 @@ Every interactive component ships with:
 - Route JS ≈200KB gz initial; Server Components by default, `'use client'`
   islands only.
 - AVIF/WebP, hero preload, everything else lazy, banner art ≤120KB.
-- System font stack = zero webfont cost; explicit media dimensions everywhere;
+- Outfit self-hosted as a variable font (single file covers all weights,
+  no per-weight requests); explicit media dimensions everywhere;
   `tabular-nums` on all dynamic numbers.
 
 ## Responsive

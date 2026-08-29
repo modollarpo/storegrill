@@ -11,6 +11,7 @@ import 'swiper/css/pagination';
 import { cn } from '@/lib/utils';
 import { storefrontImage } from '@/lib/images';
 import { ProductCard, type ProductCardData } from '@/components/commerce/ProductCard';
+import { promoPalette } from '@/design-system/tokens';
 
 export interface QuickNavItem {
   name: string;
@@ -121,8 +122,8 @@ export function TabbedProductCarousel({ tabs }: { tabs: TabbedProductTab[] }) {
             className={cn(
               'px-5 py-3 text-sm font-bold border-b-2 transition-colors',
               i === active
-                ? 'border-[#0071DC] text-[#0071DC]'
-                : 'border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-200-strong'
+                ? 'border-ember text-ember'
+                : 'border-transparent text-gray-500 hover:text-gray-900 hover:border-border-strong'
             )}
           >
             {tab.label}
@@ -182,7 +183,7 @@ export function FeaturedCollections({ collections }: { collections: FeaturedColl
           {collections.map(col => (
             <div key={col.title} className="rounded-xs border border-gray-200 bg-white p-6 md:p-8">
               <div className="flex items-center gap-5 mb-8">
-                <span className="w-16 h-16 rounded-full grid place-items-center shrink-0" style={{ backgroundColor: '#dbeafe' }}>
+                <span className="w-16 h-16 rounded-full grid place-items-center shrink-0 bg-ember-pale">
                   <Image src={col.icon} alt="" width={38} height={38} className="rounded-full relative z-10" />
                 </span>
                 <div className="min-w-0 flex-1">
@@ -196,7 +197,7 @@ export function FeaturedCollections({ collections }: { collections: FeaturedColl
                     key={tile.src}
                     href={tile.href}
                     aria-label={tile.label}
-                    className="group block overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0071DC]"
+                    className="group block overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-ember"
                   >
                     <span className={`relative block ${col.aspect ?? 'aspect-[3/2]'} bg-gray-50 overflow-hidden`}>
                       <Image
@@ -207,7 +208,7 @@ export function FeaturedCollections({ collections }: { collections: FeaturedColl
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     </span>
-                    <span className="flex items-center min-h-[64px] bg-white px-4 py-3 text-sm font-bold leading-snug text-gray-900 group-hover:text-[#0071DC] transition-colors">
+                    <span className="flex items-center min-h-[64px] bg-white px-4 py-3 text-sm font-bold leading-snug text-gray-900 group-hover:text-ember transition-colors">
                       {tile.label}
                     </span>
                   </Link>
@@ -235,7 +236,7 @@ export interface PromoSliderProps {
   tiles: PromoTile[];
 }
 
-export function PromoSlider({ id, heading, subtitle, background = '#ffffff', tiles }: PromoSliderProps) {
+export function PromoSlider({ id, heading, subtitle, background = 'var(--color-surface)', tiles }: PromoSliderProps) {
   const scroller = useRef<HTMLUListElement>(null);
 
   function scrollTiles(dir: 1 | -1) {
@@ -287,7 +288,7 @@ className="border-b border-gray-200 py-8 md:py-12"
                 <Link
                   href={tile.href}
                   aria-label={tile.label}
-                  className="group block overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0071DC] shadow-sm hover:shadow-md transition-shadow"
+                  className="group block overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-ember shadow-sm hover:shadow-md transition-shadow"
                 >
                   <span className="relative block aspect-[510/440] bg-gray-50 overflow-hidden">
                     <Image
@@ -298,7 +299,7 @@ className="border-b border-gray-200 py-8 md:py-12"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </span>
-                  <span className="flex items-center justify-center min-h-[56px] bg-white px-4 py-3 text-center text-sm font-bold leading-snug text-gray-900 group-hover:text-[#0071DC] transition-colors">
+                  <span className="flex items-center justify-center min-h-[56px] bg-white px-4 py-3 text-center text-sm font-bold leading-snug text-gray-900 group-hover:text-ember transition-colors">
                     {tile.label}
                   </span>
                 </Link>
@@ -347,21 +348,21 @@ const CAMPAIGN_TILES = {
     cta: 'Shop Now',
     image: '/banners/hero_campaign/banner-07.jpg',
     timer: true,
-    bgColor: '#584F46',
+    bgColor: promoPalette.umber,
   },
   topLeft: {
     href: '/payments',
     title: 'We Will Take You Anywhere',
     subtitle: 'The Ideal Electronics.',
     image: '/banners/hero_campaign/banner-08.jpg',
-    bgColor: '#6C597C',
+    bgColor: promoPalette.plum,
   },
   topRight: {
     href: '/shipping',
     title: 'Micro Electrons Are What We Do',
     subtitle: 'Regular And Stabler.',
     image: '/banners/hero_campaign/banner-09.jpg',
-    bgColor: '#6C597C',
+    bgColor: promoPalette.plum,
   },
   bottom: {
     href: '/products',
@@ -369,7 +370,7 @@ const CAMPAIGN_TILES = {
     subtitle: 'Order Of The Circuits',
     description: 'Discover the latest in tech. Shop new arrivals, exclusive deals, and more.',
     image: '/banners/hero_campaign/banner-10.jpg',
-    bgColor: '#746350',
+    bgColor: promoPalette.clay,
   },
 } as const;
 
@@ -378,7 +379,7 @@ function CampaignCard({ tile, large, small }: { tile: CampaignTile; large?: bool
     <Link
       href={tile.href}
       aria-label={tile.title}
-      className={`group block relative overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0071DC] ${small ? '' : 'h-full'}`}
+      className={`group block relative overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-ember ${small ? '' : 'h-full'}`}
     >
       <span className={`relative block overflow-hidden ${large ? 'aspect-[4/3] md:aspect-[3/2]' : small ? 'aspect-square' : 'h-full'}`} style={{ backgroundColor: tile.bgColor }}>
         <Image
@@ -542,66 +543,6 @@ export function CampaignHero() {
   );
 }
 
-export const BRAND_LOGOS = [
-  { src: '/banners/brand_logos/logo-02.png', alt: 'Brand', href: '/products' },
-  { src: '/banners/brand_logos/logo-03.png', alt: 'Brand', href: '/products' },
-  { src: '/banners/brand_logos/logo-04.png', alt: 'Brand', href: '/products' },
-  { src: '/banners/brand_logos/logo-05.png', alt: 'Brand', href: '/products' },
-  { src: '/banners/brand_logos/logo-06.png', alt: 'Brand', href: '/products' },
-  { src: '/banners/brand_logos/logo-07.png', alt: 'Brand', href: '/products' },
-  { src: '/banners/brand_logos/logo-08 (1).png', alt: 'Brand', href: '/products' },
-] as const;
-
-const TRIPLE_LOGOS = [...BRAND_LOGOS, ...BRAND_LOGOS, ...BRAND_LOGOS];
-
-export function BrandLogos() {
-  return (
-    <section aria-label="Brand partners" className="border-b border-gray-200 bg-white overflow-hidden">
-      <div className="py-5 md:py-6">
-        <div className="flex w-max animate-marquee hover:[animation-play-state:paused]" style={{ animationDuration: '90s' }}>
-          <div className="flex gap-10 md:gap-14 pr-10 md:pr-14 shrink-0">
-            {TRIPLE_LOGOS.map((logo, i) => (
-              <Link
-                key={`a-${i}`}
-                href={logo.href}
-                aria-label={logo.alt}
-                className="shrink-0 flex items-center justify-center h-12 md:h-16 opacity-50 hover:opacity-100 transition-opacity"
-              >
-                <Image
-                  src={logo.src}
-                  alt={logo.alt}
-                  width={160}
-                  height={64}
-                  className="h-10 md:h-14 w-auto object-contain"
-                />
-              </Link>
-            ))}
-          </div>
-          <div className="flex gap-10 md:gap-14 pr-10 md:pr-14 shrink-0" aria-hidden="true">
-            {TRIPLE_LOGOS.map((logo, i) => (
-              <Link
-                key={`b-${i}`}
-                href={logo.href}
-                tabIndex={-1}
-                aria-hidden="true"
-                className="shrink-0 flex items-center justify-center h-12 md:h-16 opacity-50 hover:opacity-100 transition-opacity"
-              >
-                <Image
-                  src={logo.src}
-                  alt=""
-                  width={160}
-                  height={64}
-                  className="h-10 md:h-14 w-auto object-contain"
-                />
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 const CATEGORY_IMAGES = [
   { name: 'Mobiles', slug: 'mobiles', image: '/banners/category/top-cat-hp-mobile.png' },
   { name: 'Laptops', slug: 'computers', image: '/banners/category/top-cat-hp-laptops.png' },
@@ -657,7 +598,7 @@ export function CategoryQuickNav() {
                   aria-label={cat.name}
                   className="group block w-[120px] md:w-[140px] text-center"
                 >
-                  <span className="relative block w-[120px] h-[120px] md:w-[140px] md:h-[140px] rounded-full overflow-hidden border border-gray-200 bg-gray-50 mx-auto mb-2 transition-all group-hover:border-[#0071DC] group-hover:shadow-md">
+                  <span className="relative block w-[120px] h-[120px] md:w-[140px] md:h-[140px] rounded-full overflow-hidden border border-gray-200 bg-gray-50 mx-auto mb-2 transition-all group-hover:border-ember group-hover:shadow-md">
                     <Image
                       src={cat.image}
                       alt=""
@@ -666,7 +607,7 @@ export function CategoryQuickNav() {
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   </span>
-                  <span className="block text-xs md:text-sm font-bold text-gray-900 group-hover:text-[#0071DC] transition-colors leading-tight">
+                  <span className="block text-xs md:text-sm font-bold text-gray-900 group-hover:text-ember transition-colors leading-tight">
                     {cat.name}
                   </span>
                 </Link>
@@ -695,109 +636,6 @@ export function CategoryQuickNav() {
   );
 }
 
-export interface CouponBannerProps {
-  title: string;
-  couponCode: string;
-  description: string;
-  ctaLabel: string;
-  ctaHref: string;
-}
-
-export function CouponBanner({ title, couponCode, description, ctaLabel, ctaHref }: CouponBannerProps) {
-  return (
-    <section className="bg-gray-50 border-b border-gray-200">
-      <div className="container-fluid py-10 md:py-14">
-        <div className="relative flex flex-col items-center text-center gap-4 px-6 py-10 md:py-12 rounded-lg overflow-hidden bg-white border border-gray-200">
-          <span className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(45deg, currentColor 0, currentColor 1px, transparent 1px, transparent 12px)', backgroundSize: '20px 20px' }} aria-hidden="true" />
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 relative z-10">{title}</h2>
-          <div className="inline-flex items-center gap-3 relative z-10">
-            <span className="px-4 py-2 bg-[#0071DC] text-white font-bold text-lg rounded-md tracking-wide">{couponCode}</span>
-          </div>
-          <p className="text-gray-500 max-w-lg relative z-10">{description}</p>
-          <Link href={ctaHref} className="relative z-10 inline-flex items-center gap-2 px-4 h-[38px] text-[14px] font-semibold text-[#0071DC] border border-[#0071DC] bg-transparent rounded-xs hover:bg-[#0071DC] hover:text-white transition-colors">
-            {ctaLabel}
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export interface ThreeColumnBannerItem {
-  href: string;
-  title: string;
-  subtitle?: string;
-  description?: string;
-  cta?: string;
-  image: string;
-  bgColor: string;
-}
-
-export function ThreeColumnBanners({ items }: { items: ThreeColumnBannerItem[] }) {
-  return (
-    <section className="border-b border-gray-200">
-      <div className="container-fluid py-8 md:py-10">
-        <div className="grid md:grid-cols-3 gap-4 md:gap-5">
-          {items.map(item => (
-            <Link
-              key={item.title}
-              href={item.href}
-              aria-label={item.title}
-              className="group block relative overflow-hidden rounded-xs h-[260px] md:h-[300px]"
-              style={{ backgroundColor: item.bgColor }}
-            >
-              <Image
-                src={item.image}
-                alt={item.title}
-                fill
-                sizes="(max-width:768px) 100vw, 33vw"
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <span className="absolute inset-0 flex flex-col justify-center p-6 md:p-8 text-white">
-                {item.subtitle && <span className="text-sm font-medium mb-2">{item.subtitle}</span>}
-                <span className="text-xl md:text-2xl font-bold tracking-tight leading-tight max-w-[80%]">{item.title}</span>
-                {item.description && <span className="text-sm mt-2 max-w-xs opacity-90">{item.description}</span>}
-                {item.cta && (
-                  <span className="inline-flex w-fit items-center mt-4 pb-0.5 border-b border-current text-sm font-semibold text-white transition-all">
-                    {item.cta}
-                  </span>
-                )}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export interface CashBackBannerProps {
-  title: string;
-  description: string;
-  ctaLabel: string;
-  ctaHref: string;
-}
-
-export function CashBackBanner({ title, description, ctaLabel, ctaHref }: CashBackBannerProps) {
-  return (
-    <section className="bg-white border-b border-gray-200">
-      <div className="container-fluid py-10 md:py-14">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-          <div className="max-w-xl">
-            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-2">{title}</h2>
-            <p className="text-gray-500">{description}</p>
-          </div>
-          <Link href={ctaHref} className="shrink-0 inline-flex items-center gap-2 px-3 h-[32px] text-[13px] font-semibold text-[#0071DC] border border-[#0071DC] bg-transparent rounded-xs hover:bg-[#0071DC] hover:text-white transition-colors">
-            {ctaLabel}
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export interface CategoryBannerWithProductsProps {
   title: string;
   subtitle?: string;
@@ -820,7 +658,7 @@ export function CategoryBannerWithProducts({ title, subtitle, description, ctaLa
               {subtitle && <span className="text-sm font-medium mb-1">{subtitle}</span>}
               <span className="text-xl md:text-2xl font-bold tracking-tight leading-tight max-w-[85%]">{title}</span>
               {description && <span className="text-sm mt-2 max-w-xs opacity-90">{description}</span>}
-              <span className="inline-flex w-fit items-center mt-4 px-5 py-2.5 bg-white text-gray-900 text-sm font-semibold rounded-xs shadow-md group-hover:bg-[#111827] group-hover:text-white transition-all">
+              <span className="inline-flex w-fit items-center mt-4 px-5 py-2.5 bg-white text-gray-900 text-sm font-semibold rounded-xs shadow-md group-hover:bg-charcoal group-hover:text-white transition-all">
                 {ctaLabel}
               </span>
             </span>
@@ -830,89 +668,6 @@ export function CategoryBannerWithProducts({ title, subtitle, description, ctaLa
               <ProductCard key={product.id} product={{ ...product, vendor: product.vendor ?? undefined }} />
             ))}
           </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export interface PromoBlockImage {
-  src: string;
-  alt: string;
-}
-
-export interface PromoBlockWithImagesProps {
-  leftImage: PromoBlockImage;
-  rightImage: PromoBlockImage;
-  title: string;
-  subtitle?: string;
-  description?: string;
-  ctaLabel: string;
-  ctaHref: string;
-}
-
-export function PromoBlockWithImages({ leftImage, rightImage, title, subtitle, description, ctaLabel, ctaHref }: PromoBlockWithImagesProps) {
-  return (
-    <section className="border-b border-gray-200">
-      <div className="container-fluid py-8 md:py-10">
-        <div className="grid md:grid-cols-[1fr_2fr_1fr] gap-4 md:gap-6 items-center">
-          <div className="relative aspect-[3/4] rounded-xs overflow-hidden hidden md:block">
-            <Image src={leftImage.src} alt={leftImage.alt} fill sizes="25vw" className="object-cover" />
-          </div>
-          <div className="flex flex-col items-center text-center gap-4 px-4 py-8">
-            {subtitle && <span className="text-sm font-medium text-gray-500">{subtitle}</span>}
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">{title}</h2>
-            {description && <p className="text-gray-500 max-w-md">{description}</p>}
-            <Link href={ctaHref} className="inline-flex items-center gap-2 px-6 py-3 bg-[#0071DC] text-white font-bold text-sm rounded-md hover:bg-[#005BBB] transition-colors">
-              {ctaLabel}
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-            </Link>
-          </div>
-          <div className="relative aspect-[3/4] rounded-xs overflow-hidden hidden md:block">
-            <Image src={rightImage.src} alt={rightImage.alt} fill sizes="25vw" className="object-cover" />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export interface BlogPost {
-  id: string;
-  title: string;
-  excerpt: string;
-  date: string;
-  image?: string;
-  href: string;
-}
-
-export function BlogPosts({ posts }: { posts: BlogPost[] }) {
-  if (posts.length === 0) return null;
-  return (
-    <section className="border-b border-gray-200">
-      <div className="container-fluid py-10 md:py-12">
-        <div className="flex items-end justify-between mb-6">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Our News</h2>
-            <p className="text-sm text-gray-500 mt-1">Some of the new products arriving this week</p>
-          </div>
-          <Link href="/blog" className="text-sm font-bold text-[#0071DC] hover:underline underline-offset-4">View All Posts</Link>
-        </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {posts.map(post => (
-            <Link key={post.id} href={post.href} className="group block rounded-xs border border-gray-200 bg-white overflow-hidden hover:border-[#0071DC] hover:shadow-md transition-all">
-              {post.image && (
-                <span className="relative block aspect-[16/10] overflow-hidden">
-                  <Image src={post.image} alt={post.title} fill sizes="(max-width:640px) 100vw, (max-width:1024px) 50vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                </span>
-              )}
-              <span className="flex flex-col p-5">
-                <span className="text-xs text-gray-400 font-medium">{post.date}</span>
-                <span className="text-base font-bold text-gray-900 group-hover:text-[#0071DC] transition-colors mt-1 line-clamp-2">{post.title}</span>
-                <span className="text-sm text-gray-500 mt-2 line-clamp-2">{post.excerpt}</span>
-              </span>
-            </Link>
-          ))}
         </div>
       </div>
     </section>
@@ -959,7 +714,7 @@ function Countdown({ endsAt }: { endsAt?: string }) {
   const time = useCountdown(endsAt);
   if (!time) return null;
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#0071DC] rounded-xs px-2 py-1 tabular-nums mt-2" role="timer" aria-label={`Deal ends in ${time.hours} hours ${time.minutes} minutes`}>
+    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-ember rounded-xs px-2 py-1 tabular-nums mt-2" role="timer" aria-label={`Deal ends in ${time.hours} hours ${time.minutes} minutes`}>
       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
       {time.hours}:{time.minutes}:{time.seconds}
     </span>
@@ -998,10 +753,10 @@ export function DealsOfTheDay({ deals }: { deals: DealCardData[] }) {
         <header className="flex items-center justify-between mb-6">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Deals Of The Day</h2>
           <div className="hidden sm:flex gap-3">
-            <button type="button" onClick={() => scroll(-1)} aria-label="Scroll deals left" className="w-10 h-10 grid place-items-center rounded-full bg-white border border-gray-200 shadow-sm hover:border-[#0071DC] hover:text-[#0071DC] transition-all">
+            <button type="button" onClick={() => scroll(-1)} aria-label="Scroll deals left" className="w-10 h-10 grid place-items-center rounded-full bg-white border border-gray-200 shadow-sm hover:border-ember hover:text-ember transition-all">
               <svg className="w-5 h-5 icon-directional" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
             </button>
-            <button type="button" onClick={() => scroll(1)} aria-label="Scroll deals right" className="w-10 h-10 grid place-items-center rounded-full bg-white border border-gray-200 shadow-sm hover:border-[#0071DC] hover:text-[#0071DC] transition-all">
+            <button type="button" onClick={() => scroll(1)} aria-label="Scroll deals right" className="w-10 h-10 grid place-items-center rounded-full bg-white border border-gray-200 shadow-sm hover:border-ember hover:text-ember transition-all">
               <svg className="w-5 h-5 icon-directional" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
             </button>
           </div>
@@ -1011,16 +766,16 @@ export function DealsOfTheDay({ deals }: { deals: DealCardData[] }) {
             const savingMinorUnits = deal.listPriceMinorUnits && deal.listPriceMinorUnits > deal.priceMinorUnits ? deal.listPriceMinorUnits - deal.priceMinorUnits : 0;
             return (
               <li key={deal.id} className="snap-start shrink-0 w-[75%] sm:w-[calc(33.333%-12px)] lg:w-[calc(25%-12px)]">
-                <Link href={deal.productId ? `/products/${deal.productId}` : '/deals'} className="group block bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-[#0071DC] transition-all h-full flex flex-col" suppressHydrationWarning>
+                <Link href={deal.productId ? `/products/${deal.productId}` : '/deals'} className="group block bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-ember transition-all h-full flex flex-col" suppressHydrationWarning>
                   <div className="relative w-full aspect-square bg-white mb-3 shrink-0 rounded-md overflow-hidden">
                     {deal.image && (
                       <Image src={storefrontImage(deal.image) || '/product-placeholder.svg'} alt="" fill sizes="240px" className="object-contain p-2 group-hover:scale-105 transition-transform duration-500" />
                     )}
                     <span className="absolute top-2 left-2">
-                      <span className="inline-flex items-center rounded-sm bg-[#0071DC] text-white text-[11px] font-bold px-2 py-1 uppercase tracking-wider">{deal.dealLabel}</span>
+                      <span className="inline-flex items-center rounded-sm bg-ember text-white text-[11px] font-bold px-2 py-1 uppercase tracking-wider">{deal.dealLabel}</span>
                     </span>
                   </div>
-                  <p className="text-sm font-bold line-clamp-2 leading-snug text-gray-900 group-hover:text-[#0071DC] transition-colors mb-3">{deal.productName}</p>
+                  <p className="text-sm font-bold line-clamp-2 leading-snug text-gray-900 group-hover:text-ember transition-colors mb-3">{deal.productName}</p>
                   
                   <div className="mt-auto">
                     <span className="block text-xl font-extrabold text-gray-900" suppressHydrationWarning>
@@ -1031,7 +786,7 @@ export function DealsOfTheDay({ deals }: { deals: DealCardData[] }) {
                         <span className="text-xs text-gray-400 line-through" suppressHydrationWarning>
                           Was {new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(deal.listPriceMinorUnits / 100)}
                         </span>
-                        <span className="text-xs text-[#0071DC] font-bold bg-[#0071DC]/10 px-1.5 py-0.5 rounded-sm" suppressHydrationWarning>
+                        <span className="text-xs text-ember font-bold bg-ember/10 px-1.5 py-0.5 rounded-sm" suppressHydrationWarning>
                           Save {new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(savingMinorUnits / 100)}
                         </span>
                       </div>
@@ -1087,17 +842,17 @@ export function TrustBar({ freeShippingThreshold, currency }: { freeShippingThre
   ];
 
   return (
-    <section aria-label="Why shop with Storegrill" className="bg-[#F0F9FF] border-b border-gray-200">
+    <section aria-label="Why shop with Storegrill" className="bg-ember-pale border-b border-gray-200">
       <div className="container-fluid py-1.5 md:py-2">
       <ul className="grid grid-cols-2 md:grid-cols-4 gap-0.5 md:gap-1" role="list">
         {items.map(item => (
           <li key={item.title} className="flex items-center gap-2 py-1">
-            <span aria-hidden="true" className="w-8 h-8 shrink-0 grid place-items-center rounded-xs text-[#075985]">
+            <span aria-hidden="true" className="w-8 h-8 shrink-0 grid place-items-center rounded-xs text-ember-deep">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                 <path strokeLinecap="round" strokeLinejoin="round" d={item.iconPath} />
               </svg>
             </span>
-            <p className="text-[15px] text-[#075985] leading-tight">{item.body}</p>
+            <p className="text-[15px] text-ember-deep leading-tight">{item.body}</p>
           </li>
         ))}
       </ul>
@@ -1176,7 +931,7 @@ export function RecentlyViewed() {
           >
             {items.map(item => (
               <li key={item.slug} className="snap-start shrink-0 w-[75%] sm:w-[calc(33.333%-12px)] lg:w-[calc(25%-12px)]">
-                <Link href={`/products/${item.slug}`} className="group flex h-full flex-col rounded-xs border border-gray-200 bg-white overflow-hidden hover:border-[#0071DC] hover:shadow-md transition-all">
+                <Link href={`/products/${item.slug}`} className="group flex h-full flex-col rounded-xs border border-gray-200 bg-white overflow-hidden hover:border-ember hover:shadow-md transition-all">
                   <span className="relative block aspect-square bg-gray-50 overflow-hidden">
                     {item.thumbnail && (
                       <Image
@@ -1189,7 +944,7 @@ export function RecentlyViewed() {
                     )}
                   </span>
                   <span className="flex flex-col p-4 grow">
-                    <span className="text-sm font-medium leading-snug text-gray-900 line-clamp-2 min-h-[2.5rem] group-hover:text-[#0071DC] transition-colors">{item.name}</span>
+                    <span className="text-sm font-medium leading-snug text-gray-900 line-clamp-2 min-h-[2.5rem] group-hover:text-ember transition-colors">{item.name}</span>
                     <span className="text-base font-bold mt-2">
                       {new Intl.NumberFormat('en-US', { style: 'currency', currency: item.currencyCode }).format(item.unitPriceMinorUnits / 100)}
                     </span>
@@ -1240,12 +995,12 @@ export function VendorSpotlight({ vendors }: { vendors: VendorSpotlightItem[] })
       <div className="container-fluid py-10 md:py-12">
       <div className="flex items-end justify-between mb-6">
         <h2 id="vendor-spotlight-heading" className="text-2xl md:text-3xl font-bold text-gray-900">Featured Vendors</h2>
-        <Link href="/vendors" className="text-sm font-bold text-[#0071DC] hover:underline underline-offset-4">All vendors</Link>
+        <Link href="/vendors" className="text-sm font-bold text-ember hover:underline underline-offset-4">All vendors</Link>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         {vendors.slice(0, 3).map(v => (
-          <Link key={v.slug} href={`/vendors/${v.slug}`} className="rounded-xs bg-white border border-gray-200 p-4 flex items-center gap-5 hover:border-[#0071DC] transition-colors group">
-            <span className="w-16 h-16 rounded-full bg-gradient-to-br from-[#0071DC] to-[#005BBB] text-white grid place-items-center font-bold text-lg shrink-0 overflow-hidden">
+          <Link key={v.slug} href={`/vendors/${v.slug}`} className="rounded-xs bg-white border border-gray-200 p-4 flex items-center gap-5 hover:border-ember transition-colors group">
+            <span className="w-16 h-16 rounded-full bg-gradient-to-br from-ember to-ember-dark text-white grid place-items-center font-bold text-lg shrink-0 overflow-hidden">
               {v.logo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={v.logo} alt="" className="w-full h-full object-cover" />
@@ -1254,12 +1009,12 @@ export function VendorSpotlight({ vendors }: { vendors: VendorSpotlightItem[] })
               )}
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-base font-bold text-gray-900 group-hover:text-[#0071DC] transition-colors truncate">{v.storeName}</span>
+              <span className="block text-base font-bold text-gray-900 group-hover:text-ember transition-colors truncate">{v.storeName}</span>
               <span className="block text-xs font-medium text-gray-500 mt-1">
                 ★ {v.rating > 0 ? v.rating.toFixed(1) : 'New'} · {v.reviewCount.toLocaleString()} reviews
               </span>
             </span>
-            <span className="shrink-0 text-gray-400 group-hover:text-[#0071DC] transition-colors">
+            <span className="shrink-0 text-gray-400 group-hover:text-ember transition-colors">
               <svg className="w-5 h-5 icon-directional" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
             </span>
           </Link>

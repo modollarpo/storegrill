@@ -67,16 +67,8 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
   const currency = variant?.currencyCode ?? product.currencyCode;
   const stock = variant ? variant.stock : product.inventoryCount;
 
-  const getAttr = (v: any, name: string) => {
-    const attrs = v.attributes;
-    if (Array.isArray(attrs)) {
-      return attrs.find((a: any) => a.name.toLowerCase() === name)?.value;
-    } else if (attrs && typeof attrs === 'object') {
-      const key = Object.keys(attrs).find(k => k.toLowerCase() === name);
-      if (key) return attrs[key];
-    }
-    return undefined;
-  };
+  const getAttr = (v: PdpVariant, name: string): string | undefined =>
+    v.attributes?.find(a => a.name.toLowerCase() === name)?.value;
 
   const colorOptions = useMemo(() => {
     const colors = new Map<string, string[]>();
@@ -114,8 +106,6 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
             setZoom({ x: ((e.clientX - rect.left) / rect.width) * 100, y: ((e.clientY - rect.top) / rect.height) * 100 });
           }}
           onMouseLeave={() => setZoom(null)}
-          aria-label={product.name}
-          role="img"
         >
           {images.length > 0 ? (
             <Image

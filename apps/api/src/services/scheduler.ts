@@ -1,4 +1,4 @@
-import { isCronDue } from '@storegrill/shared';
+import { isCronDue } from '@Storegrill/shared';
 import type { PrismaClient } from '@prisma/client';
 import { prisma as db } from '../db/prisma.js';
 import { startImportJob } from './import-engine.js';

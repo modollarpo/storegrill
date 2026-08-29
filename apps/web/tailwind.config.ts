@@ -1,8 +1,8 @@
 import type { Config } from 'tailwindcss';
 import { colors, shadows, radii, typography, layout, motion } from './src/design-system/tokens';
 
-const SYSTEM_SANS = [
-  'var(--font-sans)',
+const SYSTEM_SANS_FALLBACK = [
+  'var(--font-sans)', // Outfit Variable (self-hosted), falls back to system stack below
   '-apple-system',
   'BlinkMacSystemFont',
   '"Segoe UI"',
@@ -23,8 +23,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: SYSTEM_SANS,
-        display: SYSTEM_SANS,
+        sans: SYSTEM_SANS_FALLBACK,
+        display: SYSTEM_SANS_FALLBACK,
         mono: ['var(--font-mono)', 'JetBrains Mono', 'Fira Code', 'monospace'],
       },
       colors: {

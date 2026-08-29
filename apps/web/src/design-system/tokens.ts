@@ -127,6 +127,18 @@ export const radii = {
   pill: '9999px',
 } as const;
 
+// Decorative-only backgrounds for editorial promo banners (never interactive,
+// never used for text/links/CTAs — those stay on the ember action palette).
+export const promoPalette = {
+  merlot: '#5F1616',
+  pine: '#26525C',
+  slate: '#323E4D',
+  harbor: '#1a3a4a',
+  umber: '#584F46',
+  plum: '#6C597C',
+  clay: '#746350',
+} as const;
+
 export const zIndexLayers = {
   header: 40,
   tooltip: 50,

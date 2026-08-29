@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 :root {
+  /* Type — Outfit (self-hosted variable font, @fontsource-variable/outfit).
+     No third-party runtime requests (Google Fonts CDN raises GDPR concerns
+     in EU regions); system stack remains the fallback chain. */
+  --font-sans: 'Outfit Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", "Fira Code", Menlo, Consolas, "Liberation Mono", monospace;
+
   /* Brand — Storegrill purple */
   --color-ember: #4c12a1;
   --color-ember-dark: #400e8a;

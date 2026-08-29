@@ -19,7 +19,7 @@ export function CheckoutCoupon({ onApply }: { onApply: (code: string) => void })
           }}
           placeholder="Enter promo code"
           className={cn(
-            'input h-10 flex-1 text-sm border-gray-200 rounded-xs bg-gray-50 focus:border-[#0071DC]',
+            'input h-10 flex-1 text-sm border-gray-200 rounded-xs bg-gray-50 focus:border-ember',
             state === 'invalid' && 'border-red-600'
           )}
         />

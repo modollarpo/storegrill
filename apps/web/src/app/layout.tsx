@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { JetBrains_Mono, Outfit } from 'next/font/google';
+import '@fontsource-variable/outfit';
 import './globals.css';
 import { ToastProvider } from '@/components/feedback/Toast';
 import { CartProvider } from '@/components/providers/CartContext';
@@ -15,18 +15,6 @@ import { UserContextProvider } from '@/components/providers/UserContext';
 import { PWAProvider } from '@/components/providers/PWAProvider';
 import { colors } from '@/design-system/tokens';
 
-
-const fontMono = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-mono',
-  display: 'swap',
-});
-
-const fontSans = Outfit({
-  subsets: ['latin'],
-  variable: '--font-sans',
-  display: 'swap',
-});
 
 const APEX = process.env.NEXT_PUBLIC_APEX_DOMAIN || 'Storegrill.net';
 
@@ -77,7 +65,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { regionKey, language } = await getRequestContext();
 
   return (
-    <html lang="en" className={`${fontSans.variable} ${fontMono.variable}`}>
+    <html lang="en">
       <body className="min-h-screen flex flex-col antialiased bg-surface-page text-primary">
         <AnalyticsProvider>
           <UserContextProvider>

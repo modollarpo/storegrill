@@ -6,7 +6,7 @@ export function CheckoutNotes({ value, onChange }: { value: string, onChange: (v
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder="Add special instructions for your delivery..."
-        className="w-full h-24 p-3 text-sm border-gray-300 rounded-md focus:border-[#0071DC] bg-gray-50"
+        className="w-full h-24 p-3 text-sm border-gray-300 rounded-md focus:border-ember bg-gray-50"
       />
     </div>
   );

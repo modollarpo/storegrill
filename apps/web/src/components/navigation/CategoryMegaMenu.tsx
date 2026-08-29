@@ -64,7 +64,7 @@ export function CategoryMegaMenu({ categories, language = 'en' }: CategoryMegaMe
         aria-label="Browse all categories"
         onClick={() => setOpen(o => !o)}
         onKeyDown={onKeyDown}
-        className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap border border-subtle rounded-full transition-colors hover:border-border-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-action-primary"
+        className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap border border-border rounded-full transition-colors hover:border-border-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-action-primary"
       >
         <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
@@ -78,10 +78,10 @@ export function CategoryMegaMenu({ categories, language = 'en' }: CategoryMegaMe
           role="menu"
           aria-label="Category browser"
         >
-          <div className="w-full max-w-[calc(100%-1rem)] rounded-lg border border-subtle bg-surface shadow-sm overflow-hidden">
-            <ul role="presentation" className="w-full border-b border-subtle bg-surface/50">
+          <div className="w-full max-w-[calc(100%-1rem)] rounded-lg border border-border bg-surface shadow-sm overflow-hidden">
+            <ul role="presentation" className="w-full border-b border-border bg-surface/50">
               {categories.map((cat, i) => (
-                <li key={cat.slug} className="border-y border-subtle/50">
+                <li key={cat.slug} className="border-y border-border/50">
                   <Link
                     href={`/products?category=${cat.slug}`}
                     onClick={() => setOpen(false)}
@@ -112,9 +112,9 @@ export function CategoryMegaMenu({ categories, language = 'en' }: CategoryMegaMe
                       href={`/products/${p.id}`}
                       onClick={() => setOpen(false)}
                       role="menuitem"
-                      className="flex items-center gap-3 rounded-sm border border-subtle p-2 hover:bg-surface-sunset transition-colors group"
+                      className="flex items-center gap-3 rounded-sm border border-border p-2 hover:bg-surface-sunken transition-colors group"
                     >
-                      <span className="relative w-10 h-10 rounded-sm shrink-0 overflow-hidden bg-surface-200">
+                      <span className="relative w-10 h-10 rounded-sm shrink-0 overflow-hidden bg-gray-200">
                         {p.thumbnail && <Image src={storefrontImage(p.thumbnail) || '/product-placeholder.svg'} alt="" fill sizes="40px" className="object-contain p-0.5" />}
                       </span>
                       <span className="min-w-0 flex-1">

@@ -117,13 +117,13 @@ export const motion = {
 
 export const radii = {
   none: '0',
-  xs:   '4px',
-  sm:   '4px',
-  md:   '4px',
-  lg:   '4px',
-  xl:   '6px',
-  '2xl':'8px',
-  '3xl':'8px',
+  xs:   '6px',
+  sm:   '8px',
+  md:   '10px',
+  lg:   '14px',
+  xl:   '18px',
+  '2xl':'22px',
+  '3xl':'28px',
   pill: '9999px',
 } as const;
 

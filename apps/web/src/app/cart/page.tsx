@@ -41,7 +41,18 @@ export default function CartPage() {
       const res = await fetch(`${API_BASE}/api/v1/deals/apply-coupon`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: coupon, regionKey, subtotalMinorUnits: subtotal }),
+        body: JSON.stringify({
+          code: coupon,
+          regionKey,
+          subtotalMinorUnits: subtotal,
+          items: cart.items.map(i => ({
+            productId: i.productId,
+            categoryId: i.categoryId,
+            quantity: i.quantity,
+            unitMinorUnits: i.unitPriceMinorUnits,
+            currencyCode: i.currencyCode,
+          })),
+        }),
       });
       const data = await res.json();
       if (!res.ok) {

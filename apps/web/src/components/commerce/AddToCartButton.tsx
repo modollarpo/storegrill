@@ -17,6 +17,7 @@ export interface AddToCartButtonProps {
   quantity?: number;
   stock?: number;
   vendorName?: string;
+  categoryId?: string;
   label?: string;
   fullWidth?: boolean;
   size?: 'sm' | 'md' | 'lg';
@@ -51,6 +52,7 @@ export function AddToCartButton(props: AddToCartButtonProps) {
       quantity: props.quantity || 1,
       stock: props.stock,
       vendorName: props.vendorName,
+      categoryId: props.categoryId,
     };
     cart.addItem(line);
     

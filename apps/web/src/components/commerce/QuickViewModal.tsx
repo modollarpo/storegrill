@@ -41,7 +41,7 @@ export function QuickViewModal({ product, onClose }: { product: ProductCardData;
                 <button onClick={() => setQuantity(Math.min(product.inventoryCount ?? 99, quantity + 1))} className="px-3 py-2">+</button>
             </div>
             <Button onClick={() => {
-                cart.addItem({ productId: product.id, name: product.name, slug: product.slug, image: product.thumbnail, unitPriceMinorUnits: product.price, currencyCode: product.currencyCode, quantity });
+                cart.addItem({ productId: product.id, name: product.name, slug: product.slug, image: product.thumbnail, unitPriceMinorUnits: product.price, currencyCode: product.currencyCode, quantity, categoryId: product.categoryId });
                 onClose();
             }}>Add to Cart</Button>
           </div>

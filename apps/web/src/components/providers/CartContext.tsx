@@ -14,6 +14,7 @@ export interface CartItemLine {
   quantity: number;
   stock?: number;
   vendorName?: string;
+  categoryId?: string;
 }
 
 interface CartContextValue {

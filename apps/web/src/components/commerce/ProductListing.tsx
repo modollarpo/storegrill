@@ -120,7 +120,8 @@ export async function ProductListing({
   const { regionKey, language } = await getRequestContext();
   const data = await fetchListing(sp, regionKey, forceCategory);
   const products = (Array.isArray(data.products) ? data.products : []) as ProductCardData[];
-  const localized = (await localizeProducts(products, language)) as ProductCardData[];
+  const localized = (await localizeProducts(products, language)) as Array<ProductCardData & { category?: { id?: string } | null }>;
+  const localizedWithCategory = localized.map(p => ({ ...p, categoryId: p.categoryId ?? p.category?.id }));
   const pagination = data.pagination ?? { page: 1, totalPages: 0, total: 0 };
 
   const q = single(sp.q);
@@ -199,7 +200,7 @@ export async function ProductListing({
             <EmptyState query={q} />
           ) : (
             <>
-              <ProductListingViews products={localized} locale={language} key={`${regionKey}-${language}`} />
+              <ProductListingViews products={localizedWithCategory} locale={language} key={`${regionKey}-${language}`} />
               <Pagination page={pagination.page} totalPages={pagination.totalPages} makeHref={makeHref} />
             </>
           )}

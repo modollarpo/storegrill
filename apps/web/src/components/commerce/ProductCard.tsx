@@ -30,6 +30,7 @@ export interface ProductCardData {
   sponsored?: boolean;
   vendor?: { storeName: string; slug: string; verified?: boolean } | null;
   badge?: 'sale' | 'new' | 'deal' | 'sponsored' | 'bestseller';
+  categoryId?: string;
 }
 
 export interface ProductCardProps {
@@ -337,6 +338,7 @@ function AddToCartInline({ product }: { product: ProductCardData }) {
           image: product.thumbnail, unitPriceMinorUnits: product.price,
           currencyCode: product.currencyCode, quantity: 1,
           stock: product.inventoryCount, vendorName: product.vendor?.storeName,
+          categoryId: product.categoryId,
         });
         setJustAdded(true);
         setTimeout(() => setJustAdded(false), 1400);

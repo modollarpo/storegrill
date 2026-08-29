@@ -62,7 +62,7 @@ export async function validateCoupon(
     return { ok: false, status: 400, code: 'MIN_ORDER_NOT_MET', message: 'Minimum order amount not met' };
   }
 
-  const couponCurrencyCode = coupon.currencyCode || orderCurrencyCode;
+  const couponCurrencyCode = orderCurrencyCode;
   const dealType = coupon.deal.type as DealTypeEnum;
 
   let discount: number;

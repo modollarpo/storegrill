@@ -46,10 +46,6 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(function Select
     setOpen(false);
   }
 
-  function onDocumentClick(e: MouseEvent) {
-    if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
-  }
-
   function onKeyDown(e: React.KeyboardEvent) {
     if (disabled) return;
     if (e.key === 'Escape') {

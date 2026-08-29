@@ -41,7 +41,7 @@ const GROUPS: Array<{ label: string; test: (key: string) => boolean }> = [
 ];
 
 export default async function RegionsPage() {
-  const { regionKey, language } = await getRequestContext();
+  const { regionKey } = await getRequestContext();
   const current = regionByKey(regionKey);
 
   return (

@@ -3,35 +3,6 @@
 import Link from 'next/link';
 import { Newsletter } from '../home/Newsletter';
 
-const FOOTER_NAV = [
-  {
-    heading: 'Categories',
-    links: [
-      ['New arrivals', '/products?sort=new'],
-      ['Best Sellers', '/products?sort=best'],
-      ['Sale items', '/products?sort=sale'],
-    ],
-  },
-  {
-    heading: 'Features',
-    links: [
-      ['Today\'s Deal', '/deals'],
-      ['Vendors', '/vendors'],
-      ['Regions', '/regions'],
-      ['Sell on Storegrill', '/vendor/apply'],
-    ],
-  },
-  {
-    heading: 'Customer Services',
-    links: [
-      ['Help Centre', '/help'],
-      ['Track Order', '/track'],
-      ['Returns & Refunds', '/returns'],
-      ['Delivery Information', '/shipping'],
-    ],
-  },
-] as const;
-
 function PaymentLogos() {
   return (
     <div className="flex flex-wrap items-center gap-2" aria-label="Accepted payment methods">

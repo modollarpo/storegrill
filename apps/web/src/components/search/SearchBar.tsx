@@ -352,18 +352,6 @@ function VoiceButton({ onResult }: { onResult: (text: string) => void }) {
   );
 }
 
-interface SpeechRecognitionLike {
-  lang: string;
-  start(): void;
-  onresult: ((event: SpeechResultEventLike) => void) | null;
-  onend: (() => void) | null;
-  onerror: (() => void) | null;
-}
-
-interface SpeechResultEventLike {
-  results: { [index: number]: { [index: number]: { transcript: string } } };
-}
-
 function getRecent(): string[] {
   if (typeof localStorage === 'undefined') return [];
   try {

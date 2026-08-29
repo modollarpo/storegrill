@@ -111,7 +111,7 @@ function RegionPicker({
   );
 }
 
-function Header({ announcementMessages }: HeaderProps) {
+function Header({ announcementMessages: _announcementMessages }: HeaderProps) {
   const { regionKey, language, setLanguage } = useRegion();
   const cart = useCart();
   const wishlist = useWishlist();

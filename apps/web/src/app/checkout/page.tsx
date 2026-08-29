@@ -6,9 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useCart, CartItemLine } from '@/components/providers/CartContext';
 import { useRegion } from '@/components/providers/RegionContext';
 import { useToast } from '@/components/feedback/Toast';
-import { PriceDisplay } from '@/components/commerce/PriceDisplay';
 import { api, ApiError, API_BASE } from '@/lib/api';
-import { DEFAULT_REGIONS, PAYMENT_METHOD_PROVIDER, paymentMethodLabel, PaymentMethodId } from '@Storegrill/shared';
+import { DEFAULT_REGIONS, PAYMENT_METHOD_PROVIDER, PaymentMethodId } from '@Storegrill/shared';
 import { cn } from '@/lib/utils';
 import { CheckoutOrderSummary } from '@/components/checkout/CheckoutOrderSummary';
 import { CheckoutCoupon } from '@/components/checkout/CheckoutCoupon';
@@ -53,7 +52,7 @@ export default function CheckoutPage() {
   const [notes, setNotes] = useState('');
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sandboxNotice, setSandboxNotice] = useState(false);
+  const [, setSandboxNotice] = useState(false);
 
   const regionConfig = DEFAULT_REGIONS.find(r => r.key === regionKey) ?? DEFAULT_REGIONS[0];
   const zone = regionConfig.shippingZones[0];

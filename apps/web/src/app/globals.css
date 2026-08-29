@@ -293,10 +293,11 @@
 }
 
 @layer utilities {
-  .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-none { -ms-overflow-style: none; }
   .scrollbar-none::-webkit-scrollbar { display: none; }
+  @supports (scrollbar-width: none) { .scrollbar-none { scrollbar-width: none; } }
 
-  .text-balance { text-wrap: balance; }
+  @supports (text-wrap: balance) { .text-balance { text-wrap: balance; } }
 
   /* ── Skeleton shimmer ── */
   @keyframes shimmer { 0% { background-position: 200% center; } 100% { background-position: -200% center; } }

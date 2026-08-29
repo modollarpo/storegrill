@@ -31,3 +31,15 @@ BUILD_PROMPT.md
 *.db
 apps/currys/
 apps/web/public/Screenshot*.png
+
+# Terraform state, plans, and local secrets — never commit
+*.tfstate
+*.tfstate.backup
+*.tfplan
+*.tfplan.bin
+tfplan
+*.tfvars
+*.tmp
+key.tmp
+deploy/
+infra/terraform/live/**/.terraform/

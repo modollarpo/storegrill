@@ -2,7 +2,7 @@
 import { z } from 'zod';
 import { prisma } from '../index.js';
 import { optionalAuth, authenticate, authorize, AuthRequest } from '../middleware/auth.js';
-import { CreateDealSchema, CreateCouponSchema, ApplyCouponSchema } from '@Storegrill/shared';
+import { CreateDealSchema, CreateCouponSchema, ApplyCouponSchema, DEFAULT_REGIONS } from '@Storegrill/shared';
 import { slugify } from '../utils/slugify.js';
 import { validateCoupon } from '../services/coupons.js';
 
@@ -124,7 +124,9 @@ router.post('/', authenticate, authorize('VENDOR', 'ADMIN'), async (req: AuthReq
 
 router.post('/apply-coupon', optionalAuth, async (req: AuthRequest, res: Response) => {
   const body = ApplyCouponSchema.parse(req.body);
-  const result = await validateCoupon(body.code, body.subtotalMinorUnits);
+  const region = DEFAULT_REGIONS.find(r => r.key === body.regionKey);
+  const currencyCode = region?.defaultCurrency ?? 'USD';
+  const result = await validateCoupon(body.code, body.subtotalMinorUnits, currencyCode);
 
   if (!result.ok) {
     return res.status(result.status).json({ error: { code: result.code, message: result.message } });

@@ -5,7 +5,7 @@ import { authenticate, authorize, AuthRequest, requireVerifiedEmail } from '../m
 import { CheckoutSchema, DEFAULT_REGIONS } from '@Storegrill/shared';
 import { calculateTax, TaxRule } from '@Storegrill/shared';
 import { ShippingZone, VendorShippingPolicy, calculateGroupedShipping } from '@Storegrill/shared';
-import { createMoney } from '@Storegrill/shared';
+import { createMoney, convertMoney } from '@Storegrill/shared';
 import { v4 as uuid } from 'uuid';
 import { initiatePaypalPayment, initiateStripePayment, type PaymentOrderContext } from '../payments/providers.js';
 import { validateCoupon } from '../services/coupons.js';
@@ -146,6 +146,15 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
     });
   }
 
+  const regionConfig = DEFAULT_REGIONS.find(r => r.key === (body.regionKey || 'UK')) || DEFAULT_REGIONS[0];
+  const currencyCode = regionConfig.defaultCurrency;
+
+  const productIds = cart.items.map((item: any) => item.product.id);
+  const regionPrices = await prisma.productRegionPrice.findMany({
+    where: { productId: { in: productIds }, regionKey: regionConfig.key },
+  });
+  const regionPriceByProduct = new Map(regionPrices.map((rp: any) => [rp.productId, rp]));
+
   for (const item of cart.items) {
     if (item.product.status !== 'ACTIVE') {
       return res.status(400).json({
@@ -160,9 +169,18 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
   }
 
   const orderItems = cart.items.map((item: any) => {
-    const unitPrice = item.variant
+    const basePrice = item.variant
       ? Number(item.variant.basePriceMinorUnits)
       : Number(item.product.basePriceMinorUnits);
+    const productCurrency = item.product.currencyCode || 'USD';
+    let unitPrice = basePrice;
+    const regionPrice = regionPriceByProduct.get(item.product.id);
+    if (regionPrice) {
+      unitPrice = Number(regionPrice.priceMinorUnits);
+    } else if (productCurrency !== currencyCode) {
+      const converted = convertMoney(createMoney(BigInt(basePrice), productCurrency), currencyCode);
+      unitPrice = Number(converted.amountMinorUnits);
+    }
     return {
       productId: item.product.id,
       variantId: item.variantId,
@@ -187,7 +205,7 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
   let discount = 0;
   let appliedCouponId: string | null = null;
   if (body.couponCode) {
-    const couponResult = await validateCoupon(body.couponCode, subtotal);
+    const couponResult = await validateCoupon(body.couponCode, subtotal, currencyCode);
     if (!couponResult.ok) {
       return res.status(couponResult.status).json({ error: { code: couponResult.code, message: couponResult.message } });
     }
@@ -195,9 +213,6 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
     appliedCouponId = couponResult.coupon.couponId;
   }
   const discountedSubtotal = subtotal - discount;
-
-  const regionConfig = DEFAULT_REGIONS.find(r => r.key === (body.regionKey || 'UK')) || DEFAULT_REGIONS[0];
-  const currencyCode = regionConfig.defaultCurrency;
 
   const taxRules: TaxRule[] = regionConfig.taxRules.map((r, i) => ({
     id: `region-${i}`,

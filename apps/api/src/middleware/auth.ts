@@ -2,7 +2,14 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../index.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (secret) return secret;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET environment variable is required in production');
+  }
+  return 'dev-insecure-secret-do-not-use-in-production';
+}
 
 export interface AuthUser {
   id: string;
@@ -16,17 +23,17 @@ export interface AuthRequest extends Request {
 }
 
 export function generateTokens(user: AuthUser, tokenVersion = 0) {
-  const accessToken = jwt.sign({ ...user, tokenVersion }, JWT_SECRET, { expiresIn: '15m' });
+  const accessToken = jwt.sign({ ...user, tokenVersion }, getJwtSecret(), { expiresIn: '15m' });
   const refreshToken = jwt.sign(
     { id: user.id, type: 'refresh', tokenVersion },
-    JWT_SECRET,
+    getJwtSecret(),
     { expiresIn: '7d' }
   );
   return { accessToken, refreshToken };
 }
 
 export function verifyToken(token: string): AuthUser {
-  return jwt.verify(token, JWT_SECRET) as AuthUser;
+  return jwt.verify(token, getJwtSecret()) as AuthUser;
 }
 
 export async function authenticate(req: AuthRequest, res: Response, next: NextFunction) {

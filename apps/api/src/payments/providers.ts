@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { getCurrencyDecimals } from '@Storegrill/shared';
 
 export interface PaymentOrderContext {
   orderNumber: string;
@@ -71,11 +72,20 @@ async function paypalToken(): Promise<string> {
 }
 
 export function paypalMoney(ctx: { currencyCode: string; totalMinorUnits: number }): { currency_code: string; value: string } {
-  const decimals = ['JPY', 'KRW', 'UGX'].includes(ctx.currencyCode) ? 0 : 2;
+  const decimals = getCurrencyDecimals(ctx.currencyCode);
   const divisor = 10 ** decimals;
   return {
     currency_code: ctx.currencyCode,
     value: (ctx.totalMinorUnits / divisor).toFixed(decimals),
+  };
+}
+
+export function paypalUnitAmount(minorUnits: number, currencyCode: string): { currency_code: string; value: string } {
+  const decimals = getCurrencyDecimals(currencyCode);
+  const divisor = 10 ** decimals;
+  return {
+    currency_code: currencyCode,
+    value: (minorUnits / divisor).toFixed(decimals),
   };
 }
 
@@ -168,10 +178,7 @@ export async function initiatePaypalPayment(ctx: PaymentOrderContext): Promise<P
           items: ctx.items.map(item => ({
             name: item.name.slice(0, 127),
             quantity: String(item.quantity),
-            unit_amount: {
-              currency_code: ctx.currencyCode,
-              value: (item.unitPriceMinorUnits / 100).toFixed(2),
-            },
+            unit_amount: paypalUnitAmount(item.unitPriceMinorUnits, ctx.currencyCode),
           })),
         },
       ],

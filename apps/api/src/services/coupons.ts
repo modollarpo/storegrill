@@ -1,4 +1,5 @@
 import { prisma } from '../index.js';
+import { computeCouponDiscount } from './coupon-discount.js';
 
 export interface CouponValidationResult {
   ok: true;
@@ -19,14 +20,15 @@ export interface CouponValidationError {
 }
 
 /**
- * Single source of truth for coupon validation and discount calculation.
- * Used by both the cart-page "preview" endpoint (apply-coupon) and the real
- * order checkout flow, so a coupon can never be accepted client-side and
- * then silently ignored when the actual charge is computed server-side.
+ * Validates a coupon code and returns the discount in the order's currency.
+ * Used by both the cart "preview" endpoint (apply-coupon) and the real order
+ * checkout flow, so a coupon can never be accepted client-side and then
+ * silently ignored when the actual charge is computed server-side.
  */
 export async function validateCoupon(
   code: string,
-  subtotalMinorUnits: number
+  subtotalMinorUnits: number,
+  orderCurrencyCode = 'USD',
 ): Promise<CouponValidationResult | CouponValidationError> {
   const coupon = await prisma.coupon.findUnique({
     where: { code },
@@ -49,16 +51,15 @@ export async function validateCoupon(
     return { ok: false, status: 400, code: 'MIN_ORDER_NOT_MET', message: 'Minimum order amount not met' };
   }
 
-  let discount = 0;
-  if (coupon.deal.type === 'PERCENTAGE_OFF') {
-    discount = Math.round((subtotalMinorUnits * Number(coupon.deal.value)) / 100);
-    if (coupon.deal.maxDiscount) {
-      discount = Math.min(discount, Number(coupon.deal.maxDiscount));
-    }
-  } else if (coupon.deal.type === 'FIXED_AMOUNT') {
-    discount = Number(coupon.deal.value) * 100;
-  }
-  discount = Math.min(discount, subtotalMinorUnits);
+  const couponCurrencyCode = coupon.currencyCode || orderCurrencyCode;
+  const discount = computeCouponDiscount({
+    dealType: coupon.deal.type,
+    dealValue: Number(coupon.deal.value),
+    maxDiscount: coupon.deal.maxDiscount,
+    couponCurrencyCode,
+    orderCurrencyCode,
+    subtotalMinorUnits,
+  });
 
   return {
     ok: true,

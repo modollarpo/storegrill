@@ -8,7 +8,7 @@ export function CheckoutCoupon({ onApply }: { onApply: (code: string) => void })
   const [state, setState] = useState<'idle' | 'valid' | 'invalid'>('idle');
 
   return (
-    <div className="bg-white border border-border rounded-lg p-6 shadow-sm">
+    <div className="bg-surface-raised border border-border rounded-lg p-6 shadow-sm">
       <h2 className="text-base font-extrabold text-text-primary mb-4">Promo Code</h2>
       <div className="flex gap-2">
         <input

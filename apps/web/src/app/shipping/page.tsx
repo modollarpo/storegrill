@@ -76,7 +76,7 @@ export default async function ShippingPage() {
             <h2 id="carriers" className="text-displaysm font-semibold text-charcoal mb-3">Courier partners</h2>
             <ul className="flex flex-wrap gap-2" role="list">
               {zone.carriers.map(c => (
-                <li key={c} className="px-4 py-2 rounded-full border border-smoke-150 bg-white text-sm font-semibold text-charcoal">
+                <li key={c} className="px-4 py-2 rounded-full border border-smoke-150 bg-surface-raised text-sm font-semibold text-charcoal">
                   {c}
                 </li>
               ))}

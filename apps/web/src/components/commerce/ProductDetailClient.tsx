@@ -100,7 +100,7 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
       {/* -- Image Gallery -- */}
       <div className="flex flex-col gap-4">
         <div
-          className="relative w-full aspect-square border border-border rounded-xs overflow-hidden bg-white shadow-sm group cursor-zoom-in"
+          className="relative w-full aspect-square border border-border rounded-xs overflow-hidden bg-surface-raised shadow-sm group cursor-zoom-in"
           onMouseMove={e => {
             const rect = e.currentTarget.getBoundingClientRect();
             setZoom({ x: ((e.clientX - rect.left) / rect.width) * 100, y: ((e.clientY - rect.top) / rect.height) * 100 });
@@ -140,7 +140,7 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
                   aria-label={`View image ${i + 1} of ${product.name}`}
                   aria-current={i === activeImage}
                   className={cn(
-                    'relative w-20 h-20 rounded-xs border-2 overflow-hidden bg-white transition-all',
+                    'relative w-20 h-20 rounded-xs border-2 overflow-hidden bg-surface-raised transition-all',
                     i === activeImage
                       ? 'border-action-primary ring-2 ring-action-primary/20'
                       : 'border-border hover:border-action-primary'

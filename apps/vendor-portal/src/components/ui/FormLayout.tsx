@@ -44,7 +44,7 @@ export interface FormSectionProps {
 
 export function FormSection({ title, description, children, footer }: FormSectionProps) {
   return (
-    <section className="bg-white rounded-lg border border-slate-200 shadow-card mb-5">
+    <section className="bg-surface-raised rounded-lg border border-slate-200 shadow-card mb-5">
       <header className="px-5 pt-4 pb-3 border-b border-slate-100">
         <h2 className="text-sm font-bold text-slate-900">{title}</h2>
         {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
@@ -56,7 +56,7 @@ export function FormSection({ title, description, children, footer }: FormSectio
 }
 
 export const inputClass =
-  'w-full h-9 rounded-md border border-slate-300 bg-white px-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-colors disabled:bg-slate-50 disabled:text-slate-400';
+  'w-full h-9 rounded-md border border-slate-300 bg-surface-raised px-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-colors disabled:bg-slate-50 disabled:text-slate-400';
 
 export const textareaClass =
-  'w-full min-h-[88px] rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-colors';
+  'w-full min-h-[88px] rounded-md border border-slate-300 bg-surface-raised px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-none transition-colors';

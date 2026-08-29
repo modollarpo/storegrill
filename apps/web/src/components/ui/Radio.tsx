@@ -41,7 +41,7 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio(
           disabled={disabled}
           className="peer sr-only"
         />
-        <span className="w-4 h-4 rounded-full border border-smoke-300 bg-white peer-checked:border-[5px] peer-checked:border-ember transition-all peer-focus-visible:shadow-[0_0_0_3px_rgba(255,122,28,0.35)]" />
+        <span className="w-4 h-4 rounded-full border border-smoke-300 bg-surface-raised peer-checked:border-[5px] peer-checked:border-ember transition-all peer-focus-visible:shadow-[0_0_0_3px_rgba(255,122,28,0.35)]" />
       </span>
       <span>
         <span className="block text-xs text-charcoal font-medium group-hover:text-charcoal-mid">{label}</span>

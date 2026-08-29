@@ -16,7 +16,7 @@ export function Newsletter() {
     <>
       <h3 className="text-[14px] font-bold mb-4">Sign Up For News</h3>
       {subscribed ? (
-        <p role="status" className="text-sm font-semibold text-white bg-white/15 rounded-md px-4 py-3">
+        <p role="status" className="text-sm font-semibold text-white bg-surface-raised/15 rounded-md px-4 py-3">
           You&apos;re signed up — look out for great deals in your inbox.
         </p>
       ) : (
@@ -29,7 +29,7 @@ export function Newsletter() {
             value={email}
             onChange={e => setEmail(e.target.value)}
             placeholder="Email Address"
-            className="flex-1 min-w-0 h-[46px] px-4 rounded-l-md border-none bg-white text-text-primary text-sm outline-none placeholder:text-text-tertiary"
+            className="flex-1 min-w-0 h-[46px] px-4 rounded-l-md border-none bg-surface-raised text-text-primary text-sm outline-none placeholder:text-text-tertiary"
           />
           <button
             type="submit"

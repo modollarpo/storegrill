@@ -37,7 +37,7 @@ export function WishlistButton({ isSaved, onClick, label, className, size = 'md'
       aria-label={isSaved ? `Remove from wishlist${label ? ` — ${label}` : ''}` : `Save to wishlist${label ? ` — ${label}` : ''}`}
       onClick={onClick}
       className={cn(
-        'grid place-items-center rounded-full bg-white/90 backdrop-blur-sm border shadow-sm transition-colors',
+        'grid place-items-center rounded-full bg-surface-raised/90 backdrop-blur-sm border shadow-sm transition-colors',
         isSaved
           ? 'border-action-primary text-action-primary bg-action-primary/5'
           : 'border-border text-text-tertiary hover:border-action-primary hover:text-action-primary',

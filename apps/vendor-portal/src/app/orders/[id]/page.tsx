@@ -65,7 +65,7 @@ export default function VendorOrderDetailPage() {
   if (notFound) {
     return (
       <VendorShell>
-        <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
+        <div className="bg-surface-raised rounded-lg border border-slate-200 p-12 text-center">
           <p className="text-sm font-semibold text-slate-700">Order not found in your store.</p>
           <Link href="/orders" className="text-xs font-semibold text-indigo-600 hover:underline mt-2 inline-block">← Back to orders</Link>
         </div>
@@ -82,8 +82,8 @@ export default function VendorOrderDetailPage() {
 
       {!order ? (
         <div className="space-y-3">
-          <div className="h-20 rounded-lg bg-white border border-slate-200 animate-pulse" />
-          <div className="h-64 rounded-lg bg-white border border-slate-200 animate-pulse" />
+          <div className="h-20 rounded-lg bg-surface-raised border border-slate-200 animate-pulse" />
+          <div className="h-64 rounded-lg bg-surface-raised border border-slate-200 animate-pulse" />
         </div>
       ) : (
         <>
@@ -97,13 +97,13 @@ export default function VendorOrderDetailPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 items-start mb-4">
             {/* Line items */}
-            <section aria-label="Your items in this order" className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+            <section aria-label="Your items in this order" className="bg-surface-raised rounded-lg border border-slate-200 overflow-hidden">
               <h2 className="text-sm font-bold px-5 py-3.5 border-b border-slate-100">Items ({order.items.length})</h2>
               <ul className="divide-y divide-slate-100">
                 {order.items.map(item => (
                   <li key={item.id} className="px-5 py-3 flex items-center gap-4">
                     {item.image ? (
-                                            <img src={item.image} alt="" className="w-11 h-11 rounded-md object-contain border border-slate-100 bg-white p-0.5 shrink-0" />
+                                            <img src={item.image} alt="" className="w-11 h-11 rounded-md object-contain border border-slate-100 bg-surface-raised p-0.5 shrink-0" />
                     ) : (
                       <span className="w-11 h-11 rounded-md bg-slate-100 shrink-0" aria-hidden="true" />
                     )}
@@ -125,7 +125,7 @@ export default function VendorOrderDetailPage() {
 
             {/* Right rail */}
             <div className="space-y-4">
-              <section aria-label="Customer and delivery" className="bg-white rounded-lg border border-slate-200 p-4 text-xs">
+              <section aria-label="Customer and delivery" className="bg-surface-raised rounded-lg border border-slate-200 p-4 text-xs">
                 <h2 className="font-bold text-slate-900 mb-2">Delivery</h2>
                 <p className="text-slate-700">{order.customerName}</p>
                 {order.customerEmail && <p className="text-slate-400 mb-2">{order.customerEmail}</p>}
@@ -138,7 +138,7 @@ export default function VendorOrderDetailPage() {
                 </address>
               </section>
 
-              <section aria-label="Ship this order" className="bg-white rounded-lg border border-slate-200 p-4">
+              <section aria-label="Ship this order" className="bg-surface-raised rounded-lg border border-slate-200 p-4">
                 <h2 className="font-bold text-slate-900 text-xs mb-2.5">Fulfilment</h2>
                 <div className="space-y-2">
                   <label className="block">
@@ -168,7 +168,7 @@ export default function VendorOrderDetailPage() {
           </div>
 
           {/* Timeline */}
-          <section aria-label="Shipment timeline" className="bg-white rounded-lg border border-slate-200 p-5">
+          <section aria-label="Shipment timeline" className="bg-surface-raised rounded-lg border border-slate-200 p-5">
             <h2 className="text-sm font-bold text-slate-900 mb-3">Timeline</h2>
             {order.shipments.length === 0 ? (
               <p className="text-xs text-slate-400">No shipments yet — add tracking above when you dispatch.</p>
@@ -183,7 +183,7 @@ export default function VendorOrderDetailPage() {
                   </li>
                 ))}
                 <li className="pl-5 relative">
-                  <span className="absolute -left-[7px] top-1 w-3 h-3 rounded-full border-2 border-dashed border-slate-300 bg-white" aria-hidden="true" />
+                  <span className="absolute -left-[7px] top-1 w-3 h-3 rounded-full border-2 border-dashed border-slate-300 bg-surface-raised" aria-hidden="true" />
                   <p className="text-xs font-medium text-slate-400">Delivered (pending)</p>
                 </li>
               </ol>

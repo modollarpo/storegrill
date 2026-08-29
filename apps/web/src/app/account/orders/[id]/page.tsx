@@ -72,7 +72,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
         <section className="card divide-y divide-smoke-100 px-5" aria-label="Items in this order">
           {order.items.map(item => (
             <div key={item.id} className="py-4 flex gap-4">
-              <span className="relative w-16 h-16 rounded-md border border-smoke-150 bg-white overflow-hidden shrink-0">
+              <span className="relative w-16 h-16 rounded-md border border-smoke-150 bg-surface-raised overflow-hidden shrink-0">
                 {item.product?.thumbnail && <Image src={item.product.thumbnail} alt="" fill sizes="64px" className="object-contain p-1" />}
               </span>
               <span className="min-w-0 flex-1">

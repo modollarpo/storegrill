@@ -136,7 +136,7 @@ function OrdersInner() {
           id="f-status"
           value={status}
           onChange={e => setParam('status', e.target.value)}
-          className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs focus:border-indigo-500 outline-none"
+          className="h-8 rounded-md border border-slate-300 bg-surface-raised px-2 text-xs focus:border-indigo-500 outline-none"
         >
           {STATUS_OPTIONS.map(s => (
             <option key={s} value={s}>{s === '' ? 'All statuses' : s}</option>
@@ -150,7 +150,7 @@ function OrdersInner() {
           onKeyDown={e => { if (e.key === 'Enter') setParam('q', (e.target as HTMLInputElement).value); }}
           onBlur={e => setParam('q', e.target.value)}
           placeholder="Search SKU or order #…"
-          className="h-8 w-56 rounded-md border border-slate-300 bg-white px-2.5 text-xs placeholder:text-slate-400 focus:border-indigo-500 outline-none"
+          className="h-8 w-56 rounded-md border border-slate-300 bg-surface-raised px-2.5 text-xs placeholder:text-slate-400 focus:border-indigo-500 outline-none"
         />
 
         {selected.size > 0 && (
@@ -196,7 +196,7 @@ function OrdersInner() {
 
 export default function VendorOrdersPage() {
   return (
-    <Suspense fallback={<div className="h-64 rounded-lg bg-white border border-slate-200 animate-pulse" />}>
+    <Suspense fallback={<div className="h-64 rounded-lg bg-surface-raised border border-slate-200 animate-pulse" />}>
       <OrdersInner />
     </Suspense>
   );

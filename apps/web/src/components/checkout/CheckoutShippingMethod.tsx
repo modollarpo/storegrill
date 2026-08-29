@@ -19,7 +19,7 @@ export function CheckoutShippingMethod({
   onSelect: (id: string) => void 
 }) {
   return (
-    <div className="bg-white border border-border rounded-lg p-6 shadow-sm">
+    <div className="bg-surface-raised border border-border rounded-lg p-6 shadow-sm">
       <h2 className="text-base font-extrabold text-text-primary mb-4">Shipping Method</h2>
       <div className="space-y-3">
         {methods.map(method => (

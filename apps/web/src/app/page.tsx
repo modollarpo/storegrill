@@ -144,7 +144,7 @@ export default async function HomePage() {
   const dealCards = dealsToCards(deals);
 
   return (
-    <div className="bg-white">
+    <div className="bg-surface-raised">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd()) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteJsonLd()) }} />
 

@@ -77,7 +77,7 @@ function RegionPicker({
       className="fixed inset-0 z-[var(--z-dropdown)] flex items-start justify-center pt-20"
     >
       <div className="fixed inset-0 bg-black/30" onClick={onClose} aria-hidden="true" />
-      <div className="relative w-[30rem] max-h-[70vh] overflow-y-auto bg-white rounded-md shadow-md p-5 z-10 text-text-primary">
+      <div className="relative w-[30rem] max-h-[70vh] overflow-y-auto bg-surface-raised rounded-md shadow-md p-5 z-10 text-text-primary">
         <h3 className="text-sm font-bold mb-1">Choose your country or region</h3>
         <p className="text-xs text-text-secondary mb-3">
           Shopping on <strong>{currentKey.toLowerCase()}.storegrill.net</strong> — local
@@ -310,7 +310,7 @@ function Header({ announcementMessages }: HeaderProps) {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                   </svg>
                   {cart.count > 0 && (
-                    <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-white text-ember text-[10px] font-bold rounded-full px-1">
+                    <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-surface-raised text-ember text-[10px] font-bold rounded-full px-1">
                       {cart.count}
                     </span>
                   )}
@@ -372,7 +372,7 @@ function Header({ announcementMessages }: HeaderProps) {
         className="!max-w-full sm:!max-w-full w-full"
       >
         <div className="flex-1 overflow-y-auto pb-8">
-          <div className="p-4 bg-white text-text-primary flex items-center justify-between sticky top-0 z-10 border-b border-border">
+          <div className="p-4 bg-surface-raised text-text-primary flex items-center justify-between sticky top-0 z-10 border-b border-border">
             <p className="text-sm font-bold">
               {t(language, 'hello')}, {t(language, 'signIn').toLowerCase()}
             </p>

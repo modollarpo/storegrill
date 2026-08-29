@@ -77,7 +77,7 @@ export default async function RegionsPage() {
                         href={regionUrl(region.key)}
                         hrefLang={region.languages[0]?.code ?? 'en'}
                         aria-current={isCurrent ? 'page' : undefined}
-                        className={`flex items-center gap-4 p-4 rounded-lg border bg-white transition-all duration-fast group ${
+                        className={`flex items-center gap-4 p-4 rounded-lg border bg-surface-raised transition-all duration-fast group ${
                           isCurrent
                             ? 'border-ember shadow-sm ring-1 ring-ember/30'
                             : 'border-smoke-150 hover:border-ember hover:shadow-card'

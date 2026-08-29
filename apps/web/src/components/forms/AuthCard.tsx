@@ -65,7 +65,7 @@ export function AuthCard({ mode }: AuthCardProps) {
                 href={`${API_BASE}/api/v1/auth/oauth/${p}/start`}
                 aria-label={`Continue with ${PROVIDER_LABELS[p] || p}`}
                 title={`Continue with ${PROVIDER_LABELS[p] || p}`}
-                className="w-10 h-10 grid place-items-center border rounded transition-colors bg-white text-text-secondary border-border-strong hover:bg-surface-page"
+                className="w-10 h-10 grid place-items-center border rounded transition-colors bg-surface-raised text-text-secondary border-border-strong hover:bg-surface-page"
               >
                 <ProviderIcon provider={p} />
               </a>

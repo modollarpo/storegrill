@@ -27,7 +27,7 @@ export function CookieBanner() {
   if (!visible) return null;
 
   return (
-    <aside className="fixed inset-x-0 bottom-0 z-[var(--z-modal)] border-t border-border-strong bg-white shadow-[0_-4px_20px_rgba(31,48,57,0.14)]" aria-label="Cookie consent" data-testid="cookie-banner">
+    <aside className="fixed inset-x-0 bottom-0 z-[var(--z-modal)] border-t border-border-strong bg-surface-raised shadow-[0_-4px_20px_rgba(31,48,57,0.14)]" aria-label="Cookie consent" data-testid="cookie-banner">
       <div className="container-site py-4 md:flex md:items-center md:gap-8">
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-bold text-charcoal">Cookies on Storegrill</h2>

@@ -107,7 +107,7 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
   if (applicantMode) {
     return (
       <div className="min-h-screen bg-surface-50">
-        <header className="bg-white border-b border-surface-200 px-6 py-4 flex items-center justify-between">
+        <header className="bg-surface-raised border-b border-surface-200 px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 font-extrabold">S</div>
             <div>
@@ -129,7 +129,7 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
       {/* Sidebar Navigation */}
       <aside
         className={cn(
-          'w-[250px] shrink-0 bg-white border-r border-surface-200 flex flex-col sticky top-0 h-screen',
+          'w-[250px] shrink-0 bg-surface-raised border-r border-surface-200 flex flex-col sticky top-0 h-screen',
           'max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:top-0 max-lg:h-full max-lg:z-50 max-lg:shadow-2xl max-lg:transition-transform',
           mobileNavOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'
         )}
@@ -181,7 +181,7 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
 
         <div className="p-4 border-t border-surface-100">
           <div className="rounded-xl bg-gradient-to-br from-surface-900 to-surface-950 p-4 shadow-md text-white relative overflow-hidden group">
-            <div className="absolute -right-4 -top-4 w-16 h-16 bg-white/10 rounded-full blur-xl group-hover:bg-brand-400/20 transition-colors" />
+            <div className="absolute -right-4 -top-4 w-16 h-16 bg-surface-raised/10 rounded-full blur-xl group-hover:bg-brand-400/20 transition-colors" />
             <p className="text-[11px] font-extrabold uppercase tracking-wider text-brand-400 mb-1">Global Reach</p>
             <p className="text-xs text-white/90 font-medium leading-relaxed">Your products are automatically live across all regions.</p>
           </div>
@@ -191,7 +191,7 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* Top Header */}
-        <header className="sticky top-0 z-40 h-16 bg-white/80 backdrop-blur-md border-b border-surface-200 flex items-center justify-between px-4 lg:px-8">
+        <header className="sticky top-0 z-40 h-16 bg-surface-raised/80 backdrop-blur-md border-b border-surface-200 flex items-center justify-between px-4 lg:px-8">
           <div className="flex items-center gap-3 flex-1">
             <button
               type="button"
@@ -209,7 +209,7 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search orders, SKUs…"
-                  className="w-full h-10 rounded-full bg-surface-100/50 border border-transparent pl-10 pr-4 text-sm font-medium placeholder:text-surface-400 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all"
+                  className="w-full h-10 rounded-full bg-surface-100/50 border border-transparent pl-10 pr-4 text-sm font-medium placeholder:text-surface-400 focus:bg-surface-raised focus:border-brand-300 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all"
                 />
               </div>
             </form>
@@ -242,7 +242,7 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
                 )}
               </button>
               {showNotifications && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-surface-200 overflow-hidden animate-in z-50">
+                <div className="absolute right-0 top-full mt-2 w-80 bg-surface-raised rounded-xl shadow-lg border border-surface-200 overflow-hidden animate-in z-50">
                   <p className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-surface-500 border-b border-surface-100 bg-surface-50">Alerts</p>
                   {notifications.length === 0 ? (
                     <p className="px-4 py-8 text-center text-sm font-medium text-surface-400">All caught up.</p>
@@ -267,7 +267,7 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
                 </div>
               </button>
               <div className="absolute right-0 top-full pt-2 hidden group-hover:block z-50">
-                <div className="w-56 bg-white rounded-xl shadow-lg border border-surface-200 p-2 animate-in">
+                <div className="w-56 bg-surface-raised rounded-xl shadow-lg border border-surface-200 p-2 animate-in">
                   <div className="px-3 py-2 border-b border-surface-100 mb-2">
                     <p className="text-sm font-bold text-surface-900 truncate">{user?.name}</p>
                     <p className="text-xs text-surface-500 truncate">{user?.email}</p>

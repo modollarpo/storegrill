@@ -29,7 +29,7 @@ export default async function SellPage() {
   const zone = cfg.shippingZones[0];
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-surface-raised min-h-screen">
       <div className="container-site py-12 max-w-4xl">
         <p className="text-ember font-bold text-xs uppercase tracking-[0.2em]">Storegrill for business</p>
         <h1 className="mt-2 text-displaymd md:text-displaylg font-semibold text-charcoal max-w-3xl leading-tight">

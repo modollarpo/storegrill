@@ -64,7 +64,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ slu
               <div className="flex items-center gap-3 mb-4">
                 <Badge variant="danger" size="md">{deal.type.replace(/_/g, ' ')}</Badge>
                 {isExpired && (
-                  <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-white/20 text-white border border-white/30">
+                  <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-surface-raised/20 text-white border border-white/30">
                     Expired
                   </span>
                 )}

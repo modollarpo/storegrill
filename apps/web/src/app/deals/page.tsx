@@ -171,7 +171,7 @@ Shop the deal →
           </h2>
           <Link
             href="/products?sort=price_asc"
-            className="inline-flex items-center h-12 px-8 mt-6 w-fit rounded-pill bg-white text-text-primary font-extrabold text-sm hover:bg-action-primary hover:text-action-primary-fg transition-all shadow-lg"
+            className="inline-flex items-center h-12 px-8 mt-6 w-fit rounded-pill bg-surface-raised text-text-primary font-extrabold text-sm hover:bg-action-primary hover:text-action-primary-fg transition-all shadow-lg"
           >
 Shop lowest prices →
           </Link>

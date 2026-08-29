@@ -325,7 +325,7 @@ function Section({
 }) {
   const isCurrent = currentStep === step;
   return (
-    <section className={cn('card p-5 bg-white border border-border rounded-lg shadow-sm', !isCurrent && 'opacity-60')}>
+    <section className={cn('card p-5 bg-surface-raised border border-border rounded-lg shadow-sm', !isCurrent && 'opacity-60')}>
       <header className="flex items-center justify-between mb-3">
         <h2 className={cn('text-sm font-bold', isCurrent ? 'text-text-primary' : 'text-text-secondary')}>{title}</h2>
         {currentStep > step && (

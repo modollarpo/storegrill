@@ -89,7 +89,7 @@ export function ReviewCard({ review, locale = 'en-US' }: { review: ReviewCardDat
       {review.images && review.images.length > 0 && (
         <div className="mt-2.5 flex gap-2">
           {review.images.slice(0, 4).map(src => (
-            <span key={src} className="relative w-16 h-16 rounded-sm overflow-hidden border border-smoke-150 bg-white">
+            <span key={src} className="relative w-16 h-16 rounded-sm overflow-hidden border border-smoke-150 bg-surface-raised">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt="" loading="lazy" className="object-cover w-full h-full" />
             </span>

@@ -111,7 +111,7 @@ export default function CartPage() {
 
         {/* Free shipping progress bar */}
         {toFreeShipping > 0 && subtotal > 0 && (
-          <div className="bg-white border border-border rounded-lg p-4 mb-6 flex items-center gap-4">
+          <div className="bg-surface-raised border border-border rounded-lg p-4 mb-6 flex items-center gap-4">
             <svg className="w-5 h-5 text-ember shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-text-primary">
@@ -130,7 +130,7 @@ export default function CartPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-[30px] items-start">
           {/* Cart items */}
           <section aria-label="Cart items" className="space-y-4">
-            <div className="bg-white border border-border rounded-lg shadow-sm overflow-hidden">
+            <div className="bg-surface-raised border border-border rounded-lg shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-surface-sunken text-text-secondary font-bold border-b border-border">
@@ -147,7 +147,7 @@ export default function CartPage() {
                       <tr key={`${line.productId}-${line.variantId ?? ''}`}>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
-                            <Link href={`/products/${line.slug || line.productId}`} className="relative w-16 h-16 shrink-0 rounded-xs overflow-hidden border border-border bg-white">
+                            <Link href={`/products/${line.slug || line.productId}`} className="relative w-16 h-16 shrink-0 rounded-xs overflow-hidden border border-border bg-surface-raised">
                               {line.image && <Image src={storefrontImage(line.image) || '/product-placeholder.svg'} alt="" fill sizes="64px" className="object-contain p-1.5 mix-blend-multiply" />}
                             </Link>
                             <Link href={`/products/${line.slug || line.productId}`} className="font-medium text-text-primary hover:text-ember hover:underline underline-offset-2">
@@ -164,7 +164,7 @@ export default function CartPage() {
                               type="button"
                               onClick={() => cart.setQuantity(line.productId, line.variantId, line.quantity - 1)}
                               aria-label="Decrease quantity"
-                              className="w-8 h-8 grid place-items-center font-bold hover:bg-white hover:text-ember transition-colors"
+                              className="w-8 h-8 grid place-items-center font-bold hover:bg-surface-raised hover:text-ember transition-colors"
                             >
                               −
                             </button>
@@ -173,7 +173,7 @@ export default function CartPage() {
                               type="button"
                               onClick={() => cart.setQuantity(line.productId, line.variantId, Math.min(line.quantity + 1, line.stock ?? 99))}
                               aria-label="Increase quantity"
-                              className="w-8 h-8 grid place-items-center font-bold hover:bg-white hover:text-ember transition-colors"
+                              className="w-8 h-8 grid place-items-center font-bold hover:bg-surface-raised hover:text-ember transition-colors"
                             >
                               +
                             </button>
@@ -197,7 +197,7 @@ export default function CartPage() {
                 </table>
               </div>
             </div>
-            <div className="bg-white border border-border rounded-lg p-5 text-right shadow-sm">
+            <div className="bg-surface-raised border border-border rounded-lg p-5 text-right shadow-sm">
               <p className="text-sm text-text-secondary">
                 Subtotal ({cart.count} item{cart.count === 1 ? '' : 's'}):{' '}
                 <strong className="text-xl text-text-primary ml-2">
@@ -208,7 +208,7 @@ export default function CartPage() {
           </section>
 
           {/* Order summary sidebar */}
-          <aside aria-label="Order summary" data-testid="order-summary" className="bg-white border border-border rounded-lg overflow-hidden shadow-sm lg:sticky lg:top-28">
+          <aside aria-label="Order summary" data-testid="order-summary" className="bg-surface-raised border border-border rounded-lg overflow-hidden shadow-sm lg:sticky lg:top-28">
             {/* Payment method selector */}
             <div className="p-6 border-b border-border">
               <h2 className="text-base font-extrabold text-text-primary mb-4">How would you like to pay?</h2>
@@ -317,7 +317,7 @@ export default function CartPage() {
                             onChange={e => { setCoupon(e.target.value.toUpperCase()); setCouponState('open'); setCouponError(''); }}
                             placeholder="Enter promo code"
                             disabled={couponState === 'checking'}
-                            className="input flex-1 h-10 text-sm border-border bg-white rounded-md focus:border-ember disabled:opacity-60"
+                            className="input flex-1 h-10 text-sm border-border bg-surface-raised rounded-md focus:border-ember disabled:opacity-60"
                           />
                           <button
                             type="button"
@@ -345,7 +345,7 @@ export default function CartPage() {
                 <p className="text-xs text-text-tertiary font-bold uppercase tracking-wider mb-3">We accept</p>
                 <ul className="flex flex-wrap gap-2" aria-label="Accepted payment methods">
                   {PAYMENT_LOGOS.map(name => (
-                    <li key={name} className="px-2.5 py-1.5 bg-white border border-border rounded-md text-xs font-bold text-text-secondary shadow-sm">
+                    <li key={name} className="px-2.5 py-1.5 bg-surface-raised border border-border rounded-md text-xs font-bold text-text-secondary shadow-sm">
                       {name}
                     </li>
                   ))}

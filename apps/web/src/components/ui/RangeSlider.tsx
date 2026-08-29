@@ -86,12 +86,12 @@ export function RangeSlider({
 
         {/* Visual thumbs */}
         <div
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white border-2 border-action-primary shadow-md transition-transform hover:scale-110 active:scale-95 focus-within:ring-2 focus-within:ring-action-primary/30"
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-surface-raised border-2 border-action-primary shadow-md transition-transform hover:scale-110 active:scale-95 focus-within:ring-2 focus-within:ring-action-primary/30"
           style={{ left: `${pctLow}%` }}
           aria-hidden="true"
         />
         <div
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white border-2 border-action-primary shadow-md transition-transform hover:scale-110 active:scale-95"
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-surface-raised border-2 border-action-primary shadow-md transition-transform hover:scale-110 active:scale-95"
           style={{ left: `${pctHigh}%` }}
           aria-hidden="true"
         />

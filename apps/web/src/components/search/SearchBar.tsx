@@ -263,7 +263,7 @@ export function SearchBar({ regionKey, placeholder = 'Search our products, brand
               >
                 {row.type === 'product' ? (
                   <span className="flex items-center gap-4 group">
-                    <span className="relative w-12 h-12 rounded-sm border border-border shrink-0 overflow-hidden bg-white">
+                    <span className="relative w-12 h-12 rounded-sm border border-border shrink-0 overflow-hidden bg-surface-raised">
                       {row.thumbnail && <Image src={storefrontImage(row.thumbnail) || '/product-placeholder.svg'} alt="" fill sizes="48px" className="object-contain p-1" />}
                     </span>
                     <span className="min-w-0 flex-1">

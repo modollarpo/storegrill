@@ -49,7 +49,7 @@ export default function AdminOrdersPage() {
 
       <div className="mb-4 flex items-center gap-2">
         <label htmlFor="status-filter" className="text-xs font-semibold text-slate-600">Status:</label>
-        <select id="status-filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="h-8 rounded-md border border-slate-300 text-xs px-2 bg-white">
+        <select id="status-filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="h-8 rounded-md border border-slate-300 text-xs px-2 bg-surface-raised">
           <option value="">All</option>
           {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
@@ -58,7 +58,7 @@ export default function AdminOrdersPage() {
 
       {error && <p role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
+      <div className="bg-surface-raised rounded-xl border border-slate-200 overflow-x-auto">
         <table className="w-full text-left text-xs min-w-[720px]">
           <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
             <tr>

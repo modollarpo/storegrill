@@ -63,7 +63,7 @@ function SwitchThumb({ checked, defaultChecked }: { checked?: boolean; defaultCh
     <span
       aria-hidden="true"
       className={cn(
-        'inline-block w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-fast',
+        'inline-block w-4 h-4 rounded-full bg-surface-raised shadow-sm transition-transform duration-fast',
         (checked ?? defaultChecked) ? 'translate-x-[1.15rem]' : 'translate-x-0.5'
       )}
     />

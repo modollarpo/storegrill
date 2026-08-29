@@ -35,28 +35,28 @@ const FOOTER_NAV = [
 function PaymentLogos() {
   return (
     <div className="flex flex-wrap items-center gap-2" aria-label="Accepted payment methods">
-      <span className="h-6 px-2 rounded-sm bg-white grid place-items-center text-[10px] font-bold italic text-text-primary">
+      <span className="h-6 px-2 rounded-sm bg-surface-raised grid place-items-center text-[10px] font-bold italic text-text-primary">
         VISA
       </span>
-      <span className="h-6 px-1.5 rounded-sm bg-white grid place-items-center">
+      <span className="h-6 px-1.5 rounded-sm bg-surface-raised grid place-items-center">
         <svg viewBox="0 0 30 18" className="w-7 h-4" aria-label="Mastercard">
           <circle cx="11" cy="9" r="7.5" fill="#eb001b" />
           <circle cx="19" cy="9" r="7.5" fill="#f79e1b" fillOpacity="0.9" />
         </svg>
       </span>
-      <span className="h-6 px-1.5 rounded-sm bg-white grid place-items-center">
+      <span className="h-6 px-1.5 rounded-sm bg-surface-raised grid place-items-center">
         <svg viewBox="0 0 30 18" className="w-7 h-4" aria-label="Maestro">
           <circle cx="11" cy="9" r="7.5" fill="#0099df" />
           <circle cx="19" cy="9" r="7.5" fill="#ed0006" fillOpacity="0.85" />
         </svg>
       </span>
-      <span className="h-6 px-2 rounded-sm bg-white grid place-items-center text-[10px] font-semibold text-text-primary">
+      <span className="h-6 px-2 rounded-sm bg-surface-raised grid place-items-center text-[10px] font-semibold text-text-primary">
         PayPal
       </span>
       <span className="h-6 px-2 rounded-sm bg-[#ffb3c7] grid place-items-center text-[10px] font-semibold text-text-primary">
         Klarna.
       </span>
-      <span className="h-6 px-2 rounded-sm bg-white grid place-items-center text-[10px] font-bold text-text-secondary">
+      <span className="h-6 px-2 rounded-sm bg-surface-raised grid place-items-center text-[10px] font-bold text-text-secondary">
         G Pay
       </span>
     </div>

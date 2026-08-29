@@ -132,7 +132,7 @@ export function CartItemRow({ line, locale = 'en-US' }: { line: CartItemLine; lo
 
   return (
     <div className="flex gap-4 py-4" data-testid="cart-item-row">
-      <Link href={`/products/${line.slug || line.productId}`} className="relative w-16 h-16 shrink-0 rounded-xs overflow-hidden border border-border bg-white">
+      <Link href={`/products/${line.slug || line.productId}`} className="relative w-16 h-16 shrink-0 rounded-xs overflow-hidden border border-border bg-surface-raised">
         {line.image && <Image src={storefrontImage(line.image) || '/product-placeholder.svg'} alt="" fill sizes="64px" className="object-contain p-1.5 mix-blend-multiply" />}
       </Link>
       <div className="min-w-0 flex-1">

@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function VendorApplyPage() {
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-surface-raised min-h-screen">
       <div className="container-site py-12 max-w-3xl">
         <p className="text-ember font-bold text-xs uppercase tracking-[0.2em]">Seller application</p>
         <h1 className="mt-2 text-displaymd font-semibold text-charcoal leading-tight">Start selling on Storegrill</h1>

@@ -14,15 +14,15 @@ export function CheckoutPaymentMethod({
   onSelect: (id: string) => void 
 }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-      <h2 className="text-base font-extrabold text-gray-900 mb-4">Payment Method</h2>
+    <div className="bg-white border border-border rounded-lg p-6 shadow-sm">
+      <h2 className="text-base font-extrabold text-text-primary mb-4">Payment Method</h2>
       <div className="space-y-3">
         {PAYMENT_METHODS.map(method => (
           <label
             key={method.id}
             className={cn(
               'flex items-center gap-3 p-4 border-2 rounded-md cursor-pointer transition-all',
-              selectedId === method.id ? 'border-ember bg-ember/5 shadow-sm' : 'border-gray-200 hover:border-ember'
+              selectedId === method.id ? 'border-ember bg-ember/5 shadow-sm' : 'border-border hover:border-ember'
             )}
           >
             <input
@@ -35,7 +35,7 @@ export function CheckoutPaymentMethod({
             <div className="relative w-10 h-6">
                 <Image src={method.icon} alt="" fill className="object-contain" />
             </div>
-            <span className="text-sm font-extrabold text-gray-900">{method.name}</span>
+            <span className="text-sm font-extrabold text-text-primary">{method.name}</span>
           </label>
         ))}
       </div>

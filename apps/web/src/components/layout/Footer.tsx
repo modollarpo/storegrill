@@ -35,7 +35,7 @@ const FOOTER_NAV = [
 function PaymentLogos() {
   return (
     <div className="flex flex-wrap items-center gap-2" aria-label="Accepted payment methods">
-      <span className="h-6 px-2 rounded-sm bg-white grid place-items-center text-[10px] font-bold italic text-gray-900">
+      <span className="h-6 px-2 rounded-sm bg-white grid place-items-center text-[10px] font-bold italic text-text-primary">
         VISA
       </span>
       <span className="h-6 px-1.5 rounded-sm bg-white grid place-items-center">
@@ -50,13 +50,13 @@ function PaymentLogos() {
           <circle cx="19" cy="9" r="7.5" fill="#ed0006" fillOpacity="0.85" />
         </svg>
       </span>
-      <span className="h-6 px-2 rounded-sm bg-white grid place-items-center text-[10px] font-semibold text-gray-900">
+      <span className="h-6 px-2 rounded-sm bg-white grid place-items-center text-[10px] font-semibold text-text-primary">
         PayPal
       </span>
-      <span className="h-6 px-2 rounded-sm bg-[#ffb3c7] grid place-items-center text-[10px] font-semibold text-gray-900">
+      <span className="h-6 px-2 rounded-sm bg-[#ffb3c7] grid place-items-center text-[10px] font-semibold text-text-primary">
         Klarna.
       </span>
-      <span className="h-6 px-2 rounded-sm bg-white grid place-items-center text-[10px] font-bold text-gray-600">
+      <span className="h-6 px-2 rounded-sm bg-white grid place-items-center text-[10px] font-bold text-text-secondary">
         G Pay
       </span>
     </div>

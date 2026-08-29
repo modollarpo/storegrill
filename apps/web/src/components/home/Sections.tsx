@@ -1081,7 +1081,7 @@ export function Testimonials() {
                       <Image key={j} src="/icons/icon-star.svg" alt="star" width={16} height={16} />
                     ))}
                   </div>
-                  <p className="text-gray-600 mb-6 flex-grow">{t.quote}</p>
+                  <p className="text-text-secondary mb-6 flex-grow">{t.quote}</p>
                   <div className="flex items-center gap-3">
                     <Image src={t.avatar} alt={t.name} width={40} height={40} className="rounded-full" />
                     <div>

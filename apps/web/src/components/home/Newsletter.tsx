@@ -29,11 +29,11 @@ export function Newsletter() {
             value={email}
             onChange={e => setEmail(e.target.value)}
             placeholder="Email Address"
-            className="flex-1 min-w-0 h-[46px] px-4 rounded-l-md border-none bg-white text-gray-900 text-sm outline-none placeholder:text-gray-400"
+            className="flex-1 min-w-0 h-[46px] px-4 rounded-l-md border-none bg-white text-text-primary text-sm outline-none placeholder:text-text-tertiary"
           />
           <button
             type="submit"
-            className="shrink-0 h-[46px] px-5 rounded-r-md border-none bg-secondary text-gray-900 text-sm font-bold cursor-pointer hover:bg-secondary-hover transition-colors"
+            className="shrink-0 h-[46px] px-5 rounded-r-md border-none bg-secondary text-text-primary text-sm font-bold cursor-pointer hover:bg-secondary-hover transition-colors"
           >
             Subscribe
           </button>

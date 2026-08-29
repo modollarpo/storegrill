@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 export default function BlogPage() {
   return (
     <div className="container-fluid py-10">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Our News</h1>
+      <h1 className="text-3xl font-bold text-text-primary mb-6">Our News</h1>
       <p>Blog listing page coming soon.</p>
     </div>
   );

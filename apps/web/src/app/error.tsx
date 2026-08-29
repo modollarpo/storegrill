@@ -15,11 +15,11 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         Something went wrong
       </p>
       
-      <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight mb-4">
+      <h1 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight mb-4">
         We could not load this page
       </h1>
       
-      <p className="mx-auto max-w-md text-base text-gray-500 font-medium mb-10 leading-relaxed">
+      <p className="mx-auto max-w-md text-base text-text-secondary font-medium mb-10 leading-relaxed">
         An unexpected error occurred. Please try again. Don&apos;t worry, your basket and account details are safe.
       </p>
       

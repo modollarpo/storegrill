@@ -77,9 +77,9 @@ function RegionPicker({
       className="fixed inset-0 z-[var(--z-dropdown)] flex items-start justify-center pt-20"
     >
       <div className="fixed inset-0 bg-black/30" onClick={onClose} aria-hidden="true" />
-      <div className="relative w-[30rem] max-h-[70vh] overflow-y-auto bg-white rounded-md shadow-md p-5 z-10 text-gray-900">
+      <div className="relative w-[30rem] max-h-[70vh] overflow-y-auto bg-white rounded-md shadow-md p-5 z-10 text-text-primary">
         <h3 className="text-sm font-bold mb-1">Choose your country or region</h3>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-text-secondary mb-3">
           Shopping on <strong>{currentKey.toLowerCase()}.storegrill.net</strong> — local
           currency, payments and delivery.
         </p>
@@ -89,13 +89,13 @@ function RegionPicker({
               <a
                 href={regionUrl(r.key)}
                 className={cn(
-                  'flex items-center gap-1.5 px-2 py-1.5 rounded text-xs hover:bg-gray-100 transition-colors',
+                  'flex items-center gap-1.5 px-2 py-1.5 rounded text-xs hover:bg-surface-sunken transition-colors',
                   r.key === currentKey && 'font-bold bg-blue-50'
                 )}
               >
                 <span aria-hidden="true">{r.flag}</span>
                 <span className="truncate">{r.name}</span>
-                <span className="ml-auto text-gray-400">{r.currency}</span>
+                <span className="ml-auto text-text-tertiary">{r.currency}</span>
               </a>
             </li>
           ))}
@@ -160,7 +160,7 @@ function Header({ announcementMessages }: HeaderProps) {
                     aria-label="Switch language"
                     value={language}
                     onChange={e => setLanguage(e.target.value)}
-                    className="bg-transparent border-none text-[13px] font-medium text-white cursor-pointer outline-none [&>option]:text-gray-900"
+                    className="bg-transparent border-none text-[13px] font-medium text-white cursor-pointer outline-none [&>option]:text-text-primary"
                   >
                     {(REGION_META.find(r => r.key === regionKey)?.languages || []).map(l => (
                       <option key={l.code} value={l.code}>{l.nativeName}</option>
@@ -279,7 +279,7 @@ function Header({ announcementMessages }: HeaderProps) {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
                     </svg>
                     {wishlist.items.length > 0 && (
-                      <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-secondary text-gray-900 text-[10px] font-bold rounded-full px-1">
+                      <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-secondary text-text-primary text-[10px] font-bold rounded-full px-1">
                         {wishlist.items.length}
                       </span>
                     )}
@@ -372,7 +372,7 @@ function Header({ announcementMessages }: HeaderProps) {
         className="!max-w-full sm:!max-w-full w-full"
       >
         <div className="flex-1 overflow-y-auto pb-8">
-          <div className="p-4 bg-white text-gray-900 flex items-center justify-between sticky top-0 z-10 border-b border-gray-200">
+          <div className="p-4 bg-white text-text-primary flex items-center justify-between sticky top-0 z-10 border-b border-border">
             <p className="text-sm font-bold">
               {t(language, 'hello')}, {t(language, 'signIn').toLowerCase()}
             </p>
@@ -388,55 +388,55 @@ function Header({ announcementMessages }: HeaderProps) {
                 key={slug}
                 href={`/categories/${slug}`}
                 onClick={() => setMobileOpen(false)}
-                className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+                className="block px-4 py-2.5 text-sm hover:bg-surface-sunken transition-colors"
               >
                 {label}
               </Link>
             ))}
           </section>
 
-          <hr className="border-gray-200" />
+          <hr className="border-border" />
 
           <section className="py-3" aria-label="Programs">
             <h3 className="px-4 py-2 text-base font-bold">Programs</h3>
             <Link
               href="/deals"
               onClick={() => setMobileOpen(false)}
-              className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+              className="block px-4 py-2.5 text-sm hover:bg-surface-sunken transition-colors"
             >
               Today&apos;s Deal
             </Link>
             <Link
               href="/vendors"
               onClick={() => setMobileOpen(false)}
-              className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+              className="block px-4 py-2.5 text-sm hover:bg-surface-sunken transition-colors"
             >
               Vendors
             </Link>
             <Link
               href="/vendor/apply"
               onClick={() => setMobileOpen(false)}
-              className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+              className="block px-4 py-2.5 text-sm hover:bg-surface-sunken transition-colors"
             >
               Sell on Storegrill
             </Link>
           </section>
 
-          <hr className="border-gray-200" />
+          <hr className="border-border" />
 
           <section className="py-3" aria-label="Help & Settings">
             <h3 className="px-4 py-2 text-base font-bold">Help & Settings</h3>
             <Link
               href="/help"
               onClick={() => setMobileOpen(false)}
-              className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+              className="block px-4 py-2.5 text-sm hover:bg-surface-sunken transition-colors"
             >
               Help Centre
             </Link>
             <Link
               href="/track"
               onClick={() => setMobileOpen(false)}
-              className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+              className="block px-4 py-2.5 text-sm hover:bg-surface-sunken transition-colors"
             >
               Track Order
             </Link>

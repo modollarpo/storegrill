@@ -114,7 +114,7 @@ export function CategoryMegaMenu({ categories, language = 'en' }: CategoryMegaMe
                       role="menuitem"
                       className="flex items-center gap-3 rounded-sm border border-border p-2 hover:bg-surface-sunken transition-colors group"
                     >
-                      <span className="relative w-10 h-10 rounded-sm shrink-0 overflow-hidden bg-gray-200">
+                      <span className="relative w-10 h-10 rounded-sm shrink-0 overflow-hidden bg-surface-sunken">
                         {p.thumbnail && <Image src={storefrontImage(p.thumbnail) || '/product-placeholder.svg'} alt="" fill sizes="40px" className="object-contain p-0.5" />}
                       </span>
                       <span className="min-w-0 flex-1">

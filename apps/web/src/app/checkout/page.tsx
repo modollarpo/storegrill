@@ -173,7 +173,7 @@ export default function CheckoutPage() {
   if (cart.items.length === 0) {
     return (
       <div className="container mx-auto max-w-[1460px] px-[30px] py-16 text-center">
-        <h1 className="text-3xl font-extrabold text-gray-900">Nothing to check out</h1>
+        <h1 className="text-3xl font-extrabold text-text-primary">Nothing to check out</h1>
         <Link href="/products" className="btn btn-primary mt-4">Browse products</Link>
       </div>
     );
@@ -181,14 +181,14 @@ export default function CheckoutPage() {
 
   return (
     <div className="container mx-auto max-w-[1460px] px-[30px] py-6" data-testid="checkout">
-      <h1 className="text-2xl font-extrabold text-gray-900 mb-6">Checkout</h1>
+      <h1 className="text-2xl font-extrabold text-text-primary mb-6">Checkout</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-[30px] items-start">
         <div className="space-y-5">
           <Section title="Contact & Delivery" step={1} currentStep={step} onEdit={() => setStep(1)}>
             <div className="space-y-3.5">
               <label className="block">
-                <span className="block text-xs font-semibold mb-1.5 text-gray-900">Email</span>
+                <span className="block text-xs font-semibold mb-1.5 text-text-primary">Email</span>
                 <input
                   type="email"
                   required
@@ -201,7 +201,7 @@ export default function CheckoutPage() {
               </label>
 
               <fieldset className="space-y-3">
-                <legend className="text-xs font-semibold mb-1.5 text-gray-900">Shipping address</legend>
+                <legend className="text-xs font-semibold mb-1.5 text-text-primary">Shipping address</legend>
                 <input
                   required
                   autoComplete="address-line1"
@@ -325,9 +325,9 @@ function Section({
 }) {
   const isCurrent = currentStep === step;
   return (
-    <section className={cn('card p-5 bg-white border border-gray-200 rounded-lg shadow-sm', !isCurrent && 'opacity-60')}>
+    <section className={cn('card p-5 bg-white border border-border rounded-lg shadow-sm', !isCurrent && 'opacity-60')}>
       <header className="flex items-center justify-between mb-3">
-        <h2 className={cn('text-sm font-bold', isCurrent ? 'text-gray-900' : 'text-gray-500')}>{title}</h2>
+        <h2 className={cn('text-sm font-bold', isCurrent ? 'text-text-primary' : 'text-text-secondary')}>{title}</h2>
         {currentStep > step && (
           <button type="button" onClick={onEdit} className="btn btn-link text-xs">Edit</button>
         )}

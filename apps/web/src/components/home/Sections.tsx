@@ -62,7 +62,7 @@ export function TrendingSlider({ children }: { children: React.ReactNode[] }) {
         type="button"
         onClick={() => step(-1)}
         aria-label="Previous popular products"
-        className="absolute left-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+        className="absolute left-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
       </button>
@@ -70,7 +70,7 @@ export function TrendingSlider({ children }: { children: React.ReactNode[] }) {
         type="button"
         onClick={() => step(1)}
         aria-label="Next popular products"
-        className="absolute right-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+        className="absolute right-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
       </button>
@@ -113,7 +113,7 @@ export function TabbedProductCarousel({ tabs }: { tabs: TabbedProductTab[] }) {
   return (
     <div>
       {/* Tabs - Bevesi style: centered, border-bottom */}
-      <div className="flex flex-wrap justify-center gap-0 border-b border-gray-200 mb-6">
+      <div className="flex flex-wrap justify-center gap-0 border-b border-border mb-6">
         {tabs.map((tab, i) => (
           <button
             key={tab.label}
@@ -123,7 +123,7 @@ export function TabbedProductCarousel({ tabs }: { tabs: TabbedProductTab[] }) {
               'px-5 py-3 text-sm font-bold border-b-2 transition-colors',
               i === active
                 ? 'border-ember text-ember'
-                : 'border-transparent text-gray-500 hover:text-gray-900 hover:border-border-strong'
+                : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border-strong'
             )}
           >
             {tab.label}
@@ -147,7 +147,7 @@ export function TabbedProductCarousel({ tabs }: { tabs: TabbedProductTab[] }) {
           type="button"
           onClick={() => step(-1)}
           aria-label="Previous"
-          className="absolute left-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+          className="absolute left-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
         </button>
@@ -155,7 +155,7 @@ export function TabbedProductCarousel({ tabs }: { tabs: TabbedProductTab[] }) {
           type="button"
           onClick={() => step(1)}
           aria-label="Next"
-          className="absolute right-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+          className="absolute right-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
         </button>
@@ -174,21 +174,21 @@ export interface FeaturedCollection {
 
 export function FeaturedCollections({ collections }: { collections: FeaturedCollection[] }) {
   return (
-    <section aria-labelledby="featured-collections-heading" className="border-b border-gray-200 py-10 md:py-12">
+    <section aria-labelledby="featured-collections-heading" className="border-b border-border py-10 md:py-12">
       <div className="container-fluid">
-        <h2 id="featured-collections-heading" className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+        <h2 id="featured-collections-heading" className="text-2xl md:text-3xl font-bold text-text-primary mb-6">
           Featured collections
         </h2>
         <div className="grid md:grid-cols-2 gap-8 md:gap-12">
           {collections.map(col => (
-            <div key={col.title} className="rounded-xs border border-gray-200 bg-white p-6 md:p-8">
+            <div key={col.title} className="rounded-xs border border-border bg-surface p-6 md:p-8">
               <div className="flex items-center gap-5 mb-8">
                 <span className="w-16 h-16 rounded-full grid place-items-center shrink-0 bg-ember-pale">
                   <Image src={col.icon} alt="" width={38} height={38} className="rounded-full relative z-10" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1">{col.title}</h3>
-                  <p className="text-sm text-gray-500 leading-snug">{col.subtitle}</p>
+                  <h3 className="text-xl font-bold text-text-primary leading-tight mb-1">{col.title}</h3>
+                  <p className="text-sm text-text-secondary leading-snug">{col.subtitle}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -199,7 +199,7 @@ export function FeaturedCollections({ collections }: { collections: FeaturedColl
                     aria-label={tile.label}
                     className="group block overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-ember"
                   >
-                    <span className={`relative block ${col.aspect ?? 'aspect-[3/2]'} bg-gray-50 overflow-hidden`}>
+                    <span className={`relative block ${col.aspect ?? 'aspect-[3/2]'} bg-surface-sunken overflow-hidden`}>
                       <Image
                         src={tile.src}
                         alt=""
@@ -208,7 +208,7 @@ export function FeaturedCollections({ collections }: { collections: FeaturedColl
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     </span>
-                    <span className="flex items-center min-h-[64px] bg-white px-4 py-3 text-sm font-bold leading-snug text-gray-900 group-hover:text-ember transition-colors">
+                    <span className="flex items-center min-h-[64px] bg-surface px-4 py-3 text-sm font-bold leading-snug text-text-primary group-hover:text-ember transition-colors">
                       {tile.label}
                     </span>
                   </Link>
@@ -260,16 +260,16 @@ export function PromoSlider({ id, heading, subtitle, background = 'var(--color-s
   return (
     <section
       aria-labelledby={`${id}-spotlight-heading`}
-className="border-b border-gray-200 py-8 md:py-12"
+className="border-b border-border py-8 md:py-12"
       style={{ background }}
     >
       <div className="container-fluid">
         <div className="mb-6 text-center">
-          <h2 id={`${id}-spotlight-heading`} className="text-2xl md:text-3xl font-bold text-gray-900">
+          <h2 id={`${id}-spotlight-heading`} className="text-2xl md:text-3xl font-bold text-text-primary">
             {heading}
           </h2>
           {subtitle && (
-            <p className="mt-1 text-body-md text-gray-500">
+            <p className="mt-1 text-body-md text-text-secondary">
               {subtitle}
             </p>
           )}
@@ -290,7 +290,7 @@ className="border-b border-gray-200 py-8 md:py-12"
                   aria-label={tile.label}
                   className="group block overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-ember shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <span className="relative block aspect-[510/440] bg-gray-50 overflow-hidden">
+                  <span className="relative block aspect-[510/440] bg-surface-sunken overflow-hidden">
                     <Image
                       src={tile.src}
                       alt=""
@@ -299,7 +299,7 @@ className="border-b border-gray-200 py-8 md:py-12"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </span>
-                  <span className="flex items-center justify-center min-h-[56px] bg-white px-4 py-3 text-center text-sm font-bold leading-snug text-gray-900 group-hover:text-ember transition-colors">
+                  <span className="flex items-center justify-center min-h-[56px] bg-surface px-4 py-3 text-center text-sm font-bold leading-snug text-text-primary group-hover:text-ember transition-colors">
                     {tile.label}
                   </span>
                 </Link>
@@ -310,7 +310,7 @@ className="border-b border-gray-200 py-8 md:py-12"
             type="button"
             onClick={() => scrollTiles(-1)}
             aria-label={`Previous ${id} offers`}
-            className="absolute left-2 top-[40%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+            className="absolute left-2 top-[40%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
           </button>
@@ -318,7 +318,7 @@ className="border-b border-gray-200 py-8 md:py-12"
             type="button"
             onClick={() => scrollTiles(1)}
             aria-label={`Next ${id} offers`}
-            className="absolute right-2 top-[40%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+            className="absolute right-2 top-[40%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
           </button>
@@ -404,7 +404,7 @@ function CampaignCard({ tile, large, small }: { tile: CampaignTile; large?: bool
           )}
         </span>
         {tile.cta && (
-          <span className={`inline-flex w-fit items-center rounded-xs bg-white px-[1.375rem] h-[44px] text-[14px] font-semibold text-gray-900 shadow-[0_0.125rem_0.1875rem_rgba(2,6,23,0.04)] transition-all ${large ? 'mt-4' : 'mt-3'}`}>
+          <span className={`inline-flex w-fit items-center rounded-xs bg-surface px-[1.375rem] h-[44px] text-[14px] font-semibold text-text-primary shadow-[0_0.125rem_0.1875rem_rgba(2,6,23,0.04)] transition-all ${large ? 'mt-4' : 'mt-3'}`}>
             {tile.cta}
           </span>
         )}
@@ -436,14 +436,14 @@ function CountdownBanner() {
 
   if (remaining === null) {
     return (
-      <span className="inline-flex items-center bg-white rounded-xs gap-1">
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">--</span>
-        <span className="text-gray-900/40 font-semibold">:</span>
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">--</span>
-        <span className="text-gray-900/40 font-semibold">:</span>
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">--</span>
-        <span className="text-gray-900/40 font-semibold">:</span>
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">--</span>
+      <span className="inline-flex items-center bg-surface rounded-xs gap-1">
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">--</span>
+        <span className="text-text-tertiary font-semibold">:</span>
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">--</span>
+        <span className="text-text-tertiary font-semibold">:</span>
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">--</span>
+        <span className="text-text-tertiary font-semibold">:</span>
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">--</span>
       </span>
     );
   }
@@ -455,14 +455,14 @@ function CountdownBanner() {
   const seconds = String(totalSeconds % 60).padStart(2, '0');
 
   return (
-    <span suppressHydrationWarning className="inline-flex items-center bg-white rounded-xs gap-1">
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">{days}</span>
-        <span className="text-gray-900/40 font-semibold">:</span>
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">{hours}</span>
-        <span className="text-gray-900/40 font-semibold">:</span>
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">{minutes}</span>
-        <span className="text-gray-900/40 font-semibold">:</span>
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-gray-900">{seconds}</span>
+    <span suppressHydrationWarning className="inline-flex items-center bg-surface rounded-xs gap-1">
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">{days}</span>
+        <span className="text-text-tertiary font-semibold">:</span>
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">{hours}</span>
+        <span className="text-text-tertiary font-semibold">:</span>
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">{minutes}</span>
+        <span className="text-text-tertiary font-semibold">:</span>
+        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">{seconds}</span>
     </span>
   );
 }
@@ -487,10 +487,10 @@ export function CampaignHero() {
   }, []);
 
   return (
-    <section aria-label="Featured campaigns" className="bg-white border-b border-gray-200">
+    <section aria-label="Featured campaigns" className="bg-surface border-b border-border">
       <div className="p-4 md:p-5">
         <div className="grid md:grid-cols-[1.4fr_1fr] gap-4 md:gap-5 items-stretch">
-          <div className="relative rounded-lg overflow-hidden bg-gray-100">
+          <div className="relative rounded-lg overflow-hidden bg-surface-sunken">
             {isClient ? (
               <Swiper
                 modules={[Autoplay, Pagination]}
@@ -516,14 +516,14 @@ export function CampaignHero() {
                 <button
                   onClick={handlePrev}
                   aria-label="Previous slide"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 shadow-md flex items-center justify-center text-gray-900 hover:bg-white transition-colors"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-surface shadow-md flex items-center justify-center text-text-primary hover:bg-surface transition-colors"
                 >
                   <svg className="fill-current" width="20" height="20" viewBox="0 0 24 24"><path fillRule="evenodd" clipRule="evenodd" d="M15.4881 4.43057C15.8026 4.70014 15.839 5.17361 15.5694 5.48811L9.98781 12L15.5694 18.5119C15.839 18.8264 15.8026 19.2999 15.4881 19.5695C15.1736 19.839 14.7001 19.8026 14.4306 19.4881L8.43056 12.4881C8.18981 12.2072 8.18981 11.7928 8.43056 11.5119L14.4306 4.51192C14.7001 4.19743 15.1736 4.161 15.4881 4.43057Z" fill="" /></svg>
                 </button>
                 <button
                   onClick={handleNext}
                   aria-label="Next slide"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 shadow-md flex items-center justify-center text-gray-900 hover:bg-white transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-surface shadow-md flex items-center justify-center text-text-primary hover:bg-surface transition-colors"
                 >
                   <svg className="fill-current" width="20" height="20" viewBox="0 0 24 24"><path fillRule="evenodd" clipRule="evenodd" d="M8.51192 4.43057C8.82641 4.161 9.29989 4.19743 9.56946 4.51192L15.5695 11.5119C15.8102 11.7928 15.8102 12.2072 15.5695 12.4881L9.56946 19.4881C9.29989 19.8026 8.82641 19.839 8.51192 19.5695C8.19743 19.2999 8.161 18.8264 8.43057 18.5119L14.0122 12L8.43057 5.48811C8.161 5.17361 8.19743 4.70014 8.51192 4.43057Z" fill="" /></svg>
                 </button>
@@ -583,7 +583,7 @@ export function CategoryQuickNav() {
   }
 
   return (
-    <nav aria-label="Shop by category" className="border-b border-gray-200">
+    <nav aria-label="Shop by category" className="border-b border-border">
       <div className="py-10 md:py-12">
         <div className="relative group/cat">
           <ul
@@ -598,7 +598,7 @@ export function CategoryQuickNav() {
                   aria-label={cat.name}
                   className="group block w-[120px] md:w-[140px] text-center"
                 >
-                  <span className="relative block w-[120px] h-[120px] md:w-[140px] md:h-[140px] rounded-full overflow-hidden border border-gray-200 bg-gray-50 mx-auto mb-2 transition-all group-hover:border-ember group-hover:shadow-md">
+                  <span className="relative block w-[120px] h-[120px] md:w-[140px] md:h-[140px] rounded-full overflow-hidden border border-border bg-surface-sunken mx-auto mb-2 transition-all group-hover:border-ember group-hover:shadow-md">
                     <Image
                       src={cat.image}
                       alt=""
@@ -607,7 +607,7 @@ export function CategoryQuickNav() {
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   </span>
-                  <span className="block text-xs md:text-sm font-bold text-gray-900 group-hover:text-ember transition-colors leading-tight">
+                  <span className="block text-xs md:text-sm font-bold text-text-primary group-hover:text-ember transition-colors leading-tight">
                     {cat.name}
                   </span>
                 </Link>
@@ -618,7 +618,7 @@ export function CategoryQuickNav() {
             type="button"
             onClick={() => step(-1)}
             aria-label="Previous categories"
-            className="absolute left-2 top-[40%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/cat:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+            className="absolute left-2 top-[40%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface opacity-0 group-hover/cat:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
           </button>
@@ -626,7 +626,7 @@ export function CategoryQuickNav() {
             type="button"
             onClick={() => step(1)}
             aria-label="Next categories"
-            className="absolute right-2 top-[40%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/cat:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+            className="absolute right-2 top-[40%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface opacity-0 group-hover/cat:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
           </button>
@@ -649,7 +649,7 @@ export interface CategoryBannerWithProductsProps {
 
 export function CategoryBannerWithProducts({ title, subtitle, description, ctaLabel, ctaHref, bannerImage, bannerBg, products }: CategoryBannerWithProductsProps) {
   return (
-    <section className="border-b border-gray-200">
+    <section className="border-b border-border">
       <div className="container-fluid py-8 md:py-10">
         <div className="grid lg:grid-cols-[1fr_2fr] gap-6 md:gap-8">
           <Link href={ctaHref} className="group block relative overflow-hidden rounded-xs min-h-[280px] lg:min-h-0" style={{ backgroundColor: bannerBg }}>
@@ -658,7 +658,7 @@ export function CategoryBannerWithProducts({ title, subtitle, description, ctaLa
               {subtitle && <span className="text-sm font-medium mb-1">{subtitle}</span>}
               <span className="text-xl md:text-2xl font-bold tracking-tight leading-tight max-w-[85%]">{title}</span>
               {description && <span className="text-sm mt-2 max-w-xs opacity-90">{description}</span>}
-              <span className="inline-flex w-fit items-center mt-4 px-5 py-2.5 bg-white text-gray-900 text-sm font-semibold rounded-xs shadow-md group-hover:bg-charcoal group-hover:text-white transition-all">
+              <span className="inline-flex w-fit items-center mt-4 px-5 py-2.5 bg-surface text-text-primary text-sm font-semibold rounded-xs shadow-md group-hover:bg-charcoal group-hover:text-white transition-all">
                 {ctaLabel}
               </span>
             </span>
@@ -748,15 +748,15 @@ export function DealsOfTheDay({ deals }: { deals: DealCardData[] }) {
   if (deals.length === 0) return null;
 
   return (
-    <section className="border-b border-gray-200 py-10 md:py-12" aria-label="Deals of the day">
+    <section className="border-b border-border py-10 md:py-12" aria-label="Deals of the day">
       <div className="container-fluid">
         <header className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900">Deals Of The Day</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-text-primary">Deals Of The Day</h2>
           <div className="hidden sm:flex gap-3">
-            <button type="button" onClick={() => scroll(-1)} aria-label="Scroll deals left" className="w-10 h-10 grid place-items-center rounded-full bg-white border border-gray-200 shadow-sm hover:border-ember hover:text-ember transition-all">
+            <button type="button" onClick={() => scroll(-1)} aria-label="Scroll deals left" className="w-10 h-10 grid place-items-center rounded-full bg-surface border border-border shadow-sm hover:border-ember hover:text-ember transition-all">
               <svg className="w-5 h-5 icon-directional" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
             </button>
-            <button type="button" onClick={() => scroll(1)} aria-label="Scroll deals right" className="w-10 h-10 grid place-items-center rounded-full bg-white border border-gray-200 shadow-sm hover:border-ember hover:text-ember transition-all">
+            <button type="button" onClick={() => scroll(1)} aria-label="Scroll deals right" className="w-10 h-10 grid place-items-center rounded-full bg-surface border border-border shadow-sm hover:border-ember hover:text-ember transition-all">
               <svg className="w-5 h-5 icon-directional" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
             </button>
           </div>
@@ -766,8 +766,8 @@ export function DealsOfTheDay({ deals }: { deals: DealCardData[] }) {
             const savingMinorUnits = deal.listPriceMinorUnits && deal.listPriceMinorUnits > deal.priceMinorUnits ? deal.listPriceMinorUnits - deal.priceMinorUnits : 0;
             return (
               <li key={deal.id} className="snap-start shrink-0 w-[75%] sm:w-[calc(33.333%-12px)] lg:w-[calc(25%-12px)]">
-                <Link href={deal.productId ? `/products/${deal.productId}` : '/deals'} className="group block bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-ember transition-all h-full flex flex-col" suppressHydrationWarning>
-                  <div className="relative w-full aspect-square bg-white mb-3 shrink-0 rounded-md overflow-hidden">
+                <Link href={deal.productId ? `/products/${deal.productId}` : '/deals'} className="group block bg-surface border border-border rounded-lg p-4 hover:shadow-md hover:border-ember transition-all h-full flex flex-col" suppressHydrationWarning>
+                  <div className="relative w-full aspect-square bg-surface mb-3 shrink-0 rounded-md overflow-hidden">
                     {deal.image && (
                       <Image src={storefrontImage(deal.image) || '/product-placeholder.svg'} alt="" fill sizes="240px" className="object-contain p-2 group-hover:scale-105 transition-transform duration-500" />
                     )}
@@ -775,15 +775,15 @@ export function DealsOfTheDay({ deals }: { deals: DealCardData[] }) {
                       <span className="inline-flex items-center rounded-sm bg-ember text-white text-[11px] font-bold px-2 py-1 uppercase tracking-wider">{deal.dealLabel}</span>
                     </span>
                   </div>
-                  <p className="text-sm font-bold line-clamp-2 leading-snug text-gray-900 group-hover:text-ember transition-colors mb-3">{deal.productName}</p>
+                  <p className="text-sm font-bold line-clamp-2 leading-snug text-text-primary group-hover:text-ember transition-colors mb-3">{deal.productName}</p>
                   
                   <div className="mt-auto">
-                    <span className="block text-xl font-extrabold text-gray-900" suppressHydrationWarning>
+                    <span className="block text-xl font-extrabold text-text-primary" suppressHydrationWarning>
                       {new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(deal.priceMinorUnits / 100)}
                     </span>
                     {savingMinorUnits > 0 && deal.listPriceMinorUnits && (
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-400 line-through" suppressHydrationWarning>
+                        <span className="text-xs text-text-tertiary line-through" suppressHydrationWarning>
                           Was {new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(deal.listPriceMinorUnits / 100)}
                         </span>
                         <span className="text-xs text-ember font-bold bg-ember/10 px-1.5 py-0.5 rounded-sm" suppressHydrationWarning>
@@ -842,7 +842,7 @@ export function TrustBar({ freeShippingThreshold, currency }: { freeShippingThre
   ];
 
   return (
-    <section aria-label="Why shop with Storegrill" className="bg-ember-pale border-b border-gray-200">
+    <section aria-label="Why shop with Storegrill" className="bg-ember-pale border-b border-border">
       <div className="container-fluid py-1.5 md:py-2">
       <ul className="grid grid-cols-2 md:grid-cols-4 gap-0.5 md:gap-1" role="list">
         {items.map(item => (
@@ -919,9 +919,9 @@ export function RecentlyViewed() {
   if (items.length === 0) return null;
 
   return (
-    <section className="border-b border-gray-200" aria-label="Pick up where you left off">
+    <section className="border-b border-border" aria-label="Pick up where you left off">
       <div className="container-fluid py-10 md:py-12">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Pick up where you left off</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-text-primary mb-6">Pick up where you left off</h2>
         <div className="relative group/recent">
           <ul
             ref={scrollerRef}
@@ -931,8 +931,8 @@ export function RecentlyViewed() {
           >
             {items.map(item => (
               <li key={item.slug} className="snap-start shrink-0 w-[75%] sm:w-[calc(33.333%-12px)] lg:w-[calc(25%-12px)]">
-                <Link href={`/products/${item.slug}`} className="group flex h-full flex-col rounded-xs border border-gray-200 bg-white overflow-hidden hover:border-ember hover:shadow-md transition-all">
-                  <span className="relative block aspect-square bg-gray-50 overflow-hidden">
+                <Link href={`/products/${item.slug}`} className="group flex h-full flex-col rounded-xs border border-border bg-surface overflow-hidden hover:border-ember hover:shadow-md transition-all">
+                  <span className="relative block aspect-square bg-surface-sunken overflow-hidden">
                     {item.thumbnail && (
                       <Image
                         src={storefrontImage(item.thumbnail) || '/product-placeholder.svg'}
@@ -944,7 +944,7 @@ export function RecentlyViewed() {
                     )}
                   </span>
                   <span className="flex flex-col p-4 grow">
-                    <span className="text-sm font-medium leading-snug text-gray-900 line-clamp-2 min-h-[2.5rem] group-hover:text-ember transition-colors">{item.name}</span>
+                    <span className="text-sm font-medium leading-snug text-text-primary line-clamp-2 min-h-[2.5rem] group-hover:text-ember transition-colors">{item.name}</span>
                     <span className="text-base font-bold mt-2">
                       {new Intl.NumberFormat('en-US', { style: 'currency', currency: item.currencyCode }).format(item.unitPriceMinorUnits / 100)}
                     </span>
@@ -959,7 +959,7 @@ export function RecentlyViewed() {
                 type="button"
                 onClick={() => step(-1)}
                 aria-label="Previous recently viewed items"
-                className="absolute left-2 top-[38%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/recent:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+                className="absolute left-2 top-[38%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface opacity-0 group-hover/recent:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
               </button>
@@ -967,7 +967,7 @@ export function RecentlyViewed() {
                 type="button"
                 onClick={() => step(1)}
                 aria-label="Next recently viewed items"
-                className="absolute right-2 top-[38%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-white shadow-lg border border-gray-200 text-gray-900 hover:bg-white opacity-0 group-hover/recent:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+                className="absolute right-2 top-[38%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface opacity-0 group-hover/recent:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
               </button>
@@ -991,15 +991,15 @@ export interface VendorSpotlightItem {
 export function VendorSpotlight({ vendors }: { vendors: VendorSpotlightItem[] }) {
   if (vendors.length === 0) return null;
   return (
-    <section className="border-b border-gray-200" aria-labelledby="vendor-spotlight-heading">
+    <section className="border-b border-border" aria-labelledby="vendor-spotlight-heading">
       <div className="container-fluid py-10 md:py-12">
       <div className="flex items-end justify-between mb-6">
-        <h2 id="vendor-spotlight-heading" className="text-2xl md:text-3xl font-bold text-gray-900">Featured Vendors</h2>
+        <h2 id="vendor-spotlight-heading" className="text-2xl md:text-3xl font-bold text-text-primary">Featured Vendors</h2>
         <Link href="/vendors" className="text-sm font-bold text-ember hover:underline underline-offset-4">All vendors</Link>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         {vendors.slice(0, 3).map(v => (
-          <Link key={v.slug} href={`/vendors/${v.slug}`} className="rounded-xs bg-white border border-gray-200 p-4 flex items-center gap-5 hover:border-ember transition-colors group">
+          <Link key={v.slug} href={`/vendors/${v.slug}`} className="rounded-xs bg-surface border border-border p-4 flex items-center gap-5 hover:border-ember transition-colors group">
             <span className="w-16 h-16 rounded-full bg-gradient-to-br from-ember to-ember-dark text-white grid place-items-center font-bold text-lg shrink-0 overflow-hidden">
               {v.logo ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -1009,12 +1009,12 @@ export function VendorSpotlight({ vendors }: { vendors: VendorSpotlightItem[] })
               )}
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-base font-bold text-gray-900 group-hover:text-ember transition-colors truncate">{v.storeName}</span>
-              <span className="block text-xs font-medium text-gray-500 mt-1">
+              <span className="block text-base font-bold text-text-primary group-hover:text-ember transition-colors truncate">{v.storeName}</span>
+              <span className="block text-xs font-medium text-text-secondary mt-1">
                 ★ {v.rating > 0 ? v.rating.toFixed(1) : 'New'} · {v.reviewCount.toLocaleString()} reviews
               </span>
             </span>
-            <span className="shrink-0 text-gray-400 group-hover:text-ember transition-colors">
+            <span className="shrink-0 text-text-tertiary group-hover:text-ember transition-colors">
               <svg className="w-5 h-5 icon-directional" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
             </span>
           </Link>
@@ -1054,12 +1054,12 @@ export function Testimonials() {
     setIsClient(true);
   }, []);
 
-  if (!isClient) return <section className="border-b border-gray-200 py-10 md:py-16 bg-gray-50"><div className="container-fluid"><div className="h-64" /></div></section>;
+  if (!isClient) return <section className="border-b border-border py-10 md:py-16 bg-surface-sunken"><div className="container-fluid"><div className="h-64" /></div></section>;
 
   return (
-    <section className="border-b border-gray-200 py-10 md:py-16 bg-gray-50">
+    <section className="border-b border-border py-10 md:py-16 bg-surface-sunken">
       <div className="container-fluid">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 text-center">What Our Customers Say</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-text-primary mb-8 text-center">What Our Customers Say</h2>
         <div className="relative group/slider">
           <Swiper
             modules={[Autoplay, Pagination]}
@@ -1075,7 +1075,7 @@ export function Testimonials() {
             className="px-2">
             {TESTIMONIALS.map((t, i) => (
               <SwiperSlide key={i} className="h-auto">
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
+                <div className="bg-surface p-6 rounded-lg shadow-sm border border-border h-full flex flex-col">
                   <div className="flex items-center gap-1 mb-4">
                     {[...Array(5)].map((_, j) => (
                       <Image key={j} src="/icons/icon-star.svg" alt="star" width={16} height={16} />
@@ -1085,8 +1085,8 @@ export function Testimonials() {
                   <div className="flex items-center gap-3">
                     <Image src={t.avatar} alt={t.name} width={40} height={40} className="rounded-full" />
                     <div>
-                      <p className="text-sm font-bold text-gray-900">{t.name}</p>
-                      <p className="text-xs text-gray-500">{t.role}</p>
+                      <p className="text-sm font-bold text-text-primary">{t.name}</p>
+                      <p className="text-xs text-text-secondary">{t.role}</p>
                     </div>
                   </div>
                 </div>

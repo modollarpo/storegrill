@@ -335,7 +335,7 @@ function Header({ announcementMessages }: HeaderProps) {
                 {CATEGORY_LINKS.map(([label, slug]) => (
                   <Link
                     key={slug}
-                    href={`/products?category=${slug}`}
+                    href={`/categories/${slug}`}
                     className="text-[16px] font-semibold whitespace-nowrap hover:opacity-80 transition-opacity"
                   >
                     {label}
@@ -386,7 +386,7 @@ function Header({ announcementMessages }: HeaderProps) {
             {CATEGORY_LINKS.map(([label, slug]) => (
               <Link
                 key={slug}
-                href={`/products?category=${slug}`}
+                href={`/categories/${slug}`}
                 onClick={() => setMobileOpen(false)}
                 className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
               >

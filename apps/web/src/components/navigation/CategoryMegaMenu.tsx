@@ -83,7 +83,7 @@ export function CategoryMegaMenu({ categories, language = 'en' }: CategoryMegaMe
               {categories.map((cat, i) => (
                 <li key={cat.slug} className="border-y border-border/50">
                   <Link
-                    href={`/products?category=${cat.slug}`}
+                    href={`/categories/${cat.slug}`}
                     onClick={() => setOpen(false)}
                     role="menuitem"
                     aria-expanded={i === activeIndex}

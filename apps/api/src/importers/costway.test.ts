@@ -42,26 +42,24 @@ describe('parsePriceToMinor', () => {
 });
 
 describe('applyIngestPricing', () => {
-  it('applies 20% markup then rounds up to .99', () => {
-    expect(applyIngestPricing(10495)).toBe(12599);
-    expect(applyIngestPricing(2495)).toBe(2999);
-    expect(applyIngestPricing(4495)).toBe(5399);
+  it('applies 30% markup then rounds up to .99', () => {
+    expect(applyIngestPricing(10495)).toBe(13699);
+    expect(applyIngestPricing(2495)).toBe(3299);
+    expect(applyIngestPricing(4495)).toBe(5899);
   });
 
-  it('reduces flash-sale items by 15% off the marked-up price before charm rounding', () => {
-    expect(applyIngestPricing(10495, { flashSale: true })).toBe(10799);
-    expect(applyIngestPricing(10000, { flashSale: true })).toBe(10299);
+  it('no longer bakes a flash-sale discount at ingest (handled by the deal engine)', () => {
+    expect(applyIngestPricing(10495, {})).toBe(13699);
+    expect(applyIngestPricing(10000, {})).toBe(13099);
   });
 
-  it('prices clearance items at a reduced 10-point markup', () => {
-    expect(applyIngestPricing(10495, { clearance: true })).toBe(11599);
-    expect(applyIngestPricing(2495, { clearance: true })).toBe(2799);
+  it('prices clearance items at a reduced 10-point markup (net 20%)', () => {
+    expect(applyIngestPricing(10495, { clearance: true })).toBe(12599);
+    expect(applyIngestPricing(2495, { clearance: true })).toBe(2999);
   });
 
-  it('lets flash-sale take precedence over clearance when both flags are set', () => {
-    expect(applyIngestPricing(10495, { flashSale: true, clearance: true })).toBe(
-      applyIngestPricing(10495, { flashSale: true }),
-    );
+  it('treats clearance independently of the flash-sale flag', () => {
+    expect(applyIngestPricing(10495, { clearance: true })).toBe(12599);
   });
 });
 

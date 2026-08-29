@@ -5,6 +5,7 @@ import { optionalAuth, authenticate, authorize, AuthRequest } from '../middlewar
 import { CreateDealSchema, CreateCouponSchema, ApplyCouponSchema, DEFAULT_REGIONS } from '@Storegrill/shared';
 import { slugify } from '../utils/slugify.js';
 import { validateCoupon } from '../services/coupons.js';
+import { loadActiveDeals } from '../services/deal-eval.js';
 
 const router = Router();
 
@@ -51,6 +52,12 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
       })),
     })),
   });
+});
+
+router.get('/active', optionalAuth, async (req: AuthRequest, res: Response) => {
+  const vendorId = req.query.vendorId as string | undefined;
+  const deals = await loadActiveDeals(prisma, vendorId ? { vendorId } : undefined);
+  res.json({ deals });
 });
 
 router.get('/:slug', optionalAuth, async (req: AuthRequest, res: Response) => {

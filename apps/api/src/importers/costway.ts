@@ -3,9 +3,9 @@ import { createMoney, roundUpTo99 } from '@Storegrill/shared';
 export const COSTWAY_FEED_URL =
   'https://www.costway.co.uk/media/feed/costway_uk_dropship_products.csv';
 
-export const PRICE_MARKUP_RATE = 0.20;
-export const FLASH_SALE_DISCOUNT_RATE = 0.15;
+export const PRICE_MARKUP_RATE = 0.30;
 export const CLEARANCE_MARKUP_REDUCTION = 0.10;
+export const DEAL_PROMO_RATE = 0.025;
 export const OUT_OF_STOCK_THRESHOLD = 10;
 
 export const HOUSE_BRAND = 'Costway';
@@ -97,19 +97,13 @@ function mulPenny(minorUnits: number, factor: number): number {
 }
 
 export interface PricingFlags {
-  flashSale?: boolean;
   clearance?: boolean;
 }
 
 export function applyIngestPricing(feedPriceMinorUnits: number, flags?: PricingFlags): number {
-  let priced: number;
-  if (flags?.flashSale) {
-    priced = mulPenny(mulPenny(feedPriceMinorUnits, 1 + PRICE_MARKUP_RATE), 1 - FLASH_SALE_DISCOUNT_RATE);
-  } else if (flags?.clearance) {
-    priced = mulPenny(feedPriceMinorUnits, 1 + PRICE_MARKUP_RATE - CLEARANCE_MARKUP_REDUCTION);
-  } else {
-    priced = mulPenny(feedPriceMinorUnits, 1 + PRICE_MARKUP_RATE);
-  }
+  const priced = flags?.clearance
+    ? mulPenny(feedPriceMinorUnits, 1 + PRICE_MARKUP_RATE - CLEARANCE_MARKUP_REDUCTION)
+    : mulPenny(feedPriceMinorUnits, 1 + PRICE_MARKUP_RATE);
   return Number(roundUpTo99(createMoney(BigInt(priced), 'GBP')).amountMinorUnits);
 }
 
@@ -215,7 +209,6 @@ function toVariant(row: CostwayFeedRow, suffix: string | null, flags: DerivedFla
     variantSuffix: suffix,
     feedPriceMinorUnits,
     priceMinorUnits: applyIngestPricing(feedPriceMinorUnits, {
-      flashSale: isFlashSale,
       clearance: flags.tags.includes('clearance'),
     }),
     ...(isFlashSale ? { listPriceMinorUnits: applyIngestPricing(feedPriceMinorUnits) } : {}),

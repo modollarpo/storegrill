@@ -163,7 +163,7 @@ describe('import engine (integration)', () => {
       let products = await houseProducts();
       const kitchenSet = products.get('CW-TST-A')!;
       expect(kitchenSet.status).toBe('ACTIVE');
-      expect(kitchenSet.basePriceMinorUnits).toBe(2999);
+      expect(kitchenSet.basePriceMinorUnits).toBe(3199);
       expect(kitchenSet.currencyCode).toBe('GBP');
       expect(kitchenSet.sourceUrl).not.toContain('utm_');
       expect(JSON.parse(kitchenSet.images)[0]).toContain('https://www.costway.co.uk');
@@ -171,8 +171,8 @@ describe('import engine (integration)', () => {
       const dollhouse = [...products.values()].find(p => p.name === 'Wooden Dollhouse')!;
       expect(dollhouse.variants).toHaveLength(2);
       const variantPrices = dollhouse.variants.map((v: any) => v.basePriceMinorUnits).sort((a: any, b: any) => a - b);
-      expect(variantPrices).toEqual([1299, 2499]);
-      expect(dollhouse.basePriceMinorUnits).toBe(1299);
+      expect(variantPrices).toEqual([1399, 2699]);
+      expect(dollhouse.basePriceMinorUnits).toBe(1399);
 
       const category = await prisma.category.findUniqueOrThrow({ where: { slug: 'play-kitchens' } });
       expect(category.name).toBe('Play Kitchens');
@@ -189,13 +189,17 @@ describe('import engine (integration)', () => {
       expect(flashDeal.enabled).toBe(true);
       expect(flashDeal.type).toBe('FLASH_SALE');
       const skeleton = products.get('CW-TST-C')!;
-      expect(skeleton.variants[0].basePriceMinorUnits).toBe(5699);
+      expect(skeleton.variants[0].basePriceMinorUnits).toBe(7199);
       expect(JSON.parse(skeleton.variants[0].attributes)).toEqual([
         { name: 'Supplier stock', value: '25' },
-        { name: 'List price', value: '6599' },
+        { name: 'List price', value: '7199' },
       ]);
       const dealVariants = await prisma.dealVariant.findMany({ where: { dealId: flashDeal.id } });
       expect(dealVariants.map((dv: any) => dv.productId)).toEqual([skeleton.id]);
+
+      const categoryDeals = await prisma.deal.findMany({ where: { slug: { startsWith: 'costway-cat-' } } });
+      expect(categoryDeals.length).toBeGreaterThan(0);
+      expect(categoryDeals.every((d: any) => d.type === 'PERCENTAGE_OFF' && Number(d.value) === 2.5)).toBe(true);
 
       const secondRun = await runJobAndWait(initialCsv, 'APPLY');
       const secondSummary = JSON.parse(secondRun.errors)[0];
@@ -218,7 +222,7 @@ describe('import engine (integration)', () => {
       expect(drySummary.archived).toBe(1);
 
       products = await houseProducts();
-      expect(products.get('CW-TST-A')!.basePriceMinorUnits).toBe(2999);
+      expect(products.get('CW-TST-A')!.basePriceMinorUnits).toBe(3199);
       expect(products.get('CW-TST-C')).toBeDefined();
       expect(products.has('CW-TST-D')).toBe(false);
 
@@ -230,8 +234,8 @@ describe('import engine (integration)', () => {
       expect(applySummary.flashSaleDeals).toBe(0);
 
       products = await houseProducts();
-      expect(products.get('CW-TST-A')!.basePriceMinorUnits).toBe(3499);
-      expect(products.get('CW-TST-D')!.basePriceMinorUnits).toBe(12099);
+      expect(products.get('CW-TST-A')!.basePriceMinorUnits).toBe(3799);
+      expect(products.get('CW-TST-D')!.basePriceMinorUnits).toBe(13099);
       expect(products.get('CW-TST-C')!.status).toBe('ARCHIVED');
 
       const remainingLinks = await prisma.dealVariant.findMany({ where: { dealId: flashDeal.id } });

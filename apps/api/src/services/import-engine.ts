@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
 import {
   adaptCostwayRows,
+  DEAL_PROMO_RATE,
   type CostwayFeedRow,
   type NormalizedProduct,
   type NormalizedVariant,
@@ -320,7 +321,7 @@ async function executePlan(
 ): Promise<Record<string, unknown>> {
   const dryRun = mode === 'DRY_RUN';
 
-  const counts: Record<string, number> = { creates: 0, updates: 0, unchanged: 0, archived: 0, errors: 0, flashSaleDeals: 0, oosSynced: 0 };
+  const counts: Record<string, number> = { creates: 0, updates: 0, unchanged: 0, archived: 0, errors: 0, flashSaleDeals: 0, categoryDeals: 0, oosSynced: 0 };
   const archiveIds: string[] = [];
   const feedSkus = new Set(planned.flatMap(p => p.product.variants.map(v => v.sku)));
   for (const oos of outOfStockProducts) {
@@ -435,6 +436,7 @@ async function executePlan(
       : 0;
   } else if (profile.dealSlug) {
     counts.flashSaleDeals = await syncFlashSaleDeals(vendorId, profile);
+    counts.categoryDeals = await syncCategoryDeals(vendorId);
   }
 
   for (const err of rowErrors) {
@@ -471,13 +473,13 @@ async function syncFlashSaleDeals(vendorId: string, profile: AdapterProfile): Pr
   const dealName = profile.dealName ?? 'Flash Sale';
   const deal = await prisma.deal.upsert({
     where: { slug: profile.dealSlug! },
-    update: { enabled: true, startsAt, endsAt, vendorId },
+    update: { enabled: true, startsAt, endsAt, vendorId, value: DEAL_PROMO_RATE },
     create: {
       name: dealName,
       slug: profile.dealSlug!,
       description: 'Flash-sale picks refreshed with every feed import.',
       type: 'FLASH_SALE',
-      value: 0,
+      value: DEAL_PROMO_RATE,
       enabled: true,
       startsAt,
       endsAt,
@@ -494,10 +496,86 @@ async function syncFlashSaleDeals(vendorId: string, profile: AdapterProfile): Pr
   const linked = await prisma.dealVariant.findMany({ where: { dealId: deal.id }, select: { productId: true } });
   const linkedIds = new Set(linked.map((l: any) => l.productId));
   const missing = productIds.filter((id: any) => !linkedIds.has(id));
-  if (missing.length > 0) {
-    await prisma.dealVariant.createMany({ data: missing.map((productId: any) => ({ dealId: deal.id, productId })) });
-  }
+    if (missing.length > 0) {
+      await prisma.dealVariant.createMany({ data: missing.map((productId: any) => ({ dealId: deal.id, productId })) });
+    }
   return productIds.length;
+}
+
+async function syncCategoryDeals(vendorId: string): Promise<number> {
+  const now = new Date();
+  const startsAt = new Date(now.getTime() - 3600 * 1000);
+  const endsAt = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
+
+  const leaves = await prisma.product.findMany({
+    where: { vendorId },
+    select: { categoryId: true },
+    distinct: ['categoryId'],
+  });
+  const leafIds = leaves.map((l: any) => l.categoryId).filter(Boolean) as string[];
+  if (leafIds.length === 0) return 0;
+
+  const categories = await prisma.category.findMany({ select: { id: true, parentId: true, slug: true, name: true } });
+  const byId = new Map(categories.map((c: any) => [c.id, c]));
+
+  const rootIds = new Set<string>();
+  for (const id of leafIds) {
+    let cur: any = byId.get(id);
+    while (cur?.parentId) cur = byId.get(cur.parentId);
+    if (cur) rootIds.add(cur.id);
+  }
+
+  const childrenOf = new Map<string, string[]>();
+  for (const c of categories) {
+    if (c.parentId) {
+      const arr = childrenOf.get(c.parentId) ?? [];
+      arr.push(c.id);
+      childrenOf.set(c.parentId, arr);
+    }
+  }
+  const descendants = (root: string): string[] => {
+    const out: string[] = [];
+    const stack = [...(childrenOf.get(root) ?? [])];
+    while (stack.length) {
+      const node = stack.pop()!;
+      out.push(node);
+      for (const child of childrenOf.get(node) ?? []) stack.push(child);
+    }
+    return out;
+  };
+
+  const activeSlugs: string[] = [];
+  let created = 0;
+  for (const rootId of rootIds) {
+    const root = byId.get(rootId);
+    if (!root) continue;
+    const slug = `costway-cat-${root.slug}`;
+    activeSlugs.push(slug);
+    const categoryIds = JSON.stringify([rootId, ...descendants(rootId)]);
+    await prisma.deal.upsert({
+      where: { slug },
+      update: { enabled: true, startsAt, endsAt, value: DEAL_PROMO_RATE, categoryIds, vendorId },
+      create: {
+        name: `Category Deal: ${root.name}`,
+        slug,
+        description: 'Automatic category deal refreshed each import.',
+        type: 'PERCENTAGE_OFF',
+        value: DEAL_PROMO_RATE,
+        enabled: true,
+        startsAt,
+        endsAt,
+        vendorId,
+        categoryIds,
+      },
+    });
+    created++;
+  }
+
+  await prisma.deal.deleteMany({
+    where: { vendorId, slug: { startsWith: 'costway-cat-', notIn: activeSlugs } },
+  });
+
+  return created;
 }
 
 interface ApplyContext {

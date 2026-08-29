@@ -126,7 +126,7 @@ router.post('/apply-coupon', optionalAuth, async (req: AuthRequest, res: Respons
   const body = ApplyCouponSchema.parse(req.body);
   const region = DEFAULT_REGIONS.find(r => r.key === body.regionKey);
   const currencyCode = region?.defaultCurrency ?? 'USD';
-  const result = await validateCoupon(body.code, body.subtotalMinorUnits, currencyCode);
+  const result = await validateCoupon(body.code, body.subtotalMinorUnits, currencyCode, body.items);
 
   if (!result.ok) {
     return res.status(result.status).json({ error: { code: result.code, message: result.message } });

@@ -5,9 +5,13 @@ import { getCurrencyDecimals, convertMoney, createMoney } from '@Storegrill/shar
  * how a coupon discount is calculated. Keeping this out of the Prisma-backed
  * `coupons.ts` makes it unit-testable without a database.
  *
- * - PERCENTAGE_OFF is currency-independent (a percentage of the subtotal).
+ * - PERCENTAGE_OFF / FLASH_SALE are currency-independent (a percentage of the
+ *   subtotal). FLASH_SALE differs only in that it is auto-applied within a
+ *   time window; the arithmetic is identical.
  * - FIXED_AMOUNT `value` is treated as MAJOR units in `couponCurrencyCode`
  *   and is converted to `orderCurrencyCode` when they differ.
+ * - BOGO / BUNDLE require line-item context and are evaluated by `deal-engine.ts`
+ *   (this function returns 0 for them at the order level).
  * The returned number is always expressed in `orderCurrencyCode` minor units.
  */
 export function computeCouponDiscount(params: {
@@ -21,7 +25,7 @@ export function computeCouponDiscount(params: {
   const { dealType, dealValue, maxDiscount, couponCurrencyCode, orderCurrencyCode, subtotalMinorUnits } = params;
 
   let discountMinor: number;
-  if (dealType === 'PERCENTAGE_OFF') {
+  if (dealType === 'PERCENTAGE_OFF' || dealType === 'FLASH_SALE') {
     discountMinor = Math.round((subtotalMinorUnits * dealValue) / 100);
     if (maxDiscount != null) {
       discountMinor = Math.min(discountMinor, Number(maxDiscount));

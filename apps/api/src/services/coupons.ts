@@ -1,5 +1,15 @@
 import { prisma } from '../index.js';
 import { computeCouponDiscount } from './coupon-discount.js';
+import { evaluateDeals, type DealInput } from './deal-engine.js';
+import { DealTypeEnum } from '@Storegrill/shared';
+
+export interface ApplyCouponItem {
+  productId: string;
+  categoryId?: string | null;
+  quantity: number;
+  unitMinorUnits: number;
+  currencyCode: string;
+}
 
 export interface CouponValidationResult {
   ok: true;
@@ -29,6 +39,7 @@ export async function validateCoupon(
   code: string,
   subtotalMinorUnits: number,
   orderCurrencyCode = 'USD',
+  items?: ApplyCouponItem[],
 ): Promise<CouponValidationResult | CouponValidationError> {
   const coupon = await prisma.coupon.findUnique({
     where: { code },
@@ -52,7 +63,23 @@ export async function validateCoupon(
   }
 
   const couponCurrencyCode = coupon.currencyCode || orderCurrencyCode;
-  const discount = computeCouponDiscount({
+  const dealType = coupon.deal.type as DealTypeEnum;
+
+  let discount: number;
+  if ((dealType === 'BOGO' || dealType === 'BUNDLE') && items && items.length > 0) {
+    const dealInput: DealInput = {
+      id: coupon.deal.id,
+      name: coupon.deal.name,
+      type: dealType,
+      value: Number(coupon.deal.value),
+      categoryIds: parseCategoryIds(coupon.deal.categoryIds),
+      metadata: (coupon.deal as { metadata?: DealInput['metadata'] }).metadata ?? null,
+      minOrderAmount: coupon.deal.minOrderAmount,
+      maxDiscount: coupon.deal.maxDiscount,
+    };
+    discount = evaluateDeals({ items, deals: [dealInput], orderCurrency: orderCurrencyCode }).totalDiscountMinorUnits;
+  } else {
+    discount = computeCouponDiscount({
     dealType: coupon.deal.type,
     dealValue: Number(coupon.deal.value),
     maxDiscount: coupon.deal.maxDiscount,
@@ -60,6 +87,7 @@ export async function validateCoupon(
     orderCurrencyCode,
     subtotalMinorUnits,
   });
+  }
 
   return {
     ok: true,
@@ -71,4 +99,17 @@ export async function validateCoupon(
       couponId: coupon.id,
     },
   };
+}
+
+function parseCategoryIds(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.map(String);
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
 }

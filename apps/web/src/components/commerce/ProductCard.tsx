@@ -43,7 +43,7 @@ const BADGE_STYLES: Record<string, string> = {
   sale: 'bg-feedback-danger text-white',
   new: 'bg-black text-white',
   deal: 'bg-ember text-white',
-  sponsored: 'bg-white text-gray-700 border border-gray-200',
+  sponsored: 'bg-surface text-text-secondary border border-border',
   bestseller: 'bg-ember text-white',
 };
 
@@ -63,12 +63,12 @@ export function ProductCard({ product, variant = 'grid', locale = 'en-US' }: Pro
 
   if (variant === 'compact') {
     return (
-      <Link href={href} className="group flex gap-4 p-3 hover:bg-gray-50 transition-colors rounded-md border border-gray-200">
-        <div className="relative w-14 h-14 shrink-0 bg-white rounded-md overflow-hidden">
+      <Link href={href} className="group flex gap-4 p-3 hover:bg-surface-sunken transition-colors rounded-md border border-border">
+        <div className="relative w-14 h-14 shrink-0 bg-surface rounded-md overflow-hidden">
           {images[0] && <Image src={images[0]} alt={product.name} fill sizes="56px" className="object-contain p-0.5" />}
         </div>
         <div className="min-w-0 flex-1 flex flex-col justify-center">
-          <p className="text-sm font-normal leading-snug line-clamp-2 text-gray-900 group-hover:text-ember transition-colors">{product.name}</p>
+          <p className="text-sm font-normal leading-snug line-clamp-2 text-text-primary group-hover:text-ember transition-colors">{product.name}</p>
           <div className="mt-1">
             <PriceDisplay amountMinorUnits={product.price} currencyCode={product.currencyCode} size="sm" />
           </div>
@@ -94,7 +94,7 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
 
   return (
     <article aria-label={product.name} className="group">
-      <div className="relative overflow-hidden flex items-center justify-center rounded-lg bg-white shadow-card min-h-[270px] mb-4">
+      <div className="relative overflow-hidden flex items-center justify-center rounded-lg bg-surface shadow-card min-h-[270px] mb-4">
         {/* Product image */}
         {images[0] ? (
           <Image
@@ -102,10 +102,10 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
             alt={product.name}
             width={250}
             height={250}
-            className="object-contain p-2 mix-blend-multiply transition-transform duration-200 group-hover:scale-105"
+            className="object-contain p-2 mix-blend-multiply transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="w-[250px] h-[250px] grid place-items-center text-gray-400 font-bold text-3xl">
+          <div className="w-[250px] h-[250px] grid place-items-center text-text-tertiary font-bold text-3xl">
             {product.name.slice(0, 1)}
           </div>
         )}
@@ -114,7 +114,7 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
         {(product.badge || product.dealLabel) && (
           <span className="absolute top-3 left-3 z-10">
             <span className={cn(
-              'inline-flex items-center rounded-[5px] px-3 py-1 text-xs font-medium leading-none',
+              'inline-flex items-center rounded-xs px-3 py-1 text-xs font-medium leading-none',
               product.dealLabel ? 'bg-ember text-white' : BADGE_STYLES[product.badge || ''],
             )}>
               {product.dealLabel || BADGE_LABELS[product.badge || '']}
@@ -128,7 +128,7 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
             type="button"
             onClick={() => setShowQuickView(true)}
             aria-label={`Quick view ${product.name}`}
-            className="flex items-center justify-center w-9 h-9 rounded-[5px] shadow-card ease-out duration-200 text-gray-900 bg-white hover:text-ember"
+            className="flex items-center justify-center w-9 h-9 rounded-xs shadow-card ease-out duration-200 text-text-primary bg-surface hover:text-ember"
           >
             <svg className="fill-current" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path fillRule="evenodd" clipRule="evenodd" d="M8.00016 5.5C6.61945 5.5 5.50016 6.61929 5.50016 8C5.50016 9.38071 6.61945 10.5 8.00016 10.5C9.38087 10.5 10.5002 9.38071 10.5002 8C10.5002 6.61929 9.38087 5.5 8.00016 5.5ZM6.50016 8C6.50016 7.17157 7.17174 6.5 8.00016 6.5C8.82859 6.5 9.50016 7.17157 9.50016 8C9.50016 8.82842 8.82859 9.5 8.00016 9.5C7.17174 9.5 6.50016 8.82842 6.50016 8Z" />
@@ -152,7 +152,7 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
               <svg
                 key={star}
                 aria-hidden="true"
-                className={cn('w-3.5 h-3.5', star <= product.rating ? 'text-ember' : 'text-gray-200')}
+                className={cn('w-3.5 h-3.5', star <= product.rating ? 'text-ember' : 'text-text-disabled')}
                 viewBox="0 0 24 24"
                 fill={star <= product.rating ? 'currentColor' : 'none'}
                 stroke="currentColor"
@@ -162,22 +162,22 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
               </svg>
             ))}
           </div>
-          <span className="text-xs text-gray-400">({product.reviewCount})</span>
+          <span className="text-xs text-text-tertiary">({product.reviewCount})</span>
         </div>
       )}
 
       {/* Product name */}
-      <h3 className="font-medium text-sm text-gray-900 ease-out duration-200 hover:text-ember mb-1.5 line-clamp-2">
+      <h3 className="font-medium text-sm text-text-primary ease-out duration-200 hover:text-ember mb-1.5 line-clamp-2">
         <Link href={href}>{product.name}</Link>
       </h3>
 
       {/* Price */}
       <div className="flex items-center gap-2">
-        <span className="font-medium text-lg text-gray-900">
+        <span className="font-medium text-lg text-text-primary">
           <PriceDisplay amountMinorUnits={product.price} currencyCode={product.currencyCode} size="md" locale={locale} />
         </span>
         {savingMinorUnits > 0 && product.listPrice && (
-          <span className="text-sm text-gray-400 line-through">
+          <span className="text-sm text-text-tertiary line-through">
             <PriceDisplay amountMinorUnits={product.listPrice} currencyCode={product.currencyCode} size="sm" />
           </span>
         )}
@@ -188,7 +188,7 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
         <p className="text-xs text-feedback-danger font-medium mt-1">Out of stock</p>
       )}
       {product.inventoryCount !== undefined && product.inventoryCount > 0 && product.inventoryCount <= 3 && (
-        <p className="text-xs text-gray-900 font-medium mt-1">Only {product.inventoryCount} left</p>
+        <p className="text-xs text-text-primary font-medium mt-1">Only {product.inventoryCount} left</p>
       )}
     </article>
   );
@@ -198,9 +198,9 @@ function ListCard({ product, images, href, locale }: { product: ProductCardData;
   const savingMinorUnits = product.listPrice && product.listPrice > product.price ? product.listPrice - product.price : 0;
 
   return (
-    <article aria-label={product.name} className="group flex gap-5 p-4 rounded-lg bg-white shadow-card hover:shadow-md transition-shadow">
+    <article aria-label={product.name} className="group flex gap-5 p-4 rounded-lg bg-surface shadow-card hover:shadow-md transition-shadow">
       <Link href={href} tabIndex={-1} aria-label={product.name} className="shrink-0">
-        <div className="relative w-[180px] h-[180px] overflow-hidden rounded-lg bg-gray-50">
+        <div className="relative w-[180px] h-[180px] overflow-hidden rounded-lg bg-surface-sunken">
           {images[0] ? (
             <Image
               src={images[0]}
@@ -210,12 +210,12 @@ function ListCard({ product, images, href, locale }: { product: ProductCardData;
               className="object-contain p-2 mix-blend-multiply"
             />
           ) : (
-            <div className="absolute inset-0 grid place-items-center text-gray-400 font-bold text-2xl">
+            <div className="absolute inset-0 grid place-items-center text-text-tertiary font-bold text-2xl">
               {product.name.slice(0, 1)}
             </div>
           )}
           {product.badge && (
-            <span className="absolute top-2.5 left-2.5 z-10 inline-flex items-center rounded-[5px] px-3 py-1 text-xs font-medium bg-ember text-white">
+            <span className="absolute top-2.5 left-2.5 z-10 inline-flex items-center rounded-xs px-3 py-1 text-xs font-medium bg-ember text-white">
               {BADGE_LABELS[product.badge]}
             </span>
           )}
@@ -231,7 +231,7 @@ function ListCard({ product, images, href, locale }: { product: ProductCardData;
                 <svg
                   key={star}
                   aria-hidden="true"
-                  className={cn('w-3.5 h-3.5', star <= product.rating ? 'text-ember' : 'text-gray-200')}
+                  className={cn('w-3.5 h-3.5', star <= product.rating ? 'text-ember' : 'text-text-disabled')}
                   viewBox="0 0 24 24"
                   fill={star <= product.rating ? 'currentColor' : 'none'}
                   stroke="currentColor"
@@ -241,22 +241,22 @@ function ListCard({ product, images, href, locale }: { product: ProductCardData;
                 </svg>
               ))}
             </div>
-            <span className="text-xs text-gray-400">({product.reviewCount})</span>
+            <span className="text-xs text-text-tertiary">({product.reviewCount})</span>
           </div>
         )}
 
         <Link href={href} className="block">
-          <h3 className="font-medium text-sm text-gray-900 line-clamp-2 group-hover:text-ember transition-colors">
+          <h3 className="font-medium text-sm text-text-primary line-clamp-2 group-hover:text-ember transition-colors">
             {product.name}
           </h3>
         </Link>
 
         <div className="flex items-center gap-2 mt-2">
-          <span className="font-medium text-lg text-gray-900">
+          <span className="font-medium text-lg text-text-primary">
             <PriceDisplay amountMinorUnits={product.price} currencyCode={product.currencyCode} size="md" locale={locale} />
           </span>
           {savingMinorUnits > 0 && product.listPrice && (
-            <span className="text-sm text-gray-400 line-through">
+            <span className="text-sm text-text-tertiary line-through">
               <PriceDisplay amountMinorUnits={product.listPrice} currencyCode={product.currencyCode} size="sm" />
             </span>
           )}
@@ -295,7 +295,7 @@ function WishlistButton({ product, className }: { product: ProductCardData; clas
       aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`}
       aria-pressed={saved}
       className={cn(
-        'flex items-center justify-center w-9 h-9 rounded-[5px] shadow-card ease-out duration-200 bg-white text-gray-900 hover:text-ember transition-colors',
+        'flex items-center justify-center w-9 h-9 rounded-xs shadow-card ease-out duration-200 bg-surface text-text-primary hover:text-ember transition-colors',
         saved && 'text-ember',
         className
       )}
@@ -319,7 +319,7 @@ function AddToCartInline({ product }: { product: ProductCardData }) {
         type="button"
         onClick={() => toast({ variant: 'success', title: 'We will notify you when back in stock', description: product.name })}
         aria-label={`Notify me when ${product.name} is back in stock`}
-        className="inline-flex font-medium text-xs py-[7px] px-5 rounded-[5px] bg-white text-gray-900 shadow-card ease-out duration-200 hover:text-ember"
+        className="inline-flex font-medium text-xs py-[7px] px-5 rounded-xs bg-surface text-text-primary shadow-card ease-out duration-200 hover:text-ember"
       >
         Notify Me
       </button>
@@ -346,7 +346,7 @@ function AddToCartInline({ product }: { product: ProductCardData }) {
       aria-live="polite"
       aria-label={justAdded ? `${product.name} added to basket` : `Add ${product.name} to basket`}
       className={cn(
-        'inline-flex font-medium text-xs py-[7px] px-5 rounded-[5px] ease-out duration-200 shadow-card disabled:cursor-not-allowed',
+        'inline-flex font-medium text-xs py-[7px] px-5 rounded-xs ease-out duration-200 shadow-card disabled:cursor-not-allowed',
         justAdded
           ? 'bg-feedback-success text-white'
           : 'bg-ember text-white hover:bg-ember-dark'

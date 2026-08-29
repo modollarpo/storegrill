@@ -21,21 +21,21 @@ export function QuickViewModal({ product, onClose }: { product: ProductCardData;
   return (
     <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row">
-        <button onClick={onClose} className="absolute top-4 right-4 z-10 text-gray-400 hover:text-gray-900"><svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      <div className="relative bg-surface rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col md:flex-row">
+        <button onClick={onClose} className="absolute top-4 right-4 z-10 text-text-tertiary hover:text-text-primary"><svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
         
-        <div className="w-full md:w-1/2 bg-gray-50 p-6 flex items-center justify-center">
+        <div className="w-full md:w-1/2 bg-surface-sunken p-6 flex items-center justify-center">
             {images[0] && <Image src={images[0]} alt={product.name} width={400} height={400} className="object-contain" />}
         </div>
         
         <div className="w-full md:w-1/2 p-8 overflow-y-auto">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">{product.name}</h2>
-          <div className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl font-bold text-text-primary mb-2">{product.name}</h2>
+          <div className="text-2xl font-bold text-text-primary mb-4">
             <PriceDisplay amountMinorUnits={product.price} currencyCode={product.currencyCode} size="lg" />
           </div>
           
           <div className="flex items-center gap-4 mb-6">
-            <div className="flex items-center border border-gray-200 rounded-md">
+            <div className="flex items-center border border-border rounded-md">
                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-3 py-2">-</button>
                 <span className="px-3 py-2 font-bold">{quantity}</span>
                 <button onClick={() => setQuantity(Math.min(product.inventoryCount ?? 99, quantity + 1))} className="px-3 py-2">+</button>

@@ -77,7 +77,7 @@ export function AddToCartButton(props: AddToCartButtonProps) {
       <button
         type="button"
         onClick={() => toast({ variant: 'success', title: 'We will notify you', description: `${props.name} is back in stock` })}
-        className={cn('inline-flex items-center justify-center font-bold border-2 border-gray-200 text-gray-900 bg-surface hover:bg-gray-100 transition-colors', props.fullWidth && 'w-full', SIZE_CLASS[props.size ?? 'md'])}
+        className={cn('inline-flex items-center justify-center font-bold border-2 border-border text-text-primary bg-surface hover:bg-surface-sunken transition-colors', props.fullWidth && 'w-full', SIZE_CLASS[props.size ?? 'md'])}
       >
         Notify Me
       </button>

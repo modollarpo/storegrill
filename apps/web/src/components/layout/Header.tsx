@@ -175,7 +175,7 @@ function Header({ announcementMessages }: HeaderProps) {
         {/* ═══ ROW 2: MAIN HEADER ═══ */}
         <div
           id="header-main"
-          className="bg-ember text-white border-t border-white/20"
+          className="bg-ember text-white border-t border-white/20 shadow-sm"
         >
           <div className="container-fluid">
             <div className="flex items-center h-[74px] gap-4 lg:gap-6">

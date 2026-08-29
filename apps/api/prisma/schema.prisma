@@ -103,6 +103,7 @@ model VendorProfile {
   autoPublishImports     Boolean   @default(false)
   shippingMode           String    @default("REGION")
   shippingFlatMinorUnits Int?
+  shippingCountries      String?
   rating                 Float     @default(0)
   reviewCount            Int       @default(0)
   createdAt              DateTime  @default(now())

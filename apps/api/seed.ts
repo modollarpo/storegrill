@@ -517,6 +517,7 @@ async function main() {
       autoPublishImports: true,
       shippingMode: 'FLAT',
       shippingFlatMinorUnits: 1000,
+      shippingCountries: JSON.stringify(['GB']),
     },
   });
 

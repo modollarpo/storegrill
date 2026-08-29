@@ -99,6 +99,7 @@ export interface VendorShippingPolicy {
   vendorId: string;
   mode: VendorShippingMode;
   flatRateMinorUnits?: bigint;
+  countries?: string[];
 }
 
 export interface GroupedShippingItem {
@@ -129,6 +130,7 @@ export function calculateGroupedShipping(
   const flatVendorIds = new Set(
     Object.values(policies)
       .filter(p => p.mode === 'FLAT' && p.flatRateMinorUnits !== undefined)
+      .filter(p => p.countries === undefined || p.countries.includes(input.country))
       .map(p => p.vendorId),
   );
 

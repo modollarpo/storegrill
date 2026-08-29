@@ -125,7 +125,7 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
               basePriceMinorUnits: true, currencyCode: true,
               vendorId: true, categoryId: true, status: true,
               vendor: {
-                select: { shippingMode: true, shippingFlatMinorUnits: true },
+                select: { storeName: true, shippingMode: true, shippingFlatMinorUnits: true, shippingCountries: true },
               },
             },
           },
@@ -148,6 +148,7 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
 
   const regionConfig = DEFAULT_REGIONS.find(r => r.key === (body.regionKey || 'UK')) || DEFAULT_REGIONS[0];
   const currencyCode = regionConfig.defaultCurrency;
+  const shipCountry = body.shippingAddress?.country || 'GB';
 
   const productIds = cart.items.map((item: any) => item.product.id);
   const regionPrices = await prisma.productRegionPrice.findMany({
@@ -257,10 +258,17 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
   for (const oi of orderItems) {
     const vendor = cart.items.find((item: any) => item.product.vendorId === oi.vendorId)?.product.vendor;
     if (vendor && !vendorPolicies[oi.vendorId]) {
+      const allowedCountries = vendor.shippingCountries ? JSON.parse(vendor.shippingCountries) : undefined;
+      if (Array.isArray(allowedCountries) && allowedCountries.length > 0 && !allowedCountries.includes(shipCountry)) {
+        return res.status(400).json({
+          error: { code: 'VENDOR_SHIPPING_RESTRICTED', message: `${vendor.storeName} ships only within: ${allowedCountries.join(', ')}` },
+        });
+      }
       vendorPolicies[oi.vendorId] = {
         vendorId: oi.vendorId,
         mode: vendor.shippingMode === 'FLAT' ? 'FLAT' : 'REGION',
         flatRateMinorUnits: vendor.shippingFlatMinorUnits != null ? BigInt(vendor.shippingFlatMinorUnits) : undefined,
+        countries: Array.isArray(allowedCountries) ? allowedCountries : undefined,
       };
     }
     itemSubtotals[oi.vendorId] = (itemSubtotals[oi.vendorId] ?? 0n) + BigInt(oi.totalMinorUnits);
@@ -274,7 +282,7 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
         quantity: item.quantity,
       })),
       itemSubtotals,
-      country: body.shippingAddress?.country || 'GB',
+      country: shipCountry,
       regionKey: regionConfig.key,
     },
     vendorPolicies,

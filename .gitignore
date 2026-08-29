@@ -41,5 +41,6 @@ tfplan
 *.tfvars
 *.tmp
 key.tmp
+apply_final.txt
 deploy/
 infra/terraform/live/**/.terraform/

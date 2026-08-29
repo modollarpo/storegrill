@@ -63,9 +63,11 @@ const ANNOUNCEMENTS = [
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { regionKey, language } = await getRequestContext();
+  const primaryLang = language.split('-')[0];
+  const dir = ['ar', 'he', 'fa', 'ur'].includes(primaryLang) ? 'rtl' : 'ltr';
 
   return (
-    <html lang="en">
+    <html lang={language} dir={dir}>
       <body className="min-h-screen flex flex-col antialiased bg-surface-page text-primary">
         <AnalyticsProvider>
           <UserContextProvider>

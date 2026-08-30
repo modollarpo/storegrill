@@ -516,7 +516,7 @@ async function main() {
       isHouseVendor: true,
       autoPublishImports: true,
       shippingMode: 'FLAT',
-      shippingFlatMinorUnits: 1000,
+      shippingFlatMinorUnits: 999,
       shippingCountries: JSON.stringify(['GB']),
     },
   });

@@ -9,6 +9,7 @@ export const colors = {
     200: '#d4d4d4', 300: '#b8b8b8', 400: '#949494', 500: '#717171',
     600: '#525252', 700: '#3d3d3d', 800: '#292929', 900: '#141414', 950: '#0a0a0a',
   },
+  deal: { DEFAULT: '#E53E3E', hover: '#C53030', light: '#FFF5F5' },
   footer: '#33434A',
 } as const;
 
@@ -133,13 +134,12 @@ export const radii = {
 // Decorative-only backgrounds for editorial promo banners (never interactive,
 // never used for text/links/CTAs — those stay on the ember action palette).
 export const promoPalette = {
-  merlot: '#5F1616',
-  pine: '#26525C',
+  royal: '#4c12a1',
+  deep: '#320b6e',
+  light: '#7a4bc9',
+  plum: '#6C597C',
   slate: '#323E4D',
   harbor: '#1a3a4a',
-  umber: '#584F46',
-  plum: '#6C597C',
-  clay: '#746350',
   dealRed: '#E53E3E',
 } as const;
 

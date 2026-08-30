@@ -162,8 +162,8 @@ export default async function HomePage() {
       {/* 4. Live deals with real countdowns (renders nothing if none are active) */}
       <DealsOfTheDay deals={dealCards} />
 
-      {/* 5. Merchandising carousel — New Arrivals / Best Sellers / Top Rated / On Sale */}
-      <section className="py-8 md:py-10" aria-labelledby="products-heading">
+      {/* 5. Merchandising carousel */}
+      <section className="py-16 md:py-24" aria-labelledby="products-heading">
         <div className="container-fluid">
           <TabbedProductCarousel
             tabs={[
@@ -210,7 +210,7 @@ export default async function HomePage() {
         ctaLabel="Shop mobile & tablets"
         ctaHref="/products?category=mobiles"
         bannerImage="/banners/home4/banner-37.jpg"
-        bannerBg={promoPalette.harbor}
+        bannerBg={promoPalette.royal}
         products={localized.slice(0, 6).map(p => ({
           id: p.id,
           name: p.name,

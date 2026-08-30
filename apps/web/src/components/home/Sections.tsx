@@ -111,22 +111,25 @@ export function TabbedProductCarousel({ tabs }: { tabs: TabbedProductTab[] }) {
   const activeProducts = tabs[active]?.products ?? [];
 
   return (
-    <div>
-      {/* Tabs - Bevesi style: centered, border-bottom */}
-      <div className="flex flex-wrap justify-center gap-0 border-b border-border mb-6">
+    <div className="py-6">
+      {/* Tabs - Modernized: clean text, subtle active indicator */}
+      <div className="flex flex-wrap justify-center gap-6 mb-8">
         {tabs.map((tab, i) => (
           <button
             key={tab.label}
             type="button"
             onClick={() => setActive(i)}
             className={cn(
-              'px-5 py-3 text-sm font-bold border-b-2 transition-colors',
+              'relative px-2 py-1 text-base font-bold transition-colors',
               i === active
-                ? 'border-ember text-ember'
-                : 'border-transparent text-text-secondary hover:text-text-primary hover:border-border-strong'
+                ? 'text-text-primary'
+                : 'text-text-tertiary hover:text-text-primary'
             )}
           >
             {tab.label}
+            {i === active && (
+              <span className="absolute -bottom-2 left-0 right-0 h-0.5 bg-ember rounded-full" />
+            )}
           </button>
         ))}
       </div>
@@ -147,7 +150,7 @@ export function TabbedProductCarousel({ tabs }: { tabs: TabbedProductTab[] }) {
           type="button"
           onClick={() => step(-1)}
           aria-label="Previous"
-          className="absolute left-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+          className="absolute left-0 top-[42%] -translate-y-1/2 z-10 w-10 h-10 grid place-items-center rounded-full bg-surface shadow-md border border-border text-text-primary hover:bg-surface opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
         </button>
@@ -155,7 +158,7 @@ export function TabbedProductCarousel({ tabs }: { tabs: TabbedProductTab[] }) {
           type="button"
           onClick={() => step(1)}
           aria-label="Next"
-          className="absolute right-2 top-[42%] -translate-y-1/2 z-10 w-11 h-11 grid place-items-center rounded-full bg-surface shadow-lg border border-border text-text-primary hover:bg-surface opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
+          className="absolute right-0 top-[42%] -translate-y-1/2 z-10 w-10 h-10 grid place-items-center rounded-full bg-surface shadow-md border border-border text-text-primary hover:bg-surface opacity-0 group-hover/slider:opacity-100 focus-visible:opacity-100 active:scale-95 transition-all"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
         </button>
@@ -429,18 +432,19 @@ export function CategoryQuickNav() {
                 <Link
                   href={`/products?category=${cat.slug}`}
                   aria-label={cat.name}
-                  className="group block w-[120px] md:w-[140px] text-center"
+                  className="group block w-[100px] md:w-[120px] text-center"
                 >
-                  <span className="relative block w-[120px] h-[120px] md:w-[140px] md:h-[140px] rounded-full overflow-hidden border border-border bg-surface-sunken mx-auto mb-2 transition-all group-hover:border-ember group-hover:shadow-md">
+                  <span className="relative block w-[100px] h-[100px] md:w-[120px] md:h-[120px] rounded-full overflow-hidden border border-border bg-surface-sunken mx-auto mb-3 transition-all group-hover:border-ember group-hover:shadow-md">
                     <Image
                       src={cat.image}
                       alt=""
                       fill
-                      sizes="140px"
+                      sizes="120px"
+                      loading="lazy"
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   </span>
-                  <span className="block text-xs md:text-sm font-bold text-text-primary group-hover:text-ember transition-colors leading-tight">
+                  <span className="block text-xs font-bold text-text-primary group-hover:text-ember transition-colors leading-tight">
                     {cat.name}
                   </span>
                 </Link>
@@ -483,15 +487,15 @@ export interface CategoryBannerWithProductsProps {
 export function CategoryBannerWithProducts({ title, subtitle, description, ctaLabel, ctaHref, bannerImage, bannerBg, products }: CategoryBannerWithProductsProps) {
   return (
     <section className="border-b border-border">
-      <div className="container-fluid py-8 md:py-10">
-        <div className="grid lg:grid-cols-[1fr_2fr] gap-6 md:gap-8">
-          <Link href={ctaHref} className="group block relative overflow-hidden rounded-xs min-h-[280px] lg:min-h-0" style={{ backgroundColor: bannerBg }}>
-            <Image src={bannerImage} alt={title} fill sizes="(max-width:1024px) 100vw, 33vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
-            <span className="absolute inset-0 flex flex-col justify-end p-6 md:p-8 text-white">
-              {subtitle && <span className="text-sm font-medium mb-1">{subtitle}</span>}
-              <span className="text-xl md:text-2xl font-bold tracking-tight leading-tight max-w-[85%]">{title}</span>
-              {description && <span className="text-sm mt-2 max-w-xs opacity-90">{description}</span>}
-              <span className="inline-flex w-fit items-center mt-4 px-5 py-2.5 bg-surface text-text-primary text-sm font-semibold rounded-xs shadow-md group-hover:bg-charcoal group-hover:text-white transition-all">
+      <div className="container-fluid py-10 md:py-16">
+        <div className="grid lg:grid-cols-[280px_1fr] gap-8 md:gap-10">
+          <Link href={ctaHref} className="group block relative overflow-hidden rounded-lg min-h-[320px] lg:min-h-0" style={{ backgroundColor: bannerBg }}>
+            <Image src={bannerImage} alt={title} fill sizes="(max-width:1024px) 100vw, 280px" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+            <span className="absolute inset-0 flex flex-col justify-end p-8 text-white">
+              {subtitle && <span className="text-sm font-medium mb-2 opacity-90">{subtitle}</span>}
+              <span className="text-2xl font-bold tracking-tight leading-tight mb-3">{title}</span>
+              {description && <span className="text-sm opacity-80 mb-6">{description}</span>}
+              <span className="inline-flex w-fit items-center px-6 py-2 bg-white text-text-primary text-sm font-bold rounded-full shadow-md group-hover:bg-white/90 transition-all">
                 {ctaLabel}
               </span>
             </span>
@@ -547,8 +551,8 @@ function Countdown({ endsAt }: { endsAt?: string }) {
   const time = useCountdown(endsAt);
   if (!time) return null;
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-ember rounded-xs px-2 py-1 tabular-nums mt-2" role="timer" aria-label={`Deal ends in ${time.hours} hours ${time.minutes} minutes`}>
-      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-deal bg-deal-light rounded-sm px-2 py-0.5 tabular-nums mt-2" role="timer" aria-label={`Deal ends in ${time.hours} hours ${time.minutes} minutes`}>
+      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
       {time.hours}:{time.minutes}:{time.seconds}
     </span>
   );
@@ -600,26 +604,33 @@ export function DealsOfTheDay({ deals }: { deals: DealCardData[] }) {
             return (
               <li key={deal.id} className="snap-start shrink-0 w-[75%] sm:w-[calc(33.333%-12px)] lg:w-[calc(25%-12px)]">
                 <Link href={deal.productId ? `/products/${deal.productId}` : '/deals'} className="group block bg-surface border border-border rounded-lg p-4 hover:shadow-md hover:border-ember transition-all h-full flex flex-col" suppressHydrationWarning>
-                  <div className="relative w-full aspect-square bg-surface mb-3 shrink-0 rounded-md overflow-hidden">
+                  <div className="relative w-full aspect-square bg-surface-sunken mb-3 shrink-0 rounded-md overflow-hidden">
                     {deal.image && (
-                      <Image src={storefrontImage(deal.image) || '/product-placeholder.svg'} alt="" fill sizes="240px" className="object-contain p-2 group-hover:scale-105 transition-transform duration-500" />
+                      <Image
+                        src={storefrontImage(deal.image) || '/product-placeholder.svg'}
+                        alt=""
+                        fill
+                        sizes="(max-width:640px) 240px, (max-width:1024px) 280px, 300px"
+                        loading="lazy"
+                        className="object-contain p-3 group-hover:scale-105 transition-transform duration-500"
+                      />
                     )}
                     <span className="absolute top-2 left-2">
-                      <span className="inline-flex items-center rounded-sm bg-ember text-white text-[11px] font-bold px-2 py-1 uppercase tracking-wider">{deal.dealLabel}</span>
+                      <span className="inline-flex items-center rounded-xs bg-deal text-white text-[11px] font-bold px-2 py-1 uppercase tracking-wider">{deal.dealLabel}</span>
                     </span>
                   </div>
-                  <p className="text-sm font-bold line-clamp-2 leading-snug text-text-primary group-hover:text-ember transition-colors mb-3">{deal.productName}</p>
+                  <p className="text-sm font-medium text-text-primary group-hover:text-ember transition-colors mb-2 line-clamp-2">{deal.productName}</p>
                   
-                  <div className="mt-auto">
-                    <span className="block text-xl font-extrabold text-text-primary" suppressHydrationWarning>
+                  <div className="mt-auto pt-2">
+                    <span className="block text-lg font-bold text-text-primary" suppressHydrationWarning>
                       {new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(deal.priceMinorUnits / 100)}
                     </span>
                     {savingMinorUnits > 0 && deal.listPriceMinorUnits && (
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-1.5 mt-0.5">
                         <span className="text-xs text-text-tertiary line-through" suppressHydrationWarning>
-                          Was {new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(deal.listPriceMinorUnits / 100)}
+                          {new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(deal.listPriceMinorUnits / 100)}
                         </span>
-                        <span className="text-xs text-ember font-bold bg-ember/10 px-1.5 py-0.5 rounded-sm" suppressHydrationWarning>
+                        <span className="text-xs text-deal font-bold" suppressHydrationWarning>
                           Save {new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(savingMinorUnits / 100)}
                         </span>
                       </div>
@@ -676,16 +687,16 @@ export function TrustBar({ freeShippingThreshold, currency }: { freeShippingThre
 
   return (
     <section aria-label="Why shop with Storegrill" className="bg-ember-pale border-b border-border">
-      <div className="container-fluid py-1.5 md:py-2">
-      <ul className="grid grid-cols-2 md:grid-cols-4 gap-0.5 md:gap-1" role="list">
+      <div className="container-fluid py-3 md:py-4">
+      <ul className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3" role="list">
         {items.map(item => (
-          <li key={item.title} className="flex items-center gap-2 py-1">
-            <span aria-hidden="true" className="w-8 h-8 shrink-0 grid place-items-center rounded-xs text-ember-deep">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <li key={item.title} className="flex items-center gap-2">
+            <span aria-hidden="true" className="w-6 h-6 shrink-0 grid place-items-center rounded-full bg-ember/10 text-ember-deep">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d={item.iconPath} />
               </svg>
             </span>
-            <p className="text-[15px] text-ember-deep leading-tight">{item.body}</p>
+            <p className="text-sm text-ember-deep font-medium">{item.body}</p>
           </li>
         ))}
       </ul>

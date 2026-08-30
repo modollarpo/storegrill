@@ -93,20 +93,20 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
   const [showQuickView, setShowQuickView] = useState(false);
 
   return (
-    <article aria-label={product.name} className="group">
-      <div className="relative overflow-hidden flex items-center justify-center rounded-lg bg-surface shadow-card min-h-[270px] mb-4">
+    <article aria-label={product.name} className="group h-full flex flex-col bg-surface rounded-lg border border-border hover:border-border-strong hover:shadow-md transition-all duration-200">
+      <Link href={href} className="relative block overflow-hidden rounded-t-lg bg-surface-sunken aspect-square">
         {/* Product image */}
         {images[0] ? (
           <Image
             src={images[0]}
             alt={product.name}
-            width={250}
-            height={250}
+            fill
+            sizes="(max-width: 768px) 50vw, 250px"
             loading="lazy"
-            className="object-contain p-2 mix-blend-multiply transition-transform duration-300 group-hover:scale-105"
+            className="object-contain p-4 mix-blend-multiply transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="w-[250px] h-[250px] grid place-items-center text-text-tertiary font-bold text-3xl">
+          <div className="w-full h-full grid place-items-center text-text-tertiary font-bold text-3xl">
             {product.name.slice(0, 1)}
           </div>
         )}
@@ -115,82 +115,61 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
         {(product.badge || product.dealLabel) && (
           <span className="absolute top-3 left-3 z-10">
             <span className={cn(
-              'inline-flex items-center rounded-xs px-3 py-1 text-xs font-medium leading-none',
-              product.dealLabel ? 'bg-ember text-white' : BADGE_STYLES[product.badge || ''],
+              'inline-flex items-center rounded-xs px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider',
+              product.dealLabel ? 'bg-deal text-white' : BADGE_STYLES[product.badge || ''],
             )}>
               {product.dealLabel || BADGE_LABELS[product.badge || '']}
             </span>
           </span>
         )}
+      </Link>
+      
+      <div className="p-4 flex flex-col flex-grow">
+        {/* Star rating */}
+        {product.rating > 0 && (
+          <div className="flex items-center gap-1 mb-1.5">
+            <div className="flex items-center" aria-label={`${product.rating} out of 5 stars`}>
+              {[1, 2, 3, 4, 5].map(star => (
+                <svg
+                  key={star}
+                  aria-hidden="true"
+                  className={cn('w-3 h-3', star <= product.rating ? 'text-ember' : 'text-text-disabled')}
+                  viewBox="0 0 24 24"
+                  fill={star <= product.rating ? 'currentColor' : 'none'}
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                </svg>
+              ))}
+            </div>
+            <span className="text-[11px] text-text-tertiary font-medium">({product.reviewCount})</span>
+          </div>
+        )}
 
-        {/* Hover overlay: slides up from bottom — Quick View + Add to Cart + Wishlist */}
-        <div className="absolute left-0 bottom-0 translate-y-full w-full flex items-center justify-center gap-2.5 pb-5 ease-linear duration-200 group-hover:translate-y-0 group-focus-within:translate-y-0 z-10">
-          <button
-            type="button"
-            onClick={() => setShowQuickView(true)}
-            aria-label={`Quick view ${product.name}`}
-            className="flex items-center justify-center w-9 h-9 rounded-xs shadow-card ease-out duration-200 text-text-primary bg-surface hover:text-ember"
-          >
-            <svg className="fill-current" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path fillRule="evenodd" clipRule="evenodd" d="M8.00016 5.5C6.61945 5.5 5.50016 6.61929 5.50016 8C5.50016 9.38071 6.61945 10.5 8.00016 10.5C9.38087 10.5 10.5002 9.38071 10.5002 8C10.5002 6.61929 9.38087 5.5 8.00016 5.5ZM6.50016 8C6.50016 7.17157 7.17174 6.5 8.00016 6.5C8.82859 6.5 9.50016 7.17157 9.50016 8C9.50016 8.82842 8.82859 9.5 8.00016 9.5C7.17174 9.5 6.50016 8.82842 6.50016 8Z" />
-              <path fillRule="evenodd" clipRule="evenodd" d="M8.00016 2.16666C4.99074 2.16666 2.96369 3.96946 1.78721 5.49791L1.76599 5.52546C1.49992 5.87102 1.25487 6.18928 1.08862 6.5656C0.910592 6.96858 0.833496 7.40779 0.833496 8C0.833496 8.5922 0.910592 9.03142 1.08862 9.4344C1.25487 9.81072 1.49992 10.129 1.76599 10.4745L1.78721 10.5021C2.96369 12.0305 4.99074 13.8333 8.00016 13.8333C11.0096 13.8333 13.0366 12.0305 14.2131 10.5021L14.2343 10.4745C14.5004 10.129 14.7455 9.81072 14.9117 9.4344C15.0897 9.03142 15.1668 8.5922 15.1668 8C15.1668 7.40779 15.0897 6.96858 14.9117 6.5656C14.7455 6.18927 14.5004 5.87101 14.2343 5.52545L14.2131 5.49791C13.0366 3.96946 11.0096 2.16666 8.00016 2.16666ZM2.57964 6.10786C3.66592 4.69661 5.43374 3.16666 8.00016 3.16666C10.5666 3.16666 12.3344 4.69661 13.4207 6.10786C13.7131 6.48772 13.8843 6.7147 13.997 6.9697C14.1023 7.20801 14.1668 7.49929 14.1668 8C14.1668 8.50071 14.1023 8.79199 13.997 9.0303C13.8843 9.28529 13.7131 9.51227 13.4207 9.89213C12.3344 11.3034 10.5666 12.8333 8.00016 12.8333C5.43374 12.8333 3.66592 11.3034 2.57964 9.89213C2.28725 9.51227 2.11599 9.28529 2.00334 9.0303C1.89805 8.79199 1.8335 8.50071 1.8335 8C1.8335 7.49929 1.89805 7.20801 2.00334 6.9697C2.11599 6.7147 2.28725 6.48772 2.57964 6.10786Z" />
-            </svg>
-          </button>
+        {/* Product name */}
+        <h3 className="font-medium text-sm text-text-primary group-hover:text-ember transition-colors mb-2 line-clamp-2">
+          <Link href={href}>{product.name}</Link>
+        </h3>
 
+        {/* Price & Actions */}
+        <div className="mt-auto flex items-end justify-between gap-2">
+          <div className="flex flex-col">
+            <span className="font-bold text-lg text-text-primary">
+              <PriceDisplay amountMinorUnits={product.price} currencyCode={product.currencyCode} size="md" locale={locale} />
+            </span>
+            {savingMinorUnits > 0 && product.listPrice && (
+              <span className="text-xs text-text-tertiary line-through">
+                <PriceDisplay amountMinorUnits={product.listPrice} currencyCode={product.currencyCode} size="sm" />
+              </span>
+            )}
+          </div>
+          
           <AddToCartInline product={product} />
-
-          <WishlistButton product={product} />
         </div>
       </div>
       
       {showQuickView && <QuickViewModal product={product} onClose={() => setShowQuickView(false)} />}
-      
-      {/* Star rating */}
-      {product.rating > 0 && (
-        <div className="flex items-center gap-1 mb-2">
-          <div className="flex items-center" aria-label={`${product.rating} out of 5 stars`}>
-            {[1, 2, 3, 4, 5].map(star => (
-              <svg
-                key={star}
-                aria-hidden="true"
-                className={cn('w-3.5 h-3.5', star <= product.rating ? 'text-ember' : 'text-text-disabled')}
-                viewBox="0 0 24 24"
-                fill={star <= product.rating ? 'currentColor' : 'none'}
-                stroke="currentColor"
-                strokeWidth="1.5"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-              </svg>
-            ))}
-          </div>
-          <span className="text-xs text-text-tertiary">({product.reviewCount})</span>
-        </div>
-      )}
-
-      {/* Product name */}
-      <h3 className="font-medium text-sm text-text-primary ease-out duration-200 hover:text-ember mb-1.5 line-clamp-2">
-        <Link href={href}>{product.name}</Link>
-      </h3>
-
-      {/* Price */}
-      <div className="flex items-center gap-2">
-        <span className="font-medium text-lg text-text-primary">
-          <PriceDisplay amountMinorUnits={product.price} currencyCode={product.currencyCode} size="md" locale={locale} />
-        </span>
-        {savingMinorUnits > 0 && product.listPrice && (
-          <span className="text-sm text-text-tertiary line-through">
-            <PriceDisplay amountMinorUnits={product.listPrice} currencyCode={product.currencyCode} size="sm" />
-          </span>
-        )}
-      </div>
-
-      {/* Stock status */}
-      {product.inventoryCount !== undefined && product.inventoryCount <= 0 && (
-        <p className="text-xs text-feedback-danger font-medium mt-1">Out of stock</p>
-      )}
-      {product.inventoryCount !== undefined && product.inventoryCount > 0 && product.inventoryCount <= 3 && (
-        <p className="text-xs text-text-primary font-medium mt-1">Only {product.inventoryCount} left</p>
-      )}
     </article>
   );
 }

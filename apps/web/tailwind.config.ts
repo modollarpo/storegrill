@@ -30,6 +30,7 @@ const config: Config = {
       colors: {
         charcoal: colors.brand.charcoal,
         ember: colors.brand.ember,
+        deal: colors.deal,
         tealink: colors.brand.tealink,
         smoke: colors.smoke,
         footerdark: colors.footer,

@@ -836,34 +836,34 @@ export function VendorSpotlight({ vendors }: { vendors: VendorSpotlightItem[] })
   if (vendors.length === 0) return null;
   return (
     <section className="border-b border-border" aria-labelledby="vendor-spotlight-heading">
-      <div className="container-fluid py-10 md:py-12">
-      <div className="flex items-end justify-between mb-6">
-        <h2 id="vendor-spotlight-heading" className="text-2xl md:text-3xl font-bold text-text-primary">Featured Vendors</h2>
-        <Link href="/vendors" className="text-sm font-bold text-ember hover:underline underline-offset-4">All vendors</Link>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-        {vendors.slice(0, 3).map(v => (
-          <Link key={v.slug} href={`/vendors/${v.slug}`} className="rounded-xs bg-surface border border-border p-4 flex items-center gap-5 hover:border-ember transition-colors group">
-            <span className="w-16 h-16 rounded-full bg-gradient-to-br from-ember to-ember-dark text-white grid place-items-center font-bold text-lg shrink-0 overflow-hidden">
-              {v.logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={v.logo} alt="" className="w-full h-full object-cover" />
-              ) : (
-                v.storeName.slice(0, 2).toUpperCase()
-              )}
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-base font-bold text-text-primary group-hover:text-ember transition-colors truncate">{v.storeName}</span>
-              <span className="block text-xs font-medium text-text-secondary mt-1">
-                ★ {v.rating > 0 ? v.rating.toFixed(1) : 'New'} · {v.reviewCount.toLocaleString()} reviews
+      <div className="container-fluid py-16 md:py-24">
+        <div className="flex items-end justify-between mb-10">
+          <h2 id="vendor-spotlight-heading" className="text-3xl md:text-4xl font-bold text-text-primary">Featured Vendors</h2>
+          <Link href="/vendors" className="text-sm font-bold text-ember hover:underline underline-offset-4">All vendors</Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {vendors.slice(0, 3).map(v => (
+            <Link key={v.slug} href={`/vendors/${v.slug}`} className="rounded-lg bg-surface border border-border p-6 flex items-center gap-5 hover:border-border-strong hover:shadow-md transition-all group">
+              <span className="w-16 h-16 rounded-full bg-ember/10 text-ember-deep grid place-items-center font-bold text-xl shrink-0 overflow-hidden">
+                {v.logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={v.logo} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  v.storeName.slice(0, 2).toUpperCase()
+                )}
               </span>
-            </span>
-            <span className="shrink-0 text-text-tertiary group-hover:text-ember transition-colors">
-              <svg className="w-5 h-5 icon-directional" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-            </span>
-          </Link>
-        ))}
-      </div>
+              <span className="min-w-0 flex-1">
+                <span className="block text-base font-bold text-text-primary group-hover:text-ember transition-colors truncate">{v.storeName}</span>
+                <span className="block text-xs font-medium text-text-secondary mt-1">
+                  ★ {v.rating > 0 ? v.rating.toFixed(1) : 'New'} · {v.reviewCount.toLocaleString()} reviews
+                </span>
+              </span>
+              <span className="shrink-0 text-text-tertiary group-hover:text-ember transition-colors">
+                <svg className="w-5 h-5 icon-directional" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+              </span>
+            </Link>
+          ))}
+        </div>
       </div>
     </section>
   );

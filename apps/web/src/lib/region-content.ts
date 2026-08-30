@@ -61,6 +61,11 @@ export interface RegionPromoContent {
   couponCode: string;
   couponDiscountPercent: number;
   cashbackPercent: number;
+  heroHeadline: string;
+  heroSubtitle: string;
+  heroCta: string;
+  heroImage?: string;
+  heroExpiresAt?: string;
 }
 
 export function regionPromoContent(regionKey: string): RegionPromoContent {
@@ -71,5 +76,8 @@ export function regionPromoContent(regionKey: string): RegionPromoContent {
     couponCode: `SAVE20-${config.key}`,
     couponDiscountPercent: 20,
     cashbackPercent: 5,
+    heroHeadline: `Shop the best deals in ${config.defaultCurrency}`,
+    heroSubtitle: `${config.key} · Free shipping over $${config.freeShippingThresholdMinorUnits / 100} · 20% off with code SAVE20-${config.key}`,
+    heroCta: 'Shop now',
   };
 }

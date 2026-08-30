@@ -43,6 +43,9 @@ export const semantic = {
   actionSecondaryHover: '#333333',
   actionDestructive:    '#C41919',
   actionSuccess:        '#007B4B',
+  dealAccent:           '#E53E3E',
+  dealAccentHover:      '#C53030',
+  dealAccentLight:      '#FFF5F5',
 
   // Feedback
   feedbackSuccess:     '#007B4B',
@@ -137,6 +140,7 @@ export const promoPalette = {
   umber: '#584F46',
   plum: '#6C597C',
   clay: '#746350',
+  dealRed: '#E53E3E',
 } as const;
 
 export const zIndexLayers = {

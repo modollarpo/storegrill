@@ -65,7 +65,7 @@ export function ProductCard({ product, variant = 'grid', locale = 'en-US' }: Pro
     return (
       <Link href={href} className="group flex gap-4 p-3 hover:bg-surface-sunken transition-colors rounded-md border border-border">
         <div className="relative w-14 h-14 shrink-0 bg-surface rounded-md overflow-hidden">
-          {images[0] && <Image src={images[0]} alt={product.name} fill sizes="56px" className="object-contain p-0.5" />}
+          {images[0] && <Image src={images[0]} alt={product.name} fill sizes="56px" className="object-contain p-0.5" loading="lazy" />}
         </div>
         <div className="min-w-0 flex-1 flex flex-col justify-center">
           <p className="text-sm font-normal leading-snug line-clamp-2 text-text-primary group-hover:text-ember transition-colors">{product.name}</p>
@@ -102,6 +102,7 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
             alt={product.name}
             width={250}
             height={250}
+            loading="lazy"
             className="object-contain p-2 mix-blend-multiply transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
@@ -207,6 +208,7 @@ function ListCard({ product, images, href, locale }: { product: ProductCardData;
               alt={product.name}
               fill
               sizes="180px"
+              loading="lazy"
               className="object-contain p-2 mix-blend-multiply"
             />
           ) : (

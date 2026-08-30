@@ -10,8 +10,8 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import { cn } from '@/lib/utils';
 import { storefrontImage } from '@/lib/images';
+import { regionPromoContent } from '@/lib/region-content';
 import { ProductCard, type ProductCardData } from '@/components/commerce/ProductCard';
-import { promoPalette } from '@/design-system/tokens';
 
 export interface QuickNavItem {
   name: string;
@@ -328,214 +328,47 @@ className="border-b border-border py-8 md:py-12"
   );
 }
 
-interface CampaignTile {
-  href: string;
-  title: string;
-  subtitle?: string;
-  description?: string;
-  cta?: string;
-  image: string;
-  timer?: boolean;
-  bgColor: string;
-}
-
-const CAMPAIGN_TILES = {
-  main: {
-    href: '/deals',
-    title: 'Elevate Your Digital Lifestyle',
-    subtitle: 'The Ideal Electronics.',
-    description: 'We have prepared special discounts for you on the products you need. Don\'t miss these opportunities...',
-    cta: 'Shop Now',
-    image: '/banners/hero_campaign/banner-07.jpg',
-    timer: true,
-    bgColor: promoPalette.umber,
-  },
-  topLeft: {
-    href: '/payments',
-    title: 'We Will Take You Anywhere',
-    subtitle: 'The Ideal Electronics.',
-    image: '/banners/hero_campaign/banner-08.jpg',
-    bgColor: promoPalette.plum,
-  },
-  topRight: {
-    href: '/shipping',
-    title: 'Micro Electrons Are What We Do',
-    subtitle: 'Regular And Stabler.',
-    image: '/banners/hero_campaign/banner-09.jpg',
-    bgColor: promoPalette.plum,
-  },
-  bottom: {
-    href: '/products',
-    title: 'Tech Trends, Unleashed',
-    subtitle: 'Order Of The Circuits',
-    description: 'Discover the latest in tech. Shop new arrivals, exclusive deals, and more.',
-    image: '/banners/hero_campaign/banner-10.jpg',
-    bgColor: promoPalette.clay,
-  },
-} as const;
-
-function CampaignCard({ tile, large, small }: { tile: CampaignTile; large?: boolean; small?: boolean }) {
-  return (
-    <Link
-      href={tile.href}
-      aria-label={tile.title}
-      className={`group block relative overflow-hidden rounded-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-ember ${small ? '' : 'h-full'}`}
-    >
-      <span className={`relative block overflow-hidden ${large ? 'aspect-[4/3] md:aspect-[3/2]' : small ? 'aspect-square' : 'h-full'}`} style={{ backgroundColor: tile.bgColor }}>
-        <Image
-          src={tile.image}
-          alt={tile.title}
-          fill
-          sizes={large ? '(max-width:768px) 100vw, 880px' : '(max-width:768px) 50vw, 440px'}
-          className="object-cover transition-transform duration-700 group-hover:scale-105"
-          priority={large}
-        />
-      </span>
-      <span className={`absolute inset-0 flex flex-col text-white ${large ? 'justify-between p-5 md:p-6 lg:p-8' : small ? 'items-center justify-start text-center pt-5 md:pt-6 lg:pt-8' : 'justify-center p-5 md:p-6 lg:p-8'}`}>
-        <span className={`${large ? 'max-w-[60%]' : small ? 'max-w-full' : 'max-w-[55%]'}`}>
-          {tile.subtitle && (
-            <span className="block text-sm font-medium mb-2">{tile.subtitle}</span>
-          )}
-          {tile.title && (
-            <span className={`block font-bold tracking-tight ${large ? 'text-[26px] md:text-4xl lg:text-5xl' : small ? 'text-xl md:text-xl lg:text-2xl' : 'text-[26px] md:text-[40px] lg:text-5xl/tight'}`}>{tile.title}</span>
-          )}
-          {tile.description && (
-            <span className="block text-sm lg:text-base mt-2 max-w-sm">{tile.description}</span>
-          )}
-        </span>
-        {tile.cta && (
-          <span className={`inline-flex w-fit items-center rounded-xs bg-surface px-[1.375rem] h-[44px] text-[14px] font-semibold text-text-primary shadow-[0_0.125rem_0.1875rem_rgba(2,6,23,0.04)] transition-all ${large ? 'mt-4' : 'mt-3'}`}>
-            {tile.cta}
-          </span>
-        )}
-        {tile.timer && (
-          <span className="mt-auto pt-4">
-            <span className="block text-xs font-medium mb-1.5">Remaining Time:</span>
-            <CountdownBanner />
-          </span>
-        )}
-      </span>
-    </Link>
-  );
-}
-
-function CountdownBanner() {
-  const [target] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 3);
-    d.setHours(23, 59, 59, 0);
-    return d.getTime();
-  });
-  const [remaining, setRemaining] = useState<number | null>(null);
-
-  useEffect(() => {
-    setRemaining(target - Date.now());
-    const timer = setInterval(() => setRemaining(Math.max(0, target - Date.now())), 1000);
-    return () => clearInterval(timer);
-  }, [target]);
-
-  if (remaining === null) {
-    return (
-      <span className="inline-flex items-center bg-surface rounded-xs gap-1">
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">--</span>
-        <span className="text-text-tertiary font-semibold">:</span>
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">--</span>
-        <span className="text-text-tertiary font-semibold">:</span>
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">--</span>
-        <span className="text-text-tertiary font-semibold">:</span>
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">--</span>
-      </span>
-    );
-  }
-
-  const totalSeconds = Math.floor(remaining / 1000);
-  const days = String(Math.floor(totalSeconds / 86400)).padStart(2, '0');
-  const hours = String(Math.floor((totalSeconds % 86400) / 3600)).padStart(2, '0');
-  const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-  const seconds = String(totalSeconds % 60).padStart(2, '0');
-
-  return (
-    <span suppressHydrationWarning className="inline-flex items-center bg-surface rounded-xs gap-1">
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">{days}</span>
-        <span className="text-text-tertiary font-semibold">:</span>
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">{hours}</span>
-        <span className="text-text-tertiary font-semibold">:</span>
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">{minutes}</span>
-        <span className="text-text-tertiary font-semibold">:</span>
-        <span className="inline-flex items-center justify-center min-w-[2.375rem] py-1.5 text-[14px] font-bold tabular-nums text-text-primary">{seconds}</span>
-    </span>
-  );
-}
-
 export function CampaignHero() {
-  const { main, topLeft, topRight, bottom } = CAMPAIGN_TILES;
-  const sliderRef = useRef<SwiperType | null>(null);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  const handlePrev = useCallback(() => {
-    if (!sliderRef.current) return;
-    sliderRef.current.slidePrev();
-  }, []);
-
-  const handleNext = useCallback(() => {
-    if (!sliderRef.current) return;
-    sliderRef.current.slideNext();
-  }, []);
+  const hero = regionPromoContent('US');
 
   return (
-    <section aria-label="Featured campaigns" className="bg-surface border-b border-border">
-      <div className="p-4 md:p-5">
-        <div className="grid md:grid-cols-[1.4fr_1fr] gap-4 md:gap-5 items-stretch">
-          <div className="relative rounded-lg overflow-hidden bg-surface-sunken">
-            {isClient ? (
-              <Swiper
-                modules={[Autoplay, Pagination]}
-                spaceBetween={0}
-                slidesPerView={1}
-                autoplay={{ delay: 4000, disableOnInteraction: false }}
-                pagination={{ clickable: true }}
-                onSwiper={swiper => { sliderRef.current = swiper; }}
-                className="hero-carousel w-full"
-              >
-                {[main].map((tile, i) => (
-                  <SwiperSlide key={i}>
-                    <CampaignCard tile={tile} large />
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-            ) : (
-              <div className="aspect-[4/3] md:aspect-[2.1/1]" />
-            )}
-            {/* Navigation arrows */}
-            {isClient && (
-              <>
-                <button
-                  onClick={handlePrev}
-                  aria-label="Previous slide"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-surface shadow-md flex items-center justify-center text-text-primary hover:bg-surface transition-colors"
-                >
-                  <svg className="fill-current" width="20" height="20" viewBox="0 0 24 24"><path fillRule="evenodd" clipRule="evenodd" d="M15.4881 4.43057C15.8026 4.70014 15.839 5.17361 15.5694 5.48811L9.98781 12L15.5694 18.5119C15.839 18.8264 15.8026 19.2999 15.4881 19.5695C15.1736 19.839 14.7001 19.8026 14.4306 19.4881L8.43056 12.4881C8.18981 12.2072 8.18981 11.7928 8.43056 11.5119L14.4306 4.51192C14.7001 4.19743 15.1736 4.161 15.4881 4.43057Z" fill="" /></svg>
-                </button>
-                <button
-                  onClick={handleNext}
-                  aria-label="Next slide"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-surface shadow-md flex items-center justify-center text-text-primary hover:bg-surface transition-colors"
-                >
-                  <svg className="fill-current" width="20" height="20" viewBox="0 0 24 24"><path fillRule="evenodd" clipRule="evenodd" d="M8.51192 4.43057C8.82641 4.161 9.29989 4.19743 9.56946 4.51192L15.5695 11.5119C15.8102 11.7928 15.8102 12.2072 15.5695 12.4881L9.56946 19.4881C9.29989 19.8026 8.82641 19.839 8.51192 19.5695C8.19743 19.2999 8.161 18.8264 8.43057 18.5119L14.0122 12L8.43057 5.48811C8.161 5.17361 8.19743 4.70014 8.51192 4.43057Z" fill="" /></svg>
-                </button>
-              </>
-            )}
-          </div>
-          <div className="grid grid-rows-[auto_1fr] gap-4 md:gap-5">
-            <div className="grid grid-cols-2 gap-4 md:gap-5">
-              <CampaignCard tile={topLeft} small />
-              <CampaignCard tile={topRight} small />
+    <section aria-label="Featured deals" className="bg-surface border-b border-border">
+      <div className="container-fluid py-6 md:py-10">
+        <div className="relative overflow-hidden rounded-lg bg-ember-deep text-white">
+          {hero.heroImage && (
+            <div className="absolute inset-0">
+              <Image
+                src={hero.heroImage}
+                alt=""
+                fill
+                sizes="(max-width:768px) 100vw, 50vw"
+                className="object-cover opacity-30"
+              />
             </div>
-            <CampaignCard tile={bottom} />
+          )}
+          <div className="relative container-fluid py-10 md:py-14 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="max-w-xl">
+              <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight leading-tight mb-3">
+                {hero.heroHeadline}
+              </h1>
+              <p className="text-base md:text-lg text-white/80 mb-6 max-w-lg">
+                {hero.heroSubtitle}
+              </p>
+              <div className="flex flex-wrap items-center gap-4">
+                <span className="inline-flex items-center rounded-xs bg-white/10 backdrop-blur-sm px-4 py-2 text-sm font-semibold">
+                  {hero.couponCode} · {hero.couponDiscountPercent}% off
+                </span>
+                <span className="inline-flex items-center rounded-xs bg-white/10 backdrop-blur-sm px-4 py-2 text-sm font-semibold">
+                  {hero.cashbackPercent}% cashback
+                </span>
+              </div>
+            </div>
+            <a
+              href="/deals"
+              className="inline-flex shrink-0 items-center justify-center h-[48px] px-8 rounded-xs bg-white text-ember-deep font-bold text-sm shadow-lg hover:bg-white/90 transition-colors"
+            >
+              {hero.heroCta}
+            </a>
           </div>
         </div>
       </div>
@@ -1025,28 +858,14 @@ export function VendorSpotlight({ vendors }: { vendors: VendorSpotlightItem[] })
   );
 }
 
-const TESTIMONIALS = [
-  {
-    name: 'Sarah Johnson',
-    role: 'Tech Enthusiast',
-    avatar: '/users/user-01.jpg',
-    quote: 'Absolutely love the variety of products on Storegrill! The hero carousel makes it so easy to spot the best deals.',
-  },
-  {
-    name: 'Mark Davis',
-    role: 'Gamer',
-    avatar: '/users/user-02.jpg',
-    quote: 'Fast shipping and great customer service. Definitely my go-to for gaming gear.',
-  },
-  {
-    name: 'Emily Chen',
-    role: 'Home Decorator',
-    avatar: '/users/user-03.jpg',
-    quote: 'The deals are unbeatable and the website is so user-friendly. Highly recommended!',
-  },
-];
+export interface TestimonialItem {
+  name: string;
+  role: string;
+  avatar: string;
+  quote: string;
+}
 
-export function Testimonials() {
+export function Testimonials({ items = [] }: { items?: TestimonialItem[] }) {
   const [isClient, setIsClient] = useState(false);
   const sliderRef = useRef<SwiperType | null>(null);
 
@@ -1054,7 +873,7 @@ export function Testimonials() {
     setIsClient(true);
   }, []);
 
-  if (!isClient) return <section className="border-b border-border py-10 md:py-16 bg-surface-sunken"><div className="container-fluid"><div className="h-64" /></div></section>;
+  if (items.length === 0 || !isClient) return null;
 
   return (
     <section className="border-b border-border py-10 md:py-16 bg-surface-sunken">
@@ -1073,7 +892,7 @@ export function Testimonials() {
             pagination={{ clickable: true }}
             onSwiper={swiper => { sliderRef.current = swiper; }}
             className="px-2">
-            {TESTIMONIALS.map((t, i) => (
+            {items.map((t, i) => (
               <SwiperSlide key={i} className="h-auto">
                 <div className="bg-surface p-6 rounded-lg shadow-sm border border-border h-full flex flex-col">
                   <div className="flex items-center gap-1 mb-4">

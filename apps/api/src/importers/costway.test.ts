@@ -11,6 +11,7 @@ import {
   parseCategoryPath,
   parseFlags,
   parsePriceToMinor,
+  parseSpec,
   splitBaseNameAndSuffix,
   type CostwayFeedRow,
 } from './costway.js';
@@ -208,5 +209,27 @@ expect(bySku.get('GARBAGE')).toMatchObject({ stock: 0, supplierStock: 0 });
     ] as CostwayFeedRow[]);
     expect(bad.errors.map(e => e.field)).toEqual(['SKU', 'Price']);
     expect(bad.products).toHaveLength(1);
+  });
+});
+
+describe('parseSpec', () => {
+  it('extracts net weight in grams', () => {
+    expect(parseSpec('Net weight: 8 kg')).toEqual({ weightGrams: 8000 });
+    expect(parseSpec('Net weight: 1.5 kg')).toEqual({ weightGrams: 1500 });
+  });
+
+  it('extracts overall dimensions', () => {
+    expect(parseSpec('Overall dimension: 54 cm x 54 cm x 177 cm (LA-WA-H)')).toEqual({
+      dimensions: { length: 54, width: 54, height: 177, unit: 'cm' },
+    });
+  });
+
+  it('extracts weight and dimensions together', () => {
+    const spec = 'Box Qty:1 Net weight: 2 kg Overall dimension: 30 cm x 20 cm x 10 cm (L-W-H)';
+    expect(parseSpec(spec)).toEqual({ weightGrams: 2000, dimensions: { length: 30, width: 20, height: 10, unit: 'cm' } });
+  });
+
+  it('returns an empty object when no weight/dimensions are present', () => {
+    expect(parseSpec('No specs here')).toEqual({});
   });
 });

@@ -58,6 +58,8 @@ export interface NormalizedProduct {
   attributes: Record<string, string | boolean>;
   sourceUrl: string;
   brandName: string;
+  weightGrams?: number;
+  dimensions?: { length: number; width: number; height: number; unit: string };
   variants: NormalizedVariant[];
 }
 
@@ -198,6 +200,15 @@ export function splitBaseNameAndSuffix(names: string[]): { baseName: string; suf
   return { baseName, suffixes };
 }
 
+export function parseSpec(spec: string): { weightGrams?: number; dimensions?: { length: number; width: number; height: number; unit: string } } {
+  const result: { weightGrams?: number; dimensions?: { length: number; width: number; height: number; unit: string } } = {};
+  const wm = spec.match(/Net weight:\s*(\d+(?:\.\d+)?)\s*kg/i);
+  if (wm) result.weightGrams = Math.round(Number(wm[1]) * 1000);
+  const dm = spec.match(/Overall dimension:\s*(\d+(?:\.\d+)?)\s*cm\s*x\s*(\d+(?:\.\d+)?)\s*cm\s*x\s*(\d+(?:\.\d+)?)\s*cm/i);
+  if (dm) result.dimensions = { length: Number(dm[1]), width: Number(dm[2]), height: Number(dm[3]), unit: 'cm' };
+  return result;
+}
+
 function toVariant(row: CostwayFeedRow, suffix: string | null, flags: DerivedFlags): NormalizedVariant | null {
   const feedPriceMinorUnits = parsePriceToMinor(row.Price);
   if (feedPriceMinorUnits == null) return null;
@@ -232,6 +243,7 @@ function standaloneProduct(row: CostwayFeedRow): NormalizedProduct | null {
     attributes: flags.attributes,
     sourceUrl: cleanSourceUrl(row['Item Link']),
     brandName: HOUSE_BRAND,
+    ...parseSpec(row.Specification ?? ''),
     variants: [variant],
   };
 }
@@ -297,6 +309,7 @@ export function adaptCostwayRows(rows: CostwayFeedRow[]): AdaptResult {
       attributes: flags.attributes,
       sourceUrl: cleanSourceUrl(first['Item Link']),
       brandName: HOUSE_BRAND,
+      ...parseSpec(first.Specification ?? ''),
       variants,
     });
   }

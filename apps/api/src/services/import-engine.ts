@@ -626,6 +626,8 @@ async function applyOne(
     tags: JSON.stringify([...product.tags].sort()),
     attributes: attributesJson,
     sourceUrl: product.sourceUrl,
+    weightGrams: product.weightGrams ?? null,
+    dimensions: product.dimensions ? JSON.stringify(product.dimensions) : null,
   };
 
   let productId: string;

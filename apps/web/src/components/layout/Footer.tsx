@@ -36,7 +36,7 @@ function PaymentLogos() {
 
 export function Footer() {
   return (
-    <footer className="site-footer" style={{ backgroundColor: '#0071DC', color: '#fff' }}>
+    <footer className="site-footer" style={{ backgroundColor: 'var(--color-footer)', color: '#fff' }}>
       {/* ═══ MAIN FOOTER ═══ */}
       <div className="storegrill-footer-main">
         <div className="container-fluid">

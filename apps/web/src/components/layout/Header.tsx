@@ -127,7 +127,7 @@ function Header({ announcementMessages }: HeaderProps) {
         dir={language === 'ar' ? 'rtl' : 'ltr'}
       >
         {announcementMessages.length > 0 && (
-          <div className="overflow-hidden h-7 bg-ember-deep text-[13px] leading-7" aria-label="Announcements">
+            <div className="overflow-hidden h-7 bg-ember-deep text-[13px] leading-7 text-white" aria-label="Announcements">
             <div className="flex whitespace-nowrap animate-marquee">
               {announcementMessages.map((m, i) => (
                 <span key={i} className="mx-6">{m}</span>

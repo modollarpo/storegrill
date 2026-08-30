@@ -14,7 +14,7 @@ export function Newsletter() {
 
   return (
     <>
-      <h3 className="text-[14px] font-bold mb-4">Sign Up For News</h3>
+      <h3 className="text-[14px] font-bold mb-4 text-white">Sign Up For News</h3>
       {subscribed ? (
         <p role="status" className="text-sm font-semibold text-white bg-surface-raised/15 rounded-md px-4 py-3">
           You&apos;re signed up — look out for great deals in your inbox.
@@ -33,7 +33,7 @@ export function Newsletter() {
           />
           <button
             type="submit"
-            className="shrink-0 h-[46px] px-5 rounded-r-md border-none bg-secondary text-text-primary text-sm font-bold cursor-pointer hover:bg-secondary-hover transition-colors"
+            className="shrink-0 h-[46px] px-5 rounded-r-md border-none bg-secondary text-white text-sm font-bold cursor-pointer hover:bg-secondary-hover transition-colors"
           >
             Subscribe
           </button>

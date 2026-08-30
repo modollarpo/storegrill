@@ -78,7 +78,7 @@ export function CategoryMegaMenu({ categories, language = 'en' }: CategoryMegaMe
           role="menu"
           aria-label="Category browser"
         >
-          <div className="w-full max-w-[calc(100%-1rem)] rounded-lg border border-border bg-surface shadow-sm overflow-hidden">
+            <div className="w-full max-w-[calc(100%-0.5rem)] rounded-lg border border-border bg-surface shadow-sm overflow-hidden">
             <ul role="presentation" className="w-full border-b border-border bg-surface/50">
               {categories.map((cat, i) => (
                 <li key={cat.slug} className="border-y border-border/50">

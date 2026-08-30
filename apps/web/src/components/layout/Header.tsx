@@ -111,7 +111,7 @@ function RegionPicker({
   );
 }
 
-function Header({ announcementMessages: _announcementMessages }: HeaderProps) {
+function Header({ announcementMessages }: HeaderProps) {
   const { regionKey, language, setLanguage } = useRegion();
   const cart = useCart();
   const wishlist = useWishlist();
@@ -126,6 +126,18 @@ function Header({ announcementMessages: _announcementMessages }: HeaderProps) {
         className="site-header"
         dir={language === 'ar' ? 'rtl' : 'ltr'}
       >
+        {announcementMessages.length > 0 && (
+          <div className="overflow-hidden h-7 bg-ember-deep text-[13px] leading-7" aria-label="Announcements">
+            <div className="flex whitespace-nowrap animate-marquee">
+              {announcementMessages.map((m, i) => (
+                <span key={i} className="mx-6">{m}</span>
+              ))}
+              {announcementMessages.map((m, i) => (
+                <span key={`d${i}`} className="mx-6">{m}</span>
+              ))}
+            </div>
+          </div>
+        )}
         {/* ═══ ROW 1: TOPBAR ═══ */}
         <div
           id="header-top"

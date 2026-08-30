@@ -161,7 +161,7 @@ export async function ProductListing({
   const HeadingTag = hero ? 'h2' : 'h1';
 
   return (
-    <div className="container-site py-4">
+    <div className="container-site py-10 md:py-16">
       <Breadcrumb
         items={breadcrumbItems ?? (heading !== 'All Products' ? [{ name: heading, path: '' }] : [])}
         regionKey={regionKey}
@@ -169,20 +169,20 @@ export async function ProductListing({
 
       {hero}
 
-      <div className="flex gap-6">
-        <aside className="hidden lg:block w-72 shrink-0" aria-label="Filters">
-          <Suspense fallback={<div className="space-y-3">{[...Array(5)].map((_, i) => <div key={i} className="h-16 rounded-md bg-surface-raised animate-shimmer" />)}</div>}>
+      <div className="flex gap-10 mt-10">
+        <aside className="hidden lg:block w-72 shrink-0 rounded-2xl bg-surface border border-border p-6 shadow-sm" aria-label="Filters">
+          <Suspense fallback={<div className="space-y-3">{[...Array(5)].map((_, i) => <div key={i} className="h-16 rounded-lg bg-surface-raised animate-shimmer" />)}</div>}>
             <FilterPanel facets={facets} />
           </Suspense>
         </aside>
 
         <section aria-label="Search results" className="flex-1 min-w-0">
-          <div className="mb-4 flex items-center justify-between lg:hidden">
+          <div className="mb-8 flex items-center justify-between lg:hidden">
             <MobileFilterButton facets={facets} />
-            <span className="text-sm text-text-secondary">{pagination.total?.toLocaleString?.() ?? 0} results</span>
+            <span className="text-sm font-medium text-text-secondary">{pagination.total?.toLocaleString?.() ?? 0} results</span>
           </div>
-          <header className="flex flex-wrap items-center gap-4 mb-6">
-            <HeadingTag className="text-heading-lg font-bold text-text-primary">{heading}</HeadingTag>
+          <header className="flex flex-wrap items-center gap-6 mb-10">
+            <HeadingTag className="text-3xl md:text-4xl font-extrabold tracking-tight text-text-primary">{heading}</HeadingTag>
             <span className="text-sm font-medium text-text-secondary order-last md:order-none md:ml-auto" role="status">
               Showing {localized.length > 0 ? ((pagination.page - 1) * 24) + 1 : 0}–{((pagination.page - 1) * 24) + localized.length} of{' '}
               {pagination.total?.toLocaleString?.() ?? pagination.total ?? 0} results

@@ -74,11 +74,11 @@ export function CategoryMegaMenu({ categories, language = 'en' }: CategoryMegaMe
 
       {open && (
         <div
-          className="absolute left-0 top-full mt-1 z-[var(--z-tooltip)] animate-fade-in"
+          className="absolute left-0 top-full mt-2 z-[var(--z-tooltip)] animate-fade-in"
           role="menu"
           aria-label="Category browser"
         >
-            <div className="w-full max-w-[calc(100%-0.5rem)] rounded-lg border border-border bg-surface shadow-sm overflow-hidden">
+            <div className="w-[800px] max-w-[calc(100vw-1rem)] rounded-2xl border border-border bg-surface shadow-2xl overflow-hidden">
             <ul role="presentation" className="w-full border-b border-border bg-surface/50">
               {categories.map((cat, i) => (
                 <li key={cat.slug} className="border-y border-border/50">

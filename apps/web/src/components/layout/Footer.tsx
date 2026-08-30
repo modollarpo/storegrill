@@ -43,7 +43,7 @@ export function Footer() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 pt-16 pb-2">
             {/* Column 1: Contact */}
             <div>
-              <h3 className="text-[14px] font-bold mb-5">Contact</h3>
+              <h3 className="text-[14px] font-bold mb-5 text-white">Contact</h3>
               <ul className="space-y-3.5 text-[15px] font-medium">
                 <li className="flex items-start gap-2.5">
                   <svg className="w-5 h-5 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -69,7 +69,7 @@ export function Footer() {
 
             {/* Column 2: Categories */}
             <div>
-              <h3 className="text-[14px] font-bold mb-5">Categories</h3>
+              <h3 className="text-[14px] font-bold mb-5 text-white">Categories</h3>
               <ul className="space-y-3.5 text-[15px] font-medium">
                 <li><Link href="/products?sort=new" className="hover:opacity-70 transition-opacity">New arrivals</Link></li>
                 <li><Link href="/products?sort=best" className="hover:opacity-70 transition-opacity">Best Sellers</Link></li>
@@ -80,7 +80,7 @@ export function Footer() {
 
             {/* Column 3: Features */}
             <div>
-              <h3 className="text-[14px] font-bold mb-5">Features</h3>
+              <h3 className="text-[14px] font-bold mb-5 text-white">Features</h3>
               <ul className="space-y-3.5 text-[15px] font-medium">
                 <li><Link href="/deals" className="hover:opacity-70 transition-opacity">Today&apos;s Deal</Link></li>
                 <li><Link href="/vendors" className="hover:opacity-70 transition-opacity">Vendors</Link></li>
@@ -91,7 +91,7 @@ export function Footer() {
 
             {/* Column 4: Customer Services + Newsletter */}
             <div>
-              <h3 className="text-[14px] font-bold mb-5">Customer Services</h3>
+              <h3 className="text-[14px] font-bold mb-5 text-white">Customer Services</h3>
               <ul className="space-y-3.5 text-[15px] font-medium mb-6">
                 <li><Link href="/help" className="hover:opacity-70 transition-opacity">Help Centre</Link></li>
                 <li><Link href="/track" className="hover:opacity-70 transition-opacity">Track Order</Link></li>

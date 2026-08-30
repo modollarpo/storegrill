@@ -55,12 +55,6 @@ export const viewport: Viewport = {
   themeColor: colors.brand.ember.DEFAULT,
 };
 
-const ANNOUNCEMENTS = [
-  'Free delivery on eligible orders — shop millions of products from verified vendors',
-  'New vendors joining every week across 44 regions worldwide',
-  "Today's Deals: limited-time offers refreshed daily",
-];
-
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { regionKey, language } = await getRequestContext();
   const primaryLang = language.split('-')[0];
@@ -77,7 +71,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <RegionProvider initialRegionKey={regionKey} initialLanguage={language}>
                     <div className="flex flex-col min-h-screen">
                       <a href="#main-content" className="skip-link">Skip to main content</a>
-                      <Header announcementMessages={ANNOUNCEMENTS} />
+                      <Header />
                       <main id="main-content" className="flex-1">{children}</main>
                       <Footer />
                       <CookieBanner />

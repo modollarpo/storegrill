@@ -7,9 +7,18 @@ on:
         description: 'Image tag version'
         required: true
         default: v4
+  push:
+    branches:
+      - enterprise-refactor-session
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/deploy-web-aca.yml'
+      - 'package.json'
+      - 'package-lock.json'
 
 env:
   ACR: storegrillcr.azurecr.io
+  VERSION: ${{ inputs.version != '' && inputs.version || 'v4' }}
 
 jobs:
   deploy-web:
@@ -49,11 +58,11 @@ jobs:
         run: |
           docker build \
             --build-arg NEXT_PUBLIC_API_URL=${{ matrix.api }} \
-            -t ${{ env.ACR }}/web-${{ matrix.region }}:${{ inputs.version }} \
+            -t ${{ env.ACR }}/web-${{ matrix.region }}:${{ env.VERSION }} \
             -f apps/web/Dockerfile .
 
       - name: Push web image
-        run: docker push ${{ env.ACR }}/web-${{ matrix.region }}:${{ inputs.version }}
+        run: docker push ${{ env.ACR }}/web-${{ matrix.region }}:${{ env.VERSION }}
 
       - uses: azure/login@v2
         with:
@@ -65,7 +74,7 @@ jobs:
           az containerapp update \
             --resource-group ${{ matrix.rg }} \
             --name ${{ matrix.app }} \
-            --image ${{ env.ACR }}/web-${{ matrix.region }}:${{ inputs.version }} \
+            --image ${{ env.ACR }}/web-${{ matrix.region }}:${{ env.VERSION }} \
             --set-env-vars NEXT_PUBLIC_API_URL=${{ matrix.api }} \
-            --revision-suffix "v${{ inputs.version }}" \
+            --revision-suffix "v${{ env.VERSION }}" \
             --output none

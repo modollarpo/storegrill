@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api, ApiError, API_BASE } from '@/lib/api';
+import { cn } from '@/lib/utils';
 import { useToast } from '../feedback/Toast';
 
 export interface AuthCardProps {
@@ -11,15 +12,21 @@ export interface AuthCardProps {
 }
 
 const PROVIDER_LABELS: Record<string, string> = {
-  google: 'Google',
-  facebook: 'Facebook',
-  linkedin: 'LinkedIn',
+  google: 'Continue with Google',
+  facebook: 'Continue with Facebook',
+  linkedin: 'Continue with LinkedIn',
+};
+
+const PROVIDER_STYLES: Record<string, string> = {
+  google: 'bg-white border-smoke-200 text-charcoal hover:bg-smoke-50 hover:border-smoke-300',
+  facebook: 'bg-[#1877F2] border-[#1877F2] text-white hover:bg-[#166FE5]',
+  linkedin: 'bg-[#0A66C2] border-[#0A66C2] text-white hover:bg-[#0958A8]',
 };
 
 function ProviderIcon({ provider }: { provider: string }) {
   if (provider === 'google') {
     return (
-      <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
         <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47a5.57 5.57 0 0 1-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z" />
         <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09A11.99 11.99 0 0 0 12 24z" />
         <path fill="#FBBC05" d="M5.27 14.29A7.2 7.2 0 0 1 4.89 12c0-.8.14-1.57.38-2.29V6.62H1.29a11.97 11.97 0 0 0 0 10.76l3.98-3.09z" />
@@ -29,14 +36,14 @@ function ProviderIcon({ provider }: { provider: string }) {
   }
   if (provider === 'facebook') {
     return (
-      <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
-        <path fill="#1877F2" d="M24 12.07C24 5.41 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.09 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.32l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z" />
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.09 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.32l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z" />
       </svg>
     );
   }
   return (
-    <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
-      <path fill="#0A66C2" d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.55C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.72C24 .77 23.2 0 22.22 0z" />
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.55C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.72C24 .77 23.2 0 22.22 0z" />
     </svg>
   );
 }
@@ -58,16 +65,19 @@ export function AuthCard({ mode }: AuthCardProps) {
       </Link>
       {providers.length > 0 && (
         <>
-          <div className="flex gap-3 mb-4" role="group" aria-label="Continue with">
+          <div className="flex flex-col gap-3 mb-4 w-full max-w-[460px]" role="group" aria-label="Continue with">
             {providers.map(p => (
               <a
                 key={p}
                 href={`${API_BASE}/api/v1/auth/oauth/${p}/start`}
-                aria-label={`Continue with ${PROVIDER_LABELS[p] || p}`}
-                title={`Continue with ${PROVIDER_LABELS[p] || p}`}
-                className="w-10 h-10 grid place-items-center border rounded transition-colors bg-surface-raised text-text-secondary border-border-strong hover:bg-surface-page"
+                aria-label={PROVIDER_LABELS[p] || `Continue with ${p}`}
+                className={cn(
+                  'flex items-center justify-center gap-3 h-12 w-full rounded-lg border text-sm font-semibold transition-all shadow-sm hover:shadow-md active:scale-[0.98]',
+                  PROVIDER_STYLES[p] || 'bg-surface border-border text-text-primary hover:bg-surface-sunken'
+                )}
               >
                 <ProviderIcon provider={p} />
+                {PROVIDER_LABELS[p] || p}
               </a>
             ))}
           </div>

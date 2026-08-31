@@ -13,7 +13,7 @@ interface OrderSummaryItem {
 
 export function CheckoutOrderSummary({ items, subtotal, currency, discount = 0, shipping = 0, tax = 0, total, couponCode }: { items: OrderSummaryItem[], subtotal: number, currency: string, discount?: number, shipping?: number, tax?: number, total?: number, couponCode?: string | null }) {
   return (
-    <div className="bg-surface-raised border border-border rounded-lg p-6 shadow-sm">
+    <div className="bg-surface-raised border border-border rounded-2xl p-6 shadow-sm">
       <h2 className="text-base font-extrabold text-text-primary mb-4">Order Summary</h2>
       <ul className="divide-y divide-border">
         {items.map(item => (

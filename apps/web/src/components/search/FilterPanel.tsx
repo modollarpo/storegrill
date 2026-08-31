@@ -379,7 +379,7 @@ export function SortDropdown() {
       <label htmlFor="sort-select" className="text-sm font-medium text-text-secondary whitespace-nowrap">Sort by:</label>
       <Select
         id="sort-select"
-        className="h-10 text-sm font-bold bg-surface border-border shadow-sm rounded-md focus:border-action-primary focus:ring-action-primary"
+        className="h-11 min-w-[220px] text-sm font-bold bg-surface border-border shadow-sm rounded-full focus:border-action-primary focus:ring-action-primary"
         placeholder="Featured"
         value={value}
         onChange={v => {

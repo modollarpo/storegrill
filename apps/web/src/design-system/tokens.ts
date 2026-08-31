@@ -3,6 +3,8 @@ export const colors = {
     charcoal: { DEFAULT: '#1c1c1c', light: '#3d454a', mid: '#5a6268', soft: '#8c9296', line: '#141414' },
     ember: { DEFAULT: '#4c12a1', dark: '#400e8a', deep: '#320b6e', light: '#7a4bc9', pale: '#f2ebfb' },
     tealink: { DEFAULT: '#4c12a1', hover: '#380d80' },
+    success: { DEFAULT: '#007B4B', bg: 'rgba(0,123,75,0.08)' },
+    midnight: { DEFAULT: '#1c073d' },
   },
   smoke: {
     25: '#fafafa', 50: '#f7f7f7', 100: '#f2f2f2', 150: '#e0e0e0',

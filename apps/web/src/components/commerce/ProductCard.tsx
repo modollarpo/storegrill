@@ -10,6 +10,7 @@ import { useToast } from '../feedback/Toast';
 import { PriceDisplay } from './PriceDisplay';
 import { storefrontImage } from '@/lib/images';
 import { QuickViewModal } from './QuickViewModal';
+import { CompareButton } from './CompareButton';
 
 export type ProductCardVariant = 'grid' | 'list' | 'wide' | 'compact';
 
@@ -93,9 +94,8 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
   const [showQuickView, setShowQuickView] = useState(false);
 
   return (
-    <article aria-label={product.name} className="group h-full flex flex-col bg-surface rounded-lg border border-border hover:border-border-strong hover:shadow-md transition-all duration-200">
-      <Link href={href} className="relative block overflow-hidden rounded-t-lg bg-surface-sunken aspect-square">
-        {/* Product image */}
+    <article aria-label={product.name} className="group h-full flex flex-col">
+      <Link href={href} className="relative block overflow-hidden bg-white aspect-square mb-3">
         {images[0] ? (
           <Image
             src={images[0]}
@@ -103,7 +103,7 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
             fill
             sizes="(max-width: 768px) 50vw, 250px"
             loading="lazy"
-            className="object-contain p-4 mix-blend-multiply transition-transform duration-300 group-hover:scale-105"
+            className="object-contain p-6 transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
           <div className="w-full h-full grid place-items-center text-text-tertiary font-bold text-3xl">
@@ -111,11 +111,10 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
           </div>
         )}
 
-        {/* Badge: absolute top-left */}
         {(product.badge || product.dealLabel) && (
-          <span className="absolute top-3 left-3 z-10">
+          <span className="absolute top-2 left-2 z-10">
             <span className={cn(
-              'inline-flex items-center rounded-xs px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider',
+              'inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
               product.dealLabel ? 'bg-deal text-white' : BADGE_STYLES[product.badge || ''],
             )}>
               {product.dealLabel || BADGE_LABELS[product.badge || '']}
@@ -123,17 +122,16 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
           </span>
         )}
       </Link>
-      
-      <div className="p-4 flex flex-col flex-grow">
-        {/* Star rating */}
+
+      <div className="flex flex-col flex-grow">
         {product.rating > 0 && (
-          <div className="flex items-center gap-1 mb-1.5">
+          <div className="flex items-center gap-1 mb-1">
             <div className="flex items-center" aria-label={`${product.rating} out of 5 stars`}>
               {[1, 2, 3, 4, 5].map(star => (
                 <svg
                   key={star}
                   aria-hidden="true"
-                  className={cn('w-3 h-3', star <= product.rating ? 'text-ember' : 'text-text-disabled')}
+                  className={cn('w-3 h-3', star <= product.rating ? 'text-amber-500' : 'text-smoke-200')}
                   viewBox="0 0 24 24"
                   fill={star <= product.rating ? 'currentColor' : 'none'}
                   stroke="currentColor"
@@ -143,19 +141,21 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
                 </svg>
               ))}
             </div>
-            <span className="text-[11px] text-text-tertiary font-medium">({product.reviewCount})</span>
+            <span className="text-[11px] text-text-tertiary">({product.reviewCount})</span>
           </div>
         )}
 
-        {/* Product name */}
-        <h3 className="font-medium text-sm text-text-primary group-hover:text-ember transition-colors mb-2 line-clamp-2">
-          <Link href={href}>{product.name}</Link>
+        <h3 className="text-sm text-text-primary leading-snug line-clamp-2 mb-1.5">
+          <Link href={href} className="hover:text-ember transition-colors">{product.name}</Link>
         </h3>
 
-        {/* Price & Actions */}
+        <div className="mb-2">
+           <CompareButton productId={product.id} />
+        </div>
+
         <div className="mt-auto flex items-end justify-between gap-2">
           <div className="flex flex-col">
-            <span className="font-bold text-lg text-text-primary">
+            <span className="font-bold text-base text-text-primary">
               <PriceDisplay amountMinorUnits={product.price} currencyCode={product.currencyCode} size="md" locale={locale} />
             </span>
             {savingMinorUnits > 0 && product.listPrice && (
@@ -164,11 +164,11 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
               </span>
             )}
           </div>
-          
+
           <AddToCartInline product={product} />
         </div>
       </div>
-      
+
       {showQuickView && <QuickViewModal product={product} onClose={() => setShowQuickView(false)} />}
     </article>
   );
@@ -252,7 +252,10 @@ function ListCard({ product, images, href, locale }: { product: ProductCardData;
         </div>
       </div>
 
-      <WishlistButton product={product} className="w-9 h-9 shrink-0 self-start" />
+      <div className="flex flex-col items-center gap-2">
+        <WishlistButton product={product} className="w-9 h-9 shrink-0" />
+        <CompareButton productId={product.id} className="mt-2" />
+      </div>
     </article>
   );
 }

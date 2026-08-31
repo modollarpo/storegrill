@@ -10,6 +10,8 @@ import { AddToCartButton } from './AddToCartButton';
 import { StarRating } from '../StarRating';
 import { cn } from '@/lib/utils';
 import { storefrontImage } from '@/lib/images';
+import { ProductShare } from './ProductShare';
+import { CompareButton } from './CompareButton';
 
 export interface PdpVariant {
   id: string;
@@ -96,11 +98,11 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
   const freeShipEligible = activeUnitPrice >= shipping.freeThresholdMinorUnits;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[55%_1fr] gap-10">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-16">
       {/* -- Image Gallery -- */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         <div
-          className="relative w-full aspect-square border border-border rounded-xs overflow-hidden bg-surface-raised shadow-sm group cursor-zoom-in"
+          className="relative w-full aspect-square border border-border rounded-2xl overflow-hidden bg-surface shadow-sm group cursor-zoom-in"
           onMouseMove={e => {
             const rect = e.currentTarget.getBoundingClientRect();
             setZoom({ x: ((e.clientX - rect.left) / rect.width) * 100, y: ((e.clientY - rect.top) / rect.height) * 100 });
@@ -114,8 +116,8 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
               fill
               sizes="(max-width: 768px) 100vw, 55vw"
               priority
-              className="object-contain p-10 mix-blend-multiply transition-transform duration-300"
-              style={zoom ? { transform: 'scale(2.5)', transformOrigin: `${zoom.x}% ${zoom.y}%` } : undefined}
+              className="object-contain p-12 mix-blend-multiply transition-transform duration-300"
+              style={zoom ? { transform: 'scale(2)', transformOrigin: `${zoom.x}% ${zoom.y}%` } : undefined}
             />
           ) : (
             <div className="absolute inset-0 grid place-items-center bg-surface-sunken text-text-tertiary font-bold text-5xl">
@@ -124,14 +126,14 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
           )}
 
           {discountPct > 0 && (
-            <span className="absolute top-4 left-4 px-2.5 py-1 rounded-sm bg-action-primary text-white text-sm font-bold shadow">
+            <span className="absolute top-4 left-4 px-3 py-1 rounded-full bg-deal text-white text-xs font-bold uppercase tracking-wider shadow">
               -{discountPct}%
             </span>
           )}
         </div>
 
         {images.length > 1 && (
-          <ul className="flex gap-3 overflow-x-auto scrollbar-none snap-x pb-1" role="list" aria-label="Product images">
+          <ul className="flex gap-4 overflow-x-auto scrollbar-none snap-x pb-1" role="list" aria-label="Product images">
             {images.slice(0, 8).map((img, i) => (
               <li key={img} className="snap-start shrink-0">
                 <button
@@ -140,10 +142,10 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
                   aria-label={`View image ${i + 1} of ${product.name}`}
                   aria-current={i === activeImage}
                   className={cn(
-                    'relative w-20 h-20 rounded-xs border-2 overflow-hidden bg-surface-raised transition-all',
+                    'relative w-20 h-20 rounded-lg border-2 overflow-hidden bg-surface transition-all',
                     i === activeImage
-                      ? 'border-action-primary ring-2 ring-action-primary/20'
-                      : 'border-border hover:border-action-primary'
+                      ? 'border-action-primary'
+                      : 'border-transparent hover:border-border'
                   )}
                 >
                   <Image src={img} alt="" fill sizes="80px" className="object-contain p-2 mix-blend-multiply" />
@@ -155,55 +157,102 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
       </div>
 
       {/* -- Buy Box -- */}
-      <div className="min-w-0 lg:sticky lg:top-28 lg:self-start bg-surface border border-border rounded-xs p-6" id="buybox">
+      <div className="min-w-0 lg:sticky lg:top-28 lg:self-start bg-surface rounded-2xl p-8 shadow-sm" id="buybox">
         {product.vendor && (
-          <p className="text-sm text-text-secondary mb-1">
+          <p className="text-sm text-text-secondary mb-2">
             Sold by{' '}
-            <Link href={`/vendors/${product.vendor.slug}`} className="text-action-primary hover:underline font-bold">
+            <Link href={`/vendors/${product.vendor.slug}`} className="text-action-primary font-bold hover:underline">
               {product.vendor.storeName}
             </Link>
-            {typeof product.vendor.rating === 'number' && product.vendor.rating > 0 && (
-              <span className="ml-2 font-bold text-action-primary">★ {product.vendor.rating.toFixed(1)}</span>
-            )}
           </p>
         )}
 
-        {product.brand?.name && (
-          <p className="text-sm text-text-secondary mb-2">
-            Brand:{' '}
-            <Link
-              href={`/products?q=${encodeURIComponent(product.brand.name)}`}
-              className="font-bold text-action-primary hover:underline"
-            >
-              {product.brand.name}
-            </Link>
-          </p>
-        )}
-
-        <h1 className="text-2xl md:text-3xl font-extrabold text-text-primary leading-tight tracking-tight">{product.name}</h1>
-
-        <a href="#reviews-tab" className="inline-flex items-center gap-2 mt-3 group" aria-label={`Rated ${product.rating.toFixed(1)} out of 5`}>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-text-primary leading-snug mb-3">{product.name}</h1>
+        
+        <a href="#reviews-tab" className="inline-flex items-center gap-2 mb-6 group">
           <StarRating rating={product.rating} showCount={false} />
-          <span className="text-sm font-bold text-action-primary group-hover:underline underline-offset-2">
-            ({product.reviewCount.toLocaleString()} ratings)
+          <span className="text-sm font-bold text-action-primary hover:underline underline-offset-4">
+            {product.reviewCount.toLocaleString()} ratings
           </span>
         </a>
 
-        <hr className="my-5 border-border" />
-
         {/* Price block */}
-        <div className="flex flex-col gap-1.5">
-          <span className="text-4xl font-black text-text-primary">
+        <div className="flex items-baseline gap-3 mb-6">
+          <span className="text-5xl font-black text-text-primary tracking-tight">
             <PriceDisplay amountMinorUnits={activeUnitPrice} currencyCode={currency} size="xl" locale={locale} />
           </span>
-          {discountPct > 0 && (
-            <div className="flex items-center gap-2.5 mt-1 flex-wrap">
-              <span className="text-sm text-text-tertiary line-through">Was {formatMoney(product.listPrice!, currency)}</span>
-              <span className="text-sm text-action-primary font-extrabold">
-                Save {formatMoney(product.listPrice! - activeUnitPrice, currency)} ({discountPct}%)
-              </span>
-            </div>
+          {discountPct > 0 && product.listPrice && (
+            <span className="text-lg text-text-tertiary line-through">
+              {formatMoney(product.listPrice, currency)}
+            </span>
           )}
+        </div>
+
+        {/* Variant Selectors & CTA Box */}
+        <div className="mt-8 space-y-6">
+          {/* Variant Color Selector (simplified) */}
+          {colorOptions.length > 0 && (
+            <fieldset>
+              <legend className="text-xs font-bold uppercase tracking-wider text-text-tertiary mb-3">Colour</legend>
+              <div className="flex flex-wrap gap-2">
+                {colorOptions.map(color => (
+                  <button
+                    key={color}
+                    type="button"
+                    aria-pressed={variant?.attributes?.some(a => a.value === color)}
+                    onClick={() => selectByAttribute('color', color)}
+                    className="px-4 py-2 text-sm font-medium rounded-full border border-border-strong hover:border-action-primary aria-pressed:border-action-primary aria-pressed:bg-action-primary aria-pressed:text-white transition-all"
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+          )}
+
+          {/* CTA / Buy Box */}
+          <div className="bg-surface-raised rounded-2xl p-6 border border-border shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <label htmlFor="qty" className="text-sm font-medium text-text-primary">Quantity</label>
+              <select
+                id="qty"
+                value={quantity}
+                onChange={e => setQuantity(Number(e.target.value))}
+                className="bg-surface border border-border rounded-full px-4 py-2 text-sm font-bold"
+              >
+                {[...Array(Math.min(stock ?? 10, 10))].map((_, i) => (
+                  <option key={i + 1} value={i + 1}>{i + 1}</option>
+                ))}
+              </select>
+            </div>
+
+            {stock && stock > 0 ? (
+              <div className="flex flex-col gap-3">
+                <AddToCartButton
+                  productId={product.id}
+                  variantId={variantId}
+                  name={product.name}
+                  slug={product.slug}
+                  image={images[0]}
+                  unitPriceMinorUnits={activeUnitPrice}
+                  currencyCode={currency}
+                  quantity={quantity}
+                  stock={stock}
+                  vendorName={product.vendor?.storeName}
+                  label="Add to basket"
+                  size="lg"
+                  fullWidth
+                  className="rounded-full font-bold text-base"
+                />
+              </div>
+            ) : (
+              <NotifyMe productId={product.id} />
+            )}
+            
+            <div className="mt-4 flex items-center justify-center pt-4 border-t border-border">
+               <CompareButton productId={product.id} className="text-sm" />
+            </div>
+          </div>
         </div>
 
         {product.shortDescription && (
@@ -223,7 +272,7 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
                   type="button"
                   aria-pressed={variant?.attributes?.some(a => a.value === color)}
                   onClick={() => selectByAttribute('color', color)}
-                  className="px-4 py-2 rounded-xs border border-border-strong text-sm font-bold hover:border-action-primary transition-colors aria-pressed:border-action-primary aria-pressed:bg-action-primary aria-pressed:text-white aria-pressed:border-action-primary"
+                  className="px-4 py-2 rounded-xs border border-border-strong text-sm font-bold hover:border-action-primary transition-colors aria-pressed:border-action-primary aria-pressed:bg-action-primary aria-pressed:text-white"
                 >
                   {color}
                 </button>
@@ -436,20 +485,19 @@ function NotifyMe({ productId }: { productId: string }) {
         e.preventDefault();
         toast({ variant: 'success', title: 'We will notify you', description: email });
       }}
-      className="flex gap-2 max-w-md"
+      className="flex flex-col gap-3"
     >
-      <label htmlFor={`notify-${productId}`} className="sr-only">Email for restock notification</label>
       <input
         id={`notify-${productId}`}
         type="email"
         required
         value={email}
         onChange={e => setEmail(e.target.value)}
-        placeholder="Email me when available"
-        className="input h-11 flex-1 rounded-xs px-4 text-sm border-border focus:border-action-primary"
+        placeholder="Enter your email"
+        className="h-12 w-full rounded-full px-5 text-sm border-border focus:border-action-primary"
       />
-      <button type="submit" className="h-11 px-6 shrink-0 rounded-xs text-sm font-bold bg-action-primary text-action-primary-fg hover:bg-action-primary-hover transition-colors">
-        Notify Me
+      <button type="submit" className="h-12 w-full rounded-full text-sm font-bold bg-action-primary text-white hover:bg-action-primary-hover transition-colors">
+        Notify me when available
       </button>
     </form>
   );
@@ -460,54 +508,35 @@ function WishlistShare({ product }: { product: PdpProduct }) {
   const wishlist = useWishlist();
   const saved = wishlist.has(product.id);
 
-  async function share() {
-    const url = typeof window !== 'undefined' ? window.location.href : '';
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: product.name, url });
-      } catch {
-        // user dismissed
-      }
-    } else {
-      await navigator.clipboard.writeText(url);
-      toast({ variant: 'success', title: 'Link copied' });
-    }
-  }
-
   return (
-    <div className="flex items-center gap-3">
-      <button
-        type="button"
-        aria-pressed={saved}
-        onClick={() => {
-          wishlist.toggle({
-            productId: product.id,
-            name: product.name,
-            slug: product.slug,
-            image: product.thumbnail,
-            unitPriceMinorUnits: product.price,
-            currencyCode: product.currencyCode,
-          });
-          toast({ variant: saved ? 'info' : 'success', title: saved ? 'Removed from wishlist' : 'Saved to wishlist' });
-        }}
-        className={cn(
-          'h-10 px-4 rounded-xs text-sm font-bold flex items-center gap-2 border transition-colors',
-          saved
-            ? 'border-action-primary text-action-primary bg-action-primary/5'
-            : 'border-border-strong text-text-primary hover:border-action-primary hover:text-action-primary bg-surface'
-        )}
-      >
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
-        {saved ? 'Saved' : 'Save'}
-      </button>
-      <button
-        type="button"
-        onClick={share}
-        className="h-10 px-4 rounded-xs text-sm font-bold text-text-primary hover:bg-surface-sunken transition-colors flex items-center gap-2 border border-border-strong"
-      >
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" /></svg>
-        Share
-      </button>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          aria-pressed={saved}
+          onClick={() => {
+            wishlist.toggle({
+              productId: product.id,
+              name: product.name,
+              slug: product.slug,
+              image: product.thumbnail,
+              unitPriceMinorUnits: product.price,
+              currencyCode: product.currencyCode,
+            });
+            toast({ variant: saved ? 'info' : 'success', title: saved ? 'Removed from wishlist' : 'Saved to wishlist' });
+          }}
+          className={cn(
+            'h-10 px-4 rounded-xs text-sm font-bold flex items-center gap-2 border transition-colors',
+            saved
+              ? 'border-action-primary text-action-primary bg-action-primary/5'
+              : 'border-border-strong text-text-primary hover:border-action-primary hover:text-action-primary bg-surface'
+          )}
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
+          {saved ? 'Saved' : 'Save'}
+        </button>
+      </div>
+      <ProductShare name={product.name} slug={product.slug} />
     </div>
   );
 }

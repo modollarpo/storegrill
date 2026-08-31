@@ -81,3 +81,61 @@ export function regionPromoContent(regionKey: string): RegionPromoContent {
     heroCta: 'Shop now',
   };
 }
+
+export interface HeroSlide {
+  headline: string;
+  subtitle: string;
+  ctaLabel: string;
+  ctaHref: string;
+  bgClass: string;
+  eyebrow?: string;
+}
+
+const PURPLE_GRADIENTS: string[] = [
+  'bg-gradient-to-r from-[#4c12a1] to-[#7a4bc9]',
+  'bg-gradient-to-r from-[#320b6e] to-[#6C597C]',
+  'bg-gradient-to-r from-[#4c12a1] to-[#323E4D]',
+  'bg-gradient-to-r from-[#6C597C] to-[#4c12a1]',
+];
+
+export function heroSlidesFor(regionKey: string): HeroSlide[] {
+  const config = regionConfig(regionKey);
+  const c = config.defaultCurrency;
+  const threshold = config.freeShippingThresholdMinorUnits / 100;
+  const code = `SAVE20-${config.key}`;
+
+  return [
+    {
+      headline: `Shop the best deals in ${c}`,
+      subtitle: `${config.key} · Free shipping over ${c}${threshold} · 20% off with code ${code}`,
+      ctaLabel: 'Shop now',
+      ctaHref: '/deals',
+      bgClass: PURPLE_GRADIENTS[0],
+      eyebrow: 'Featured',
+    },
+    {
+      headline: `New arrivals just landed in ${config.name}`,
+      subtitle: `Be the first to explore fresh picks — curated for ${config.name} shoppers.`,
+      ctaLabel: 'Discover more',
+      ctaHref: '/products?sort=newest',
+      bgClass: PURPLE_GRADIENTS[1],
+      eyebrow: 'Just in',
+    },
+    {
+      headline: `Verified sellers, fast delivery to ${config.name}`,
+      subtitle: `Every order backed by buyer protection and ${c} pricing — no surprises at checkout.`,
+      ctaLabel: 'Meet our sellers',
+      ctaHref: '/vendors',
+      bgClass: PURPLE_GRADIENTS[2],
+      eyebrow: 'Why Storegrill',
+    },
+    {
+      headline: `Earn 5% cashback on every order`,
+      subtitle: `Stack your rewards — use code ${code} for an extra 20% off today.`,
+      ctaLabel: 'Start saving',
+      ctaHref: '/deals',
+      bgClass: PURPLE_GRADIENTS[3],
+      eyebrow: 'Rewards',
+    },
+  ];
+}

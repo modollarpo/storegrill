@@ -30,28 +30,37 @@ export default async function HelpPage() {
   const cfg = regionConfig(regionKey);
 
   return (
-    <div className="container-site py-10 max-w-4xl">
-      <p className="text-ember font-bold text-xs uppercase tracking-[0.2em]">Storegrill {cfg.name}</p>
-      <h1 className="mt-2 text-displaymd font-semibold text-charcoal">How can we help?</h1>
+    <div className="bg-surface-page min-h-screen">
+      <div className="container-content py-16 max-w-4xl">
+        <header className="mb-12 text-center">
+          <p className="text-ember font-bold text-sm uppercase tracking-widest mb-3">Storegrill {cfg.name}</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold text-charcoal tracking-tight">How can we help?</h1>
+          <p className="mt-4 text-smoke-600 text-lg">Select a topic below or contact our regional support team.</p>
+        </header>
 
-      <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3" role="list">
-        {TOPICS.map(t => (
-          <li key={t.href}>
-            <Link href={t.href} className="card p-5 flex flex-col h-full hover:border-ember hover:shadow-card transition-all duration-fast group">
-              <span className="text-sm font-bold text-charcoal group-hover:text-ember transition-colors">{t.title}</span>
-              <span className="text-xs text-smoke-600 mt-1.5 leading-relaxed">{t.desc}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-5" role="list">
+          {TOPICS.map(t => (
+            <li key={t.href}>
+              <Link href={t.href} className="group flex flex-col h-full bg-surface-raised border border-border rounded-2xl p-8 hover:border-ember hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+                <div className="w-12 h-12 rounded-full bg-ember/10 flex items-center justify-center text-ember mb-5 group-hover:scale-110 transition-transform">
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <span className="text-xl font-bold text-charcoal group-hover:text-ember transition-colors">{t.title}</span>
+                <span className="text-smoke-600 mt-2 leading-relaxed">{t.desc}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
 
-      <footer className="mt-8 card p-6 max-w-prose">
-        <h2 className="text-sm font-bold text-charcoal">Still stuck?</h2>
-        <p className="mt-2 text-xs text-smoke-600 leading-relaxed">
-          Email <span className="font-mono">{supportEmailFor(regionKey)}</span> and include your order number
-          (format SG-XXXXXX). Our {cfg.name} team replies within one working day.
-        </p>
-      </footer>
+        <footer className="mt-16 p-10 bg-ember-deep text-white rounded-[2rem] text-center shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 inset-x-0 h-px bg-white/20"></div>
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-ember-light rounded-full blur-[80px] opacity-40"></div>
+          <h2 className="text-2xl font-bold relative z-10">Still stuck?</h2>
+          <p className="mt-4 text-white/80 leading-relaxed max-w-2xl mx-auto relative z-10">
+            Email <span className="font-mono bg-black/20 py-1 px-2 rounded font-semibold">{supportEmailFor(regionKey)}</span> and include your order number (format SG-XXXXXX). Our {cfg.name} team replies within one working day.
+          </p>
+        </footer>
+      </div>
     </div>
   );
 }

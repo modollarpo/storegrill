@@ -14,14 +14,14 @@ export function CheckoutPaymentMethod({
   onSelect: (id: string) => void 
 }) {
   return (
-    <div className="bg-surface-raised border border-border rounded-lg p-6 shadow-sm">
+    <div className="bg-surface-raised border border-border rounded-2xl p-6 shadow-sm">
       <h2 className="text-base font-extrabold text-text-primary mb-4">Payment Method</h2>
       <div className="space-y-3">
         {PAYMENT_METHODS.map(method => (
           <label
             key={method.id}
             className={cn(
-              'flex items-center gap-3 p-4 border-2 rounded-md cursor-pointer transition-all',
+              'flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all',
               selectedId === method.id ? 'border-ember bg-ember/5 shadow-sm' : 'border-border hover:border-ember'
             )}
           >

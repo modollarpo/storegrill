@@ -22,6 +22,7 @@ export interface AddToCartButtonProps {
   fullWidth?: boolean;
   size?: 'sm' | 'md' | 'lg';
   mode?: 'add' | 'buynow';
+  className?: string;
 }
 
 const SIZE_CLASS = {
@@ -91,6 +92,7 @@ export function AddToCartButton(props: AddToCartButtonProps) {
         className={cn(
           'relative overflow-hidden inline-flex items-center justify-center font-bold transition-colors duration-fast',
           props.fullWidth && 'w-full',
+          props.className,
           SIZE_CLASS[props.size ?? 'md'],
           isBuyNow
             ? 'border border-action-primary text-action-primary bg-surface hover:bg-action-primary/5'

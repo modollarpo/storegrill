@@ -17,18 +17,22 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function VendorApplyPage() {
   return (
-    <div className="bg-surface-raised min-h-screen">
-      <div className="container-site py-12 max-w-3xl">
-        <p className="text-ember font-bold text-xs uppercase tracking-[0.2em]">Seller application</p>
-        <h1 className="mt-2 text-displaymd font-semibold text-charcoal leading-tight">Start selling on Storegrill</h1>
-        <p className="mt-3 text-sm text-smoke-600 leading-relaxed max-w-prose">
-          Four short steps. Your answers are saved as you go — you can close this page and continue later.
-          Verification usually takes two working days.
-        </p>
-        <div className="card p-6 md:p-8 mt-8 shadow-sm">
-          <Suspense fallback={<p className="text-sm text-smoke-500 py-16 text-center">Loading your application…</p>}>
-            <VendorApplyWizard />
-          </Suspense>
+    <div className="bg-surface-page min-h-screen">
+      <div className="container-content py-12 md:py-20 flex flex-col lg:flex-row gap-12 lg:gap-16">
+        <div className="lg:w-1/3 flex flex-col justify-start space-y-6">
+          <p className="text-text-link font-bold text-label-md uppercase tracking-widest">Seller application</p>
+          <h1 className="text-display-md lg:text-display-lg font-bold text-text-primary tracking-tight leading-tight">Start selling on Storegrill</h1>
+          <p className="text-body-lg text-text-secondary leading-relaxed">
+            Four short steps. Your answers are saved as you go — you can close this page and continue later.
+            Verification usually takes two working days.
+          </p>
+        </div>
+        <div className="lg:w-2/3">
+          <div className="bg-surface border border-border rounded-2xl p-6 md:p-10 shadow-lg relative overflow-hidden">
+            <Suspense fallback={<p className="text-body-md text-text-tertiary py-20 text-center animate-pulse">Loading your application…</p>}>
+              <VendorApplyWizard />
+            </Suspense>
+          </div>
         </div>
       </div>
     </div>

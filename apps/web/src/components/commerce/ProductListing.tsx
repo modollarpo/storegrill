@@ -177,11 +177,11 @@ export async function ProductListing({
         </aside>
 
         <section aria-label="Search results" className="flex-1 min-w-0">
-          <div className="mb-8 flex items-center justify-between lg:hidden">
+          <div className="mb-6 flex items-center justify-between lg:hidden bg-surface border border-border rounded-xl p-4 shadow-sm">
             <MobileFilterButton facets={facets} />
             <span className="text-sm font-medium text-text-secondary">{pagination.total?.toLocaleString?.() ?? 0} results</span>
           </div>
-          <header className="flex flex-wrap items-center gap-6 mb-10">
+          <header className="flex flex-wrap items-center gap-6 mb-10 bg-surface border border-border rounded-xl p-5 shadow-sm">
             <HeadingTag className="text-3xl md:text-4xl font-extrabold tracking-tight text-text-primary">{heading}</HeadingTag>
             <span className="text-sm font-medium text-text-secondary order-last md:order-none md:ml-auto" role="status">
               Showing {localized.length > 0 ? ((pagination.page - 1) * 24) + 1 : 0}–{((pagination.page - 1) * 24) + localized.length} of{' '}

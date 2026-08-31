@@ -14,6 +14,7 @@ interface PageSeoOptions {
   regionKey: string;
   noIndex?: boolean;
   ogImage?: string;
+  keywords?: string[];
 }
 
 export function buildMetadata({
@@ -23,6 +24,7 @@ export function buildMetadata({
   regionKey,
   noIndex = false,
   ogImage,
+  keywords,
 }: PageSeoOptions): Metadata {
   const region = regionByKey(regionKey);
   const canonicalPath = path === '/' ? '/' : path.replace(/\/$/, '');
@@ -39,6 +41,7 @@ export function buildMetadata({
   return {
     title,
     description,
+    ...(keywords ? { keywords } : {}),
     alternates: {
       canonical: url,
       languages,
@@ -116,8 +119,13 @@ export function organizationJsonLd(): object {
     '@type': 'Organization',
     name: SITE_NAME,
     url: `https://${APEX_DOMAIN}`,
-    logo: `https://${APEX_DOMAIN}/logo.png`,
-    sameAs: [],
+    logo: `https://${APEX_DOMAIN}/icons/icon-512.png`,
+    sameAs: [
+      'https://twitter.com/Storegrill',
+      'https://www.facebook.com/Storegrill',
+      'https://www.linkedin.com/company/storegrill',
+      'https://www.instagram.com/storegrill',
+    ],
   };
 }
 
@@ -134,6 +142,42 @@ export function webSiteJsonLd(): object {
         urlTemplate: `https://${APEX_DOMAIN}/search?q={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
+    },
+  };
+}
+
+interface ArticleJsonLdInput {
+  title: string;
+  description?: string;
+  image?: string;
+  authorName?: string;
+  publishedAt?: string;
+  url: string;
+}
+
+export function articleJsonLd(input: ArticleJsonLdInput): object {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: input.title,
+    description: input.description,
+    image: input.image ? [input.image] : [],
+    author: {
+      '@type': 'Person',
+      name: input.authorName || 'Storegrill Team',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+      logo: {
+        '@type': 'ImageObject',
+        url: `https://${APEX_DOMAIN}/icons/icon-512.png`,
+      },
+    },
+    datePublished: input.publishedAt,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': input.url,
     },
   };
 }

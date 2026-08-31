@@ -178,11 +178,11 @@
     gap: 0.4em;
     height: 2.5rem;
     padding-inline: 1.25rem;
-    border-radius: var(--radius-xs);
+    border-radius: var(--radius-pill);
     font-size: 0.9375rem;
     transition: all var(--duration-fast) var(--ease-out);
   }
-  .btn:disabled, .btn[aria-disabled="true"] { cursor: not-allowed; opacity: 0.5; }
+  .btn:disabled, .btn[aria-disabled="true"] { cursor: not-allowed; opacity: 0.5; box-shadow: none !important; }
   .btn-xs  { height: 1.75rem;  padding-inline: 0.625rem; font-size: 0.8125rem; }
   .btn-sm  { height: 2.125rem; padding-inline: 0.875rem; font-size: 0.875rem;  }
   .btn-lg  { height: 2.875rem; padding-inline: 1.75rem;  font-size: 1rem;      }
@@ -191,9 +191,16 @@
   .btn-primary {
     background-color: var(--color-action-primary);
     color: var(--color-action-primary-fg);
+    box-shadow: 0 4px 14px 0 rgba(76, 18, 161, 0.39);
   }
-  .btn-primary:hover:not(:disabled) { background-color: var(--color-action-primary-hover); }
-  .btn-primary:active:not(:disabled) { background-color: var(--color-action-primary-active); }
+  .btn-primary:hover:not(:disabled) { 
+    background-color: var(--color-action-primary-hover); 
+    transform: scale(1.02);
+  }
+  .btn-primary:active:not(:disabled) { 
+    background-color: var(--color-action-primary-active);
+    transform: scale(0.95);
+  }
 
   .btn-secondary { 
     background-color: var(--color-action-secondary); 
@@ -365,6 +372,12 @@
     to   { opacity: 1; }
   }
   .animate-fade-in { animation: fade-in 300ms ease-out forwards; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .animate-float { animation: float 6s ease-in-out infinite; }
 
   .skip-link {
     position: absolute;

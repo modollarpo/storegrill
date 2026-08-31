@@ -1,0 +1,67 @@
+# ─── Node / build artefacts (never needed in image) ──────────────────────────
+node_modules
+**/node_modules
+
+# Next.js output (rebuilt inside Docker)
+.next
+**/.next
+apps/web/.next
+
+# TypeScript compiled output (rebuilt inside Docker)
+dist
+**/dist
+packages/shared/dist
+
+# Source dirs not needed for the web image build
+# (Dockerfile only COPYs their package.json for workspace resolution)
+apps/api/src
+apps/api/prisma
+apps/admin/src
+apps/vendor-portal/src
+
+# Build info caches
+**/*.tsbuildinfo
+
+# ─── Secrets ──────────────────────────────────────────────────────────────────
+.env
+**/.env
+**/.env.*
+apps/api/.env
+apps/api/dev.db
+apps/api/test.db
+
+# ─── VCS ──────────────────────────────────────────────────────────────────────
+.git
+**/.git
+.gitignore
+
+# ─── Infrastructure (Terraform providers = 1.7 GB) ────────────────────────────
+infra/
+
+# ─── Deployment scripts / staging assets ─────────────────────────────────────
+deploy/
+
+# Large stray/scratch assets never needed by the web image build
+themeforest-*.zip
+**/Screenshot*.png
+
+# ─── Test & QA artefacts ─────────────────────────────────────────────────────
+e2e/
+playwright-report/
+test-results/
+coverage/
+**/__mocks__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+
+# ─── Docs, prompts, scratch ───────────────────────────────────────────────────
+docs/
+PROMPTS/
+on/
+.gemini/
+*.md
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+logs/
+*.log

@@ -1,63 +1,22 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { ProductListing, buildListingMetadata } from '@/components/commerce/ProductListing';
-
-const CATEGORY_DESCRIPTIONS: Record<string, string> = {
-  electronics: 'Discover the latest gadgets, audio gear and smart devices from verified sellers with regional pricing and warranty support.',
-  computers: 'Laptops, desktops, components and accessories — compare specs and prices across trusted vendors.',
-  home: 'Upgrade your space with kitchen, décor and appliance essentials delivered regionally.',
-  fashion: 'Apparel, footwear and accessories for every season, sourced from local and global brands.',
-  beauty: 'Skincare, makeup and personal care favorites with authentic-product guarantees.',
-  sports: 'Gear and apparel for training, outdoors and everyday movement.',
-  books: 'Bestsellers, classics and educational titles with fast regional delivery.',
-};
-
-const SUBCATEGORIES: Record<string, { name: string; slug: string }[]> = {
-  electronics: [
-    { name: 'Headphones', slug: 'headphones' },
-    { name: 'Speakers', slug: 'speakers' },
-    { name: 'Smart Watches', slug: 'smart-watches' },
-    { name: 'Cameras', slug: 'cameras' },
-    { name: 'Accessories', slug: 'electronics-accessories' },
-  ],
-  computers: [
-    { name: 'Laptops', slug: 'laptops' },
-    { name: 'Monitors', slug: 'monitors' },
-    { name: 'Keyboards', slug: 'keyboards' },
-    { name: 'Storage', slug: 'storage' },
-    { name: 'Components', slug: 'components' },
-  ],
-  home: [
-    { name: 'Cookware', slug: 'cookware' },
-    { name: 'Small Appliances', slug: 'small-appliances' },
-    { name: 'Furniture', slug: 'furniture' },
-    { name: 'Bedding', slug: 'bedding' },
-  ],
-  fashion: [
-    { name: 'Shoes', slug: 'shoes' },
-    { name: 'Tops', slug: 'tops' },
-    { name: 'Outerwear', slug: 'outerwear' },
-    { name: 'Bags', slug: 'bags' },
-  ],
-  beauty: [
-    { name: 'Skincare', slug: 'skincare' },
-    { name: 'Makeup', slug: 'makeup' },
-    { name: 'Haircare', slug: 'haircare' },
-  ],
-  sports: [
-    { name: 'Fitness', slug: 'fitness' },
-    { name: 'Outdoor', slug: 'outdoor' },
-    { name: 'Cycling', slug: 'cycling' },
-  ],
-  books: [
-    { name: 'Fiction', slug: 'fiction' },
-    { name: 'Non-Fiction', slug: 'non-fiction' },
-    { name: 'Educational', slug: 'educational' },
-  ],
-};
+import { Banner } from '@/components/ui/Banner';
+import { API_BASE } from '@/lib/api';
 
 function prettify(slug: string): string {
   return slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+async function fetchCategory(slug: string) {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/categories/${slug}`, { next: { revalidate: 300 } });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
 }
 
 export async function generateMetadata({
@@ -79,30 +38,56 @@ export default async function CategoryPage({
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { slug } = await params;
-  const name = prettify(slug);
-  const description = CATEGORY_DESCRIPTIONS[slug];
-  const sub = SUBCATEGORIES[slug] ?? [];
+  const data = await fetchCategory(slug);
+  
+  if (!data?.category) notFound();
+
+  const { category } = data;
+  const name = category.name || prettify(slug);
+  const description = category.description;
+  const sub = category.children || [];
 
   const hero = (
-    <section className="card border border-border bg-surface p-6 min-md:p-10 mb-6 rounded-xl shadow-sm">
-      <h1 className="text-heading-xl font-bold text-text-primary">{name}</h1>
-      <p className="mt-2 max-w-2xl text-text-secondary">
-        {description ?? `Browse ${name} on Storegrill with regional pricing, verified sellers and secure checkout.`}
-      </p>
-      {sub.length > 0 && (
-        <div className="mt-5 flex flex-wrap gap-2.5">
-          {sub.map(s => (
-            <Link
-              key={s.slug}
-              href={`/products?category=${s.slug}`}
-              className="px-4 py-1.5 rounded-pill bg-surface-sunken border border-border text-xs font-bold text-text-primary hover:text-action-primary hover:border-action-primary transition-colors"
-            >
-              {s.name}
-            </Link>
-          ))}
+    <div className="relative mb-8 rounded-3xl overflow-hidden bg-white border border-border shadow-sm">
+      <div className="absolute inset-0 bg-gradient-to-r from-ember/5 to-transparent pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-ember/10 to-transparent pointer-events-none" />
+      <div className="relative px-8 py-10 md:px-12 md:py-14 flex flex-col md:flex-row md:items-center justify-between gap-8">
+        <div className="max-w-2xl">
+          <p className="text-ember text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-ember animate-pulse" />
+            Storegrill Department
+          </p>
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-charcoal mb-4">{name}</h1>
+          <p className="text-smoke-600 text-base md:text-lg leading-relaxed mb-8">
+            {description ?? `Browse millions of items in ${name}. Verified sellers, fast regional shipping, and secure Stripe & PayPal checkout.`}
+          </p>
+          {sub.length > 0 && (
+            <div className="flex flex-wrap gap-2.5">
+              {sub.map((s: any) => (
+                <Link
+                  key={s.slug}
+                  href={`/products?category=${s.slug}`}
+                  className="px-5 py-2 rounded-xl bg-surface-raised border border-border text-sm font-bold text-charcoal hover:border-ember hover:text-ember hover:shadow-md transition-all"
+                >
+                  {s.name}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
-      )}
-    </section>
+        <div className="hidden md:flex flex-col items-end shrink-0">
+           <div className="flex gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-surface-sunken border border-border flex items-center justify-center text-ember/60 shadow-inner">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              </div>
+              <div className="w-16 h-16 rounded-2xl bg-surface-sunken border border-border flex items-center justify-center text-ember/60 shadow-inner">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </div>
+           </div>
+           <p className="text-xs font-semibold text-smoke-500 mt-3">Verified & Fast Shipping</p>
+        </div>
+      </div>
+    </div>
   );
 
   return (

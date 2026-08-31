@@ -1,0 +1,71 @@
+name: Deploy web (ACA)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Image tag version'
+        required: true
+        default: v4
+
+env:
+  ACR: storegrillcr.azurecr.io
+
+jobs:
+  deploy-web:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - region: UK
+            app: app-storegrill-web-prod-uk
+            rg: rg-storegrill-prod-uk
+            api: https://app-storegrill-api-prod-uk.lemonfield-34ed6851.uksouth.azurecontainerapps.io
+          - region: US
+            app: app-storegrill-web-prod-us
+            rg: rg-storegrill-prod-us
+            api: https://app-storegrill-api-prod-us.yellowmoss-db299de7.centralus.azurecontainerapps.io
+          - region: EU
+            app: app-storegrill-web-prod-eu
+            rg: rg-storegrill-prod-eu
+            api: https://app-storegrill-api-prod-eu.redmoss-64579e51.swedencentral.azurecontainerapps.io
+          - region: IN
+            app: app-storegrill-web-in
+            rg: rg-storegrill-prod-in
+            api: https://app-storegrill-api-in.livelyfield-8da97331.centralindia.azurecontainerapps.io
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker login to ACR
+        uses: azure/docker-login-action@v1
+        with:
+          login-server: ${{ env.ACR }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build web image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=${{ matrix.api }} \
+            -t ${{ env.ACR }}/web-${{ matrix.region }}:${{ inputs.version }} \
+            -f apps/web/Dockerfile .
+
+      - name: Push web image
+        run: docker push ${{ env.ACR }}/web-${{ matrix.region }}:${{ inputs.version }}
+
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Container App
+        run: |
+          az account set -s "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          az containerapp update \
+            --resource-group ${{ matrix.rg }} \
+            --name ${{ matrix.app }} \
+            --image ${{ env.ACR }}/web-${{ matrix.region }}:${{ inputs.version }} \
+            --set-env-vars NEXT_PUBLIC_API_URL=${{ matrix.api }} \
+            --revision-suffix "v${{ inputs.version }}" \
+            --output none

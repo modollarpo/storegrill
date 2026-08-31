@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { VendorProfile } from './user';
 
 export const VendorStatus = z.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'BANNED']);
 export const KycStatus = z.enum(['PENDING', 'APPROVED', 'REJECTED']);
@@ -101,6 +102,8 @@ export const VendorStoreStepSchema = z.object({
 export const VendorOperationsStepSchema = z.object({
   warehouseRegionKey: z.string().min(2).max(3),
   plannedCategories: z.array(z.string().min(1).max(80)).min(1).max(10),
+  servingRegions: z.array(z.string().min(2).max(10)).min(1).default(['UK']),
+  corridor: z.boolean().default(false),
 });
 
 export const VendorPayoutStepSchema = z.object({
@@ -144,3 +147,13 @@ export const VendorApplicationPatchSchema = z.object({
 
 export type VendorApplyInput = z.infer<typeof VendorApplySchema>;
 export type VendorApplicationPatch = z.infer<typeof VendorApplicationPatchSchema>;
+
+export const SUPER_POD_KEYS = ['UK', 'US', 'EU', 'IN', 'NG', 'GH'] as const;
+export type SuperPodKey = (typeof SUPER_POD_KEYS)[number];
+
+export function vendorServesRegion(
+  vendor: Pick<VendorProfile, 'servingRegions' | 'status'>,
+  regionKey: string,
+): boolean {
+  return vendor.status === 'ACTIVE' && vendor.servingRegions.includes(regionKey);
+}

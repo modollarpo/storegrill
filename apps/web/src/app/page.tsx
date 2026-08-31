@@ -3,7 +3,7 @@ import { getRequestContext } from '@/lib/server-context';
 import { localizeProducts } from '@/lib/server-translate';
 import { API_BASE } from '@/lib/api';
 import { buildMetadata, organizationJsonLd, webSiteJsonLd } from '@/lib/seo';
-import { regionPromoContent } from '@/lib/region-content';
+import { regionPromoContent, regionConfig } from '@/lib/region-content';
 import { promoPalette } from '@/design-system/tokens';
 
 import { ProductCard } from '@/components/commerce/ProductCard';
@@ -16,6 +16,11 @@ import {
   CategoryBannerWithProducts,
   DealsOfTheDay,
   Testimonials,
+  RecommendedForYou,
+  AppDownloadBanner,
+  RegionalTrust,
+  BrandLogoBar,
+  PromoBanner3Up,
   type DealCardData,
 } from '@/components/home/Sections';
 
@@ -142,6 +147,20 @@ export default async function HomePage() {
   const localized = await localizeProducts(products.slice(0, 8), language);
   const promo = regionPromoContent(regionKey);
   const dealCards = dealsToCards(deals);
+  const regionCfg = regionConfig(regionKey);
+
+  const dealTicker = dealCards.slice(0, 6).map(d => ({
+    label: `${d.dealLabel}: ${d.productName}`,
+    href: d.slug ? `/products/${d.slug}` : d.productId ? `/products/${d.productId}` : '/deals',
+  }));
+
+  const testimonials = [
+    { name: 'Amara O.', role: 'Verified buyer · Lagos', avatar: '/avatars/avatar-1.jpg', quote: 'Fast delivery, exactly as described. Storegrill is now my go-to for electronics. Buyer protection gave me real peace of mind.' },
+    { name: 'James K.', role: 'Verified buyer · London', avatar: '/avatars/avatar-2.jpg', quote: 'Found a deal on a Sony camera that was 25% cheaper than everywhere else. Arrived next day. Absolutely brilliant.' },
+    { name: 'Priya S.', role: 'Verified buyer · Mumbai', avatar: '/avatars/avatar-3.jpg', quote: 'The vendor rating system is great — I could see the seller\'s history before buying. Felt completely safe. Will definitely shop again.' },
+    { name: 'Carlos M.', role: 'Verified buyer · Madrid', avatar: '/avatars/avatar-4.jpg', quote: '30-day return policy is no joke — I returned an item hassle-free. The team was responsive and the refund was instant.' },
+    { name: 'Aisha B.', role: 'Verified buyer · Nairobi', avatar: '/avatars/avatar-5.jpg', quote: 'Great prices on fashion and beauty. Local currency pricing made it easy. I refer all my friends here now.' },
+  ];
 
   return (
     <div className="bg-surface-raised">
@@ -153,16 +172,19 @@ export default async function HomePage() {
       {/* 1. Trust/USP strip */}
       <TrustBar freeShippingThreshold={promo.freeShippingThresholdMinorUnits} currency={promo.currency} />
 
-      {/* 2. Hero */}
-      <CampaignHero />
+      {/* 2. Hero — full-bleed split with deal ticker */}
+      <CampaignHero dealTicker={dealTicker} />
 
-      {/* 3. Category navigation — surfaces marketplace breadth immediately */}
+      {/* 3. Brand logo marquee */}
+      <BrandLogoBar />
+
+      {/* 4. Category navigation */}
       <CategoryQuickNav />
 
-      {/* 4. Live deals with real countdowns (renders nothing if none are active) */}
+      {/* 5. Live deals */}
       <DealsOfTheDay deals={dealCards} />
 
-      {/* 5. Merchandising carousel */}
+      {/* 6. Merchandising carousel */}
       <section className="py-16 md:py-24" aria-labelledby="products-heading">
         <div className="container-fluid">
           <TabbedProductCarousel
@@ -202,7 +224,25 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 6. Category deep-dive: Mobile Phones & Tablets */}
+      {/* 7. Editorial 3-up promo banners */}
+      <PromoBanner3Up />
+
+      {/* 8. Recommended for you */}
+      <RecommendedForYou
+        products={localized.slice(0, 8).map(p => ({
+          id: p.id,
+          name: p.name,
+          slug: p.slug,
+          thumbnail: p.thumbnail,
+          price: p.price,
+          listPrice: p.listPriceMinorUnits,
+          currencyCode: p.currencyCode,
+          rating: p.rating,
+          reviewCount: p.reviewCount,
+        }))}
+      />
+
+      {/* 9. Category deep-dive */}
       <CategoryBannerWithProducts
         title="Mobile Phones & Tablets"
         subtitle="Verified vendors · buyer protection included"
@@ -211,6 +251,9 @@ export default async function HomePage() {
         ctaHref="/products?category=mobiles"
         bannerImage="/banners/home4/banner-37.jpg"
         bannerBg={promoPalette.royal}
+        fromPrice={new Intl.NumberFormat('en-US', { style: 'currency', currency: promo.currency, minimumFractionDigits: 0 }).format(
+          Math.min(...localized.map(p => p.price ?? 99900)) / 100
+        )}
         products={localized.slice(0, 6).map(p => ({
           id: p.id,
           name: p.name,
@@ -225,7 +268,10 @@ export default async function HomePage() {
         }))}
       />
 
-      {/* 7. Vendor spotlight — the marketplace differentiator */}
+      {/* 10. App download CTA */}
+      <AppDownloadBanner />
+
+      {/* 11. Vendor spotlight */}
       <VendorSpotlight
         vendors={vendors.map(v => ({
           storeName: String(v.storeName),
@@ -237,11 +283,16 @@ export default async function HomePage() {
         }))}
       />
 
-      {/* 8. Social proof */}
-      <Testimonials />
+      {/* 12. Regional trust */}
+      <RegionalTrust
+        regionKey={regionKey}
+        paymentMethods={regionCfg.paymentMethods}
+        carriers={regionCfg.shippingZones[0]?.carriers ?? []}
+      />
+
+      {/* 13. Social proof */}
+      <Testimonials items={testimonials} />
 
     </div>
   );
 }
-
-

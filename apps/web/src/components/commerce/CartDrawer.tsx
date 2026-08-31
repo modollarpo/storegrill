@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -110,7 +110,7 @@ function CartLines({ onNavigate, locale }: { onNavigate: () => void; locale: str
         <Link
           href="/checkout"
           onClick={onNavigate}
-          className="flex items-center justify-center gap-2 w-full h-12 rounded-xs bg-action-primary text-action-primary-fg font-extrabold text-base hover:bg-action-primary-hover active:bg-action-primary-active transition-colors"
+          className="flex items-center justify-center gap-2 w-full h-[52px] rounded-full bg-ember text-white font-extrabold text-base shadow-lg shadow-ember/30 hover:bg-deal hover:scale-[1.02] active:scale-95 transition-all"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
           Checkout securely

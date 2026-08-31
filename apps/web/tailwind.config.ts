@@ -34,6 +34,8 @@ const config: Config = {
         tealink: colors.brand.tealink,
         smoke: colors.smoke,
         footerdark: colors.footer,
+        midnight: colors.brand.midnight,
+        success: colors.brand.success,
         surface: {
           DEFAULT: 'var(--color-surface)',
           raised: 'var(--color-surface-raised)',

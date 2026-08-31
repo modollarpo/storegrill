@@ -19,22 +19,27 @@ export default async function CategoriesIndex() {
   const { regionKey } = await getRequestContext();
 
   return (
-    <div className="container-site py-8">
+    <div className="container-site py-16 md:py-24">
       <Breadcrumb items={[]} regionKey={regionKey} />
-      <h1 className="text-heading-xl font-bold text-text-primary mb-2">Shop by Category</h1>
-      <p className="text-text-secondary mb-8 max-w-2xl">
-        Explore curated categories with regional pricing, verified sellers and secure checkout across all Storegrill markets.
-      </p>
+      <header className="mb-16">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-text-primary tracking-tight mb-4">Shop by Category</h1>
+        <p className="text-lg text-text-secondary max-w-2xl leading-relaxed">
+          Explore our curated categories, featuring verified regional sellers, secure checkout, and reliable delivery across all Storegrill markets.
+        </p>
+      </header>
 
-      <ul className="grid grid-cols-2 min-md:grid-cols-3 min-lg:grid-cols-4 gap-4">
+      <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {FACET_CATEGORIES.map(cat => (
           <li key={cat.slug}>
             <Link
               href={`/categories/${cat.slug}`}
-              className="group flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-surface p-8 text-center shadow-sm transition-colors hover:border-action-primary hover:bg-surface-sunken"
+              className="group flex flex-col items-center justify-center gap-4 rounded-2xl border border-border bg-surface p-10 text-center shadow-sm transition-all hover:border-action-primary hover:shadow-md"
             >
-              <span className="text-2xl font-bold text-text-primary group-hover:text-action-primary">{cat.name}</span>
-              <span className="text-xs font-medium text-text-tertiary">Shop now →</span>
+              <div className="w-20 h-20 rounded-full bg-surface-sunken grid place-items-center text-4xl group-hover:bg-action-primary/10 transition-colors">
+                {/* Placeholder for category icon, can be replaced by real icons */}
+                <span className="text-3xl">📦</span>
+              </div>
+              <span className="text-lg font-bold text-text-primary group-hover:text-action-primary transition-colors">{cat.name}</span>
             </Link>
           </li>
         ))}

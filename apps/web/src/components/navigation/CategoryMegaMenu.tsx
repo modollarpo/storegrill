@@ -69,7 +69,6 @@ export function CategoryMegaMenu({ categories, language = 'en' }: CategoryMegaMe
         <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
-        {language === 'en' ? 'Shop All' : language === 'de' ? 'Alle Kategorien' : language === 'fr' ? 'Toutes catégories' : language === 'es' ? 'Todas las categorías' : language === 'it' ? 'Tutte le categorie' : language === 'nl' ? 'Alle categorieën' : language === 'pl' ? 'Wszystkie kategorie' : language === 'pt' ? 'Todas as categorias' : language === 'ja' ? 'すべてのカテゴリー' : language === 'ar' ? 'جميع الفئات' : 'Shop All'}
       </button>
 
       {open && (
@@ -78,7 +77,7 @@ export function CategoryMegaMenu({ categories, language = 'en' }: CategoryMegaMe
           role="menu"
           aria-label="Category browser"
         >
-            <div className="w-[800px] max-w-[calc(100vw-1rem)] rounded-2xl border border-border bg-surface shadow-2xl overflow-hidden">
+          <div className="w-[800px] max-w-[calc(100vw-1rem)] rounded-2xl border border-border bg-surface shadow-2xl overflow-hidden">
             <ul role="presentation" className="w-full border-b border-border bg-surface/50">
               {categories.map((cat, i) => (
                 <li key={cat.slug} className="border-y border-border/50">
@@ -106,7 +105,7 @@ export function CategoryMegaMenu({ categories, language = 'en' }: CategoryMegaMe
             <div className="p-4">
               <h3 className="text-xs font-bold uppercase tracking-wide text-smoke-400 mb-3">Popular right now</h3>
               <ul className="grid grid-cols-2 gap-3 rounded-sm p-3 bg-surface/50" role="presentation">
-                {(active.featured || []).slice(0, 4).map(p => (
+                {(active?.featured || []).slice(0, 4).map(p => (
                   <li key={p.id} className="group">
                     <Link
                       href={`/products/${p.id}`}
@@ -119,7 +118,7 @@ export function CategoryMegaMenu({ categories, language = 'en' }: CategoryMegaMe
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-xs text-charcoal truncate group-hover:text-action-primary">{p.name}</span>
-                        <span className="block text-[2px] font-semibold text-charcoal">{new Intl.NumberFormat('en-US', { style: 'currency', currency: p.currencyCode }).format(p.price / 100)}</span>
+                        <span className="block text-xs font-semibold text-charcoal">{new Intl.NumberFormat('en-US', { style: 'currency', currency: p.currencyCode }).format(p.price / 100)}</span>
                       </span>
                     </Link>
                   </li>

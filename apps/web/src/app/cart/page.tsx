@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useState } from 'react';
@@ -90,10 +90,10 @@ export default function CartPage() {
         <h1 className="text-3xl font-extrabold text-text-primary">Your basket is empty</h1>
         <p className="text-base text-text-secondary mt-3">Looking for inspiration? Browse our latest offers.</p>
         <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
-          <Link href="/deals" className="h-12 px-8 rounded-md bg-ember text-white font-bold text-base hover:bg-ember-dark transition-colors inline-flex items-center">
+          <Link href="/deals" className="h-[52px] px-8 rounded-full bg-ember text-white font-extrabold text-base shadow-lg shadow-ember/30 hover:bg-deal hover:scale-[1.02] active:scale-95 transition-all inline-flex items-center">
             Shop Deals
           </Link>
-          <Link href="/products" className="h-12 px-8 rounded-md border border-border text-text-primary font-bold text-base hover:border-ember hover:text-ember transition-all inline-flex items-center">
+          <Link href="/products" className="h-[52px] px-8 rounded-full border border-border text-text-primary font-bold text-base hover:border-ember hover:text-ember active:scale-95 transition-all inline-flex items-center">
             Browse all products
           </Link>
         </div>
@@ -273,14 +273,14 @@ export default function CartPage() {
               <div className="mt-6 space-y-3">
                 <Link
                   href="/checkout"
-                  className="flex items-center justify-center w-full h-13 py-3.5 bg-ember text-white font-extrabold rounded-md hover:bg-ember-dark active:bg-ember-deep transition-colors gap-2 text-base"
+                  className="flex items-center justify-center w-full h-[52px] bg-ember text-white font-extrabold rounded-full shadow-lg shadow-ember/30 hover:bg-deal hover:scale-[1.02] active:scale-95 transition-all gap-2 text-base"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                   Checkout securely
                 </Link>
                 <Link
                   href="/products"
-                  className="flex items-center justify-center w-full h-11 border border-border text-text-primary font-bold rounded-md hover:border-ember hover:text-ember transition-all text-sm"
+                  className="flex items-center justify-center w-full h-[48px] border border-border text-text-primary font-bold rounded-full hover:border-ember hover:text-ember active:scale-95 transition-all text-sm"
                 >
                   Continue shopping
                 </Link>

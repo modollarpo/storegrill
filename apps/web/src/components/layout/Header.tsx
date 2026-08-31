@@ -12,6 +12,7 @@ import { SearchBar } from '../search/SearchBar';
 import { CategoryMegaMenu, type MegaMenuCategory } from '../navigation/CategoryMegaMenu';
 import { CartDrawer } from '../commerce/CartDrawer';
 import { Drawer } from '../ui/Drawer';
+import { useCompareStore } from '../../store/useCompareStore';
 
 const CATEGORY_LINKS = [
   ['Electronics', 'electronics'],
@@ -113,6 +114,7 @@ function Header(_props: HeaderProps) {
   const { regionKey, language, setLanguage } = useRegion();
   const cart = useCart();
   const wishlist = useWishlist();
+  const compareItems = useCompareStore((state) => state.productIds);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
@@ -176,7 +178,7 @@ function Header(_props: HeaderProps) {
           className="bg-ember text-white border-t border-white/20 shadow-sm"
         >
           <div className="container-fluid">
-            <div className="flex items-center h-[74px] gap-4 lg:gap-6">
+            <div className="flex items-center h-[74px] gap-2 lg:gap-6">
               {/* Mobile hamburger */}
               <button
                 type="button"
@@ -196,7 +198,7 @@ function Header(_props: HeaderProps) {
                 className="shrink-0 flex items-center transition-transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo-white.svg" alt="Storegrill" className="h-12 lg:h-[48px] w-auto" />
+                <img src="/logo-white.svg" alt="Storegrill" className="h-6 sm:h-8 lg:h-[48px] w-auto max-w-[9.5rem] max-[400px]:max-w-[7rem]" />
               </Link>
 
               {/* Desktop: Categories dropdown + Search */}
@@ -206,10 +208,6 @@ function Header(_props: HeaderProps) {
                 <div className="flex-1">
                   <SearchBar regionKey={regionKey} />
                 </div>
-                
-                <Link href="/blog" className="text-sm font-semibold hover:opacity-80 transition-opacity whitespace-nowrap">
-                  Blog
-                </Link>
               </div>
 
               {/* Mobile spacer */}
@@ -230,6 +228,24 @@ function Header(_props: HeaderProps) {
                     </svg>
                     <span className="text-[10px] font-medium leading-none">Region</span>
                   </button>
+
+                  <Link
+                    href="/compare"
+                    className="relative flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity max-[400px]:hidden"
+                    aria-label={`Compare, ${compareItems.length} items`}
+                  >
+                    <svg className="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h18" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 4.5 3 12m0 0 7.5 7.5M3 12h18" />
+                    </svg>
+                    {compareItems.length > 0 && (
+                      <span className="absolute -top-0.5 right-0 min-w-[15px] h-[15px] flex items-center justify-center bg-secondary text-text-primary text-[9px] font-bold rounded-full px-1">
+                        {compareItems.length}
+                      </span>
+                    )}
+                    <span className="text-[10px] font-medium leading-none">Compare</span>
+                  </Link>
 
                   <Link
                     href="/account/wishlist"
@@ -267,6 +283,24 @@ function Header(_props: HeaderProps) {
                     </svg>
                     <span className="text-[10px] font-medium leading-none">Region</span>
                   </button>
+
+                  <Link
+                    href="/compare"
+                    className="relative flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity"
+                    aria-label={`Compare, ${compareItems.length} items`}
+                  >
+                    <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h18" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 4.5 3 12m0 0 7.5 7.5M3 12h18" />
+                    </svg>
+                    {compareItems.length > 0 && (
+                      <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-secondary text-text-primary text-[10px] font-bold rounded-full px-1">
+                        {compareItems.length}
+                      </span>
+                    )}
+                    <span className="text-[10px] font-medium leading-none">Compare</span>
+                  </Link>
 
                   <Link
                     href="/account/wishlist"
@@ -326,15 +360,17 @@ function Header(_props: HeaderProps) {
           className="hidden lg:block bg-ember-deep text-white"
         >
           <div className="container-fluid">
-            <div className="flex items-center h-[56px] gap-6">
-              {/* Left: categories + nav */}
-              <div className="flex items-center gap-6 flex-1 overflow-x-auto scrollbar-none">
-                <CategoryMegaMenu categories={MEGA_MENU_CATEGORIES} language={language} />
+            <div className="flex items-center h-[56px] gap-4 w-full justify-between">
+              {/* Left spacer for perfect centering */}
+              <div className="w-[120px] shrink-0 hidden lg:block" />
+
+              {/* Center: category links */}
+              <div className="flex items-center justify-center gap-4 xl:gap-6 flex-1 overflow-x-auto scrollbar-none">
                 {CATEGORY_LINKS.map(([label, slug]) => (
                   <Link
                     key={slug}
                     href={`/categories/${slug}`}
-                    className="text-[16px] font-semibold whitespace-nowrap hover:opacity-80 transition-opacity"
+                    className="text-[15px] xl:text-[16px] font-semibold whitespace-nowrap hover:opacity-80 transition-opacity"
                   >
                     {label}
                   </Link>
@@ -342,12 +378,14 @@ function Header(_props: HeaderProps) {
               </div>
 
               {/* Right: deals link */}
-              <Link
-                href="/deals"
-                className="shrink-0 text-[16px] font-semibold text-secondary hover:opacity-80 transition-opacity inline-flex items-center gap-1.5"
-              >
-                Today&apos;s Deal
-              </Link>
+              <div className="w-[120px] shrink-0 flex justify-end">
+                <Link
+                  href="/deals"
+                  className="text-[15px] xl:text-[16px] font-semibold text-secondary hover:opacity-80 transition-opacity whitespace-nowrap"
+                >
+                  Today&apos;s Deal
+                </Link>
+              </div>
             </div>
           </div>
         </nav>

@@ -18,7 +18,7 @@ on:
 
 env:
   ACR: storegrillcr.azurecr.io
-  VERSION: ${{ inputs.version != '' && inputs.version || 'v4' }}
+  VERSION: v4
 
 jobs:
   deploy-web:

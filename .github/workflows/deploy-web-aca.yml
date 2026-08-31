@@ -58,11 +58,11 @@ jobs:
         run: |
           docker build \
             --build-arg NEXT_PUBLIC_API_URL=${{ matrix.api }} \
-            -t ${{ env.ACR }}/web-${{ matrix.region }}:${{ env.VERSION }} \
+            -t ${{ env.ACR }}/web-${{ matrix.region | lower }}:${{ env.VERSION }} \
             -f apps/web/Dockerfile .
 
       - name: Push web image
-        run: docker push ${{ env.ACR }}/web-${{ matrix.region }}:${{ env.VERSION }}
+        run: docker push ${{ env.ACR }}/web-${{ matrix.region | lower }}:${{ env.VERSION }}
 
       - uses: azure/login@v2
         with:
@@ -74,7 +74,7 @@ jobs:
           az containerapp update \
             --resource-group ${{ matrix.rg }} \
             --name ${{ matrix.app }} \
-            --image ${{ env.ACR }}/web-${{ matrix.region }}:${{ env.VERSION }} \
+            --image ${{ env.ACR }}/web-${{ matrix.region | lower }}:${{ env.VERSION }} \
             --set-env-vars NEXT_PUBLIC_API_URL=${{ matrix.api }} \
             --revision-suffix "v${{ env.VERSION }}" \
             --output none

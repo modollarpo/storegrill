@@ -8,6 +8,7 @@ import { RegionProvider } from '@/components/providers/RegionContext';
 import Header from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { getRequestContext } from '@/lib/server-context';
+import { getCategories } from '@/lib/api-client';
 import { CookieBanner } from '@/components/layout/CookieBanner';
 import { ScrollToTop } from '@/components/ui/ScrollToTop';
 import { AnalyticsProvider } from '@/components/providers/AnalyticsProvider';
@@ -80,6 +81,7 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { regionKey, language } = await getRequestContext();
+  const categories = await getCategories(regionKey);
   const primaryLang = language.split('-')[0];
   const dir = ['ar', 'he', 'fa', 'ur'].includes(primaryLang) ? 'rtl' : 'ltr';
 
@@ -95,7 +97,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   <RegionProvider initialRegionKey={regionKey} initialLanguage={language}>
                     <div className="flex flex-col min-h-screen">
                       <a href="#main-content" className="skip-link">Skip to main content</a>
-                      <Header />
+                      <Header categories={categories} />
                       <main id="main-content" className="flex-1">{children}</main>
                       <Footer />
                       <CookieBanner />

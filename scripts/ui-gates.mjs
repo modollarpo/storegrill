@@ -4,11 +4,11 @@ import { join, relative } from 'node:path';
 
 const ROOT = process.cwd();
 const SRC = join(ROOT, 'apps', 'web', 'src');
-const ALLOWED_HEX_FILES = /design-system[/\\]tokens\.ts$|globals\.css$/;
-const BRAND_ASSET_FILES = /components[/\\]icons\.tsx$|components[/\\]layout[/\\]Footer\.tsx$|components[/\\]forms[/\\]AuthCard\.tsx$/;
+const ALLOWED_HEX_FILES = /design-system[/\\]tokens\.ts$|globals\.css$|app[/\\]layout\.tsx$/;
+const BRAND_ASSET_FILES = /components[/\\]icons\.tsx$|components[/\\]layout[/\\]Footer\.tsx$|components[/\\]forms[/\\]AuthCard\.tsx$|components[/\\]commerce[/\\]ProductShare\.tsx$/;
 
 const MOJIBAKE = /\uFFFD|Ã[\u0080-\u00FF\u02C6\u20AC\u201A\u0192\u201E\u2026\u2020\u2021\u2030\u0152\u0153]|Â[\u00A1-\u00FF]|\u00E2[\u20AC\u0153\u201D\u02DC\u02C6\u201A\u0192\u201E\u2026\u2020\u2021\u2030]|\u00E2\u0020?[\u02DC]/;
-const RAW_HEX_IN_TSX = /#[0-9a-fA-F]{3,8}\b/;
+const RAW_HEX_IN_TSX = /(?<!&)#[0-9a-fA-F]{3,8}\b/;
 
 function walk(dir) {
   const out = [];

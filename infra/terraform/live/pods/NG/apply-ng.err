@@ -1,0 +1,14 @@
+
+Error: A resource with the ID "/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-ng/providers/Microsoft.KeyVault/vaults/kv-storegrill-ng-prod/objectId/beea1530-4490-4d3d-b263-89cb7da848bb" already exists - to be managed via Terraform this resource needs to be imported into the State. Please see the resource documentation for "azurerm_key_vault_access_policy" for more information.
+
+  with module.pod.azurerm_key_vault_access_policy.deployer,
+  on ..\..\..\modules\pod\main.tf line 178, in resource "azurerm_key_vault_access_policy" "deployer":
+ 178: resource "azurerm_key_vault_access_policy" "deployer" {
+
+
+Error: A resource with the ID "/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-ng/providers/Microsoft.KeyVault/vaults/kv-storegrill-ng-prod/objectId/5edbc221-1278-474e-a8bd-9995a3e8b489" already exists - to be managed via Terraform this resource needs to be imported into the State. Please see the resource documentation for "azurerm_key_vault_access_policy" for more information.
+
+  with module.pod.azurerm_key_vault_access_policy.apps,
+  on ..\..\..\modules\pod\main.tf line 186, in resource "azurerm_key_vault_access_policy" "apps":
+ 186: resource "azurerm_key_vault_access_policy" "apps" {
+

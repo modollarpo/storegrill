@@ -5,14 +5,23 @@ import { getRequestContext } from '@/lib/server-context';
 import { localizeProducts } from '@/lib/server-translate';
 import { buildMetadata, SEO_DEFAULTS } from '@/lib/seo';
 import { API_BASE } from '@/lib/api';
-import { FilterPanel, MobileFilterButton, ActiveFilterChips, SortDropdown } from '@/components/search/FilterPanel';
+import { FilterPanel, MobileFilterButton, ActiveFilterChips, SortDropdown, type FacetCategory } from '@/components/search/FilterPanel';
 import type { ProductCardData } from '@/components/commerce/ProductCard';
 import { ProductListingViews } from '@/components/commerce/ProductListingViews';
 import { Pagination } from '@/components/navigation/Pagination';
 import { Breadcrumb } from '@/components/navigation/Breadcrumb';
+import { getCategories } from '@/lib/api-client';
 
 export interface ListingSearchParams {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function flattenTree(nodes: import('@/lib/api-client').CategoryNode[]): FacetCategory[] {
+  return nodes.map(n => ({
+    name: n.name,
+    slug: n.slug,
+    children: n.children.length > 0 ? flattenTree(n.children) : undefined,
+  }));
 }
 
 export const FACET_CATEGORIES = [
@@ -123,6 +132,9 @@ export async function ProductListing({
   const localized = (await localizeProducts(products, language)) as Array<ProductCardData & { category?: { id?: string } | null }>;
   const localizedWithCategory = localized.map(p => ({ ...p, categoryId: p.categoryId ?? p.category?.id }));
   const pagination = data.pagination ?? { page: 1, totalPages: 0, total: 0 };
+  const categoryTree = (await getCategories(regionKey)).filter(c => c.children.length > 0 || c.featured);
+
+  const categoryOptions = categoryTree.length > 0 ? flattenTree(categoryTree) : FACET_CATEGORIES;
 
   const q = single(sp.q);
   const effectiveCategory = forceCategory ?? single(sp.category);
@@ -139,7 +151,7 @@ export async function ProductListing({
   const maxPriceMinorUnits = realMax > 0 ? Math.ceil((realMax + 1) / step) * step : 10000;
 
   const facets = {
-    categories: FACET_CATEGORIES,
+    categories: categoryOptions,
     brands: [...new Set(products.map(p => p.vendor?.storeName).filter((v): v is string => Boolean(v)))].slice(0, 12),
     vendors: [...new Map(products.filter(p => p.vendor).map(p => [p.vendor!.slug, { id: p.vendor!.slug, name: p.vendor!.storeName }])).values()],
     maxPriceMinorUnits,

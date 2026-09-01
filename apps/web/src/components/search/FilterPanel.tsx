@@ -6,8 +6,15 @@ import { cn } from '@/lib/utils';
 import { Select } from '../ui/Select';
 import { Drawer } from '../ui/Drawer';
 
+export interface FacetCategory {
+  name: string;
+  slug: string;
+  count?: number;
+  children?: FacetCategory[];
+}
+
 export interface FacetData {
-  categories: Array<{ name: string; slug: string; count?: number }>;
+  categories: FacetCategory[];
   brands: string[];
   vendors: Array<{ id: string; name: string }>;
   maxPriceMinorUnits: number;
@@ -82,27 +89,11 @@ export function FilterPanel({ facets, className }: FilterPanelProps) {
   return (
     <div className={cn('space-y-6', className)} data-testid="filter-panel">
       <FilterGroup title="Category">
-        <ul className="space-y-1.5">
-          {facets.categories.map(cat => {
-            const active = params.get('category') === cat.slug;
-            return (
-              <li key={cat.slug}>
-                <button
-                  type="button"
-                  onClick={() => updateParam('category', active ? null : cat.slug)}
-                  aria-pressed={active}
-                  className={cn(
-                    'w-full text-left text-sm py-1 flex items-center justify-between group transition-colors',
-                    active ? 'text-action-primary font-bold' : 'text-text-primary hover:text-action-primary'
-                  )}
-                >
-                  <span className={cn(active && 'underline underline-offset-4', 'group-hover:underline underline-offset-4 truncate')}>{cat.name}</span>
-                  {cat.count !== undefined && <span className="text-xs text-text-tertiary ml-2">({cat.count})</span>}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <CategoryTree
+          categories={facets.categories}
+          activeSlug={params.get('category') ?? ''}
+          onPick={slug => updateParam('category', params.get('category') === slug ? null : slug)}
+        />
       </FilterGroup>
 
       <FilterGroup title={`Price`}>
@@ -222,6 +213,46 @@ function CheckParam({
       />
       {label}
     </label>
+  );
+}
+
+function CategoryTree({
+  categories,
+  activeSlug,
+  onPick,
+  depth = 0,
+}: {
+  categories: FacetCategory[];
+  activeSlug: string;
+  onPick: (slug: string) => void;
+  depth?: number;
+}) {
+  return (
+    <ul className={depth === 0 ? 'space-y-1.5' : 'ml-3 pl-2 border-l border-border space-y-0.5 mt-0.5'}>
+      {categories.map(cat => {
+        const active = activeSlug === cat.slug;
+        return (
+          <li key={cat.slug}>
+            <button
+              type="button"
+              onClick={() => onPick(cat.slug)}
+              aria-pressed={active}
+              className={cn(
+                'w-full text-left py-1 flex items-center justify-between group transition-colors',
+                depth > 0 ? 'text-[13px]' : 'text-sm',
+                active ? 'text-action-primary font-bold' : 'text-text-primary hover:text-action-primary'
+              )}
+            >
+              <span className={cn(active && 'underline underline-offset-4', 'group-hover:underline underline-offset-4 truncate')}>{cat.name}</span>
+              {cat.count !== undefined && <span className="text-xs text-text-tertiary ml-2">({cat.count})</span>}
+            </button>
+            {cat.children && cat.children.length > 0 && (
+              <CategoryTree categories={cat.children} activeSlug={activeSlug} onPick={onPick} depth={depth + 1} />
+            )}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="#f4f4f5">
+  <rect width="512" height="512" fill="#f4f4f5"/>
+  <path d="M128 160c0-1.1 1.1-2 2-2h192v32H128zm0 64c0-1.1 1.1-2 2-2h192v32H128zm0 64c0-1.1 1.1-2 2-2h192v32H128z"/>
+  <!-- Maskable area -->
+  <mask id="a" maskUnits="objectBoundingBox">
+    <rect x="0.05" y="0.05" width="0.9" height="0.9" fill="white"/>
+  </mask>
+  <rect width="512" height="512" fill="#f4f4f5" mask="url(#a)"/>
+</svg>

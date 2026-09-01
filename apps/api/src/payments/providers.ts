@@ -222,3 +222,43 @@ export async function capturePaypalOrder(paypalOrderId: string): Promise<{ compl
     orderNumber: unit?.custom_id || unit?.reference_id || null,
   };
 }
+
+export interface PaypalWebhookHeaders {
+  transmissionId: string | undefined;
+  transmissionTime: string | undefined;
+  certUrl: string | undefined;
+  authAlgo: string | undefined;
+  transmissionSig: string | undefined;
+}
+
+export async function verifyPaypalWebhook(
+  rawBody: Buffer,
+  headers: PaypalWebhookHeaders
+): Promise<boolean> {
+  const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+  if (!webhookId) return true; // skip verification in dev when env var not set
+
+  const { transmissionId, transmissionTime, certUrl, authAlgo, transmissionSig } = headers;
+  if (!transmissionId || !transmissionTime || !certUrl || !authAlgo || !transmissionSig) return false;
+
+  try {
+    const token = await paypalToken();
+    const res = await fetch(`${PAYPAL_API}/v1/notifications/verify-webhook-signature`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        transmission_id: transmissionId,
+        transmission_time: transmissionTime,
+        cert_url: certUrl,
+        auth_algo: authAlgo,
+        transmission_sig: transmissionSig,
+        webhook_id: webhookId,
+        webhook_event: JSON.parse(rawBody.toString('utf8')),
+      }),
+    });
+    const data = (await res.json()) as { verification_status?: string };
+    return data.verification_status === 'SUCCESS';
+  } catch {
+    return false;
+  }
+}

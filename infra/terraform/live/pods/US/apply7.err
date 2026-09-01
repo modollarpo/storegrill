@@ -1,0 +1,9 @@
+
+Error: creating Key Vault (Subscription: "a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-us"
+Key Vault Name: "kv-storegrill-us-prod"): performing CreateOrUpdate: vaults.VaultsClient#CreateOrUpdate: Failure sending request: StatusCode=0 -- Original Error: autorest/azure: Service returned an error. Status=<nil> Code="VaultAlreadyExists" Message="The vault name 'kv-storegrill-us-prod' is already in use. Vault names are globally unique so it is possible that the name is already taken. If you are sure that the vault name was not taken then it is possible that a vault with the same name was recently deleted but not purged after being placed in a recoverable state. If the vault is in a recoverable state then the vault will need to be purged before reusing the name. For more information about VaultAlreadyExists, soft delete and purging a vault follow this link https://go.microsoft.com/fwlink/?linkid=2147740."
+
+  with module.pod.azurerm_key_vault.vault,
+  on ..\..\..\modules\pod\main.tf line 162, in resource "azurerm_key_vault" "vault":
+ 162: resource "azurerm_key_vault" "vault" {
+

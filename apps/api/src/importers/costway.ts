@@ -5,7 +5,7 @@ export const COSTWAY_FEED_URL =
 
 export const PRICE_MARKUP_RATE = 0.30;
 export const CLEARANCE_MARKUP_REDUCTION = 0.10;
-export const DEAL_PROMO_RATE = 0.025;
+export const DEAL_PROMO_RATE = 0.25;
 export const OUT_OF_STOCK_THRESHOLD = 10;
 
 export const HOUSE_BRAND = 'Costway';

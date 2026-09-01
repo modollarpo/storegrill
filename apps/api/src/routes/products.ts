@@ -13,9 +13,15 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
   const query = ProductFilterSchema.parse(req.query);
   const regionKey = query.regionKey;
 
+  let categoryId = query.categoryId;
+  if (!categoryId && query.category) {
+    const cat = await prisma.category.findUnique({ where: { slug: query.category }, select: { id: true } });
+    if (cat) categoryId = cat.id;
+  }
+
   const where: Prisma.ProductWhereInput = {
     status: 'ACTIVE',
-    ...(query.categoryId && { categoryId: query.categoryId }),
+    ...(categoryId && { categoryId }),
     ...(query.brandId && { brandId: query.brandId }),
     ...(query.vendorId && { vendorId: query.vendorId }),
     ...(query.minRating && { rating: { gte: query.minRating } }),

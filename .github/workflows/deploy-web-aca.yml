@@ -18,7 +18,7 @@ on:
 
 env:
   ACR: storegrillcr.azurecr.io
-  VERSION: v4
+  VERSION: v5
 
 jobs:
   deploy-web:

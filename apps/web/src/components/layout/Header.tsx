@@ -123,7 +123,7 @@ function Header(_props: HeaderProps) {
     <>
       <header
         id="masthead"
-        className="site-header"
+        className="site-header sticky top-0 z-[var(--z-header)]"
         dir={language === 'ar' ? 'rtl' : 'ltr'}
       >
         {/* ═══ ROW 1: TOPBAR ═══ */}

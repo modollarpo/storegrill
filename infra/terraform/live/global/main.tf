@@ -3,51 +3,64 @@ resource "azurerm_resource_group" "edge" {
   location = var.azure_location
 }
 
-resource "azurerm_dns_zone" "apex" {
-  name                = var.dns_zone_name
-  resource_group_name = azurerm_resource_group.edge.name
-}
-
 locals {
   subdomains = merge(
     { for region, t in var.region_targets : lower(region) => { hostname = t.web_hostname, verification_id = t.verification_id } },
-    { for region, t in var.region_targets : "${lower(region)}-api" => { hostname = t.api_hostname, verification_id = null } },
+    { for region, t in var.region_targets : "${lower(region)}-api" => { hostname = t.api_hostname, verification_id = t.verification_id } },
     { for region, t in var.region_targets : "${lower(region)}-admin" => { hostname = t.admin_hostname, verification_id = t.admin_verification_id } },
     { for region, t in var.region_targets : "${lower(region)}-vendor" => { hostname = t.vendor_hostname, verification_id = t.vendor_verification_id } },
   )
+  web_fqdn = var.region_targets[var.apex_region].web_hostname
 }
 
-resource "azurerm_dns_cname_record" "region_subdomains" {
+resource "cloudflare_record" "region_subdomains" {
   for_each = local.subdomains
 
-  name                = each.key
-  zone_name           = azurerm_dns_zone.apex.name
-  resource_group_name = azurerm_resource_group.edge.name
-  ttl                 = 300
-  record              = each.value.hostname
+  zone_id  = var.cloudflare_zone_id
+  name     = each.key
+  type     = "CNAME"
+  value    = each.value.hostname
+  proxied  = true
+  ttl      = 1
 }
 
-resource "azurerm_dns_txt_record" "region_domain_validation" {
+resource "cloudflare_record" "region_domain_validation" {
   for_each = { for key, value in local.subdomains : key => value if value.verification_id != null && value.verification_id != "" }
 
-  name                = "asuid.${each.key}"
-  zone_name           = azurerm_dns_zone.apex.name
-  resource_group_name = azurerm_resource_group.edge.name
-  ttl                 = 300
-
-  record {
-    value = each.value.verification_id
-  }
+  zone_id = var.cloudflare_zone_id
+  name    = "asuid.${each.key}"
+  type    = "TXT"
+  value   = each.value.verification_id
+  ttl     = 300
 }
 
-resource "azurerm_dns_cname_record" "www" {
-  name                = "www"
-  zone_name           = azurerm_dns_zone.apex.name
-  resource_group_name = azurerm_resource_group.edge.name
-  ttl                 = 300
-  record              = var.region_targets[var.apex_region].web_hostname
+resource "cloudflare_record" "www" {
+  zone_id  = var.cloudflare_zone_id
+  name     = "www"
+  type     = "CNAME"
+  value    = local.web_fqdn
+  proxied  = true
+  ttl      = 1
 }
 
-output "name_servers" {
-  value = azurerm_dns_zone.apex.name_servers
+resource "cloudflare_record" "apex" {
+  zone_id  = var.cloudflare_zone_id
+  name     = var.dns_zone_name
+  type     = "CNAME"
+  value    = local.web_fqdn
+  proxied  = true
+  ttl      = 1
+}
+
+resource "cloudflare_record" "wildcard" {
+  zone_id  = var.cloudflare_zone_id
+  name     = "*"
+  type     = "CNAME"
+  value    = local.web_fqdn
+  proxied  = true
+  ttl      = 1
+}
+
+output "cloudflare_zone_id" {
+  value = var.cloudflare_zone_id
 }

@@ -47,9 +47,10 @@ jobs:
       - name: Resolve names
         id: names
         run: |
-          REGION="${{ inputs.region_key }}"
-          ENVIRONMENT="prod"
-          SUFFIX="${ENVIRONMENT}-${REGION}"
+           REGION="${{ inputs.region_key }}"
+           ENVIRONMENT="prod"
+           REGION_LC="$(echo "$REGION" | tr '[:upper:]' '[:lower:]')"
+           SUFFIX="${ENVIRONMENT}-${REGION_LC}"
           FLAT="$(echo "$SUFFIX" | tr -d '-' | tr '[:upper:]' '[:lower:]')"
           echo "rg=rg-storegrill-$SUFFIX" >> "$GITHUB_OUTPUT"
           echo "kv=kv-storegrill-$FLAT" >> "$GITHUB_OUTPUT"

@@ -31,22 +31,22 @@ jobs:
             region_lc: uk
             app: app-storegrill-web-prod-uk
             rg: rg-storegrill-prod-uk
-            api: https://app-storegrill-api-prod-uk.lemonfield-34ed6851.uksouth.azurecontainerapps.io
+            api: https://uk-api.storegrill.net
           - region: US
             region_lc: us
             app: app-storegrill-web-prod-us
             rg: rg-storegrill-prod-us
-            api: https://app-storegrill-api-prod-us.yellowmoss-db299de7.centralus.azurecontainerapps.io
+            api: https://us-api.storegrill.net
           - region: EU
             region_lc: eu
             app: app-storegrill-web-prod-eu
             rg: rg-storegrill-prod-eu
-            api: https://app-storegrill-api-prod-eu.redmoss-64579e51.swedencentral.azurecontainerapps.io
-          - region: IN
-            region_lc: in
-            app: app-storegrill-web-in
-            rg: rg-storegrill-prod-in
-            api: https://app-storegrill-api-in.livelyfield-8da97331.centralindia.azurecontainerapps.io
+            api: https://eu-api.storegrill.net
+          - region: AE
+            region_lc: ae
+            app: app-storegrill-web-prod-ae
+            rg: rg-storegrill-prod-ae
+            api: https://ae-api.storegrill.net
 
     steps:
       - uses: actions/checkout@v4

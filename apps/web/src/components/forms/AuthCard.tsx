@@ -50,6 +50,8 @@ function ProviderIcon({ provider }: { provider: string }) {
 
 export function AuthCard({ mode }: AuthCardProps) {
   const [providers, setProviders] = useState<string[]>([]);
+  const searchParams = useSearchParams();
+  const nextPath = searchParams.get('next') || '/';
 
   useEffect(() => {
     api<{ providers: string[] }>('/api/v1/auth/oauth/providers')
@@ -69,7 +71,7 @@ export function AuthCard({ mode }: AuthCardProps) {
             {providers.map(p => (
               <a
                 key={p}
-                href={`${API_BASE}/api/v1/auth/oauth/${p}/start`}
+                href={`${API_BASE}/api/v1/auth/oauth/${p}/start?sg_oauth_next=${encodeURIComponent(nextPath)}`}
                 aria-label={PROVIDER_LABELS[p] || `Continue with ${p}`}
                 className={cn(
                   'flex items-center justify-center gap-3 h-12 w-full rounded-lg border text-sm font-semibold transition-all shadow-sm hover:shadow-md active:scale-[0.98]',

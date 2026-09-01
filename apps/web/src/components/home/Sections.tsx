@@ -160,7 +160,6 @@ export function CampaignHero({ dealTicker = [] }: { dealTicker?: DealTickerItem[
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[120%] bg-ember rounded-full blur-[120px] opacity-60 pointer-events-none mix-blend-screen" />
       <div className="absolute top-[20%] right-[-10%] w-[40%] h-[100%] bg-deal rounded-full blur-[140px] opacity-30 pointer-events-none mix-blend-screen" />
       <div className="absolute bottom-[-30%] left-[20%] w-[60%] h-[80%] bg-ember-light rounded-full blur-[100px] opacity-40 pointer-events-none mix-blend-screen" />
-      <div className="absolute inset-0 opacity-20 bg-[url('/noise.png')] pointer-events-none mix-blend-overlay" />
       <div className="relative container-fluid py-12 md:py-20">
         <div className="grid md:grid-cols-[1fr_340px] lg:grid-cols-[1fr_420px] gap-10 items-center">
           <div>

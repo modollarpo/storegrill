@@ -13,6 +13,7 @@ module "pod" {
     "http://localhost:3003",
   ]
 
+  web_extra_domains = ["storegrill.net", "www.storegrill.net"]
   deploy_translator = false
   deploy_redis      = var.deploy_redis
   dev_client_ip     = var.dev_client_ip

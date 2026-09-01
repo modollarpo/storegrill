@@ -4,7 +4,7 @@ import { prisma } from '../index.js';
 import { authenticate, authorize, AuthRequest, requireVerifiedEmail } from '../middleware/auth.js';
 import { CheckoutSchema, DEFAULT_REGIONS } from '@Storegrill/shared';
 import { calculateTax, TaxRule } from '@Storegrill/shared';
-import { ShippingZone, VendorShippingPolicy, calculateGroupedShipping } from '@Storegrill/shared';
+import { ShippingZone, VendorShippingPolicy, calculateGroupedShipping, planFulfillment } from '@Storegrill/shared';
 import { createMoney, convertMoney } from '@Storegrill/shared';
 import { v4 as uuid } from 'uuid';
 import { initiatePaypalPayment, initiateStripePayment, type PaymentOrderContext } from '../payments/providers.js';
@@ -292,6 +292,18 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
   const tax = Number(taxResult.totalTax.amountMinorUnits);
   const shipping = grouped ? Number(grouped.totalMinorUnits) : 0;
   const total = discountedSubtotal + tax + shipping;
+
+  const fulfillment = planFulfillment(
+    orderItems.map((item: any) => ({
+      productId: item.productId,
+      vendorId: item.vendorId,
+      unitPriceMinorUnits: item.unitPriceMinorUnits,
+      quantity: item.quantity,
+    })),
+    [],
+    regionConfig.key,
+    regionConfig,
+  );
 
   const orderNumber = `SG-${Date.now().toString(36).toUpperCase()}-${uuid().slice(0, 4).toUpperCase()}`;
 

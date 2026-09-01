@@ -1,4 +1,9 @@
-import ExpressLayer from 'express/lib/router/layer';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const ExpressLayer = require('express/lib/router/layer') as {
+  prototype: { __handle?: unknown };
+};
 
 Object.defineProperty(ExpressLayer.prototype, 'handle', {
   enumerable: true,

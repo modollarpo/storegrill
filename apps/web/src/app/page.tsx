@@ -3,7 +3,7 @@ import { getRequestContext } from '@/lib/server-context';
 import { localizeProducts } from '@/lib/server-translate';
 import { API_BASE } from '@/lib/api';
 import { buildMetadata, organizationJsonLd, webSiteJsonLd } from '@/lib/seo';
-import { regionPromoContent, regionConfig } from '@/lib/region-content';
+import { regionPromoContent, regionConfig, heroSlidesFor, categoryBannerFor, vendorSpotlightFor } from '@/lib/region-content';
 import { promoPalette } from '@/design-system/tokens';
 
 import { ProductCard } from '@/components/commerce/ProductCard';
@@ -190,6 +190,14 @@ export default async function HomePage() {
           <TabbedProductCarousel
             tabs={[
               {
+                label: 'What\'s Trending Right Now',
+                products: [...localized]
+                  .sort((a, b) => (b.rating ?? 0) * (b.reviewCount ?? 0) - (a.rating ?? 0) * (a.reviewCount ?? 0))
+                  .map(product => (
+                    <ProductCard key={`trending-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'trending' }} />
+                  )),
+              },
+              {
                 label: 'New Arrivals',
                 products: [...localized].reverse().map(product => (
                   <ProductCard key={`new-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'new' }} />
@@ -244,13 +252,7 @@ export default async function HomePage() {
 
       {/* 9. Category deep-dive */}
       <CategoryBannerWithProducts
-        title="Mobile Phones & Tablets"
-        subtitle="Verified vendors · buyer protection included"
-        description="Flagship devices backed by Storegrill's 30-day returns and secure checkout."
-        ctaLabel="Shop mobile & tablets"
-        ctaHref="/products?category=mobiles"
-        bannerImage="/banners/home4/banner-37.jpg"
-        bannerBg={promoPalette.royal}
+        {...categoryBannerFor(regionKey)}
         fromPrice={new Intl.NumberFormat('en-US', { style: 'currency', currency: promo.currency, minimumFractionDigits: 0 }).format(
           Math.min(...localized.map(p => p.price ?? 99900)) / 100
         )}
@@ -273,7 +275,7 @@ export default async function HomePage() {
 
       {/* 11. Vendor spotlight */}
       <VendorSpotlight
-        vendors={vendors.map(v => ({
+        vendors={vendorSpotlightFor(regionKey).map(v => ({
           storeName: String(v.storeName),
           slug: String(v.slug),
           rating: Number(v.rating || 0),

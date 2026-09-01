@@ -19,6 +19,15 @@ import { adminRouter } from './routes/admin.js';
 import { i18nRouter } from './routes/i18n.js';
 import { paymentsRouter } from './routes/payments.js';
 import { paymentsWebhookRouter } from './routes/payments-webhook.js';
+import { categoriesRouter } from './routes/categories.js';
+import { brandsRouter } from './routes/brands.js';
+import { searchRouter } from './routes/search.js';
+import { notificationsRouter } from './routes/notifications.js';
+import { shippingRouter } from './routes/shipping.js';
+import { trackingRouter } from './routes/tracking.js';
+import { taxRouter } from './routes/tax.js';
+import { blogRouter } from './routes/blog.js';
+import { newsletterRouter } from './routes/newsletter.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 export { prisma } from './db/prisma.js';
@@ -69,6 +78,8 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/v1/auth', authLimiter, authRouter);
 app.use('/api/v1/auth/oauth', oauthRouter);
 app.use('/api/v1/products', productsRouter);
+app.use('/api/v1/categories', categoriesRouter);
+app.use('/api/v1/brands', brandsRouter);
 app.use('/api/v1/cart', cartRouter);
 app.use('/api/v1/orders', ordersRouter);
 app.use('/api/v1/vendors', vendorsRouter);
@@ -80,11 +91,37 @@ app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/i18n', i18nRouter);
 app.use('/api/v1/payments', paymentsRouter);
 app.use('/api/v1/payments/webhook', paymentsWebhookRouter);
+app.use('/api/v1/search', searchRouter);
+app.use('/api/v1/notifications', notificationsRouter);
+app.use('/api/v1/shipping', shippingRouter);
+app.use('/api/v1/tracking', trackingRouter);
+app.use('/api/v1/tax', taxRouter);
+app.use('/api/v1/blog', blogRouter);
+app.use('/api/v1/newsletter', newsletterRouter);
 
 app.use(errorHandler);
 
+async function provisionSchema() {
+  if (process.env.AUTO_SCHEMA_SYNC === '0') return;
+  const { execSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const { dirname, resolve } = await import('node:path');
+  const schemaPath = resolve(dirname(fileURLToPath(import.meta.url)), '../prisma/schema.prisma');
+  try {
+    console.log('Syncing database schema...');
+    execSync(`npx prisma db push --skip-generate --schema="${schemaPath}"`, {
+      stdio: 'inherit',
+      env: { ...process.env },
+    });
+    console.log('Database schema synced');
+  } catch (error) {
+    console.error('Schema sync failed, continuing anyway:', error);
+  }
+}
+
 async function bootstrap() {
   try {
+    await provisionSchema();
     await prisma.$connect();
     console.log('Database connected');
     if (process.env.DISABLE_IMPORT_WORKER !== '1') {

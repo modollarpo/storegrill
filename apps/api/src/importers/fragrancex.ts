@@ -162,6 +162,11 @@ export function adaptFragranceXRows(rows: FragranceXFeedRow[]): AdaptResult {
       }
     }
 
+    // Skip products priced under $50 (5000 minor units)
+    if (entries.length > 0 && entries[0].variant.priceMinorUnits < 5000) {
+      continue;
+    }
+
     const first = bucket[0].row;
     products.push({
       groupKey,

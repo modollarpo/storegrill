@@ -8,7 +8,7 @@ const REGIONS = [
   { key: 'UK', name: 'United Kingdom', languages: 'en', defaultLanguage: 'en', currencies: 'GBP', defaultCurrency: 'GBP', defaultTimezone: 'Europe/London' },
   { key: 'US', name: 'United States', languages: 'en', defaultLanguage: 'en', currencies: 'USD', defaultCurrency: 'USD', defaultTimezone: 'America/New_York' },
   { key: 'EU', name: 'European Union', languages: 'en,de,fr', defaultLanguage: 'en', currencies: 'EUR', defaultCurrency: 'EUR', defaultTimezone: 'Europe/Berlin' },
-  { key: 'IN', name: 'India', languages: 'en,hi', defaultLanguage: 'en', currencies: 'INR', defaultCurrency: 'INR', defaultTimezone: 'Asia/Kolkata' },
+  { key: 'AE', name: 'United Arab Emirates', languages: 'ar,en', defaultLanguage: 'ar', currencies: 'AED', defaultCurrency: 'AED', defaultTimezone: 'Asia/Dubai' },
   { key: 'NG', name: 'Nigeria', languages: 'en,ha,yo,ig', defaultLanguage: 'en', currencies: 'NGN', defaultCurrency: 'NGN', defaultTimezone: 'Africa/Lagos' },
   { key: 'GH', name: 'Ghana', languages: 'en', defaultLanguage: 'en', currencies: 'GHS', defaultCurrency: 'GHS', defaultTimezone: 'Africa/Accra' },
 ];

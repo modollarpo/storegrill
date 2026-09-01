@@ -15,6 +15,8 @@ const FAMILIES = {
   ember: ['DEFAULT', 'dark', 'deep', 'light', 'pale'],
   charcoal: ['DEFAULT', 'light', 'mid', 'soft', 'line'],
   tealink: ['DEFAULT', 'hover'],
+  midnight: ['DEFAULT'],
+  deal: ['DEFAULT'],
   smoke: ['25', '50', '100', '150', '200', '300', '400', '500', '600', '700', '800', '900', '950'],
   footerdark: ['DEFAULT'],
   surface: ['DEFAULT', 'raised', 'overlay', 'sunken', 'page'],
@@ -22,6 +24,7 @@ const FAMILIES = {
   text: ['primary', 'secondary', 'tertiary', 'disabled', 'inverse', 'link', 'link-hover'],
   action: ['primary', 'primary-hover', 'primary-active', 'primary-fg', 'secondary', 'secondary-hover', 'destructive', 'success'],
   feedback: ['success', 'success-bg', 'warning', 'warning-bg', 'danger', 'danger-bg', 'info', 'info-bg'],
+  success: ['DEFAULT', 'bg'],
 };
 
 const SHADOW_VALID = new Set(['xs', 'sm', 'md', 'lg', 'xl', '2xl', 'focus', 'card', 'card-hover', 'sticky', 'inner', 'none', '']);
@@ -88,6 +91,10 @@ function checkToken(token, file, issues) {
 
   if (base.startsWith('shadow-')) {
     const suffix = base.slice('shadow-'.length);
+    // Ignore colored shadows (e.g., shadow-ember/30)
+    const familyCheck = suffix.split('/')[0].split('-')[0];
+    if (familyCheck in FAMILIES || familyCheck === 'black' || familyCheck === 'white' || familyCheck === 'transparent') return;
+    
     if (!SHADOW_VALID.has(suffix)) issues.push(`${file}: "${token}" — undeclared shadow "${suffix}"`);
     return;
   }

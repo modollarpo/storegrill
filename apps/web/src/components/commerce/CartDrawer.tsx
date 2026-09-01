@@ -20,7 +20,7 @@ export function CartDrawer({ open, onClose, locale = 'en-US' }: CartDrawerProps)
   const cart = useCart();
 
   return (
-    <Drawer open={open} onClose={onClose} side="right" title={`Basket · ${cart.count} item${cart.count === 1 ? '' : 's'}`} className="w-[var(--drawer-width)]">
+    <Drawer open={open} onClose={onClose} side="right" title={`Basket · ${cart.count} item${cart.count === 1 ? '' : 's'}`} className="w-full sm:w-[var(--drawer-width)]">
       <CartLines onNavigate={onClose} locale={locale} />
     </Drawer>
   );

@@ -1,0 +1,113 @@
+
+Error: creating Database (Subscription: "a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-eu"
+Flexible Server Name: "pg-storegrill-eu-prod"
+Database Name: "storegrill_test"): performing Create: unexpected status 404 (404 Not Found) with error: ResourceNotFound: The Resource 'Microsoft.DBforPostgreSQL/flexibleServers/pg-storegrill-eu-prod' under resource group 'rg-storegrill-prod-eu' was not found. For more details please go to https://aka.ms/ARMResourceNotFoundFix
+
+  with module.pod.azurerm_postgresql_flexible_server_database.dbs["storegrill_test"],
+  on ..\..\..\modules\pod\main.tf line 134, in resource "azurerm_postgresql_flexible_server_database" "dbs":
+ 134: resource "azurerm_postgresql_flexible_server_database" "dbs" {
+
+
+Error: creating Database (Subscription: "a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-eu"
+Flexible Server Name: "pg-storegrill-eu-prod"
+Database Name: "storegrill_dev"): performing Create: unexpected status 404 (404 Not Found) with error: ResourceNotFound: The Resource 'Microsoft.DBforPostgreSQL/flexibleServers/pg-storegrill-eu-prod' under resource group 'rg-storegrill-prod-eu' was not found. For more details please go to https://aka.ms/ARMResourceNotFoundFix
+
+  with module.pod.azurerm_postgresql_flexible_server_database.dbs["storegrill_dev"],
+  on ..\..\..\modules\pod\main.tf line 134, in resource "azurerm_postgresql_flexible_server_database" "dbs":
+ 134: resource "azurerm_postgresql_flexible_server_database" "dbs" {
+
+
+Error: creating Database (Subscription: "a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-eu"
+Flexible Server Name: "pg-storegrill-eu-prod"
+Database Name: "storegrill"): performing Create: unexpected status 404 (404 Not Found) with error: ResourceNotFound: The Resource 'Microsoft.DBforPostgreSQL/flexibleServers/pg-storegrill-eu-prod' under resource group 'rg-storegrill-prod-eu' was not found. For more details please go to https://aka.ms/ARMResourceNotFoundFix
+
+  with module.pod.azurerm_postgresql_flexible_server_database.dbs["storegrill"],
+  on ..\..\..\modules\pod\main.tf line 134, in resource "azurerm_postgresql_flexible_server_database" "dbs":
+ 134: resource "azurerm_postgresql_flexible_server_database" "dbs" {
+
+
+Error: creating/updating "Firewall Rule (Subscription: \"a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d\"\nResource Group Name: \"rg-storegrill-prod-eu\"\nFlexible Server Name: \"pg-storegrill-eu-prod\"\nFirewall Rule Name: \"AllowAllAzureIps\")": performing CreateOrUpdate: unexpected status 404 (404 Not Found) with error: ResourceNotFound: The Resource 'Microsoft.DBforPostgreSQL/flexibleServers/pg-storegrill-eu-prod' under resource group 'rg-storegrill-prod-eu' was not found. For more details please go to https://aka.ms/ARMResourceNotFoundFix
+
+  with module.pod.azurerm_postgresql_flexible_server_firewall_rule.allow_azure_services,
+  on ..\..\..\modules\pod\main.tf line 142, in resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure_services":
+ 142: resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure_services" {
+
+
+Error: creating Container App Custom Domain (Subscription: "a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-eu"
+Container App Name: "app-storegrill-vendor-prod-eu"
+Custom Domain Name: "eu-vendor.storegrill.net"): performing CreateOrUpdate: unexpected status 400 (400 Bad Request) with error: CertificateNotFound: Certificate '/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-eu/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-eu/certificates/storegrill-eu-cert-v2' doesn't exist.
+
+  with module.pod.azurerm_container_app_custom_domain.next_apps["vendor"],
+  on ..\..\..\modules\pod\main.tf line 529, in resource "azurerm_container_app_custom_domain" "next_apps":
+ 529: resource "azurerm_container_app_custom_domain" "next_apps" {
+
+creating Container App Custom Domain (Subscription:
+"a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-eu"
+Container App Name: "app-storegrill-vendor-prod-eu"
+Custom Domain Name: "eu-vendor.storegrill.net"): performing CreateOrUpdate:
+unexpected status 400 (400 Bad Request) with error: CertificateNotFound:
+Certificate
+'/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-eu/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-eu/certificates/storegrill-eu-cert-v2'
+doesn't exist.
+
+Error: creating Container App Custom Domain (Subscription: "a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-eu"
+Container App Name: "app-storegrill-web-prod-eu"
+Custom Domain Name: "eu.storegrill.net"): performing CreateOrUpdate: unexpected status 400 (400 Bad Request) with error: CertificateNotFound: Certificate '/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-eu/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-eu/certificates/storegrill-eu-cert-v2' doesn't exist.
+
+  with module.pod.azurerm_container_app_custom_domain.next_apps["web"],
+  on ..\..\..\modules\pod\main.tf line 529, in resource "azurerm_container_app_custom_domain" "next_apps":
+ 529: resource "azurerm_container_app_custom_domain" "next_apps" {
+
+creating Container App Custom Domain (Subscription:
+"a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-eu"
+Container App Name: "app-storegrill-web-prod-eu"
+Custom Domain Name: "eu.storegrill.net"): performing CreateOrUpdate:
+unexpected status 400 (400 Bad Request) with error: CertificateNotFound:
+Certificate
+'/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-eu/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-eu/certificates/storegrill-eu-cert-v2'
+doesn't exist.
+
+Error: creating Container App Custom Domain (Subscription: "a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-eu"
+Container App Name: "app-storegrill-admin-prod-eu"
+Custom Domain Name: "eu-admin.storegrill.net"): performing CreateOrUpdate: unexpected status 400 (400 Bad Request) with error: CertificateNotFound: Certificate '/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-eu/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-eu/certificates/storegrill-eu-cert-v2' doesn't exist.
+
+  with module.pod.azurerm_container_app_custom_domain.next_apps["admin"],
+  on ..\..\..\modules\pod\main.tf line 529, in resource "azurerm_container_app_custom_domain" "next_apps":
+ 529: resource "azurerm_container_app_custom_domain" "next_apps" {
+
+creating Container App Custom Domain (Subscription:
+"a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-eu"
+Container App Name: "app-storegrill-admin-prod-eu"
+Custom Domain Name: "eu-admin.storegrill.net"): performing CreateOrUpdate:
+unexpected status 400 (400 Bad Request) with error: CertificateNotFound:
+Certificate
+'/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-eu/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-eu/certificates/storegrill-eu-cert-v2'
+doesn't exist.
+
+Error: creating Container App Custom Domain (Subscription: "a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-eu"
+Container App Name: "app-storegrill-api-prod-eu"
+Custom Domain Name: "eu-api.storegrill.net"): performing CreateOrUpdate: unexpected status 400 (400 Bad Request) with error: CertificateNotFound: Certificate '/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-eu/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-eu/certificates/storegrill-eu-cert-v2' doesn't exist.
+
+  with module.pod.azurerm_container_app_custom_domain.api,
+  on ..\..\..\modules\pod\main.tf line 538, in resource "azurerm_container_app_custom_domain" "api":
+ 538: resource "azurerm_container_app_custom_domain" "api" {
+
+creating Container App Custom Domain (Subscription:
+"a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-eu"
+Container App Name: "app-storegrill-api-prod-eu"
+Custom Domain Name: "eu-api.storegrill.net"): performing CreateOrUpdate:
+unexpected status 400 (400 Bad Request) with error: CertificateNotFound:
+Certificate
+'/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-eu/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-eu/certificates/storegrill-eu-cert-v2'
+doesn't exist.

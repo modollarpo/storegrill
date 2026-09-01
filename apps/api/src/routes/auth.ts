@@ -1,4 +1,4 @@
-﻿import { Router, Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { z } from 'zod';
@@ -197,7 +197,11 @@ router.post('/refresh', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/logout', (_req: Request, res: Response) => {
+router.post('/logout', authenticate, async (req: AuthRequest, res: Response) => {
+  await prisma.user.update({
+    where: { id: req.user!.id },
+    data: { tokenVersion: { increment: 1 } },
+  });
   res.clearCookie('accessToken');
   res.clearCookie('refreshToken');
   res.json({ message: 'Logged out successfully' });

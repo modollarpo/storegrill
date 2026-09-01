@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -12,25 +12,11 @@ import { SearchBar } from '../search/SearchBar';
 import { CategoryMegaMenu, type MegaMenuCategory } from '../navigation/CategoryMegaMenu';
 import { CartDrawer } from '../commerce/CartDrawer';
 import { Drawer } from '../ui/Drawer';
-import { useCompareStore } from '../../store/useCompareStore';
+import type { CategoryNode } from '@/lib/api-client';
 
-const CATEGORY_LINKS = [
-  ['Electronics', 'electronics'],
-  ['Computers', 'computers'],
-  ['Home & Kitchen', 'home'],
-  ['Fashion', 'fashion'],
-  ['Beauty', 'beauty'],
-  ['Sports', 'sports'],
-  ['Books', 'books'],
-] as const;
-
-const MEGA_MENU_CATEGORIES: MegaMenuCategory[] = CATEGORY_LINKS.map(([name, slug]) => ({
-  name,
-  slug,
-  children: [],
-}));
-
-export interface HeaderProps {}
+export interface HeaderProps {
+  categories: CategoryNode[];
+}
 
 function useOutsideClick<T extends HTMLElement>(
   handler: (e: MouseEvent) => void,
@@ -73,13 +59,13 @@ function RegionPicker({
       ref={ref}
       role="dialog"
       aria-label="Choose your country or region"
-      className="fixed inset-0 z-[var(--z-dropdown)] flex items-start justify-center pt-20"
+      className="fixed inset-0 z-[9999] flex items-start justify-center pt-20"
     >
       <div className="fixed inset-0 bg-black/30" onClick={onClose} aria-hidden="true" />
       <div className="relative w-[30rem] max-h-[70vh] overflow-y-auto bg-surface-raised rounded-md shadow-md p-5 z-10 text-text-primary">
         <h3 className="text-sm font-bold mb-1">Choose your country or region</h3>
         <p className="text-xs text-text-secondary mb-3">
-          Shopping on <strong>{currentKey.toLowerCase()}.storegrill.net</strong> — local
+          Shopping on <strong>{currentKey.toLowerCase()}.storegrill.net</strong> â€” local
           currency, payments and delivery.
         </p>
         <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-2">
@@ -103,21 +89,31 @@ function RegionPicker({
           href={regionUrl(currentKey, '/regions')}
           className="btn btn-outline btn-sm mt-3 w-full"
         >
-          View all regions →
+          View all regions â†’
         </a>
       </div>
     </div>
   );
 }
 
-function Header(_props: HeaderProps) {
+function Header({ categories }: HeaderProps) {
   const { regionKey, language, setLanguage } = useRegion();
   const cart = useCart();
   const wishlist = useWishlist();
-  const compareItems = useCompareStore((state) => state.productIds);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
+
+  const megaMenuCategories: MegaMenuCategory[] = categories.map(c => ({
+    name: c.name,
+    slug: c.slug,
+    children: c.children.map(child => ({
+      name: child.name,
+      slug: child.slug,
+      children: (child.children || []).map(grandchild => ({ name: grandchild.name, slug: grandchild.slug })),
+    })),
+    featured: c.featured,
+  }));
 
   return (
     <>
@@ -126,7 +122,7 @@ function Header(_props: HeaderProps) {
         className="site-header sticky top-0 z-[var(--z-header)]"
         dir={language === 'ar' ? 'rtl' : 'ltr'}
       >
-        {/* ═══ ROW 1: TOPBAR ═══ */}
+        {/* â•â•â• ROW 1: TOPBAR â•â•â• */}
         <div
           id="header-top"
           className="hidden lg:block bg-ember-deep text-white"
@@ -172,7 +168,7 @@ function Header(_props: HeaderProps) {
           </div>
         </div>
 
-        {/* ═══ ROW 2: MAIN HEADER ═══ */}
+        {/* â•â•â• ROW 2: MAIN HEADER â•â•â• */}
         <div
           id="header-main"
           className="bg-ember text-white border-t border-white/20 shadow-sm"
@@ -203,7 +199,7 @@ function Header(_props: HeaderProps) {
 
               {/* Desktop: Categories dropdown + Search */}
               <div className="hidden lg:flex items-center flex-1 gap-3">
-                <CategoryMegaMenu categories={MEGA_MENU_CATEGORIES} language={language} />
+                <CategoryMegaMenu categories={megaMenuCategories} language={language} />
 
                 <div className="flex-1">
                   <SearchBar regionKey={regionKey} />
@@ -228,24 +224,6 @@ function Header(_props: HeaderProps) {
                     </svg>
                     <span className="text-[10px] font-medium leading-none">Region</span>
                   </button>
-
-                  <Link
-                    href="/compare"
-                    className="relative flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity max-[400px]:hidden"
-                    aria-label={`Compare, ${compareItems.length} items`}
-                  >
-                    <svg className="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h18" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 4.5 3 12m0 0 7.5 7.5M3 12h18" />
-                    </svg>
-                    {compareItems.length > 0 && (
-                      <span className="absolute -top-0.5 right-0 min-w-[15px] h-[15px] flex items-center justify-center bg-secondary text-text-primary text-[9px] font-bold rounded-full px-1">
-                        {compareItems.length}
-                      </span>
-                    )}
-                    <span className="text-[10px] font-medium leading-none">Compare</span>
-                  </Link>
 
                   <Link
                     href="/account/wishlist"
@@ -283,24 +261,6 @@ function Header(_props: HeaderProps) {
                     </svg>
                     <span className="text-[10px] font-medium leading-none">Region</span>
                   </button>
-
-                  <Link
-                    href="/compare"
-                    className="relative flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity"
-                    aria-label={`Compare, ${compareItems.length} items`}
-                  >
-                    <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h18" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 4.5 3 12m0 0 7.5 7.5M3 12h18" />
-                    </svg>
-                    {compareItems.length > 0 && (
-                      <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-secondary text-text-primary text-[10px] font-bold rounded-full px-1">
-                        {compareItems.length}
-                      </span>
-                    )}
-                    <span className="text-[10px] font-medium leading-none">Compare</span>
-                  </Link>
 
                   <Link
                     href="/account/wishlist"
@@ -353,7 +313,7 @@ function Header(_props: HeaderProps) {
           </div>
         </div>
 
-        {/* ═══ ROW 3: BOTTOM NAVIGATION BAR ═══ */}
+        {/* â•â•â• ROW 3: BOTTOM NAVIGATION BAR â•â•â• */}
         <nav
           id="header-bottom"
           aria-label="Categories"
@@ -366,13 +326,13 @@ function Header(_props: HeaderProps) {
 
               {/* Center: category links */}
               <div className="flex items-center justify-center gap-4 xl:gap-6 flex-1 overflow-x-auto scrollbar-none">
-                {CATEGORY_LINKS.map(([label, slug]) => (
+                {categories.map(cat => (
                   <Link
-                    key={slug}
-                    href={`/categories/${slug}`}
+                    key={cat.slug}
+                    href={`/categories/${cat.slug}`}
                     className="text-[15px] xl:text-[16px] font-semibold whitespace-nowrap hover:opacity-80 transition-opacity"
                   >
-                    {label}
+                    {cat.name}
                   </Link>
                 ))}
               </div>
@@ -419,15 +379,32 @@ function Header(_props: HeaderProps) {
 
           <section className="py-3" aria-label="Shop by department">
             <h3 className="px-4 py-2 text-base font-bold">Shop by Department</h3>
-            {CATEGORY_LINKS.map(([label, slug]) => (
-              <Link
-                key={slug}
-                href={`/categories/${slug}`}
-                onClick={() => setMobileOpen(false)}
-                className="block px-4 py-2.5 text-sm hover:bg-surface-sunken transition-colors"
-              >
-                {label}
-              </Link>
+            {categories.map(cat => (
+              <div key={cat.slug}>
+                <Link
+                  href={`/categories/${cat.slug}`}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-between px-4 py-2.5 text-sm font-semibold hover:bg-surface-sunken transition-colors"
+                >
+                  {cat.name}
+                  {cat.children.length > 0 && <span className="text-text-tertiary text-xs">â–¸</span>}
+                </Link>
+                {cat.children.length > 0 && (
+                  <div className="pl-5 border-l border-border ml-4">
+                    {cat.children.map(child => (
+                      <Link
+                        key={child.slug}
+                        href={`/categories/${child.slug}`}
+                        onClick={() => setMobileOpen(false)}
+                        className="flex items-center justify-between px-4 py-2 text-sm text-text-secondary hover:bg-surface-sunken transition-colors"
+                      >
+                        {child.name}
+                        {child.children.length > 0 && <span className="text-text-tertiary text-xs">â–¸</span>}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </section>
 

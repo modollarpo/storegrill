@@ -38,7 +38,7 @@ export function Newsletter() {
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-          <div className="flex">
+          <div className="flex flex-col gap-2 sm:flex-row sm:gap-0">
             <label htmlFor="footer-email" className="sr-only">Email address</label>
             <input
               id="footer-email"
@@ -47,12 +47,12 @@ export function Newsletter() {
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="Email Address"
-              className="flex-1 min-w-0 h-[46px] px-4 rounded-l-xl border-none bg-white/15 text-white text-sm outline-none placeholder:text-white/40 focus:bg-white/20 transition-colors"
+              className="w-full min-w-0 h-[46px] px-4 rounded-xl sm:rounded-r-none border-none bg-white/15 text-white text-sm outline-none placeholder:text-white/40 focus:bg-white/20 transition-colors"
             />
             <button
               type="submit"
               disabled={loading}
-              className="shrink-0 h-[46px] px-5 rounded-r-xl bg-ember text-white text-sm font-bold cursor-pointer hover:bg-ember-dark transition-colors disabled:opacity-60 border-none"
+              className="w-full sm:w-auto shrink-0 h-[46px] px-5 rounded-xl sm:rounded-l-none bg-ember text-white text-sm font-bold cursor-pointer hover:bg-ember-dark transition-colors disabled:opacity-60 border-none"
             >
               {loading ? "..." : "Subscribe"}
             </button>
@@ -104,7 +104,7 @@ export function NewsletterSection() {
             </svg>
             Newsletter
           </div>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight mb-4 leading-tight">
+          <h2 id="newsletter-heading" className="text-3xl md:text-4xl font-extrabold text-white tracking-tight mb-4 leading-tight">
             Stay ahead of<br className="hidden md:block" /> the curve
           </h2>
           <p className="text-white/60 text-base md:text-lg max-w-md leading-relaxed">

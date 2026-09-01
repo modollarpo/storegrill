@@ -41,7 +41,7 @@ export function Footer() {
       {/* ═══ MAIN FOOTER ═══ */}
       <div className="storegrill-footer-main">
         <div className="container-fluid">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 pt-16 pb-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 pt-16 pb-2">
             {/* Column 1: Contact */}
             <div>
               <h3 className="text-[14px] font-bold mb-5 text-white">Contact</h3>
@@ -57,7 +57,7 @@ export function Footer() {
                   <svg className="w-5 h-5 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
                   </svg>
-                  <span>{supportEmailFor('UK')}</span>
+                  <span className="min-w-0 break-all">{supportEmailFor('UK')}</span>
                 </li>
               </ul>
             </div>
@@ -103,7 +103,7 @@ export function Footer() {
       {/* ═══ COPYRIGHT BAR ═══ */}
       <div className="border-t border-white/20">
         <div className="container-fluid py-5 flex flex-col lg:flex-row items-center justify-between gap-5">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-medium">
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2 text-[13px] font-medium">
             <Link href="/terms" className="hover:opacity-70 transition-opacity">Terms &amp; Conditions</Link>
             <Link href="/privacy" className="hover:opacity-70 transition-opacity">Privacy Policy</Link>
             <Link href="/sitemap" className="hover:opacity-70 transition-opacity">Sitemap</Link>
@@ -111,7 +111,9 @@ export function Footer() {
           <p className="text-[13px] font-medium text-center lg:text-right">
             © {new Date().getFullYear()} Storegrill Inc Ltd. All rights reserved.
           </p>
-          <PaymentLogos />
+          <div className="w-full lg:w-auto flex justify-center lg:justify-end">
+            <PaymentLogos />
+          </div>
         </div>
       </div>
     </footer>

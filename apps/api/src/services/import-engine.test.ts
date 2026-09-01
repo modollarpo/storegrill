@@ -199,7 +199,7 @@ describe('import engine (integration)', () => {
 
       const categoryDeals = await prisma.deal.findMany({ where: { slug: { startsWith: 'costway-cat-' } } });
       expect(categoryDeals.length).toBeGreaterThan(0);
-      expect(categoryDeals.every((d: any) => d.type === 'PERCENTAGE_OFF' && Number(d.value) === 2.5)).toBe(true);
+      expect(categoryDeals.every((d: any) => d.type === 'PERCENTAGE_OFF' && Number(d.value) === 0.025)).toBe(true);
 
       const secondRun = await runJobAndWait(initialCsv, 'APPLY');
       const secondSummary = JSON.parse(secondRun.errors)[0];

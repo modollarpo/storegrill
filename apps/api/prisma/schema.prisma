@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgres"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -31,6 +31,8 @@ model User {
   notifications   Notification[]
   oauthAccounts   OAuthAccount[]
   emailTokens     EmailToken[]
+  wishlistItems   WishlistItem[]
+  blogPosts       BlogPost[]
 }
 
 model OAuthAccount {
@@ -97,7 +99,8 @@ model VendorProfile {
   kycStatus              String    @default("PENDING")
   kycData                String?
   payoutMethod           String?
-  revenueSharePct        Float     @default(15.0)
+  revenueSharePct        Float     @default(12.0)
+  fixedFeeMinorUnits     Int       @default(30)
   status                 String    @default("PENDING")
   isHouseVendor          Boolean   @default(false)
   autoPublishImports     Boolean   @default(false)
@@ -210,6 +213,7 @@ model Product {
   orderItems       OrderItem[]
   dealVariants     DealVariant[]
   importJobResults ImportJobResult[]
+  wishlistItems    WishlistItem[]
 
   @@unique([vendorId, sku])
 }
@@ -531,6 +535,7 @@ model PayoutLine {
   orderItemId String
   amount      Int
   commission  Int
+  fixedFee    Int    @default(30)
 }
 
 model ImportJob {
@@ -626,4 +631,90 @@ model TranslationCache {
   createdAt      DateTime @default(now())
 
   @@index([sourceLang, targetLang])
+}
+
+model NewsletterSubscriber {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  regionKey       String?
+  verified        Boolean   @default(false)
+  unsubscribedAt  DateTime?
+  createdAt       DateTime  @default(now())
+}
+
+model Banner {
+  id         String   @id @default(cuid())
+  type       String   @default("hero") // hero, editorial, promo
+  imageUrl   String
+  title      String?
+  subtitle   String?
+  ctaLabel   String?
+  ctaHref    String?
+  bgColor    String?
+  regionKeys String   @default("[]") // JSON array of regions, empty means all
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model BlogCategory {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  slug      String     @unique
+  createdAt DateTime   @default(now())
+  posts     BlogPost[]
+}
+
+model BlogTag {
+  id        String         @id @default(cuid())
+  name      String         @unique
+  slug      String         @unique
+  createdAt DateTime       @default(now())
+  posts     BlogPostTag[]
+}
+
+model BlogPost {
+  id              String        @id @default(cuid())
+  title           String
+  slug            String        @unique
+  excerpt         String?
+  body            String        // Markdown/HTML content
+  coverImage      String?
+  status          String        @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
+  featuredAt      DateTime?
+  publishedAt     DateTime?
+  authorId        String?
+  author          User?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  categoryId      String?
+  category        BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  readTimeMinutes Int           @default(0)
+  viewCount       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  tags            BlogPostTag[]
+
+  @@index([status, publishedAt])
+  @@index([slug])
+  @@index([categoryId])
+}
+
+model BlogPostTag {
+  postId    String
+  tagId     String
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag       BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
 }

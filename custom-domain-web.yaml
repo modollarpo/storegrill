@@ -1,0 +1,20 @@
+apiVersion: containerapps.io/v1alpha1
+kind: ContainerApp
+metadata:
+  name: app-storegrill-web-prod-ng
+  group: rg-storegrill-prod-ng
+spec:
+  template:
+    spec:
+      containers:
+        - name: storegrill-web
+          image: storegrillcr.azurecr.io/api:v2
+          env:
+            - name: NG_APP
+              value: "true"
+      external: true
+      ingress:
+        customDomains:
+          - name: ng.storegrill.net
+            bindingType: SniEnabled
+            certificateName: storegrill-ng-cert-v2

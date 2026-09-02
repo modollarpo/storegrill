@@ -18,7 +18,7 @@ on:
 
 env:
   ACR: storegrillcr.azurecr.io
-  VERSION: v8
+  VERSION: v9
 
 jobs:
   deploy-web:
@@ -47,6 +47,11 @@ jobs:
             app: app-storegrill-web-prod-ae
             rg: rg-storegrill-prod-ae
             api: https://ae-api.storegrill.net
+          - region: NG
+            region_lc: ng
+            app: app-storegrill-web-prod-ng
+            rg: rg-storegrill-prod-ng
+            api: https://ng-api.storegrill.net
 
     steps:
       - uses: actions/checkout@v4

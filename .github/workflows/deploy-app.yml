@@ -57,11 +57,11 @@ jobs:
            SUFFIX="${ENVIRONMENT}-${REGION_LC}"
            FLAT="$(echo "$SUFFIX" | tr -d '-' | tr '[:upper:]' '[:lower:]')"
            echo "rg=rg-storegrill-$SUFFIX" >> "$GITHUB_OUTPUT"
-          echo "kv=kv-storegrill-$FLAT" >> "$GITHUB_OUTPUT"
-          echo "api_app=app-storegrill-api-$SUFFIX" >> "$GITHUB_OUTPUT"
-          echo "web_app=app-storegrill-web-$SUFFIX" >> "$GITHUB_OUTPUT"
-          echo "admin_app=app-storegrill-admin-$SUFFIX" >> "$GITHUB_OUTPUT"
-          echo "vendor_app=app-storegrill-vendor-$SUFFIX" >> "$GITHUB_OUTPUT"
+           echo "kv=kv-storegrill-$FLAT" >> "$GITHUB_OUTPUT"
+           echo "api_app=app-storegrill-api-$SUFFIX" >> "$GITHUB_OUTPUT"
+           echo "web_app=app-storegrill-web-$SUFFIX" >> "$GITHUB_OUTPUT"
+           echo "admin_app=app-storegrill-admin-$SUFFIX" >> "$GITHUB_OUTPUT"
+           echo "vendor_app=app-storegrill-vendor-$SUFFIX" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
         run: npm ci

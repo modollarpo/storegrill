@@ -34,6 +34,6 @@ variable "apex_region" {
 
 variable "cloudflare_zone_id" {
   type        = string
-  default     = "664c2c4f2fd9cbb8e14e3a8e6d"
+  default     = "664c2c4f2fd9cbb8e14e0042a1973535"
   description = "Cloudflare zone id for storegrill.net (authoritative DNS)"
 }

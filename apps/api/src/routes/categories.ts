@@ -36,6 +36,19 @@ function buildTree(rows: Array<Record<string, any>>): CategoryNode[] {
   return roots;
 }
 
+function pruneEmpty(nodes: CategoryNode[], activeCountById: Map<string, number>): CategoryNode[] {
+  const out: CategoryNode[] = [];
+  for (const node of nodes) {
+    const children = pruneEmpty(node.children, activeCountById);
+    const hasProducts = (activeCountById.get(node.id) ?? 0) > 0;
+    if (hasProducts || children.length > 0) {
+      node.children = children;
+      out.push(node);
+    }
+  }
+  return out;
+}
+
 function subtreeIds(node: CategoryNode, acc: string[] = []): string[] {
   acc.push(node.id);
   for (const child of node.children) subtreeIds(child, acc);
@@ -48,14 +61,18 @@ router.get('/', async (req: Request, res: Response) => {
   const regionKey = (req.query.regionKey as string) || 'UK';
 
   const rows = await prisma.category.findMany({
-    where: {
-      products: {
-        some: { status: 'ACTIVE' },
-      },
-    },
     orderBy: { name: 'asc' },
   });
-  const roots = buildTree(rows);
+  const activeCountById = new Map(
+    (
+      await prisma.product.groupBy({
+        by: ['categoryId'],
+        where: { status: 'ACTIVE' },
+        _count: true,
+      })
+    ).map(r => [r.categoryId, r._count])
+  );
+  const roots = pruneEmpty(buildTree(rows), activeCountById);
 
   if (includeProducts) {
     for (const root of roots) {

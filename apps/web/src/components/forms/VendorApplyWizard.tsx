@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
 import { REGION_META } from '@/lib/regions';
 
@@ -75,7 +74,6 @@ function parseJsonField(value: unknown): Record<string, unknown> {
 }
 
 export function VendorApplyWizard() {
-  const router = useRouter();
   const [gate, setGate] = useState<'loading' | 'anonymous' | 'unverified' | 'ready'>('loading');
   const [appStatus, setAppStatus] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState<string | null>(null);
@@ -167,12 +165,6 @@ export function VendorApplyWizard() {
     };
   }, []);
 
-  useEffect(() => {
-    if (gate === 'anonymous') {
-      router.replace('/auth/signin?next=/vendor/apply');
-    }
-  }, [gate, router]);
-
   const persist = async (payload: Record<string, unknown>) => {
     setSaving(true);
     setStepError('');
@@ -258,6 +250,21 @@ export function VendorApplyWizard() {
 
   if (gate === 'loading') {
     return <p className="text-body-md text-text-tertiary py-16 text-center animate-pulse">Loading your application…</p>;
+  }
+
+  if (gate === 'anonymous') {
+    return (
+      <div className="text-center py-8">
+        <h2 className="text-heading-xl font-bold text-text-primary">Sign in to apply</h2>
+        <p className="mt-4 text-body-md text-text-secondary max-w-md mx-auto">
+          To sell on Storegrill you need an account. Sign in or create one to start your seller application — we&apos;ll remember your progress.
+        </p>
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link href="/auth/signin?next=/vendor/apply" className="btn btn-primary">Sign in</Link>
+          <Link href="/auth/signup" className="btn btn-outline">Create account</Link>
+        </div>
+      </div>
+    );
   }
 
   if (gate === 'unverified') {

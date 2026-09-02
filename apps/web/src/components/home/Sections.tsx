@@ -116,8 +116,8 @@ export function TrustBar({ freeShippingThreshold, currency }: { freeShippingThre
 
 export interface DealTickerItem { label: string; href: string; }
 
-export function CampaignHero({ dealTicker = [] }: { dealTicker?: DealTickerItem[] }) {
-  const hero = regionPromoContent('UK');
+export function CampaignHero({ dealTicker = [], regionKey = 'UK' }: { dealTicker?: DealTickerItem[]; regionKey?: string }) {
+  const hero = regionPromoContent(regionKey);
   const [slide, setSlide] = useState(0);
 
   const slides = [

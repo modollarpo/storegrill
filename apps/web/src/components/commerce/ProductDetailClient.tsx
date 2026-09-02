@@ -38,6 +38,7 @@ export interface PdpProduct {
   thumbnail?: string;
   price: number;
   listPrice?: number;
+  listPriceMinorUnits?: number;
   basePriceMinorUnits: number;
   currencyCode: string;
   rating: number;
@@ -69,10 +70,11 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
   const activeUnitPrice = variant?.basePriceMinorUnits ?? product.price;
   const currency = variant?.currencyCode ?? product.currencyCode;
   const stock = variant ? variant.stock : product.inventoryCount;
+  const listPrice = product.listPrice ?? product.listPriceMinorUnits;
 
   const discountPct =
-    product.listPrice && product.listPrice > activeUnitPrice
-      ? Math.round(((product.listPrice - activeUnitPrice) / product.listPrice) * 100)
+    listPrice && listPrice > activeUnitPrice
+      ? Math.round(((listPrice - activeUnitPrice) / listPrice) * 100)
       : 0;
 
   const freeShipEligible = activeUnitPrice >= shipping.freeThresholdMinorUnits;
@@ -83,12 +85,12 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
   const formatMoney = (amount: number, currency: string) => new Intl.NumberFormat(locale, { style: 'currency', currency }).format(amount / 100);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-16">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-8 lg:gap-12">
       {/* -- Image Gallery -- */}
       <PdpImageGallery images={images} productName={product.name} discountPct={discountPct} />
 
       {/* -- Buy Box -- */}
-      <div className="min-w-0 lg:sticky lg:top-28 lg:self-start" id="buybox">
+      <div className="min-w-0 lg:sticky lg:top-28 lg:self-start bg-surface border border-border rounded-2xl p-6 shadow-sm" id="buybox">
         {product.vendor && (
           <p className="text-sm text-text-secondary mb-2">
             Sold by{' '}
@@ -111,7 +113,7 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
         <PdpPricing 
           activeUnitPrice={activeUnitPrice} 
           currency={currency} 
-          listPrice={product.listPrice} 
+          listPrice={listPrice} 
           discountPct={discountPct}
           locale={locale}
           formatMoney={formatMoney}
@@ -156,7 +158,7 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
       </div>
 
       {/* -- Tabs (full width) -- */}
-      <div className="lg:col-span-2 mt-6">{tabs.description}</div>
+      <div className="lg:col-span-2 mt-6 bg-surface border border-border rounded-2xl p-6 shadow-sm">{tabs.description}</div>
     </div>
   );
 }

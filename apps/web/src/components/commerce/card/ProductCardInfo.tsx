@@ -13,6 +13,7 @@ interface ProductCardInfoProps {
 
 export function ProductCardInfo({ product, href, locale }: ProductCardInfoProps) {
   const savingMinorUnits = product.listPrice && product.listPrice > product.price ? product.listPrice - product.price : 0;
+  const discountPct = savingMinorUnits > 0 && product.listPrice ? Math.round((savingMinorUnits / product.listPrice) * 100) : 0;
 
   return (
     <div className="flex flex-col flex-grow">
@@ -52,6 +53,16 @@ export function ProductCardInfo({ product, href, locale }: ProductCardInfoProps)
             </span>
           )}
         </div>
+        {savingMinorUnits > 0 && (
+          <div className="flex flex-col items-end gap-0.5 shrink-0">
+            <span className="inline-flex items-center rounded-xs bg-feedback-success-bg text-feedback-success text-[11px] font-bold px-1.5 py-0.5">
+              {discountPct}% off
+            </span>
+            <span className="text-[11px] text-feedback-success font-semibold">
+              Save <PriceDisplay amountMinorUnits={savingMinorUnits} currencyCode={product.currencyCode} size="sm" locale={locale} />
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

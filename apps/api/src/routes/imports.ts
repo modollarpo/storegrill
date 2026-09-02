@@ -83,7 +83,7 @@ router.post('/url', async (req: AuthRequest, res: Response) => {
       url: z.string().url().refine(u => u.startsWith('https://') || u.startsWith('ftp://'), {
         message: 'Feed URL must use https or ftp',
       }),
-      format: z.enum(['csv']).default('csv'),
+      format: z.enum(['csv', 'tsv']).default('csv'),
       mode: ModeSchema,
       schedule: z.boolean().default(false),
       scheduleName: z.string().min(1).max(100).optional(),

@@ -3,10 +3,10 @@ import { createMoney, roundUpTo99 } from '@Storegrill/shared';
 export const COSTWAY_FEED_URL =
   'https://www.costway.co.uk/media/feed/costway_uk_dropship_products.csv';
 
-export const PRICE_MARKUP_RATE = 0.30;
+export const PRICE_MARKUP_RATE = 0.20;
 export const CLEARANCE_MARKUP_REDUCTION = 0.10;
-export const DEAL_PROMO_RATE = 0.25;
-export const OUT_OF_STOCK_THRESHOLD = 10;
+export const DEAL_PROMO_RATE = 25;
+export const OUT_OF_STOCK_THRESHOLD = 20;
 
 export const HOUSE_BRAND = 'Costway';
 

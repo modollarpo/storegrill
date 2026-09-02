@@ -109,6 +109,7 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
 
 function ListCard({ product, images, href, locale }: { product: ProductCardData; images: string[]; href: string; locale: string }) {
   const savingMinorUnits = product.listPrice && product.listPrice > product.price ? product.listPrice - product.price : 0;
+  const discountPct = savingMinorUnits > 0 && product.listPrice ? Math.round((savingMinorUnits / product.listPrice) * 100) : 0;
 
   return (
     <article aria-label={product.name} className="group flex gap-5 p-4 rounded-lg bg-surface shadow-card hover:shadow-md transition-shadow">
@@ -172,6 +173,11 @@ function ListCard({ product, images, href, locale }: { product: ProductCardData;
           {savingMinorUnits > 0 && product.listPrice && (
             <span className="text-sm text-text-tertiary line-through">
               <PriceDisplay amountMinorUnits={product.listPrice} currencyCode={product.currencyCode} size="sm" />
+            </span>
+          )}
+          {savingMinorUnits > 0 && (
+            <span className="inline-flex items-center rounded-xs bg-feedback-success-bg text-feedback-success text-[11px] font-bold px-1.5 py-0.5">
+              {discountPct}% off
             </span>
           )}
         </div>

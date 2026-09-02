@@ -32,12 +32,6 @@ export function PwaSplashScreen() {
     >
       <div className="relative z-10 flex flex-col items-center">
         <Spinner size="lg" />
-
-        {/* Brand Logo / Icon */}
-        <div className="mt-6">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-white.svg" alt="Storegrill" className="h-[64px] w-auto" suppressHydrationWarning />
-        </div>
       </div>
     </div>
   );

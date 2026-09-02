@@ -3,8 +3,7 @@ import { getRequestContext } from '@/lib/server-context';
 import { localizeProducts } from '@/lib/server-translate';
 import { API_BASE } from '@/lib/api';
 import { buildMetadata, organizationJsonLd, webSiteJsonLd } from '@/lib/seo';
-import { regionPromoContent, regionConfig, heroSlidesFor, categoryBannerFor, vendorSpotlightFor } from '@/lib/region-content';
-import { promoPalette } from '@/design-system/tokens';
+import { regionPromoContent, regionConfig } from '@/lib/region-content';
 
 import { ProductCard } from '@/components/commerce/ProductCard';
 import {
@@ -13,18 +12,23 @@ import {
   VendorSpotlight,
   CampaignHero,
   TabbedProductCarousel,
-  CategoryBannerWithProducts,
   DealsOfTheDay,
-  Testimonials,
   RecommendedForYou,
-  AppDownloadBanner,
   RegionalTrust,
   BrandLogoBar,
   PromoBanner3Up,
+  type PromoBannerItem,
+  type QuickNavItem,
   type DealCardData,
 } from '@/components/home/Sections';
 
 export const revalidate = 60;
+
+const PROMO_GRADIENTS = [
+  'from-ember-deep to-ember',
+  'from-midnight to-charcoal',
+  'from-tealink to-tealink',
+];
 
 interface PageProps {
   params: Record<string, never>;
@@ -113,27 +117,41 @@ interface FeaturedProduct {
   vendor?: { storeName: string; slug: string } | null;
   description?: string;
   shortDescription?: string;
-  category?: { name?: string } | null;
+  category?: { name?: string; slug?: string } | null;
 }
 
-async function fetchHome(regionKey: string) {
+interface RawVendor {
+  id: string;
+  storeName: string;
+  slug: string;
+  logo?: string | null;
+  description?: string | null;
+  rating: number;
+  reviewCount: number;
+  status: string;
+}
+
+interface HomeData {
+  products: FeaturedProduct[];
+  deals: Array<Record<string, unknown>>;
+  vendors: RawVendor[];
+  ok: boolean;
+}
+
+async function fetchHome(regionKey: string): Promise<HomeData> {
   try {
     const [productsRes, dealsRes, vendorsRes] = await Promise.all([
       fetch(`${API_BASE}/api/v1/products/featured?regionKey=${regionKey}`, { next: { revalidate: 60 } }),
       fetch(`${API_BASE}/api/v1/deals?regionKey=${regionKey}&enabled=true`, { next: { revalidate: 60 } }),
       fetch(`${API_BASE}/api/v1/vendors?limit=3&status=ACTIVE`, { next: { revalidate: 300 } }),
     ]);
-    const productsData = productsRes.ok ? await productsRes.json() as { products?: FeaturedProduct[] } : { products: [] as FeaturedProduct[] };
-    const dealsData = dealsRes.ok ? await dealsRes.json().catch(() => ({ deals: [] as Array<Record<string, unknown>> })) as { deals?: Array<Record<string, unknown>> } : { deals: [] as Array<Record<string, unknown>> };
-    const vendorsData = vendorsRes.ok ? await vendorsRes.json().catch(() => ({ vendors: [] as Array<Record<string, unknown>> })) as { vendors?: Array<Record<string, unknown>> } : { vendors: [] as Array<Record<string, unknown>> };
-    const products: FeaturedProduct[] = (productsData.products ?? []).map(p => ({
-      ...p,
-      price: Number(p.basePriceMinorUnits ?? 0),
-    }));
+    const productsData = productsRes.ok ? (await productsRes.json()) as { products?: FeaturedProduct[] } : { products: [] as FeaturedProduct[] };
+    const dealsData = dealsRes.ok ? (await dealsRes.json().catch(() => ({ deals: [] as Array<Record<string, unknown>> }))) as { deals?: Array<Record<string, unknown>> } : { deals: [] as Array<Record<string, unknown>> };
+    const vendorsData = vendorsRes.ok ? (await vendorsRes.json().catch(() => ({ vendors: [] as RawVendor[] }))) as { vendors?: RawVendor[] } : { vendors: [] as RawVendor[] };
     return {
-      products,
-      deals: (dealsData.deals || []) as Array<Record<string, unknown>>,
-      vendors: (vendorsData.vendors || []) as Array<Record<string, unknown>>,
+      products: productsData.products ?? [],
+      deals: dealsData.deals ?? [],
+      vendors: vendorsData.vendors ?? [],
       ok: true,
     };
   } catch {
@@ -154,13 +172,46 @@ export default async function HomePage() {
     href: d.slug ? `/products/${d.slug}` : d.productId ? `/products/${d.productId}` : '/deals',
   }));
 
-  const testimonials = [
-    { name: 'Amara O.', role: 'Verified buyer · Lagos', avatar: '/avatars/avatar-1.jpg', quote: 'Fast delivery, exactly as described. Storegrill is now my go-to for electronics. Buyer protection gave me real peace of mind.' },
-    { name: 'James K.', role: 'Verified buyer · London', avatar: '/avatars/avatar-2.jpg', quote: 'Found a deal on a Sony camera that was 25% cheaper than everywhere else. Arrived next day. Absolutely brilliant.' },
-    { name: 'Priya S.', role: 'Verified buyer · Mumbai', avatar: '/avatars/avatar-3.jpg', quote: 'The vendor rating system is great — I could see the seller\'s history before buying. Felt completely safe. Will definitely shop again.' },
-    { name: 'Carlos M.', role: 'Verified buyer · Madrid', avatar: '/avatars/avatar-4.jpg', quote: '30-day return policy is no joke — I returned an item hassle-free. The team was responsive and the refund was instant.' },
-    { name: 'Aisha B.', role: 'Verified buyer · Nairobi', avatar: '/avatars/avatar-5.jpg', quote: 'Great prices on fashion and beauty. Local currency pricing made it easy. I refer all my friends here now.' },
-  ];
+  const categoryRows = new Map<string, { name: string; slug: string; minPrice: number }>();
+  for (const p of products) {
+    const cat = p.category;
+    if (!cat?.slug || !cat.name) continue;
+    const price = p.price ?? 0;
+    const existing = categoryRows.get(cat.slug);
+    if (!existing) categoryRows.set(cat.slug, { name: cat.name, slug: cat.slug, minPrice: price });
+    else if (price > 0 && (existing.minPrice === 0 || price < existing.minPrice)) existing.minPrice = price;
+  }
+  const availableCategories: QuickNavItem[] = Array.from(categoryRows.values())
+    .filter(c => c.minPrice > 0)
+    .map(c => ({ name: c.name, slug: c.slug }));
+
+  const promoBanners: PromoBannerItem[] = categoryRows.size > 0
+    ? Array.from(categoryRows.values())
+        .filter(c => c.minPrice > 0)
+        .sort((a, b) => b.minPrice - a.minPrice)
+        .slice(0, 3)
+        .map((c, i) => ({
+          eyebrow: `Available in ${promo.currency}`,
+          title: c.name,
+          cta: `Shop ${c.name}`,
+          href: `/products?category=${encodeURIComponent(c.slug)}`,
+          bg: PROMO_GRADIENTS[i % PROMO_GRADIENTS.length],
+          fromPriceMinorUnits: c.minPrice,
+          currency: promo.currency,
+        }))
+    : [];
+
+  const spotlightVendors = vendors
+    .filter(v => v.status === 'ACTIVE')
+    .slice(0, 3)
+    .map(v => ({
+      storeName: String(v.storeName),
+      slug: String(v.slug),
+      rating: Number(v.rating || 0),
+      reviewCount: Number(v.reviewCount || 0),
+      logo: v.logo ? String(v.logo) : undefined,
+      description: v.description ? String(v.description) : undefined,
+    }));
 
   return (
     <div className="bg-surface-raised">
@@ -169,22 +220,16 @@ export default async function HomePage() {
 
       <h1 className="sr-only">Storegrill — Shop millions of products from verified vendors</h1>
 
-      {/* 1. Trust/USP strip */}
       <TrustBar freeShippingThreshold={promo.freeShippingThresholdMinorUnits} currency={promo.currency} />
 
-      {/* 2. Hero — full-bleed split with deal ticker */}
       <CampaignHero dealTicker={dealTicker} regionKey={regionKey} />
 
-      {/* 3. Brand logo marquee */}
       <BrandLogoBar />
 
-      {/* 4. Category navigation */}
-      <CategoryQuickNav />
+      {availableCategories.length >= 4 && <CategoryQuickNav categories={availableCategories} />}
 
-      {/* 5. Live deals */}
       <DealsOfTheDay deals={dealCards} />
 
-      {/* 6. Merchandising carousel */}
       <section className="py-16 md:py-24" aria-labelledby="products-heading">
         <div className="container-fluid">
           <TabbedProductCarousel
@@ -232,10 +277,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 7. Editorial 3-up promo banners */}
-      <PromoBanner3Up />
+      <PromoBanner3Up banners={promoBanners} />
 
-      {/* 8. Recommended for you */}
       <RecommendedForYou
         products={localized.slice(0, 8).map(p => ({
           id: p.id,
@@ -250,51 +293,13 @@ export default async function HomePage() {
         }))}
       />
 
-      {/* 9. Category deep-dive */}
-      <CategoryBannerWithProducts
-        {...categoryBannerFor(regionKey)}
-        fromPrice={new Intl.NumberFormat('en-US', { style: 'currency', currency: promo.currency, minimumFractionDigits: 0 }).format(
-          Math.min(...localized.map(p => p.price ?? 99900)) / 100
-        )}
-        products={localized.slice(0, 6).map(p => ({
-          id: p.id,
-          name: p.name,
-          slug: p.slug,
-          thumbnail: p.thumbnail,
-          price: p.price,
-          listPrice: p.listPriceMinorUnits,
-          currencyCode: p.currencyCode,
-          rating: p.rating,
-          reviewCount: p.reviewCount,
-          vendor: p.vendor ?? null,
-        }))}
-      />
+      <VendorSpotlight vendors={spotlightVendors} />
 
-      {/* 10. App download CTA */}
-      <AppDownloadBanner />
-
-      {/* 11. Vendor spotlight */}
-      <VendorSpotlight
-        vendors={vendorSpotlightFor(regionKey).map(v => ({
-          storeName: String(v.storeName),
-          slug: String(v.slug),
-          rating: Number(v.rating || 0),
-          reviewCount: Number(v.reviewCount || 0),
-          logo: v.logo ? String(v.logo) : undefined,
-          description: v.description ? String(v.description) : undefined,
-        }))}
-      />
-
-      {/* 12. Regional trust */}
       <RegionalTrust
         regionKey={regionKey}
         paymentMethods={regionCfg.paymentMethods}
         carriers={regionCfg.shippingZones[0]?.carriers ?? []}
       />
-
-      {/* 13. Social proof */}
-      <Testimonials items={testimonials} />
-
     </div>
   );
 }

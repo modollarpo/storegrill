@@ -322,18 +322,47 @@ const REGIONAL_CONTENT: Record<string, { hero: HeroSlide[]; promo: RegionPromoCo
 };
 
 export function heroSlidesFor(regionKey: string): HeroSlide[] {
-  return REGIONAL_CONTENT[regionKey]?.hero ?? REGIONAL_CONTENT.US.hero;
+  const cfg = REGIONAL_CONTENT[regionKey];
+  if (cfg) return cfg.hero;
+  return [{
+    headline: 'Shop smarter with Storegrill',
+    subtitle: regionPromoContent(regionKey).heroSubtitle,
+    ctaLabel: 'Shop now',
+    ctaHref: '/products',
+    bgClass: PURPLE_GRADIENTS[0],
+  }];
+}
+
+function formatMinorUnits(currency: string, minorUnits: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(minorUnits / 100);
 }
 
 export function regionPromoContent(regionKey: string): RegionPromoContent {
-  return REGIONAL_CONTENT[regionKey]?.promo ?? REGIONAL_CONTENT.US.promo;
+  const defined = REGIONAL_CONTENT[regionKey]?.promo;
+  if (defined) return defined;
+  const cfg = regionConfig(regionKey);
+  return {
+    currency: cfg.defaultCurrency,
+    freeShippingThresholdMinorUnits: cfg.freeShippingThresholdMinorUnits,
+    couponCode: '',
+    couponDiscountPercent: 0,
+    cashbackPercent: 0,
+    heroHeadline: 'Shop smarter with Storegrill',
+    heroSubtitle: `Free shipping on eligible orders over ${formatMinorUnits(cfg.defaultCurrency, cfg.freeShippingThresholdMinorUnits)}. Secure checkout and easy returns.`,
+    heroCta: 'Shop now',
+  };
 }
 
-export function categoryBannerFor(regionKey: string): CategoryBannerContent {
-  return REGIONAL_CONTENT[regionKey]?.categoryBanner ?? REGIONAL_CONTENT.US.categoryBanner;
+export function categoryBannerFor(regionKey: string): CategoryBannerContent | null {
+  return REGIONAL_CONTENT[regionKey]?.categoryBanner ?? null;
 }
 
 export function vendorSpotlightFor(regionKey: string): VendorSpotlightContent[] {
-  return REGIONAL_CONTENT[regionKey]?.vendorSpotlight ?? REGIONAL_CONTENT.US.vendorSpotlight;
+  return REGIONAL_CONTENT[regionKey]?.vendorSpotlight ?? [];
 }
 

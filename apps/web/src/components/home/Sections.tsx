@@ -116,13 +116,13 @@ export function TrustBar({ freeShippingThreshold, currency }: { freeShippingThre
 
 export interface DealTickerItem { label: string; href: string; }
 
-export function CampaignHero({ dealTicker = [], regionKey = 'UK' }: { dealTicker?: DealTickerItem[]; regionKey?: string }) {
+export function CampaignHero({ dealTicker = [], regionKey }: { dealTicker?: DealTickerItem[]; regionKey: string }) {
   const hero = regionPromoContent(regionKey);
   const [slide, setSlide] = useState(0);
 
   const slides = [
     {
-      eyebrow: 'Summer Sale — Up to 60% off',
+      eyebrow: 'Live deals today',
       headline: 'Shop Smarter,\nSave Bigger.',
       subtitle: hero.heroSubtitle,
       cta: { label: 'Shop the sale', href: '/deals' },
@@ -130,21 +130,30 @@ export function CampaignHero({ dealTicker = [], regionKey = 'UK' }: { dealTicker
       accent: 'bg-amber-400',
     },
     {
-      eyebrow: 'New Arrivals — Just landed',
+      eyebrow: 'New arrivals — just landed',
       headline: 'Fresh Picks,\nFresh Prices.',
-      subtitle: `Brand new products from verified sellers — delivered fast across ${hero.currency} regions.`,
+      subtitle: `New products from verified sellers, delivered across ${hero.currency} markets.`,
       cta: { label: 'Discover new', href: '/products?sort=newest' },
       ghost: { label: 'Meet our sellers', href: '/vendors' },
       accent: 'bg-emerald-400',
     },
-    {
-      eyebrow: 'Earn 5% cashback — Every order',
-      headline: 'Rewards on\nEverything.',
-      subtitle: `Use code ${hero.couponCode} for ${hero.couponDiscountPercent}% off today — cashback stacks automatically.`,
-      cta: { label: 'Start earning', href: '/deals' },
-      ghost: { label: 'How it works', href: '/help/cashback' },
-      accent: 'bg-yellow-300',
-    },
+    ...(hero.couponCode
+      ? [{
+          eyebrow: 'Limited-time code',
+          headline: 'Extra Savings\nWaiting.',
+          subtitle: `Use code ${hero.couponCode} for ${hero.couponDiscountPercent}% off today.`,
+          cta: { label: 'Shop now', href: '/deals' },
+          ghost: { label: 'Browse all products', href: '/products' },
+          accent: 'bg-yellow-300',
+        }]
+      : [{
+          eyebrow: 'Secure checkout',
+          headline: 'Shop with\nConfidence.',
+          subtitle: 'Stripe and PayPal protected checkout with easy returns on every order.',
+          cta: { label: 'Start shopping', href: '/products' },
+          ghost: { label: 'Delivery options', href: '/shipping' },
+          accent: 'bg-yellow-300',
+        }]),
   ];
 
   const current = slides[slide];
@@ -161,7 +170,7 @@ export function CampaignHero({ dealTicker = [], regionKey = 'UK' }: { dealTicker
       <div className="absolute top-[20%] right-[-10%] w-[40%] h-[100%] bg-deal rounded-full blur-[140px] opacity-30 pointer-events-none mix-blend-screen" />
       <div className="absolute bottom-[-30%] left-[20%] w-[60%] h-[80%] bg-ember-light rounded-full blur-[100px] opacity-40 pointer-events-none mix-blend-screen" />
       <div className="relative container-fluid py-12 md:py-20">
-        <div className="grid md:grid-cols-[1fr_340px] lg:grid-cols-[1fr_420px] gap-10 items-center">
+        <div className="grid md:grid-cols-1 gap-10">
           <div>
             <span className="inline-flex items-center gap-2 mb-4">
               <span className={`w-2.5 h-2.5 rounded-full ${current.accent} animate-pulse`} />
@@ -182,19 +191,6 @@ export function CampaignHero({ dealTicker = [], regionKey = 'UK' }: { dealTicker
                   className={cn('rounded-full transition-all', i === slide ? 'w-6 h-2.5 bg-white' : 'w-2.5 h-2.5 bg-white/30 hover:bg-white/60')} />
               ))}
             </div>
-          </div>
-          <div className="hidden md:grid grid-cols-2 gap-4">
-            {[
-              { value: '10M+', label: 'Products listed' },
-              { value: '5,000+', label: 'Verified sellers' },
-              { value: '44', label: 'Regions served' },
-              { value: '4.9\u2605', label: 'App store rating' },
-            ].map(stat => (
-              <div key={stat.label} className="rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 p-5 text-center">
-                <p className="text-3xl font-extrabold text-white mb-1">{stat.value}</p>
-                <p className="text-xs text-white/60 font-semibold">{stat.label}</p>
-              </div>
-            ))}
           </div>
         </div>
       </div>
@@ -250,25 +246,20 @@ export function BrandLogoBar() {
 
 // ─── §4 CategoryQuickNav ─────────────────────────────────────────────────────
 
-const CATEGORY_IMAGES = [
-  { name: 'Mobiles', slug: 'mobiles', image: '/banners/category/top-cat-hp-mobile.png' },
-  { name: 'Laptops', slug: 'computers', image: '/banners/category/top-cat-hp-laptops.png' },
-  { name: 'Televisions', slug: 'tvs', image: '/banners/category/top-cat-hp-televisions.png' },
-  { name: 'Gaming', slug: 'gaming', image: '/banners/category/top-cat-hp-console-gaming.png' },
-  { name: 'Games', slug: 'games', image: '/banners/category/top-cat-hp-console-games.png' },
-  { name: 'Cameras', slug: 'camera', image: '/banners/category/top-cat-hp-camera.png' },
-  { name: 'Washing', slug: 'washing-machines', image: '/banners/category/top-cat-hp-washing-machine.png' },
-  { name: 'Fridges', slug: 'refrigeration', image: '/banners/category/top-cat-hp-refrigeration.png' },
-  { name: 'Beauty', slug: 'beauty', image: '/banners/category/top-cat-hp-health-beauty.png' },
-  { name: 'Kitchen', slug: 'kitchen', image: '/banners/category/top-cat-hp-drinks-treat-makers.png' },
-  { name: 'E-Mobility', slug: 'mobility', image: '/banners/category/top-cat-hp-e-mobility.png' },
-  { name: 'Sports', slug: 'sports', image: '/banners/category/top-cat-hp-sports-fitness.png' },
-] as const;
+export interface QuickNavItem { name: string; slug: string; }
 
-export interface QuickNavItem { name: string; slug: string; icon?: string; }
+const CATEGORY_ACCENTS = [
+  'from-ember-deep to-ember',
+  'from-tealink to-tealink',
+  'from-midnight to-charcoal',
+  'from-deal to-deal',
+  'from-charcoal-light to-charcoal-mid',
+  'from-ember to-ember-dark',
+];
 
-export function CategoryQuickNav() {
+export function CategoryQuickNav({ categories = [] }: { categories?: QuickNavItem[] }) {
   const scroller = useRef<HTMLUListElement>(null);
+  if (categories.length < 4) return null;
   return (
     <nav aria-label="Shop by category" className="bg-surface border-b border-border">
       <div className="container-fluid py-8 md:py-10">
@@ -280,13 +271,13 @@ export function CategoryQuickNav() {
         </div>
         <div className="relative group/slider">
           <ul ref={scroller} className="flex gap-4 md:gap-6 pb-2 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-pl-0" role="list">
-            {CATEGORY_IMAGES.map(cat => (
+            {categories.slice(0, 12).map((cat, i) => (
               <li key={cat.slug} className="snap-start shrink-0">
-                <Link href={`/products?category=${cat.slug}`} aria-label={cat.name} className="group block w-[96px] md:w-[112px] text-center">
-                  <span className="relative block w-[96px] h-[96px] md:w-[112px] md:h-[112px] rounded-full overflow-hidden border-2 border-border bg-surface-sunken mx-auto mb-3 transition-all group-hover:border-ember group-hover:ring-2 group-hover:ring-ember/20 group-hover:shadow-lg">
-                    <Image src={cat.image} alt="" fill sizes="112px" loading="lazy" className="object-cover transition-transform duration-500 group-hover:scale-110" />
+                <Link href={`/products?category=${encodeURIComponent(cat.slug)}`} aria-label={cat.name} className="group block w-[96px] md:w-[112px] text-center">
+                  <span className={`relative block w-[96px] h-[96px] md:w-[112px] md:h-[112px] rounded-full bg-gradient-to-br ${CATEGORY_ACCENTS[i % CATEGORY_ACCENTS.length]} text-white grid place-items-center mx-auto mb-3 shadow-md group-hover:ring-2 group-hover:ring-ember/20 group-hover:shadow-lg transition-all`}>
+                    <span className="text-3xl md:text-4xl font-extrabold">{cat.name.slice(0, 1).toUpperCase()}</span>
                   </span>
-                  <span className="block text-xs font-bold text-text-primary group-hover:text-ember transition-colors leading-tight">{cat.name}</span>
+                  <span className="block text-xs font-bold text-text-primary group-hover:text-ember transition-colors leading-tight truncate">{cat.name}</span>
                 </Link>
               </li>
             ))}
@@ -479,15 +470,22 @@ export function TabbedProductCarousel({ tabs }: { tabs: TabbedProductTab[] }) {
 
 // ─── §7 PromoBanner3Up ───────────────────────────────────────────────────────
 
-interface PromoBannerItem { eyebrow: string; title: string; cta: string; href: string; bg: string; image?: string; }
+export interface PromoBannerItem {
+  eyebrow: string;
+  title: string;
+  cta: string;
+  href: string;
+  bg: string;
+  fromPriceMinorUnits?: number;
+  currency?: string;
+}
 
-const DEFAULT_PROMO_BANNERS: PromoBannerItem[] = [
-  { eyebrow: 'From £399', title: 'Laptops & Computers', cta: 'Shop laptops', href: '/products?category=computers', bg: 'from-slate-900 to-slate-800', image: '/banners/category/top-cat-hp-laptops.png' },
-  { eyebrow: 'New collection', title: 'Smart Home Essentials', cta: 'Explore smart home', href: '/products?category=smart-home', bg: 'from-ember-deep to-ember', image: '/banners/category/top-cat-hp-televisions.png' },
-  { eyebrow: 'Trending now', title: 'Fashion & Style Picks', cta: 'Browse fashion', href: '/products?category=fashion', bg: 'from-red-900 to-red-800', image: '/banners/category/top-cat-hp-health-beauty.png' },
-];
-
-export function PromoBanner3Up({ banners = DEFAULT_PROMO_BANNERS }: { banners?: PromoBannerItem[] }) {
+export function PromoBanner3Up({ banners = [] }: { banners?: PromoBannerItem[] }) {
+  if (banners.length === 0) return null;
+  const priceOf = (b: PromoBannerItem) =>
+    b.fromPriceMinorUnits != null && b.currency
+      ? new Intl.NumberFormat('en-US', { style: 'currency', currency: b.currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(b.fromPriceMinorUnits / 100)
+      : undefined;
   return (
     <section aria-label="Featured categories" className="bg-surface border-b border-border">
       <div className="container-fluid py-10 md:py-12">
@@ -495,11 +493,11 @@ export function PromoBanner3Up({ banners = DEFAULT_PROMO_BANNERS }: { banners?: 
           {banners.map(banner => (
             <Link key={banner.href} href={banner.href} className="group relative overflow-hidden rounded-2xl min-h-[200px] md:min-h-[240px] flex flex-col justify-end p-6">
               <div className={`absolute inset-0 bg-gradient-to-br ${banner.bg}`} />
-              {banner.image && <div className="absolute inset-0"><Image src={banner.image} alt="" fill sizes="33vw" className="object-cover opacity-30 group-hover:scale-105 transition-transform duration-700" /></div>}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
               <div className="relative z-10">
                 <p className="text-xs font-bold text-white/60 uppercase tracking-widest mb-1">{banner.eyebrow}</p>
                 <h3 className="text-xl md:text-2xl font-extrabold text-white mb-4 leading-tight">{banner.title}</h3>
+                {priceOf(banner) && <p className="text-sm font-bold text-white/70 mb-4">From {priceOf(banner)}</p>}
                 <span className="inline-flex items-center gap-1.5 h-9 px-5 rounded-full bg-white text-ember text-xs font-extrabold shadow-lg group-hover:bg-white/90 transition-all">
                   {banner.cta} <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                 </span>
@@ -555,7 +553,7 @@ export function RecommendedForYou({ products }: { products: ProductCardData[] })
       <div className="container-fluid">
         <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
           <div>
-            <p className="text-xs font-bold text-ember uppercase tracking-widest mb-1">Picked for you</p>
+            <p className="text-xs font-bold text-ember uppercase tracking-widest mb-1">Trending now</p>
             <h2 id="reco-heading" className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight">Recommended for you</h2>
           </div>
           <Link href="/products" className="text-sm font-bold text-ember hover:underline underline-offset-4 hidden sm:inline-flex items-center gap-1">
@@ -580,10 +578,6 @@ export function AppDownloadBanner() {
           <div className="absolute -right-24 -top-24 w-96 h-96 rounded-full blur-3xl bg-white/10" />
           <div className="absolute -left-12 -bottom-12 w-64 h-64 rounded-full blur-2xl bg-white/5" />
           <div className="relative z-10 lg:py-16 max-w-lg text-center lg:text-left">
-            <div className="flex items-center gap-2 justify-center lg:justify-start mb-5">
-              <span className="flex">{[0,1,2,3,4].map(i => <svg key={i} className="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>)}</span>
-              <span className="text-sm font-semibold text-white/60">4.9 · 50,000+ reviews</span>
-            </div>
             <h2 id="app-heading" className="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight leading-tight text-white">Get the Storegrill App</h2>
             <p className="text-white/60 text-base md:text-lg mb-8 leading-relaxed">Shop faster, track orders in real-time, and unlock exclusive mobile-only deals. Available free on iOS and Android.</p>
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
@@ -649,10 +643,6 @@ export function VendorSpotlight({ vendors }: { vendors: VendorSpotlightItem[] })
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {vendors.slice(0, 3).map(v => (
             <Link key={v.slug} href={`/vendors/${v.slug}`} className="group relative rounded-2xl bg-surface border border-border p-6 flex items-start gap-5 hover:border-ember hover:shadow-xl transition-all">
-              <span className="absolute top-4 right-4 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full text-[success] bg-[success]/10">
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
-                Trusted Seller
-              </span>
               <span className="w-20 h-20 rounded-2xl bg-ember/10 text-ember-deep grid place-items-center font-extrabold text-2xl shrink-0 overflow-hidden border border-ember/20">
                 {v.logo ? <img src={v.logo} alt="" className="w-full h-full object-cover" /> : v.storeName.slice(0, 2).toUpperCase()}
               </span>

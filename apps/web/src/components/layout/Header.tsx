@@ -387,9 +387,9 @@ function Header({ categories }: HeaderProps) {
                   className="flex items-center justify-between px-4 py-2.5 text-sm font-semibold hover:bg-surface-sunken transition-colors"
                 >
                   {cat.name}
-                  {cat.children.length > 0 && <span className="text-text-tertiary text-xs">â–¸</span>}
+                  {cat.children?.length > 0 && <span className="text-text-tertiary text-xs">â–¸</span>}
                 </Link>
-                {cat.children.length > 0 && (
+                {(cat.children?.length ?? 0) > 0 && (
                   <div className="pl-5 border-l border-border ml-4">
                     {cat.children.map(child => (
                       <Link
@@ -399,7 +399,7 @@ function Header({ categories }: HeaderProps) {
                         className="flex items-center justify-between px-4 py-2 text-sm text-text-secondary hover:bg-surface-sunken transition-colors"
                       >
                         {child.name}
-                        {child.children.length > 0 && <span className="text-text-tertiary text-xs">â–¸</span>}
+                        {child.children?.length > 0 && <span className="text-text-tertiary text-xs">â–¸</span>}
                       </Link>
                     ))}
                   </div>

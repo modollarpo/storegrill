@@ -229,30 +229,71 @@ function CategoryTree({
 }) {
   return (
     <ul className={depth === 0 ? 'space-y-1.5' : 'ml-3 pl-2 border-l border-border space-y-0.5 mt-0.5'}>
-      {categories.map(cat => {
-        const active = activeSlug === cat.slug;
-        return (
-          <li key={cat.slug}>
-            <button
-              type="button"
-              onClick={() => onPick(cat.slug)}
-              aria-pressed={active}
-              className={cn(
-                'w-full text-left py-1 flex items-center justify-between group transition-colors',
-                depth > 0 ? 'text-[13px]' : 'text-sm',
-                active ? 'text-action-primary font-bold' : 'text-text-primary hover:text-action-primary'
-              )}
-            >
-              <span className={cn(active && 'underline underline-offset-4', 'group-hover:underline underline-offset-4 truncate')}>{cat.name}</span>
-              {cat.count !== undefined && <span className="text-xs text-text-tertiary ml-2">({cat.count})</span>}
-            </button>
-            {cat.children && cat.children.length > 0 && (
-              <CategoryTree categories={cat.children} activeSlug={activeSlug} onPick={onPick} depth={depth + 1} />
-            )}
-          </li>
-        );
-      })}
+      {categories.map(cat => (
+        <CategoryNode key={cat.slug} cat={cat} activeSlug={activeSlug} onPick={onPick} depth={depth} />
+      ))}
     </ul>
+  );
+}
+
+function CategoryNode({
+  cat,
+  activeSlug,
+  onPick,
+  depth,
+}: {
+  cat: FacetCategory;
+  activeSlug: string;
+  onPick: (slug: string) => void;
+  depth: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const active = activeSlug === cat.slug;
+  const hasChildren = (cat.children?.length ?? 0) > 0;
+
+  return (
+    <li>
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={() => onPick(cat.slug)}
+          aria-pressed={active}
+          className={cn(
+            'flex-1 text-left py-1 group transition-colors',
+            depth > 0 ? 'text-[13px]' : 'text-sm',
+            active ? 'text-action-primary font-bold' : 'text-text-primary hover:text-action-primary'
+          )}
+        >
+          <span className={cn(active && 'underline underline-offset-4', 'group-hover:underline underline-offset-4 truncate')}>
+            {cat.name}
+          </span>
+          {cat.count !== undefined && <span className="text-xs text-text-tertiary ml-2">({cat.count})</span>}
+        </button>
+        {hasChildren && (
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-label={`${open ? 'Collapse' : 'Expand'} ${cat.name}`}
+            onClick={() => setOpen(o => !o)}
+            className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
+          >
+            <svg
+              className={cn('w-3.5 h-3.5 transition-transform duration-200', open && 'rotate-180')}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+        )}
+      </div>
+      {hasChildren && open && (
+        <CategoryTree categories={cat.children!} activeSlug={activeSlug} onPick={onPick} depth={depth + 1} />
+      )}
+    </li>
   );
 }
 

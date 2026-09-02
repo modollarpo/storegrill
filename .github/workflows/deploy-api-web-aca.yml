@@ -1,0 +1,132 @@
+name: Deploy API + Web (ACA)
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_version:
+        description: 'API image tag'
+        required: true
+        default: v3
+      web_version:
+        description: 'Web image tag'
+        required: true
+        default: v10
+
+env:
+  ACR: storegrillcr.azurecr.io
+
+jobs:
+  build:
+    name: Build images
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        region: [UK, US, EU, AE, NG]
+        include:
+          - region: UK
+            region_lc: uk
+            api_url: https://uk-api.storegrill.net
+          - region: US
+            region_lc: us
+            api_url: https://us-api.storegrill.net
+          - region: EU
+            region_lc: eu
+            api_url: https://eu-api.storegrill.net
+          - region: AE
+            region_lc: ae
+            api_url: https://ae-api.storegrill.net
+          - region: NG
+            region_lc: ng
+            api_url: https://ng-api.storegrill.net
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker login to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build & push API image
+        run: |
+          docker build \
+            -t ${{ env.ACR }}/api:${{ github.event.inputs.api_version }} \
+            -f apps/api/Dockerfile .
+          docker push ${{ env.ACR }}/api:${{ github.event.inputs.api_version }}
+
+      - name: Build & push Web image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=${{ matrix.api_url }} \
+            -t ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ github.event.inputs.web_version }} \
+            -f apps/web/Dockerfile .
+          docker push ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ github.event.inputs.web_version }}
+
+  deploy:
+    name: Deploy ${{ matrix.region }}
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - region: UK
+            region_lc: uk
+            rg: rg-storegrill-prod-uk
+            api_app: app-storegrill-api-prod-uk
+            web_app: app-storegrill-web-prod-uk
+            api_url: https://uk-api.storegrill.net
+          - region: US
+            region_lc: us
+            rg: rg-storegrill-prod-us
+            api_app: app-storegrill-api-prod-us
+            web_app: app-storegrill-web-prod-us
+            api_url: https://us-api.storegrill.net
+          - region: EU
+            region_lc: eu
+            rg: rg-storegrill-prod-eu
+            api_app: app-storegrill-api-prod-eu
+            web_app: app-storegrill-web-prod-eu
+            api_url: https://eu-api.storegrill.net
+          - region: AE
+            region_lc: ae
+            rg: rg-storegrill-prod-ae
+            api_app: app-storegrill-api-prod-ae
+            web_app: app-storegrill-web-prod-ae
+            api_url: https://ae-api.storegrill.net
+          - region: NG
+            region_lc: ng
+            rg: rg-storegrill-prod-ng
+            api_app: app-storegrill-api-prod-ng
+            web_app: app-storegrill-web-prod-ng
+            api_url: https://ng-api.storegrill.net
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy API to Container App
+        run: |
+          az account set -s "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          az containerapp update \
+            --resource-group ${{ matrix.rg }} \
+            --name ${{ matrix.api_app }} \
+            --image ${{ env.ACR }}/api:${{ github.event.inputs.api_version }} \
+            --output none
+
+      - name: Deploy Web to Container App
+        run: |
+          az account set -s "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          az containerapp update \
+            --resource-group ${{ matrix.rg }} \
+            --name ${{ matrix.web_app }} \
+            --image ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ github.event.inputs.web_version }} \
+            --set-env-vars NEXT_PUBLIC_API_URL=${{ matrix.api_url }} \
+            --revision-suffix "${{ github.event.inputs.web_version }}" \
+            --output none

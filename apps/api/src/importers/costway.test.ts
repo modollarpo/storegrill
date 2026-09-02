@@ -43,24 +43,24 @@ describe('parsePriceToMinor', () => {
 });
 
 describe('applyIngestPricing', () => {
-  it('applies 30% markup then rounds up to .99', () => {
-    expect(applyIngestPricing(10495)).toBe(13699);
-    expect(applyIngestPricing(2495)).toBe(3299);
-    expect(applyIngestPricing(4495)).toBe(5899);
+  it('applies 20% markup then rounds up to .99', () => {
+    expect(applyIngestPricing(10495)).toBe(12599);
+    expect(applyIngestPricing(2495)).toBe(2999);
+    expect(applyIngestPricing(4495)).toBe(5399);
   });
 
   it('no longer bakes a flash-sale discount at ingest (handled by the deal engine)', () => {
-    expect(applyIngestPricing(10495, {})).toBe(13699);
-    expect(applyIngestPricing(10000, {})).toBe(13099);
+    expect(applyIngestPricing(10495, {})).toBe(12599);
+    expect(applyIngestPricing(10000, {})).toBe(12099);
   });
 
-  it('prices clearance items at a reduced 10-point markup (net 20%)', () => {
-    expect(applyIngestPricing(10495, { clearance: true })).toBe(12599);
-    expect(applyIngestPricing(2495, { clearance: true })).toBe(2999);
+  it('prices clearance items at a reduced 10-point markup (net 10%)', () => {
+    expect(applyIngestPricing(10495, { clearance: true })).toBe(11599);
+    expect(applyIngestPricing(2495, { clearance: true })).toBe(2799);
   });
 
   it('treats clearance independently of the flash-sale flag', () => {
-    expect(applyIngestPricing(10495, { clearance: true })).toBe(12599);
+    expect(applyIngestPricing(10495, { clearance: true })).toBe(11599);
   });
 });
 
@@ -146,16 +146,16 @@ describe('adaptCostwayRows', () => {
 it('clamps stock at or below the out-of-stock threshold while preserving supplier count', () => {
 const adapted = adaptCostwayRows([
 { ...rows[0], SKU: 'LOW1', Stock: '7' },
-{ ...rows[0], SKU: 'EDGE', Stock: '10' },
-{ ...rows[0], SKU: 'OK1', Stock: '11' },
+{ ...rows[0], SKU: 'EDGE', Stock: '20' },
+{ ...rows[0], SKU: 'OK1', Stock: '21' },
 { ...rows[0], SKU: 'GARBAGE', Stock: '' },
 ] as CostwayFeedRow[]);
 const bySku = new Map(
 adapted.products.flatMap(p => p.variants.map(v => [v.sku, v])),
 );
 expect(bySku.get('LOW1')).toMatchObject({ stock: 0, supplierStock: 7 });
-expect(bySku.get('EDGE')).toMatchObject({ stock: 0, supplierStock: 10 });
-expect(bySku.get('OK1')).toMatchObject({ stock: 11, supplierStock: 11 });
+expect(bySku.get('EDGE')).toMatchObject({ stock: 0, supplierStock: 20 });
+expect(bySku.get('OK1')).toMatchObject({ stock: 21, supplierStock: 21 });
 expect(bySku.get('GARBAGE')).toMatchObject({ stock: 0, supplierStock: 0 });
 });
 

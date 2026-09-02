@@ -173,7 +173,7 @@ export default async function HomePage() {
       <TrustBar freeShippingThreshold={promo.freeShippingThresholdMinorUnits} currency={promo.currency} />
 
       {/* 2. Hero — full-bleed split with deal ticker */}
-      <CampaignHero dealTicker={dealTicker} />
+      <CampaignHero dealTicker={dealTicker} regionKey={regionKey} />
 
       {/* 3. Brand logo marquee */}
       <BrandLogoBar />

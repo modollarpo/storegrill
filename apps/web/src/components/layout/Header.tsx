@@ -65,7 +65,7 @@ function RegionPicker({
       <div className="relative w-[30rem] max-h-[70vh] overflow-y-auto bg-surface-raised rounded-md shadow-md p-5 z-10 text-text-primary">
         <h3 className="text-sm font-bold mb-1">Choose your country or region</h3>
         <p className="text-xs text-text-secondary mb-3">
-          Shopping on <strong>{currentKey.toLowerCase()}.storegrill.net</strong> â€” local
+          Shopping on <strong>{currentKey.toLowerCase()}.storegrill.net</strong> — local
           currency, payments and delivery.
         </p>
         <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-2">
@@ -89,12 +89,14 @@ function RegionPicker({
           href={regionUrl(currentKey, '/regions')}
           className="btn btn-outline btn-sm mt-3 w-full"
         >
-          View all regions â†’
+          View all regions →
         </a>
       </div>
     </div>
   );
 }
+
+const HIDDEN_CATEGORY_SLUGS = new Set(['costway', 'makeup-vanities', 'uncategorised']);
 
 function Header({ categories }: HeaderProps) {
   const { regionKey, language, setLanguage } = useRegion();
@@ -104,7 +106,9 @@ function Header({ categories }: HeaderProps) {
   const [cartOpen, setCartOpen] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
 
-  const megaMenuCategories: MegaMenuCategory[] = categories.map(c => ({
+  const filteredCategories = categories.filter(c => !HIDDEN_CATEGORY_SLUGS.has(c.slug));
+
+  const megaMenuCategories: MegaMenuCategory[] = filteredCategories.map(c => ({
     name: c.name,
     slug: c.slug,
     children: c.children.map(child => ({
@@ -122,7 +126,7 @@ function Header({ categories }: HeaderProps) {
         className="site-header sticky top-0 z-[var(--z-header)]"
         dir={language === 'ar' ? 'rtl' : 'ltr'}
       >
-        {/* â•â•â• ROW 1: TOPBAR â•â•â• */}
+        {/* ——— ROW 1: TOPBAR ——— */}
         <div
           id="header-top"
           className="hidden lg:block bg-ember-deep text-white"
@@ -326,14 +330,14 @@ function Header({ categories }: HeaderProps) {
 
               {/* Center: category links */}
               <div className="flex items-center justify-center gap-4 xl:gap-6 flex-1 overflow-x-auto scrollbar-none">
-                {categories.map(cat => (
-                  <Link
+                {filteredCategories.map(cat => (
+                  <a
                     key={cat.slug}
                     href={`/categories/${cat.slug}`}
                     className="text-[15px] xl:text-[16px] font-semibold whitespace-nowrap hover:opacity-80 transition-opacity"
                   >
                     {cat.name}
-                  </Link>
+                  </a>
                 ))}
               </div>
 
@@ -379,7 +383,7 @@ function Header({ categories }: HeaderProps) {
 
           <section className="py-3" aria-label="Shop by department">
             <h3 className="px-4 py-2 text-base font-bold">Shop by Department</h3>
-            {categories.map(cat => (
+            {filteredCategories.map(cat => (
               <div key={cat.slug}>
                 <Link
                   href={`/categories/${cat.slug}`}
@@ -387,7 +391,7 @@ function Header({ categories }: HeaderProps) {
                   className="flex items-center justify-between px-4 py-2.5 text-sm font-semibold hover:bg-surface-sunken transition-colors"
                 >
                   {cat.name}
-                  {cat.children?.length > 0 && <span className="text-text-tertiary text-xs">â–¸</span>}
+                  {cat.children?.length > 0 && <span className="text-text-tertiary text-xs">▸</span>}
                 </Link>
                 {(cat.children?.length ?? 0) > 0 && (
                   <div className="pl-5 border-l border-border ml-4">

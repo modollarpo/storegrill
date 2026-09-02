@@ -47,7 +47,14 @@ router.get('/', async (req: Request, res: Response) => {
   const includeProducts = req.query.includeProducts === 'true';
   const regionKey = (req.query.regionKey as string) || 'UK';
 
-  const rows = await prisma.category.findMany({ orderBy: { name: 'asc' } });
+  const rows = await prisma.category.findMany({
+    where: {
+      products: {
+        some: { status: 'ACTIVE' },
+      },
+    },
+    orderBy: { name: 'asc' },
+  });
   const roots = buildTree(rows);
 
   if (includeProducts) {

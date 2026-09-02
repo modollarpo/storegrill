@@ -1,6 +1,8 @@
 # ─── Node / build artefacts (never needed in image) ──────────────────────────
 node_modules
 **/node_modules
+node_modules_backup
+**/node_modules_backup
 
 # Next.js output (rebuilt inside Docker)
 .next
@@ -16,8 +18,6 @@ packages/shared/dist
 # (Dockerfile only COPYs their package.json for workspace resolution)
 apps/api/src
 apps/api/prisma
-apps/admin/src
-apps/vendor-portal/src
 
 # Build info caches
 **/*.tsbuildinfo

@@ -1,5 +1,5 @@
 import { createReadStream } from 'node:fs';
-import { unlink } from 'node:fs/promises';
+import { readFile, unlink } from 'node:fs/promises';
 import { parse as csvParse } from 'csv-parse';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
@@ -16,6 +16,19 @@ import {
   isFragranceXHeader,
   type FragranceXFeedRow,
 } from '../importers/fragrancex.js';
+import {
+  adaptAosomRows,
+  isAosomHeader,
+  parseAosomTsv,
+  type AosomFeedRow,
+} from '../importers/aosom.js';
+import {
+  adaptAosomUkRows,
+  isAosomUkSource,
+  mergeAosomUkFeeds,
+  parseAosomUkProductTsv,
+  parseAosomUkStockTsv,
+} from '../importers/aosom-uk.js';
 import { slugify } from '../utils/slugify.js';
 
 const CHUNK_SIZE = 200;
@@ -30,6 +43,7 @@ interface AdapterProfile {
   dealSlug: string | null;
   dealName: string | null;
   flashSaleTag: string | null;
+  enforcePriceFloor: boolean;
 }
 
 const COSTWAY_PROFILE: AdapterProfile = {
@@ -37,6 +51,7 @@ const COSTWAY_PROFILE: AdapterProfile = {
   dealSlug: DAILY_DEAL_SLUG,
   dealName: 'Costway Flash Sale',
   flashSaleTag: FLASH_SALE_TAG,
+  enforcePriceFloor: false,
 };
 
 const FRAGRANCEX_PROFILE: AdapterProfile = {
@@ -44,6 +59,29 @@ const FRAGRANCEX_PROFILE: AdapterProfile = {
   dealSlug: 'fragrancex-deals',
   dealName: 'FragranceX Deals',
   flashSaleTag: 'deal',
+  enforcePriceFloor: true,
+};
+
+const AOSOM_PROFILE: AdapterProfile = {
+  currencyCode: 'EUR',
+  dealSlug: null,
+  dealName: 'Aosom Deals',
+  flashSaleTag: null,
+  enforcePriceFloor: true,
+};
+
+const AOSOM_UK_PROFILE: AdapterProfile = {
+  currencyCode: 'GBP',
+  dealSlug: null,
+  dealName: 'Aosom UK Deals',
+  flashSaleTag: null,
+  enforcePriceFloor: false,
+};
+
+type AdaptRendered = {
+  products: NormalizedProduct[];
+  outOfStock: NormalizedProduct[];
+  errors: Array<{ rowNumber: number; field: string; message: string }>;
 };
 
 type ExistingVariant = {
@@ -121,49 +159,94 @@ async function runImport(jobId: string): Promise<void> {
     ? await prisma.importSchedule.findUnique({ where: { id: job.scheduleId } })
     : null;
 
-  let tempFile: string | null = null;
+  const tempFiles: string[] = [];
 
   try {
-    let feedFile: string;
-    if (job.type === 'CSV_UPLOAD') {
-      feedFile = job.source;
-      tempFile = feedFile;
+    let adapted: AdaptRendered;
+    let profile: AdapterProfile;
+    let totalRows = 0;
+
+    if (job.type === 'CSV_UPLOAD' || !isAosomUkSource(job.source)) {
+      let feedFile: string;
+      if (job.type === 'CSV_UPLOAD') {
+        feedFile = job.source;
+        tempFiles.push(feedFile);
+      } else {
+        const fetchResult = job.source.startsWith('ftp://')
+          ? await ftpFetchToFile(job.source, { jobId })
+          : await fetchFeedToFile(job.source, { etag: schedule?.etag ?? null, jobId });
+        if (fetchResult.unchanged) {
+          await completeJob(jobId, { summary: { unchanged: true, message: 'Feed not modified since last run' } });
+          await touchSchedule(schedule?.id, 'UNCHANGED');
+          return;
+        }
+        feedFile = fetchResult.filePath;
+        tempFiles.push(feedFile);
+        if (schedule) {
+          await prisma.importSchedule.update({
+            where: { id: schedule.id },
+            data: { etag: fetchResult.etag },
+          });
+        }
+      }
+
+      await setPhase(jobId, 'PARSING');
+      const { records, kind } = await readFeed(feedFile, async count => {
+        await prisma.importJob.update({ where: { id: jobId }, data: { processedRows: count } });
+      });
+      totalRows = records.length;
+
+      const isAosom = kind === 'aosom';
+      const isFragranceX = !isAosom && isFragranceXHeader(Object.keys(records[0] ?? {}));
+      profile = isAosom ? AOSOM_PROFILE : isFragranceX ? FRAGRANCEX_PROFILE : COSTWAY_PROFILE;
+      adapted = isAosom
+        ? adaptAosomRows(records as unknown as AosomFeedRow[])
+        : isFragranceX
+          ? adaptFragranceXRows(records as unknown as FragranceXFeedRow[])
+          : adaptCostwayRows(records as unknown as CostwayFeedRow[]);
     } else {
-      const fetchResult = job.source.startsWith('ftp://')
-        ? await ftpFetchToFile(job.source, { jobId })
-        : await fetchFeedToFile(job.source, { etag: schedule?.etag ?? null, jobId });
-      if (fetchResult.unchanged) {
+      const [productUrl, stockUrl] = job.source.split('|');
+      const [productResult, stockResult] = await Promise.all([
+        fetchFeedToFile(productUrl, { etag: schedule?.etag ?? null, jobId }),
+        fetchFeedToFile(stockUrl, { jobId }),
+      ]);
+      if (productResult.unchanged) {
         await completeJob(jobId, { summary: { unchanged: true, message: 'Feed not modified since last run' } });
         await touchSchedule(schedule?.id, 'UNCHANGED');
         return;
       }
-      feedFile = fetchResult.filePath;
-      tempFile = feedFile;
-      if (schedule) {
+      tempFiles.push(productResult.filePath);
+      if (stockResult.filePath) tempFiles.push(stockResult.filePath);
+      if (schedule && productResult.etag) {
         await prisma.importSchedule.update({
           where: { id: schedule.id },
-          data: { etag: fetchResult.etag },
+          data: { etag: productResult.etag },
         });
       }
+
+      await setPhase(jobId, 'PARSING');
+      const productText = await readFile(productResult.filePath, 'utf8');
+      const stockText = await readFile(stockResult.filePath, 'utf8');
+      const merged = mergeAosomUkFeeds(
+        parseAosomUkProductTsv(productText),
+        parseAosomUkStockTsv(stockText),
+      );
+      totalRows = merged.length;
+      await prisma.importJob.update({
+        where: { id: jobId },
+        data: { processedRows: totalRows },
+      });
+      adapted = adaptAosomUkRows(merged);
+      profile = AOSOM_UK_PROFILE;
     }
 
-    await setPhase(jobId, 'PARSING');
-    const records = await parseCsvRows(feedFile, async count => {
-      await prisma.importJob.update({ where: { id: jobId }, data: { processedRows: count } });
-    });
-
-    const isFragranceX = isFragranceXHeader(Object.keys(records[0] ?? {}));
-    const profile = isFragranceX ? FRAGRANCEX_PROFILE : COSTWAY_PROFILE;
-    const adapted = isFragranceX
-      ? adaptFragranceXRows(records as unknown as FragranceXFeedRow[])
-      : adaptCostwayRows(records as unknown as CostwayFeedRow[]);
     await prisma.importJob.update({
       where: { id: jobId },
-      data: { totalRows: records.length, processedRows: records.length },
+      data: { totalRows, processedRows: totalRows },
     });
 
     await setPhase(jobId, 'DIFFING');
-    const planned = await planChanges(job.vendorId, adapted.products);
+    const planned = await planChanges(job.vendorId, adapted.products, profile);
 
     const summary = await executePlan(
       jobId,
@@ -182,8 +265,39 @@ async function runImport(jobId: string): Promise<void> {
     await completeJob(jobId, { summary });
     await touchSchedule(schedule?.id, adapted.errors.length > 0 ? 'OK_WITH_ERRORS' : 'OK');
   } finally {
-    if (tempFile) await unlink(tempFile).catch(() => undefined);
+    for (const file of tempFiles) await unlink(file).catch(() => undefined);
   }
+}
+
+async function readFeed(
+  filePath: string,
+  onProgress: (count: number) => Promise<void>,
+): Promise<{ records: Record<string, string>[]; kind: 'aosom' | 'csv' }> {
+  const headerLine = await peekHeaderLine(filePath);
+  if (isAosomHeader(headerLine ?? [])) {
+    const text = await readFile(filePath, 'utf8');
+    const rows = parseAosomTsv(text) as unknown as Record<string, string>[];
+    if (rows.length > 0) await onProgress(rows.length);
+    return { records: rows, kind: 'aosom' };
+  }
+  return { records: await parseCsvRows(filePath, onProgress), kind: 'csv' };
+}
+
+async function peekHeaderLine(filePath: string): Promise<string[] | null> {
+  return new Promise((resolve, reject) => {
+    const source = createReadStream(filePath, { highWaterMark: 64 * 1024 });
+    let buf = '';
+    source.on('data', chunk => {
+      buf += chunk.toString('utf8');
+      if (buf.includes('\n')) {
+        source.destroy();
+        const line = buf.slice(0, buf.indexOf('\n')).trim();
+        resolve(line.split('\t').map(h => h.trim()).filter(Boolean));
+      }
+    });
+    source.on('end', () => resolve(buf.split('\t').map(h => h.trim()).filter(Boolean)));
+    source.on('error', reject);
+  });
 }
 
 async function parseCsvRows(
@@ -200,7 +314,7 @@ async function parseCsvRows(
   return rows;
 }
 
-async function planChanges(vendorId: string, products: NormalizedProduct[]): Promise<PlannedAction[]> {
+async function planChanges(vendorId: string, products: NormalizedProduct[], profile: AdapterProfile): Promise<PlannedAction[]> {
   const existingRows = await prisma.product.findMany({
     where: { vendorId },
     include: { variants: true },
@@ -233,6 +347,16 @@ async function planChanges(vendorId: string, products: NormalizedProduct[]): Pro
     });
   }
 
+  // Never import products cheaper than 50 minor-currency units (GBP 50 / USD 50 / EUR 50)
+  // for non-UK pods. The UK pod (Costway UK + Aosom UK) imports at any price so long as
+  // stock is at or above the out-of-stock threshold.
+  const minPriceMinorUnits = 5000;
+  const priceFloorEnabled =
+    profile.enforcePriceFloor &&
+    (profile.currencyCode === 'GBP' ||
+      profile.currencyCode === 'USD' ||
+      profile.currencyCode === 'EUR');
+
   const categories = await prisma.category.findMany();
   const categoryById = new Map(categories.map((c: any) => [c.id, c]));
   const categoryPathOf = (categoryId: string): string => {
@@ -247,6 +371,9 @@ async function planChanges(vendorId: string, products: NormalizedProduct[]): Pro
 
   const planned: PlannedAction[] = [];
   for (const product of products) {
+    if (priceFloorEnabled && product.variants.some(v => v.priceMinorUnits < minPriceMinorUnits)) {
+      continue;
+    }
     const existing = existingBySku.get(product.variants[0].sku);
     if (!existing) {
       planned.push({ action: 'create', product });
@@ -647,13 +774,15 @@ async function applyOne(
 
   for (const variant of product.variants) {
     const isFlashSale = ctx.profile.flashSaleTag != null && product.tags.includes(ctx.profile.flashSaleTag);
-    const variantAttributes = [{ name: 'Supplier stock', value: String(variant.supplierStock) }];
-    if (isFlashSale && variant.listPriceMinorUnits != null) {
-      variantAttributes.push({
-        name: 'List price',
-        value: String(variant.listPriceMinorUnits),
-      });
-    }
+    const variantAttributes = [
+      { name: 'Supplier stock', value: String(variant.supplierStock) },
+      ...(isFlashSale && variant.listPriceMinorUnits != null
+        ? [{ name: 'List price', value: String(variant.listPriceMinorUnits) }]
+        : []),
+      ...(variant.listPriceMinorUnits != null
+        ? [{ name: 'Compare at price', value: String(variant.listPriceMinorUnits) }]
+        : []),
+    ];
     const variantData = {
       productId,
       name: variant.variantSuffix ? `${product.baseName}-${variant.variantSuffix}` : product.baseName,

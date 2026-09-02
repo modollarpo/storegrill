@@ -9,6 +9,25 @@ import { slugify } from '../utils/slugify.js';
 
 const router = Router();
 
+function compareAtPriceOf(product: any): number | undefined {
+  const attributes = Array.isArray(product.variants)
+    ? product.variants.flatMap((v: any) => {
+        try {
+          return typeof v.attributes === 'string' ? JSON.parse(v.attributes) : v.attributes;
+        } catch {
+          return [];
+        }
+      })
+    : [];
+  for (const attr of attributes) {
+    if (attr && String(attr.name).toLowerCase() === 'compare at price') {
+      const value = Number(attr.value);
+      if (Number.isFinite(value) && value > Number(product.basePriceMinorUnits)) return value;
+    }
+  }
+  return undefined;
+}
+
 router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
   const query = ProductFilterSchema.parse(req.query);
   const regionKey = query.regionKey;
@@ -19,9 +38,26 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
     if (cat) categoryId = cat.id;
   }
 
+  let categoryIds: string[] = [];
+  if (categoryId) {
+    categoryIds = [categoryId];
+    const pending = [categoryId];
+    while (pending.length > 0) {
+      const batch = pending.splice(0);
+      const children = await prisma.category.findMany({
+        where: { parentId: { in: batch } },
+        select: { id: true },
+      });
+      for (const child of children) {
+        categoryIds.push(child.id);
+        pending.push(child.id);
+      }
+    }
+  }
+
   const where: Prisma.ProductWhereInput = {
     status: 'ACTIVE',
-    ...(categoryId && { categoryId }),
+    ...(categoryIds.length > 0 && { categoryId: { in: categoryIds } }),
     ...(query.brandId && { brandId: query.brandId }),
     ...(query.vendorId && { vendorId: query.vendorId }),
     ...(query.minRating && { rating: { gte: query.minRating } }),
@@ -73,6 +109,7 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
         vendor: { select: { id: true, storeName: true, slug: true } },
         category: { select: { id: true, name: true, slug: true } },
         regionPrices: { where: { regionKey }, take: 1 },
+        variants: true,
         _count: { select: { variants: { where: { stock: { gt: 0 } } } } },
       },
     }),
@@ -85,6 +122,7 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
     tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
     basePriceMinorUnits: Number(p.basePriceMinorUnits),
     price: p.regionPrices[0] ? Number(p.regionPrices[0].priceMinorUnits) : Number(p.basePriceMinorUnits),
+    listPriceMinorUnits: compareAtPriceOf(p),
     currencyCode: p.regionPrices[0]?.currencyCode || p.currencyCode,
     inStock: p._count.variants > 0,
     rating: Number(p.rating),
@@ -114,6 +152,7 @@ router.get('/featured', optionalAuth, async (req: AuthRequest, res: Response) =>
       vendor: { select: { id: true, storeName: true, slug: true } },
       category: { select: { id: true, name: true, slug: true } },
       regionPrices: { where: { regionKey }, take: 1 },
+      variants: true,
     },
   });
 
@@ -124,9 +163,11 @@ router.get('/featured', optionalAuth, async (req: AuthRequest, res: Response) =>
       tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
       basePriceMinorUnits: Number(p.basePriceMinorUnits),
       price: p.regionPrices[0] ? Number(p.regionPrices[0].priceMinorUnits) : Number(p.basePriceMinorUnits),
+      listPriceMinorUnits: compareAtPriceOf(p),
       currencyCode: p.regionPrices[0]?.currencyCode || p.currencyCode,
       rating: Number(p.rating),
       regionPrices: undefined,
+      variants: undefined,
     })),
   });
 });
@@ -175,6 +216,7 @@ router.get('/:identifier', optionalAuth, async (req: AuthRequest, res: Response)
       price: product.regionPrices[0]
         ? Number(product.regionPrices[0].priceMinorUnits)
         : Number(product.basePriceMinorUnits),
+      listPriceMinorUnits: compareAtPriceOf(product as any),
       currencyCode: product.regionPrices[0]?.currencyCode || product.currencyCode,
       rating: Number(product.rating),
       inventoryCount: product.variants.reduce((sum: number, v: { stock: number }) => sum + v.stock, 0),

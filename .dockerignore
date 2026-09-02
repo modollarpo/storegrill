@@ -14,10 +14,8 @@ dist
 **/dist
 packages/shared/dist
 
-# Source dirs not needed for the web image build
-# (Dockerfile only COPYs their package.json for workspace resolution)
-apps/api/src
-apps/api/prisma
+# apps/api source and prisma are required by the API image build, so they are
+# NOT excluded here even though the web image build does not need them.
 
 # Build info caches
 **/*.tsbuildinfo

@@ -18,7 +18,7 @@ on:
 
 env:
   ACR: storegrillcr.azurecr.io
-  VERSION: v7
+  VERSION: v8
 
 jobs:
   deploy-web:
@@ -80,5 +80,5 @@ jobs:
             --name ${{ matrix.app }} \
             --image ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.VERSION }} \
             --set-env-vars NEXT_PUBLIC_API_URL=${{ matrix.api }} \
-            --revision-suffix "v${{ env.VERSION }}" \
+            --revision-suffix "${{ env.VERSION }}" \
             --output none

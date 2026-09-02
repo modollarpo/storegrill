@@ -20,7 +20,7 @@ function flattenTree(nodes: import('@/lib/api-client').CategoryNode[]): FacetCat
   return nodes.map(n => ({
     name: n.name,
     slug: n.slug,
-    children: n.children.length > 0 ? flattenTree(n.children) : undefined,
+    children: n.children && n.children.length > 0 ? flattenTree(n.children) : undefined,
   }));
 }
 
@@ -132,7 +132,7 @@ export async function ProductListing({
   const localized = (await localizeProducts(products, language)) as Array<ProductCardData & { category?: { id?: string } | null }>;
   const localizedWithCategory = localized.map(p => ({ ...p, categoryId: p.categoryId ?? p.category?.id }));
   const pagination = data.pagination ?? { page: 1, totalPages: 0, total: 0 };
-  const categoryTree = (await getCategories(regionKey)).filter(c => c.children.length > 0 || c.featured);
+  const categoryTree = (await getCategories(regionKey)).filter(c => (c.children?.length ?? 0) > 0 || c.featured);
 
   const categoryOptions = categoryTree.length > 0 ? flattenTree(categoryTree) : FACET_CATEGORIES;
 

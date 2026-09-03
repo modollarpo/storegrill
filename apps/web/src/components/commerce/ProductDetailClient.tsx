@@ -95,9 +95,12 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
   const formatMoney = (amount: number, currency: string) => new Intl.NumberFormat(locale, { style: 'currency', currency }).format(amount / 100);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_640px] gap-4 lg:gap-5">
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_440px] gap-4 lg:gap-6">
       {/* -- Image Gallery -- */}
-      <PdpImageGallery images={images} productName={product.name} discountPct={discountPct} />
+      <div className="min-w-0">
+        <PdpImageGallery images={images} productName={product.name} discountPct={discountPct} />
+      </div>
 
       {/* -- Buy Box -- */}
       <div className="min-w-0 lg:sticky lg:top-28 lg:self-start bg-surface border border-border rounded-2xl p-6 shadow-sm" id="buybox">
@@ -168,9 +171,12 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
           </p>
         )}
       </div>
+      </div>
 
-      {/* -- Tabs (below gallery, matching image box width) -- */}
-      <div className="min-w-0 mt-6 bg-surface border border-border rounded-2xl p-6 shadow-sm">{tabs.description}</div>
+      {/* -- Details (full-width, aligned to container edges) -- */}
+      <div id="product-details" className="min-w-0 bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm">
+        {tabs.description}
+      </div>
     </div>
   );
 }

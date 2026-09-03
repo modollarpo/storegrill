@@ -82,7 +82,7 @@ export function Tabs({ items, initial, className, tablistClassName, panelClassNa
                 tabIndex={selected ? 0 : -1}
                 onClick={() => setActive(item.id)}
                 className={cn(
-                  'relative inline-flex items-center gap-2 px-4 py-3 text-sm font-bold whitespace-nowrap transition-colors',
+                  'relative inline-flex items-center gap-2 px-5 py-3.5 text-base font-bold whitespace-nowrap transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember focus-visible:ring-inset rounded-t-sm',
                   selected ? 'text-text-primary' : 'text-text-tertiary hover:text-text-primary'
                 )}

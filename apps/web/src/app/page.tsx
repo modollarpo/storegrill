@@ -3,9 +3,9 @@ import { getRequestContext } from '@/lib/server-context';
 import { localizeProducts } from '@/lib/server-translate';
 import { API_BASE } from '@/lib/api';
 import { buildMetadata, organizationJsonLd, webSiteJsonLd } from '@/lib/seo';
-import { regionPromoContent, regionConfig } from '@/lib/region-content';
+import { regionPromoContent, regionConfig, categoryBannerFor } from '@/lib/region-content';
 
-import { ProductCard } from '@/components/commerce/ProductCard';
+import { ProductCard, type ProductCardData } from '@/components/commerce/ProductCard';
 import {
   CategoryQuickNav,
   TrustBar,
@@ -17,9 +17,13 @@ import {
   RegionalTrust,
   BrandLogoBar,
   PromoBanner3Up,
+  CategoryBannerWithProducts,
+  Testimonials,
+  AppDownloadBanner,
   type PromoBannerItem,
   type QuickNavItem,
   type DealCardData,
+  type TestimonialItem,
 } from '@/components/home/Sections';
 
 export const revalidate = 60;
@@ -213,6 +217,35 @@ export default async function HomePage() {
       description: v.description ? String(v.description) : undefined,
     }));
 
+  const featuredCards: ProductCardData[] = localized.slice(0, 8).map(p => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    thumbnail: p.thumbnail,
+    price: p.price,
+    listPrice: p.listPriceMinorUnits,
+    currencyCode: p.currencyCode,
+    rating: p.rating,
+    reviewCount: p.reviewCount,
+    vendor: p.vendor ?? undefined,
+  }));
+
+  const testimonials: TestimonialItem[] = [
+    { name: 'Aisha M.', role: 'Verified buyer · UK', avatar: '/testimonials/avatar-1.png', quote: 'Delivery was faster than promised and the price beat every high street option. The order tracking updates were spot on.' },
+    { name: 'Sam K.', role: 'Verified buyer · US', avatar: '/testimonials/avatar-2.png', quote: 'Ordered a laptop bundle and the “frequently bought together” picks saved me real money. Checkout in local currency made it painless.' },
+    { name: 'Tina D.', role: 'Verified buyer · DE', avatar: '/testimonials/avatar-3.png', quote: 'Customer support resolved a sizing question within minutes. The regional shipping estimate was accurate to the day.' },
+    { name: 'Luis N.', role: 'Verified buyer · US', avatar: '/testimonials/avatar-4.png', quote: 'Great variety of vendors under one roof. I compared two sellers on the same product and the reviews were really helpful.' },
+    { name: 'Rebecca B.', role: 'Verified buyer · UK', avatar: '/testimonials/avatar-5.png', quote: 'The mobile app checkout took under a minute. I have reordered three times since and it has been flawless every time.' },
+    { name: 'Chen P.', role: 'Verified buyer · AE', avatar: '/testimonials/avatar-6.png', quote: 'Transparent pricing and easy returns gave me confidence to try a new brand. It has become my go-to storefront.' },
+  ];
+
+  const categoryBanner = categoryBannerFor(regionKey);
+
+  const fromMinorUnits = featuredCards.reduce((min, p) => (min === 0 || p.price < min ? p.price : min), 0);
+  const fromPrice = fromMinorUnits > 0
+    ? new Intl.NumberFormat(language, { style: 'currency', currency: promo.currency }).format(fromMinorUnits / 100)
+    : undefined;
+
   return (
     <div className="bg-surface-raised">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd()) }} />
@@ -279,27 +312,33 @@ export default async function HomePage() {
 
       <PromoBanner3Up banners={promoBanners} />
 
-      <RecommendedForYou
-        products={localized.slice(0, 8).map(p => ({
-          id: p.id,
-          name: p.name,
-          slug: p.slug,
-          thumbnail: p.thumbnail,
-          price: p.price,
-          listPrice: p.listPriceMinorUnits,
-          currencyCode: p.currencyCode,
-          rating: p.rating,
-          reviewCount: p.reviewCount,
-        }))}
-      />
+      <RecommendedForYou products={featuredCards} />
 
       <VendorSpotlight vendors={spotlightVendors} />
+
+      {categoryBanner && featuredCards.length > 0 && (
+        <CategoryBannerWithProducts
+          title={categoryBanner.title}
+          subtitle={categoryBanner.subtitle}
+          description={categoryBanner.description}
+          ctaLabel={categoryBanner.ctaLabel}
+          ctaHref={categoryBanner.ctaHref}
+          bannerImage={categoryBanner.bannerImage}
+          bannerBg={categoryBanner.bannerBg}
+          fromPrice={fromPrice}
+          products={featuredCards}
+        />
+      )}
+
+      <Testimonials items={testimonials} />
 
       <RegionalTrust
         regionKey={regionKey}
         paymentMethods={regionCfg.paymentMethods}
         carriers={regionCfg.shippingZones[0]?.carriers ?? []}
       />
+
+      <AppDownloadBanner />
     </div>
   );
 }

@@ -88,7 +88,35 @@ export function FilterPanel({ facets, className }: FilterPanelProps) {
 
   return (
     <div className={cn('space-y-6', className)} data-testid="filter-panel">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-extrabold uppercase tracking-wide text-text-primary flex items-center gap-2">
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+          </svg>
+          Filters
+        </h3>
+        <button
+          type="button"
+          onClick={() => router.replace(pathname, { scroll: false })}
+          disabled={[...params.keys()].length === 0}
+          className="text-xs font-bold text-action-primary hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Clear all
+        </button>
+      </div>
+      <div className="h-px bg-border" />
+
       <FilterGroup title="Category">
+        <button
+          type="button"
+          onClick={() => updateParam('category', null)}
+          className={cn(
+            'flex items-center gap-2 text-sm py-1 transition-colors',
+            !params.get('category') ? 'font-bold text-action-primary' : 'text-text-primary hover:text-action-primary'
+          )}
+        >
+          All categories
+        </button>
         <CategoryTree
           categories={facets.categories}
           activeSlug={params.get('category') ?? ''}
@@ -96,7 +124,7 @@ export function FilterPanel({ facets, className }: FilterPanelProps) {
         />
       </FilterGroup>
 
-      <FilterGroup title={`Price`}>
+      <FilterGroup title="Price">
         <RangeSlider
           min={0}
           max={facets.maxPriceMinorUnits}
@@ -113,6 +141,44 @@ export function FilterPanel({ facets, className }: FilterPanelProps) {
             router.replace(`${pathname}?${next.toString()}`, { scroll: false });
           }}
         />
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <label className="text-xs font-medium text-text-secondary">
+            Min
+            <input
+              type="number"
+              min={0}
+              value={minPrice === '0' ? '' : minPrice}
+              placeholder={facets.currencySymbol + '0'}
+              onChange={e => {
+                const next = new URLSearchParams(params.toString());
+                const v = Number(e.target.value);
+                if (v > 0) next.set('min', String(Math.round(v)));
+                else next.delete('min');
+                next.delete('page');
+                router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+              }}
+              className="mt-1 w-full h-9 rounded-lg border border-border bg-surface px-2 text-sm text-text-primary focus:border-action-primary focus:ring-1 focus:ring-action-primary"
+            />
+          </label>
+          <label className="text-xs font-medium text-text-secondary">
+            Max
+            <input
+              type="number"
+              min={0}
+              value={maxPrice === String(facets.maxPriceMinorUnits) ? '' : maxPrice}
+              placeholder={facets.currencySymbol}
+              onChange={e => {
+                const next = new URLSearchParams(params.toString());
+                const v = Number(e.target.value);
+                if (v > 0 && v < facets.maxPriceMinorUnits) next.set('max', String(Math.round(v)));
+                else next.delete('max');
+                next.delete('page');
+                router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+              }}
+              className="mt-1 w-full h-9 rounded-lg border border-border bg-surface px-2 text-sm text-text-primary focus:border-action-primary focus:ring-1 focus:ring-action-primary"
+            />
+          </label>
+        </div>
       </FilterGroup>
 
       <FilterGroup title="Customer Reviews">
@@ -135,8 +201,8 @@ export function FilterPanel({ facets, className }: FilterPanelProps) {
         </div>
       </FilterGroup>
 
-      {facets.brands.length > 0 && (
-        <FilterGroup title="Brand">
+      <FilterGroup title="Brand">
+        {facets.brands.length > 0 ? (
           <div className="space-y-2">
             {(showAllBrands ? facets.brands : facets.brands.slice(0, 5)).map(brand => (
               <label key={brand} className="flex items-center gap-3 text-sm cursor-pointer hover:text-action-primary text-text-primary transition-colors">
@@ -159,11 +225,13 @@ export function FilterPanel({ facets, className }: FilterPanelProps) {
               </button>
             )}
           </div>
-        </FilterGroup>
-      )}
+        ) : (
+          <p className="text-xs text-text-tertiary">No brands listed for this category.</p>
+        )}
+      </FilterGroup>
 
-      {facets.vendors.length > 0 && (
-        <FilterGroup title="Seller">
+      <FilterGroup title="Seller">
+        {facets.vendors.length > 0 ? (
           <div className="space-y-2">
             {facets.vendors.slice(0, 6).map(v => (
               <label key={v.id} className="flex items-center gap-3 text-sm cursor-pointer hover:text-action-primary text-text-primary transition-colors">
@@ -177,8 +245,10 @@ export function FilterPanel({ facets, className }: FilterPanelProps) {
               </label>
             ))}
           </div>
-        </FilterGroup>
-      )}
+        ) : (
+          <p className="text-xs text-text-tertiary">No sellers listed for this category.</p>
+        )}
+      </FilterGroup>
 
       <FilterGroup title="Availability & Shipping">
         <div className="space-y-2">
@@ -466,7 +536,7 @@ export function SortDropdown() {
           { value: 'price_desc', label: 'Price: High to Low' },
           { value: 'rating', label: 'Avg. Customer Review' },
           { value: 'newest', label: 'Newest Arrivals' },
-          { value: 'bestselling', label: 'Best Selling' },
+          { value: 'popular', label: 'Best Selling' },
         ]}
       />
     </div>

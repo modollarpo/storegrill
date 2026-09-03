@@ -20,10 +20,14 @@ import {
   CategoryBannerWithProducts,
   Testimonials,
   AppDownloadBanner,
+  FeaturedCollections,
+  PromoSlider,
   type PromoBannerItem,
   type QuickNavItem,
   type DealCardData,
   type TestimonialItem,
+  type FeaturedCollection,
+  type PromoTile,
 } from '@/components/home/Sections';
 
 export const revalidate = 60;
@@ -230,6 +234,42 @@ export default async function HomePage() {
     vendor: p.vendor ?? undefined,
   }));
 
+  const promoSlides: PromoTile[] = localized
+    .filter(p => (p.thumbnail ?? p.images?.[0]))
+    .slice(0, 8)
+    .map(p => ({
+      src: p.thumbnail ?? p.images?.[0] ?? '',
+      label: p.name,
+      href: `/products/${p.slug ?? p.id}`,
+    }));
+
+  const collections: FeaturedCollection[] = (() => {
+    const byCat = new Map<string, FeaturedProduct[]>();
+    for (const p of localized) {
+      const catSlug = p.category?.slug;
+      if (!catSlug || !(p.thumbnail ?? p.images?.[0])) continue;
+      if (!byCat.has(catSlug)) byCat.set(catSlug, []);
+      byCat.get(catSlug)!.push(p);
+    }
+    return [...byCat.entries()]
+      .filter(([, prods]) => prods.length >= 2)
+      .sort((a, b) => b[1].length - a[1].length)
+      .slice(0, 2)
+      .map(([, prods]) => {
+        const cat = prods[0].category;
+        return {
+          icon: prods[0].thumbnail ?? prods[0].images?.[0] ?? '',
+          title: `${cat?.name ?? 'Collection'} picks`,
+          subtitle: `Hand-picked ${(cat?.name ?? 'products').toLowerCase()} from trusted vendors`,
+          tiles: prods.slice(0, 4).map(p => ({
+            src: p.thumbnail ?? p.images?.[0] ?? '',
+            label: p.name,
+            href: `/products/${p.slug ?? p.id}`,
+          })),
+        };
+      });
+  })();
+
   const testimonials: TestimonialItem[] = [
     { name: 'Aisha M.', role: 'Verified buyer · UK', avatar: '/testimonials/avatar-1.png', quote: 'Delivery was faster than promised and the price beat every high street option. The order tracking updates were spot on.' },
     { name: 'Sam K.', role: 'Verified buyer · US', avatar: '/testimonials/avatar-2.png', quote: 'Ordered a laptop bundle and the “frequently bought together” picks saved me real money. Checkout in local currency made it painless.' },
@@ -310,7 +350,20 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {promoSlides.length > 5 && (
+        <PromoSlider
+          id="trending-categories"
+          heading="Trending this week"
+          subtitle="Shop the styles and categories customers can't stop raving about"
+          tiles={promoSlides}
+        />
+      )}
+
       <PromoBanner3Up banners={promoBanners} />
+
+      {collections.length >= 2 && (
+        <FeaturedCollections collections={collections} />
+      )}
 
       <RecommendedForYou products={featuredCards} />
 

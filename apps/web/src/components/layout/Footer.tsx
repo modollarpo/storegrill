@@ -66,9 +66,9 @@ export function Footer() {
             <div>
               <h3 className="text-[14px] font-bold mb-5 text-white">Categories</h3>
               <ul className="space-y-3.5 text-[15px] font-medium">
-                <li><Link href="/products?sort=new" className="hover:opacity-70 transition-opacity">New arrivals</Link></li>
-                <li><Link href="/products?sort=best" className="hover:opacity-70 transition-opacity">Best Sellers</Link></li>
-                <li><Link href="/products?sort=sale" className="hover:opacity-70 transition-opacity">Sale items</Link></li>
+                <li><Link href="/products?sort=newest" className="hover:opacity-70 transition-opacity">New arrivals</Link></li>
+                <li><Link href="/products?sort=popular" className="hover:opacity-70 transition-opacity">Best Sellers</Link></li>
+                <li><Link href="/deals" className="hover:opacity-70 transition-opacity">Sale items</Link></li>
                 <li><Link href="/blog" className="hover:opacity-70 transition-opacity">Blog</Link></li>
               </ul>
             </div>

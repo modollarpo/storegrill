@@ -170,7 +170,7 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
       </div>
 
       {/* -- Tabs (full width) -- */}
-      <div className="lg:col-span-2 min-w-0 mt-6 bg-surface border border-border rounded-2xl p-6 shadow-sm">{tabs.description}</div>
+      <div className="lg:col-span-2 w-full mx-auto max-w-4xl min-w-0 mt-6 bg-surface border border-border rounded-2xl p-6 shadow-sm">{tabs.description}</div>
     </div>
   );
 }

@@ -128,5 +128,4 @@ jobs:
             --name ${{ matrix.web_app }} \
             --image ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ github.event.inputs.web_version }} \
             --set-env-vars NEXT_PUBLIC_API_URL=${{ matrix.api_url }} \
-            --revision-suffix "${{ github.event.inputs.web_version }}" \
             --output none

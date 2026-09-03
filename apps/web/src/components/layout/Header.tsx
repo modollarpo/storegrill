@@ -96,7 +96,14 @@ function RegionPicker({
   );
 }
 
-const HIDDEN_CATEGORY_SLUGS = new Set(['costway', 'makeup-vanities', 'makeup-vanities-2', 'uncategorised']);
+const HIDDEN_CATEGORY_SLUGS = new Set(['costway', 'uncategorised']);
+
+function isHiddenCategory(category: { name: string; slug: string }): boolean {
+  if (HIDDEN_CATEGORY_SLUGS.has(category.slug)) return true;
+  if (category.name.toLowerCase() === 'makeup vanities') return true;
+  if (category.slug === 'makeup-vanities' || category.slug.startsWith('makeup-vanities-')) return true;
+  return false;
+}
 
 function Header({ categories }: HeaderProps) {
   const { regionKey, language, setLanguage } = useRegion();
@@ -107,7 +114,7 @@ function Header({ categories }: HeaderProps) {
   const [regionOpen, setRegionOpen] = useState(false);
   const [openDept, setOpenDept] = useState<string | null>(null);
 
-  const filteredCategories = categories.filter(c => !HIDDEN_CATEGORY_SLUGS.has(c.slug));
+  const filteredCategories = categories.filter(c => !isHiddenCategory(c));
 
   const megaMenuCategories: MegaMenuCategory[] = filteredCategories.map(c => ({
     name: c.name,

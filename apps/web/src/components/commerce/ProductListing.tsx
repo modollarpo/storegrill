@@ -182,7 +182,7 @@ export async function ProductListing({
       {hero}
 
       <div className="flex gap-10 mt-10">
-        <aside className="hidden lg:block w-72 shrink-0 rounded-2xl bg-surface border border-border p-6 shadow-sm" aria-label="Filters">
+        <aside className="hidden lg:block sticky top-24 self-start max-h-[calc(100vh-8rem)] overflow-y-auto w-72 shrink-0 rounded-2xl bg-surface border border-border p-6 shadow-sm" aria-label="Filters">
           <Suspense fallback={<div className="space-y-3">{[...Array(5)].map((_, i) => <div key={i} className="h-16 rounded-lg bg-surface-raised animate-shimmer" />)}</div>}>
             <FilterPanel facets={facets} />
           </Suspense>

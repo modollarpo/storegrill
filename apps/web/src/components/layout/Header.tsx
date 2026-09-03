@@ -96,7 +96,7 @@ function RegionPicker({
   );
 }
 
-const HIDDEN_CATEGORY_SLUGS = new Set(['costway', 'makeup-vanities', 'uncategorised']);
+const HIDDEN_CATEGORY_SLUGS = new Set(['costway', 'makeup-vanities', 'makeup-vanities-2', 'uncategorised']);
 
 function Header({ categories }: HeaderProps) {
   const { regionKey, language, setLanguage } = useRegion();

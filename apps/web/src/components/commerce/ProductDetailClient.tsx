@@ -64,13 +64,23 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
     return [...(product.images || []), ...variantImages].map(storefrontImage).filter((image): image is string => Boolean(image));
   }, [product]);
 
-  const [variantId, setVariantId] = useState<string | undefined>(product.variants && product.variants.length === 1 ? product.variants[0].id : undefined);
+  const [variantId, setVariantId] = useState<string | undefined>(() => {
+    if (!product.variants?.length) return undefined;
+    const first = product.variants.find(v => v.stock > 0) ?? product.variants[0];
+    return first.id;
+  });
 
   const variant = product.variants?.find(v => v.id === variantId);
   const activeUnitPrice = variant?.basePriceMinorUnits ?? product.price;
   const currency = variant?.currencyCode ?? product.currencyCode;
   const stock = variant ? variant.stock : product.inventoryCount;
   const listPrice = product.listPrice ?? product.listPriceMinorUnits;
+
+  const variantPrices = product.variants?.map(v => v.basePriceMinorUnits) ?? [];
+  const variantMin = variantPrices.length ? Math.min(...variantPrices) : undefined;
+  const variantMax = variantPrices.length ? Math.max(...variantPrices) : undefined;
+  const priceRangeDiffer = variantMin !== undefined && variantMax !== undefined && variantMin !== variantMax;
+  const showPriceRange = priceRangeDiffer && !variant;
 
   const discountPct =
     listPrice && listPrice > activeUnitPrice
@@ -85,7 +95,7 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
   const formatMoney = (amount: number, currency: string) => new Intl.NumberFormat(locale, { style: 'currency', currency }).format(amount / 100);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-8 lg:gap-12">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_560px] gap-8 lg:gap-12">
       {/* -- Image Gallery -- */}
       <PdpImageGallery images={images} productName={product.name} discountPct={discountPct} />
 
@@ -115,6 +125,8 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
           currency={currency} 
           listPrice={listPrice} 
           discountPct={discountPct}
+          fromMinorUnits={showPriceRange ? variantMin : undefined}
+          toMinorUnits={showPriceRange ? variantMax : undefined}
           locale={locale}
           formatMoney={formatMoney}
         />
@@ -158,7 +170,7 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
       </div>
 
       {/* -- Tabs (full width) -- */}
-      <div className="lg:col-span-2 mt-6 bg-surface border border-border rounded-2xl p-6 shadow-sm">{tabs.description}</div>
+      <div className="lg:col-span-2 min-w-0 mt-6 bg-surface border border-border rounded-2xl p-6 shadow-sm">{tabs.description}</div>
     </div>
   );
 }

@@ -83,22 +83,56 @@ export default async function ProductPage({ params }: PdpProps) {
     daysMax: zone?.estimatedDaysMax ?? 7,
   };
 
+  const companionsRes = await fetch(`${API_BASE}/api/v1/products/${encodeURIComponent(product.slug || product.id)}/companions?regionKey=${regionKey}&limit=8`, { next: { revalidate: 300 } }).catch(() => null);
+  const companionsData = companionsRes && companionsRes.ok ? await companionsRes.json().catch(() => ({ companions: [] })) : { companions: [] };
+  interface CompanionItem { id: string; slug: string; name: string; priceMinorUnits: number; currencyCode: string; thumbnail: string | null; rating: number; reviewCount: number; inStock: boolean; reason: string; vendorName?: string | null; vendorSlug?: string | null; }
+  const companions: CompanionItem[] = (companionsData.companions || []) as CompanionItem[];
+
   const relatedRes = await fetch(`${API_BASE}/api/v1/products?regionKey=${regionKey}&category=${product.category?.slug ?? ''}&limit=8`, { next: { revalidate: 300 } }).catch(() => null);
   const relatedData = relatedRes && relatedRes.ok ? await relatedRes.json().catch(() => ({ products: [] })) : { products: [] };
-  const related = ((relatedData.products || []) as ProductCardData[]).filter(p => p.id !== product.id).slice(0, 8);
+  const relatedBase = ((relatedData.products || []) as ProductCardData[]).filter(p => p.id !== product.id).slice(0, 8);
 
-  const bundleCompanions = [...related]
-    .filter(p => p.price <= product.price * 2)
-    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-    .slice(0, 2)
-    .map(p => ({
-      id: p.id,
-      slug: p.slug,
-      name: p.name,
-      unitPriceMinorUnits: Number(p.price),
-      currencyCode: String(p.currencyCode),
-      thumbnail: p.thumbnail ?? null,
-    }));
+  const bundleCompanions: Array<{ id: string; slug?: string; name: string; unitPriceMinorUnits: number; currencyCode: string; thumbnail: string | null }> =
+    companions.length > 0
+      ? companions
+          .filter(c => c.inStock && (c.reason === 'authored' || c.reason === 'similar'))
+          .slice(0, 2)
+          .map(c => ({
+            id: c.id,
+            slug: c.slug,
+            name: c.name,
+            unitPriceMinorUnits: Number(c.priceMinorUnits),
+            currencyCode: String(c.currencyCode),
+            thumbnail: c.thumbnail ?? null,
+          }))
+      : [...relatedBase]
+          .filter(p => p.price <= product.price * 2)
+          .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+          .slice(0, 2)
+          .map(p => ({
+            id: p.id,
+            slug: p.slug,
+            name: p.name,
+            unitPriceMinorUnits: Number(p.price),
+            currencyCode: String(p.currencyCode),
+            thumbnail: p.thumbnail ?? null,
+          }));
+
+  const companionIds = new Set(bundleCompanions.map(c => c.id));
+  const related: ProductCardData[] = companions.length > 0
+    ? companions.filter(c => c.inStock && c.reason === 'similar' && !companionIds.has(c.id)).slice(0, 8).map(c => ({
+        id: c.id,
+        slug: c.slug,
+        name: c.name,
+        thumbnail: c.thumbnail ?? undefined,
+        price: c.priceMinorUnits,
+        currencyCode: c.currencyCode,
+        rating: c.rating,
+        reviewCount: 0,
+        inventoryCount: c.inStock ? 1 : 0,
+        vendor: c.vendorName && c.vendorSlug ? { storeName: c.vendorName, slug: c.vendorSlug } : null,
+      }))
+    : relatedBase;
 
   const protectionTiers = [
     { id: 'care-1', title: '1 year StoreCare protection', months: 12 },

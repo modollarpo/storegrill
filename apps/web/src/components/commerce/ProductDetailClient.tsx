@@ -96,7 +96,7 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_440px] gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-4 lg:gap-6">
       {/* -- Image Gallery -- */}
       <div className="min-w-0">
         <PdpImageGallery images={images} productName={product.name} discountPct={discountPct} />

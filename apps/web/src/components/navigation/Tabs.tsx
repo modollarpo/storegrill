@@ -64,7 +64,7 @@ export function Tabs({ items, initial, className, tablistClassName, panelClassNa
         aria-label="Product information"
         onKeyDown={onKeyDown}
         className={cn(
-          'sticky top-14 z-10 -mx-6 px-6 bg-surface/95 backdrop-blur-sm border-b border-smoke-150 shadow-sticky',
+          'sticky top-14 z-10 -mx-6 px-6 md:-mx-8 md:px-8 rounded-t-2xl bg-surface/95 backdrop-blur-sm border-b border-smoke-150 shadow-sticky',
           tablistClassName
         )}
       >

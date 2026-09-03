@@ -43,7 +43,7 @@ One brand color owns everything interactive. Errors are never brand-colored:
 
 ## Component inventory (storefront)
 
-AnnouncementBar (marquee, 24h dismiss cookie) · Header (utility bar, mega categories strip, search, region/account/basket) · Footer (newsletter, 5 columns, PaymentLogos, legal) · CampaignHero promo grid · CategoryQuickNav chips · ProductCard · DealsOfTheDay + Countdown chip · PromoSlider · TrustBar (SVG icons) · RecentlyViewed · CartDrawer (focus-trapped) · PriceDisplay · AddToCartButton · WishlistButton · Badge · StarRating · Toast · Skeleton/SkeletonProductGrid · Drawer · Button/Input/Select · CookieBanner.
+AnnouncementBar (marquee, 24h dismiss cookie) · Header (utility bar, mega categories strip, search, region/account/basket) · Footer (newsletter, 5 columns, PaymentLogos, legal) · CampaignHero promo grid · CategoryQuickNav chips · ProductCard · DealsOfTheDay + Countdown chip · TrustBar (SVG icons) · RecentlyViewed · CartDrawer (focus-trapped) · PriceDisplay · AddToCartButton · WishlistButton · Badge · StarRating · Toast · Skeleton/SkeletonProductGrid · Drawer · Button/Input/Select · CookieBanner.
 
 ## Verification
 

@@ -16,27 +16,15 @@ import {
   RecommendedForYou,
   RegionalTrust,
   BrandLogoBar,
-  PromoBanner3Up,
   CategoryBannerWithProducts,
   Testimonials,
   AppDownloadBanner,
-  FeaturedCollections,
-  PromoSlider,
-  type PromoBannerItem,
   type QuickNavItem,
   type DealCardData,
   type TestimonialItem,
-  type FeaturedCollection,
-  type PromoTile,
 } from '@/components/home/Sections';
 
 export const revalidate = 60;
-
-const PROMO_GRADIENTS = [
-  'from-ember-deep to-ember',
-  'from-midnight to-charcoal',
-  'from-tealink to-tealink',
-];
 
 interface PageProps {
   params: Record<string, never>;
@@ -141,36 +129,50 @@ interface RawVendor {
 
 interface HomeData {
   products: FeaturedProduct[];
+  newArrivals: FeaturedProduct[];
+  topRated: FeaturedProduct[];
   deals: Array<Record<string, unknown>>;
   vendors: RawVendor[];
   ok: boolean;
 }
 
 async function fetchHome(regionKey: string): Promise<HomeData> {
+  const productList = (sort: string, limit: number) =>
+    `${API_BASE}/api/v1/products?regionKey=${regionKey}&sort=${sort}&limit=${limit}`;
   try {
-    const [productsRes, dealsRes, vendorsRes] = await Promise.all([
-      fetch(`${API_BASE}/api/v1/products/featured?regionKey=${regionKey}`, { next: { revalidate: 60 } }),
+    const [productsRes, newArrivalsRes, topRatedRes, dealsRes, vendorsRes] = await Promise.all([
+      fetch(productList('popular', 24), { next: { revalidate: 60 } }),
+      fetch(productList('newest', 12), { next: { revalidate: 60 } }),
+      fetch(productList('rating', 12), { next: { revalidate: 60 } }),
       fetch(`${API_BASE}/api/v1/deals?regionKey=${regionKey}&enabled=true`, { next: { revalidate: 60 } }),
       fetch(`${API_BASE}/api/v1/vendors?limit=3&status=ACTIVE`, { next: { revalidate: 300 } }),
     ]);
-    const productsData = productsRes.ok ? (await productsRes.json()) as { products?: FeaturedProduct[] } : { products: [] as FeaturedProduct[] };
+    const readProducts = async (res: Response) =>
+      res.ok ? ((await res.json().catch(() => ({ products: [] as FeaturedProduct[] }))) as { products?: FeaturedProduct[] }) : { products: [] as FeaturedProduct[] };
+    const productsData = await readProducts(productsRes);
+    const newArrivalsData = await readProducts(newArrivalsRes);
+    const topRatedData = await readProducts(topRatedRes);
     const dealsData = dealsRes.ok ? (await dealsRes.json().catch(() => ({ deals: [] as Array<Record<string, unknown>> }))) as { deals?: Array<Record<string, unknown>> } : { deals: [] as Array<Record<string, unknown>> };
     const vendorsData = vendorsRes.ok ? (await vendorsRes.json().catch(() => ({ vendors: [] as RawVendor[] }))) as { vendors?: RawVendor[] } : { vendors: [] as RawVendor[] };
     return {
       products: productsData.products ?? [],
+      newArrivals: newArrivalsData.products ?? [],
+      topRated: topRatedData.products ?? [],
       deals: dealsData.deals ?? [],
       vendors: vendorsData.vendors ?? [],
       ok: true,
     };
   } catch {
-    return { products: [], deals: [], vendors: [], ok: false };
+    return { products: [], newArrivals: [], topRated: [], deals: [], vendors: [], ok: false };
   }
 }
 
 export default async function HomePage() {
   const { regionKey, language } = await getRequestContext();
-  const { products, deals, vendors } = await fetchHome(regionKey);
-  const localized = await localizeProducts(products.slice(0, 8), language);
+  const { products, newArrivals, topRated, deals, vendors } = await fetchHome(regionKey);
+  const localized = await localizeProducts(products, language);
+  const localizedNewArrivals = await localizeProducts(newArrivals, language);
+  const localizedTopRated = await localizeProducts(topRated, language);
   const promo = regionPromoContent(regionKey);
   const dealCards = dealsToCards(deals);
   const regionCfg = regionConfig(regionKey);
@@ -193,22 +195,6 @@ export default async function HomePage() {
     .filter(c => c.minPrice > 0)
     .map(c => ({ name: c.name, slug: c.slug }));
 
-  const promoBanners: PromoBannerItem[] = categoryRows.size > 0
-    ? Array.from(categoryRows.values())
-        .filter(c => c.minPrice > 0)
-        .sort((a, b) => b.minPrice - a.minPrice)
-        .slice(0, 3)
-        .map((c, i) => ({
-          eyebrow: `Available in ${promo.currency}`,
-          title: c.name,
-          cta: `Shop ${c.name}`,
-          href: `/products?category=${encodeURIComponent(c.slug)}`,
-          bg: PROMO_GRADIENTS[i % PROMO_GRADIENTS.length],
-          fromPriceMinorUnits: c.minPrice,
-          currency: promo.currency,
-        }))
-    : [];
-
   const spotlightVendors = vendors
     .filter(v => v.status === 'ACTIVE')
     .slice(0, 3)
@@ -221,7 +207,7 @@ export default async function HomePage() {
       description: v.description ? String(v.description) : undefined,
     }));
 
-  const featuredCards: ProductCardData[] = localized.slice(0, 8).map(p => ({
+  const featuredCards: ProductCardData[] = localized.slice(12, 20).map(p => ({
     id: p.id,
     name: p.name,
     slug: p.slug,
@@ -233,42 +219,6 @@ export default async function HomePage() {
     reviewCount: p.reviewCount,
     vendor: p.vendor ?? undefined,
   }));
-
-  const promoSlides: PromoTile[] = localized
-    .filter(p => (p.thumbnail ?? p.images?.[0]))
-    .slice(0, 8)
-    .map(p => ({
-      src: p.thumbnail ?? p.images?.[0] ?? '',
-      label: p.name,
-      href: `/products/${p.slug ?? p.id}`,
-    }));
-
-  const collections: FeaturedCollection[] = (() => {
-    const byCat = new Map<string, FeaturedProduct[]>();
-    for (const p of localized) {
-      const catSlug = p.category?.slug;
-      if (!catSlug || !(p.thumbnail ?? p.images?.[0])) continue;
-      if (!byCat.has(catSlug)) byCat.set(catSlug, []);
-      byCat.get(catSlug)!.push(p);
-    }
-    return [...byCat.entries()]
-      .filter(([, prods]) => prods.length >= 2)
-      .sort((a, b) => b[1].length - a[1].length)
-      .slice(0, 2)
-      .map(([, prods]) => {
-        const cat = prods[0].category;
-        return {
-          icon: prods[0].thumbnail ?? prods[0].images?.[0] ?? '',
-          title: `${cat?.name ?? 'Collection'} picks`,
-          subtitle: `Hand-picked ${(cat?.name ?? 'products').toLowerCase()} from trusted vendors`,
-          tiles: prods.slice(0, 4).map(p => ({
-            src: p.thumbnail ?? p.images?.[0] ?? '',
-            label: p.name,
-            href: `/products/${p.slug ?? p.id}`,
-          })),
-        };
-      });
-  })();
 
   const testimonials: TestimonialItem[] = [
     { name: 'Aisha M.', role: 'Verified buyer · UK', avatar: '/testimonials/avatar-1.png', quote: 'Delivery was faster than promised and the price beat every high street option. The order tracking updates were spot on.' },
@@ -311,31 +261,28 @@ export default async function HomePage() {
                 label: 'What\'s Trending Right Now',
                 products: [...localized]
                   .sort((a, b) => (b.rating ?? 0) * (b.reviewCount ?? 0) - (a.rating ?? 0) * (a.reviewCount ?? 0))
+                  .slice(0, 8)
                   .map(product => (
                     <ProductCard key={`trending-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'trending' }} />
                   )),
               },
               {
                 label: 'New Arrivals',
-                products: [...localized].reverse().map(product => (
+                products: localizedNewArrivals.map(product => (
                   <ProductCard key={`new-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'new' }} />
                 )),
               },
               {
                 label: 'Best Sellers',
-                products: [...localized]
-                  .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
-                  .map(product => (
-                    <ProductCard key={`best-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'bestseller' }} />
-                  )),
+                products: localized.slice(0, 8).map(product => (
+                  <ProductCard key={`best-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'bestseller' }} />
+                )),
               },
               {
                 label: 'Top Rated',
-                products: [...localized]
-                  .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-                  .map(product => (
-                    <ProductCard key={`top-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined }} />
-                  )),
+                products: localizedTopRated.map(product => (
+                  <ProductCard key={`top-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined }} />
+                )),
               },
               {
                 label: 'On Sale',
@@ -349,21 +296,6 @@ export default async function HomePage() {
           />
         </div>
       </section>
-
-      {promoSlides.length > 5 && (
-        <PromoSlider
-          id="trending-categories"
-          heading="Trending this week"
-          subtitle="Shop the styles and categories customers can't stop raving about"
-          tiles={promoSlides}
-        />
-      )}
-
-      <PromoBanner3Up banners={promoBanners} />
-
-      {collections.length >= 2 && (
-        <FeaturedCollections collections={collections} />
-      )}
 
       <RecommendedForYou products={featuredCards} />
 

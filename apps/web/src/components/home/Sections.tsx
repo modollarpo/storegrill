@@ -166,9 +166,9 @@ export function CampaignHero({ dealTicker = [], regionKey }: { dealTicker?: Deal
   return (
     <section aria-label="Featured campaign" className="relative overflow-hidden bg-midnight">
       {/* Abstract Mesh Background Elements */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[120%] bg-ember rounded-full blur-[120px] opacity-60 pointer-events-none mix-blend-screen" />
-      <div className="absolute top-[20%] right-[-10%] w-[40%] h-[100%] bg-deal rounded-full blur-[140px] opacity-30 pointer-events-none mix-blend-screen" />
-      <div className="absolute bottom-[-30%] left-[20%] w-[60%] h-[80%] bg-ember-light rounded-full blur-[100px] opacity-40 pointer-events-none mix-blend-screen" />
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[120%] bg-ember rounded-full blur-[120px] opacity-70 pointer-events-none mix-blend-screen" />
+      <div className="absolute top-[20%] right-[-10%] w-[40%] h-[100%] bg-ember-dark rounded-full blur-[140px] opacity-40 pointer-events-none mix-blend-screen" />
+      <div className="absolute bottom-[-30%] left-[20%] w-[60%] h-[80%] bg-ember-light rounded-full blur-[100px] opacity-50 pointer-events-none mix-blend-screen" />
       <div className="relative container-fluid py-12 md:py-20">
         <div className="grid md:grid-cols-1 gap-10">
           <div>
@@ -462,48 +462,6 @@ export function TabbedProductCarousel({ tabs }: { tabs: TabbedProductTab[] }) {
           </ul>
           <NavBtn dir={-1} label="Previous products" onClick={() => snapScroll(scroller.current, -1)} />
           <NavBtn dir={1} label="Next products" onClick={() => snapScroll(scroller.current, 1)} />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── §7 PromoBanner3Up ───────────────────────────────────────────────────────
-
-export interface PromoBannerItem {
-  eyebrow: string;
-  title: string;
-  cta: string;
-  href: string;
-  bg: string;
-  fromPriceMinorUnits?: number;
-  currency?: string;
-}
-
-export function PromoBanner3Up({ banners = [] }: { banners?: PromoBannerItem[] }) {
-  if (banners.length === 0) return null;
-  const priceOf = (b: PromoBannerItem) =>
-    b.fromPriceMinorUnits != null && b.currency
-      ? new Intl.NumberFormat('en-US', { style: 'currency', currency: b.currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(b.fromPriceMinorUnits / 100)
-      : undefined;
-  return (
-    <section aria-label="Featured categories" className="bg-surface border-b border-border">
-      <div className="container-fluid py-10 md:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {banners.map(banner => (
-            <Link key={banner.href} href={banner.href} className="group relative overflow-hidden rounded-2xl min-h-[200px] md:min-h-[240px] flex flex-col justify-end p-6">
-              <div className={`absolute inset-0 bg-gradient-to-br ${banner.bg}`} />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              <div className="relative z-10">
-                <p className="text-xs font-bold text-white/60 uppercase tracking-widest mb-1">{banner.eyebrow}</p>
-                <h3 className="text-xl md:text-2xl font-extrabold text-white mb-4 leading-tight">{banner.title}</h3>
-                {priceOf(banner) && <p className="text-sm font-bold text-white/70 mb-4">From {priceOf(banner)}</p>}
-                <span className="inline-flex items-center gap-1.5 h-9 px-5 rounded-full bg-white text-ember text-xs font-extrabold shadow-lg group-hover:bg-white/90 transition-all">
-                  {banner.cta} <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-                </span>
-              </div>
-            </Link>
-          ))}
         </div>
       </div>
     </section>
@@ -843,74 +801,3 @@ export function RecentlyViewed({ currentSlug }: { currentSlug?: string }) {
   );
 }
 
-// ─── Preserved: PromoSlider, FeaturedCollections ──────────────────────────────
-
-export interface PromoTile { src: string; label: string; href: string; }
-export interface PromoSliderProps { id: string; heading: string; subtitle?: string; background?: string; tiles: PromoTile[]; }
-
-export function PromoSlider({ id, heading, subtitle, background = 'var(--color-surface)', tiles }: PromoSliderProps) {
-  const scroller = useRef<HTMLUListElement>(null);
-  return (
-    <section aria-labelledby={`${id}-heading`} className="border-b border-border py-8 md:py-12" style={{ background }}>
-      <div className="container-fluid">
-        <div className="mb-6 text-center">
-          <h2 id={`${id}-heading`} className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight">{heading}</h2>
-          {subtitle && <p className="mt-1 text-sm text-text-secondary">{subtitle}</p>}
-        </div>
-        <div className="relative group/slider">
-          <ul ref={scroller} data-testid={`${id}-scroller`} className="flex gap-4 pb-2 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-pl-0" role="list">
-            {tiles.map(tile => (
-              <li key={tile.src} className="w-full shrink-0 snap-start sm:w-[calc(25%-12px)]">
-                <Link href={tile.href} aria-label={tile.label} className="group block overflow-hidden rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-                  <span className="relative block aspect-[510/440] bg-surface-sunken overflow-hidden">
-                    <Image src={tile.src} alt="" fill sizes="25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                  </span>
-                  <span className="flex items-center justify-center min-h-[56px] bg-surface px-4 py-3 text-center text-sm font-bold text-text-primary group-hover:text-ember transition-colors">{tile.label}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <NavBtn dir={-1} label={`Previous ${id}`} onClick={() => snapScroll(scroller.current, -1)} />
-          <NavBtn dir={1} label={`Next ${id}`} onClick={() => snapScroll(scroller.current, 1)} />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export interface FeaturedCollection { icon: string; title: string; subtitle: string; aspect?: string; tiles: PromoTile[]; }
-
-export function FeaturedCollections({ collections }: { collections: FeaturedCollection[] }) {
-  return (
-    <section aria-labelledby="featured-collections-heading" className="border-b border-border py-10 md:py-12">
-      <div className="container-fluid">
-        <h2 id="featured-collections-heading" className="text-2xl md:text-3xl font-extrabold text-text-primary mb-6 tracking-tight">Featured collections</h2>
-        <div className="grid md:grid-cols-2 gap-8 md:gap-12">
-          {collections.map(col => (
-            <div key={col.title} className="rounded-2xl border border-border bg-surface p-6 md:p-8">
-              <div className="flex items-center gap-5 mb-8">
-                <span className="w-16 h-16 rounded-full grid place-items-center shrink-0 bg-ember/10">
-                  <Image src={col.icon} alt="" width={38} height={38} className="rounded-full" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-xl font-extrabold text-text-primary leading-tight mb-1">{col.title}</h3>
-                  <p className="text-sm text-text-secondary leading-snug">{col.subtitle}</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                {col.tiles.map(tile => (
-                  <Link key={tile.src} href={tile.href} aria-label={tile.label} className="group block overflow-hidden rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-ember">
-                    <span className={`relative block ${col.aspect ?? 'aspect-[3/2]'} bg-surface-sunken overflow-hidden`}>
-                      <Image src={tile.src} alt="" fill sizes="22vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                    </span>
-                    <span className="flex items-center min-h-[64px] bg-surface px-4 py-3 text-sm font-bold text-text-primary group-hover:text-ember transition-colors">{tile.label}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}

@@ -214,6 +214,8 @@ model Product {
   dealVariants     DealVariant[]
   importJobResults ImportJobResult[]
   wishlistItems    WishlistItem[]
+  compatibleWith   Product[]        @relation("ProductCompanions")
+  relatedTo        Product[]        @relation("ProductCompanions")
 
   @@unique([vendorId, sku])
 }

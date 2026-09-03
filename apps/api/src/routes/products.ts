@@ -6,6 +6,7 @@ import { authenticate, optionalAuth, authorize, AuthRequest } from '../middlewar
 import { cache, TTL } from '../lib/cache.js';
 import { ProductFilterSchema } from '@Storegrill/shared';
 import { slugify } from '../utils/slugify.js';
+import { getCompanions } from '../lib/companions.js';
 
 const router = Router();
 
@@ -235,6 +236,70 @@ router.get('/:identifier', optionalAuth, async (req: AuthRequest, res: Response)
   };
 
   cache.set(cacheKey, payload, TTL.product);
+  res.setHeader('X-Cache', 'MISS');
+  res.json(payload);
+});
+
+router.get('/:identifier/companions', optionalAuth, async (req: AuthRequest, res: Response) => {
+  const { identifier } = req.params;
+  const regionKey = (req.query.regionKey as string) || 'UK';
+  const limit = Math.max(1, Math.min(24, Number(req.query.limit) || 6));
+  const cacheKey = `companions:${identifier}:${regionKey}:${limit}`;
+
+  const cached = cache.get<object>(cacheKey);
+  if (cached) {
+    res.setHeader('X-Cache', 'HIT');
+    return res.json(cached);
+  }
+
+  const candidates = await getCompanions(identifier, { limit });
+
+  if (candidates.length === 0) {
+    const payload = { companions: [] };
+    cache.set(cacheKey, payload, TTL.products);
+    res.setHeader('X-Cache', 'MISS');
+    return res.json(payload);
+  }
+
+  const productIds = candidates.map(c => c.productId);
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds }, status: 'ACTIVE' },
+    include: {
+      vendor: { select: { storeName: true, slug: true } },
+      category: { select: { name: true, slug: true } },
+      regionPrices: { where: { regionKey }, take: 1 },
+      variants: { select: { stock: true } },
+    },
+  });
+
+  const orderById = new Map(products.map((p, idx) => [p.id, idx]));
+  const companions = candidates
+    .filter(c => products.some(p => p.id === c.productId))
+    .sort((a, b) => (orderById.get(a.productId) ?? 0) - (orderById.get(b.productId) ?? 0))
+    .map(c => {
+      const p = products.find(x => x.id === c.productId)!;
+      return {
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        thumbnail: p.thumbnail ?? null,
+        priceMinorUnits: p.regionPrices[0]
+          ? Number(p.regionPrices[0].priceMinorUnits)
+          : Number(p.basePriceMinorUnits),
+        currencyCode: p.regionPrices[0]?.currencyCode || p.currencyCode,
+        rating: Number(p.rating),
+        reviewCount: p.reviewCount,
+        inStock: p.variants.some(v => v.stock > 0),
+        vendorSlug: p.vendor?.slug ?? null,
+        vendorName: p.vendor?.storeName ?? null,
+        categorySlug: p.category?.slug ?? null,
+        reason: c.reason,
+        weight: c.weight,
+      };
+    });
+
+  const payload = { companions };
+  cache.set(cacheKey, payload, TTL.products);
   res.setHeader('X-Cache', 'MISS');
   res.json(payload);
 });

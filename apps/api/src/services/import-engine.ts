@@ -238,6 +238,9 @@ async function runImport(jobId: string): Promise<void> {
       });
       adapted = adaptAosomUkRows(merged);
       profile = AOSOM_UK_PROFILE;
+      console.log('[DIAG] adapted sellable=', adapted.products.length, 'outOfStock=', adapted.outOfStock.length, 'errors=', adapted.errors.length, 'merged=', merged.length);
+      const _sample = merged[0] ?? {};
+      console.log('[DIAG] first merged row sku=', JSON.stringify(_sample).slice(0, 300));
     }
 
     await prisma.importJob.update({
@@ -247,6 +250,7 @@ async function runImport(jobId: string): Promise<void> {
 
     await setPhase(jobId, 'DIFFING');
     const planned = await planChanges(job.vendorId, adapted.products, profile);
+    console.log('[DIAG] planned.length=', planned.length, 'actionCounts=', JSON.stringify(planned.reduce((a: any, p: any) => { a[p.action] = (a[p.action] || 0) + 1; return a; }, {})));
 
     const summary = await executePlan(
       jobId,

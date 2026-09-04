@@ -8,6 +8,8 @@ import type {
 import { OUT_OF_STOCK_THRESHOLD } from './costway.js';
 import { deduceAosomCostwayCategory } from './aosom-uk.js';
 
+const LOCAL_STOCK_THRESHOLD = OUT_OF_STOCK_THRESHOLD === undefined ? 20 : OUT_OF_STOCK_THRESHOLD;
+
 export const AOSOM_EU_FEED_URL =
   'https://feed.aosomcdn.com/390/201_feed/0/0/ed/056920.txt';
 
@@ -256,7 +258,7 @@ export function adaptAosomRows(rows: AosomFeedRow[]): AdaptResult {
   const outOfStock: NormalizedProduct[] = [];
   const sellable: NormalizedProduct[] = [];
   for (const p of products) {
-    (p.variants.every(v => v.stock >= OUT_OF_STOCK_THRESHOLD) ? sellable : outOfStock).push(p);
+    (p.variants.every(v => v.stock >= LOCAL_STOCK_THRESHOLD) ? sellable : outOfStock).push(p);
   }
 
   return { products: sellable, outOfStock, errors };

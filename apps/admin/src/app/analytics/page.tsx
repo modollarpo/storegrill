@@ -6,6 +6,8 @@ import { AdminShell, PageHeader } from '@/components/AdminShell';
 
 interface Analytics {
   totals: { revenue: number; orders: number };
+  funnel: Array<{ stage: string; count: number; pct: number }>;
+  importStats: { jobsByStatus: Record<string, number>; successRows: number; errorRows: number };
   revenueByDay: Array<{ date: string; revenue: number; orders: number }>;
   revenueByRegion: Array<{ regionKey: string; revenue: number; orders: number }>;
   salesByVendor: Array<{ vendorId: string; storeName: string; revenue: number; units: number }>;
@@ -62,6 +64,48 @@ function AnalyticsInner() {
             <div className="bg-surface-raised rounded-xl border border-slate-200 p-5">
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Delivered orders</p>
               <p className="text-2xl font-extrabold text-slate-900 mt-1 [font-variant-numeric:tabular-nums]">{data.totals.orders.toLocaleString()}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="bg-surface-raised rounded-xl border border-slate-200 p-5">
+              <h2 className="text-sm font-bold text-slate-900 mb-4">Conversion funnel</h2>
+              <ol className="space-y-3">
+                {data.funnel.map((s, i) => (
+                  <li key={s.stage} className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-semibold text-slate-700">{s.stage}</span>
+                        <span className="text-slate-500 [font-variant-numeric:tabular-nums]">{s.count.toLocaleString()} <span className="text-slate-400">({s.pct}%)</span></span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                        <div className="h-full rounded-full bg-indigo-500" style={{ width: `${s.pct}%` }} />
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            <div className="bg-surface-raised rounded-xl border border-slate-200 p-5">
+              <h2 className="text-sm font-bold text-slate-900 mb-4">Import jobs</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {(['COMPLETED', 'RUNNING', 'PENDING', 'FAILED'] as const).map(status => (
+                  <div key={status} className="rounded-lg border border-slate-100 bg-slate-50/60 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{status}</p>
+                    <p className="text-xl font-extrabold text-slate-900 mt-1 [font-variant-numeric:tabular-nums]">{data.importStats.jobsByStatus[status] ?? 0}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex items-center justify-between text-xs">
+                <span className="text-slate-500">Rows imported</span>
+                <span className="font-bold text-emerald-600 [font-variant-numeric:tabular-nums]">{data.importStats.successRows.toLocaleString()}</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs">
+                <span className="text-slate-500">Rows failed</span>
+                <span className="font-bold text-rose-600 [font-variant-numeric:tabular-nums]">{data.importStats.errorRows.toLocaleString()}</span>
+              </div>
             </div>
           </div>
 

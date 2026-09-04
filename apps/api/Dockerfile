@@ -16,6 +16,8 @@ FROM deps AS builder
 COPY tsconfig.base.json ./
 COPY packages/shared packages/shared
 COPY apps/api apps/api
+ARG CACHEBUST
+RUN echo "cachebust=$CACHEBUST" > /tmp/cachebust
 RUN npm run db:generate -w apps/api
 RUN npm run build -w packages/shared
 RUN npm run build -w apps/api

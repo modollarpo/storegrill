@@ -63,6 +63,7 @@ jobs:
       - name: Build & push API image
         run: |
           docker build \
+            --build-arg CACHEBUST=${{ github.run_id }} \
             -t ${{ env.ACR }}/api:${{ github.event.inputs.api_version }} \
             -f apps/api/Dockerfile .
           docker push ${{ env.ACR }}/api:${{ github.event.inputs.api_version }}
@@ -70,6 +71,7 @@ jobs:
       - name: Build & push Web image
         run: |
           docker build \
+            --build-arg CACHEBUST=${{ github.run_id }} \
             --build-arg NEXT_PUBLIC_API_URL=${{ matrix.api_url }} \
             -t ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ github.event.inputs.web_version }} \
             -f apps/web/Dockerfile .

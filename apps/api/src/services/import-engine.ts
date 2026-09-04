@@ -239,8 +239,18 @@ async function runImport(jobId: string): Promise<void> {
       adapted = adaptAosomUkRows(merged);
       profile = AOSOM_UK_PROFILE;
       console.log('[DIAG] adapted sellable=', adapted.products.length, 'outOfStock=', adapted.outOfStock.length, 'errors=', adapted.errors.length, 'merged=', merged.length);
-      const _sample = merged[0] ?? {};
-      console.log('[DIAG] first merged row sku=', JSON.stringify(_sample).slice(0, 300));
+      const _first = merged[0] ?? null;
+      console.log('[DIAG] first merged row sku=', JSON.stringify(_first).slice(0, 500));
+      await prisma.importJobResult.createMany({
+        data: merged.slice(0, 5).map((r, i) => ({
+          jobId,
+          rowNumber: i + 1,
+          status: 'DEBUG',
+          message: JSON.stringify({ sku: r.sku, stock: r.stock, price: r.sellPriceMinorUnits, isFinite: Number.isFinite(r.stock), typeofStock: typeof r.stock }),
+        })),
+      });
+      const _ctx = { sellable: adapted.products.length, outOfStock: adapted.outOfStock.length, merged: merged.length, errors: adapted.errors.length, threshold: Number((await import('../importers/costway.js')).OUT_OF_STOCK_THRESHOLD) };
+      console.log('[DIAG] context', JSON.stringify(_ctx));
     }
 
     await prisma.importJob.update({

@@ -582,7 +582,7 @@ router.get('/imports', async (req: AuthRequest, res: Response) => {
 router.get('/analytics', async (_req: AuthRequest, res: Response) => {
   const delivered = { status: 'DELIVERED' };
 
-  const [totals, regionGroup, recentItems] = await Promise.all([
+  const [totals, regionGroup, recentItems, funnel, importStats] = await Promise.all([
     prisma.order.aggregate({
       where: delivered,
       _sum: { totalMinorUnits: true },
@@ -606,6 +606,23 @@ router.get('/analytics', async (_req: AuthRequest, res: Response) => {
         vendor: { select: { storeName: true } },
       },
     }),
+    (async () => {
+      const [cartCount, orderByStatus, paidCount] = await Promise.all([
+        prisma.cart.count(),
+        prisma.order.groupBy({ by: ['status'], _count: true }),
+        prisma.payment.count({ where: { status: 'CAPTURED' } }),
+      ]);
+      return { cartCount, orderByStatus, paidCount };
+    })(),
+    (async () => {
+      const [jobSummary, rowSummary] = await Promise.all([
+        prisma.importJob.groupBy({ by: ['status'], _count: true }),
+        prisma.importJob.aggregate({
+          _sum: { successRows: true, errorRows: true },
+        }),
+      ]);
+      return { jobSummary, rowSummary };
+    })(),
   ]);
 
   const byVendor = new Map<string, { storeName: string; revenue: number; units: number }>();
@@ -659,11 +676,27 @@ router.get('/analytics', async (_req: AuthRequest, res: Response) => {
     orders: r._count,
   }));
 
+  const statusCounts: Record<string, number> = {};
+  for (const row of funnel.orderByStatus) statusCounts[row.status] = row._count;
+
+  const funnelSteps = [
+    { stage: 'Carts', count: funnel.cartCount, pct: 100 },
+    { stage: 'Orders', count: statusCounts.PENDING ?? 0, pct: funnel.cartCount ? Math.round(((statusCounts.PENDING ?? 0) / funnel.cartCount) * 100) : 0 },
+    { stage: 'Paid', count: funnel.paidCount, pct: funnel.cartCount ? Math.round((funnel.paidCount / funnel.cartCount) * 100) : 0 },
+    { stage: 'Delivered', count: statusCounts.DELIVERED ?? 0, pct: funnel.cartCount ? Math.round(((statusCounts.DELIVERED ?? 0) / funnel.cartCount) * 100) : 0 },
+  ];
+
   res.json({
     analytics: {
       totals: {
         revenue: Number(totals._sum.totalMinorUnits || 0),
         orders: totals._count,
+      },
+      funnel: funnelSteps,
+      importStats: {
+        jobsByStatus: Object.fromEntries(importStats.jobSummary.map((j: any) => [j.status, j._count])),
+        successRows: Number(importStats.rowSummary._sum.successRows || 0),
+        errorRows: Number(importStats.rowSummary._sum.errorRows || 0),
       },
       revenueByDay: series,
       revenueByRegion: regionBreakdown,

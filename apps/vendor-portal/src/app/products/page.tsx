@@ -26,6 +26,7 @@ export default function VendorCatalogPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftStock, setDraftStock] = useState('0');
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = useCallback(() => {
     api<{ products: VendorProduct[] }>('/api/v1/vendors/me/products')
@@ -34,6 +35,21 @@ export default function VendorCatalogPage() {
   }, []);
 
   useEffect(load, [load]);
+
+  async function deleteProduct(p: VendorProduct) {
+    if (deletingId) return;
+    if (!window.confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+    setDeletingId(p.id);
+    try {
+      await api(`/api/v1/products/${p.id}`, { method: 'DELETE' });
+      toastSuccess(`Deleted ${p.sku}`);
+      load();
+    } catch (e) {
+      toastError(e instanceof ApiError ? e.message : 'Delete failed');
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   function startEdit(p: VendorProduct) {
     setEditingId(p.id);
@@ -137,11 +153,47 @@ export default function VendorCatalogPage() {
         ),
     },
     { key: 'status', label: 'Status', render: p => <StatusBadge status={p.status} /> },
+    {
+      key: 'actions',
+      label: 'Actions',
+      align: 'right',
+      render: p => (
+        <span className="inline-flex items-center gap-3 justify-end">
+          <Link
+            href={`/products/${p.id}/edit`}
+            data-testid={`edit-${p.sku}`}
+            className="text-indigo-600 font-bold hover:underline"
+          >
+            Edit
+          </Link>
+          <button
+            type="button"
+            onClick={() => void deleteProduct(p)}
+            disabled={deletingId === p.id}
+            aria-label={`Delete ${p.name}`}
+            className="text-rose-600 font-bold hover:underline disabled:opacity-50"
+          >
+            Delete
+          </button>
+        </span>
+      ),
+    },
   ];
 
   return (
     <VendorShell>
       <PageHeader title="Catalog" subtitle="Click a stock count to adjust inventory — every change is ledger-logged" />
+
+      <div className="mb-4 flex items-center justify-end">
+        <Link
+          href="/products/new"
+          data-testid="new-product"
+          className="inline-flex items-center gap-1.5 h-9 px-4 rounded-md bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M12 5v14m-7-7h14" /></svg>
+          New product
+        </Link>
+      </div>
 
       {error && <p role="alert" className="mb-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-md px-3 py-2">{error}</p>}
 
@@ -151,7 +203,9 @@ export default function VendorCatalogPage() {
         loading={products === null}
         rowKey={p => p.id}
         emptyTitle="Your catalog is empty"
-        emptyAction={<Link href="/imports" className="text-xs font-semibold text-indigo-600 hover:underline">Bulk-import via CSV →</Link>}
+        emptyAction={
+          <Link href="/products/new" className="text-xs font-semibold text-indigo-600 hover:underline">Add your first product →</Link>
+        }
         caption="Products in your catalog"
       />
     </VendorShell>

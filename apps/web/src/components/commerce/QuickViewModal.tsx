@@ -31,7 +31,7 @@ export function QuickViewModal({ product, onClose }: { product: ProductCardData;
         <div className="w-full md:w-1/2 p-8 overflow-y-auto">
           <h2 className="text-2xl font-bold text-text-primary mb-2">{product.name}</h2>
           <div className="text-2xl font-bold text-text-primary mb-4">
-            <PriceDisplay amountMinorUnits={product.price} currencyCode={product.currencyCode} size="lg" />
+            <PriceDisplay amountMinorUnits={product.price} listMinorUnits={product.listPrice} currencyCode={product.currencyCode} size="lg" />
           </div>
           
           <div className="flex items-center gap-4 mb-6">
@@ -41,11 +41,11 @@ export function QuickViewModal({ product, onClose }: { product: ProductCardData;
                 <button onClick={() => setQuantity(Math.min(product.inventoryCount ?? 99, quantity + 1))} className="px-3 py-2">+</button>
             </div>
             <Button onClick={() => {
-                cart.addItem({ productId: product.id, name: product.name, slug: product.slug, image: product.thumbnail, unitPriceMinorUnits: product.price, currencyCode: product.currencyCode, quantity, categoryId: product.categoryId });
+                cart.addItem({ productId: product.id, name: product.name, slug: product.slug, image: product.thumbnail, unitPriceMinorUnits: product.price, listPriceMinorUnits: product.listPrice, currencyCode: product.currencyCode, quantity, categoryId: product.categoryId });
                 onClose();
             }}>Add to Cart</Button>
           </div>
-          <Button variant="outline" onClick={() => wishlist.toggle({ productId: product.id, name: product.name, slug: product.slug, image: product.thumbnail, unitPriceMinorUnits: product.price, currencyCode: product.currencyCode })}>
+          <Button variant="outline" onClick={() => wishlist.toggle({ productId: product.id, name: product.name, slug: product.slug, image: product.thumbnail, unitPriceMinorUnits: product.price, listPriceMinorUnits: product.listPrice, currencyCode: product.currencyCode })}>
             {wishlist.has(product.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
           </Button>
         </div>

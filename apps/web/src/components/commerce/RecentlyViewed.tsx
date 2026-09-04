@@ -11,6 +11,7 @@ interface RecentItem {
   slug: string;
   name: string;
   unitPriceMinorUnits: number;
+  listPriceMinorUnits?: number;
   currencyCode: string;
   thumbnail?: string;
 }
@@ -69,7 +70,7 @@ export function RecentlyViewed({ currentSlug }: { currentSlug?: string }) {
                 ) : null}
               </span>
               <span className="block text-xs font-semibold text-charcoal line-clamp-2 leading-snug">{item.name}</span>
-              <PriceDisplay amountMinorUnits={item.unitPriceMinorUnits} currencyCode={item.currencyCode} size="sm" />
+              <PriceDisplay amountMinorUnits={item.unitPriceMinorUnits} listMinorUnits={item.listPriceMinorUnits} currencyCode={item.currencyCode} size="sm" />
             </Link>
           </li>
         ))}

@@ -81,7 +81,7 @@ export default function CartPage() {
 
   if (cart.items.length === 0) {
     return (
-      <div className="container mx-auto max-w-[1460px] px-[30px] py-20 text-center" data-testid="empty-cart">
+      <div className="container-site py-20 text-center" data-testid="empty-cart">
         <div className="inline-flex items-center justify-center w-28 h-28 rounded-full bg-surface-sunken mb-8">
           <svg className="w-14 h-14 text-text-tertiary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
@@ -103,7 +103,7 @@ export default function CartPage() {
 
   return (
     <div className="bg-surface-sunken min-h-screen py-10">
-      <div className="container mx-auto max-w-[1460px] px-[30px]">
+      <div className="container-site py-6 md:py-10">
         <h1 className="text-2xl font-extrabold text-text-primary mb-8">
           Basket
           <span className="ml-2 text-base font-medium text-text-secondary">({cart.count} item{cart.count === 1 ? '' : 's'})</span>
@@ -164,7 +164,7 @@ export default function CartPage() {
                               type="button"
                               onClick={() => cart.setQuantity(line.productId, line.variantId, line.quantity - 1)}
                               aria-label="Decrease quantity"
-                              className="w-8 h-8 grid place-items-center font-bold hover:bg-surface-raised hover:text-ember transition-colors"
+                              className="w-9 h-9 grid place-items-center font-bold hover:bg-surface-raised hover:text-ember transition-colors"
                             >
                               −
                             </button>
@@ -173,14 +173,19 @@ export default function CartPage() {
                               type="button"
                               onClick={() => cart.setQuantity(line.productId, line.variantId, Math.min(line.quantity + 1, line.stock ?? 99))}
                               aria-label="Increase quantity"
-                              className="w-8 h-8 grid place-items-center font-bold hover:bg-surface-raised hover:text-ember transition-colors"
+                              className="w-9 h-9 grid place-items-center font-bold hover:bg-surface-raised hover:text-ember transition-colors"
                             >
                               +
                             </button>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right font-bold">
-                          <PriceDisplay amountMinorUnits={line.unitPriceMinorUnits * line.quantity} currencyCode={currency} size="sm" />
+                          <PriceDisplay
+                            amountMinorUnits={line.unitPriceMinorUnits * line.quantity}
+                            listMinorUnits={line.listPriceMinorUnits ? line.listPriceMinorUnits * line.quantity : undefined}
+                            currencyCode={currency}
+                            size="sm"
+                          />
                         </td>
                         <td className="px-6 py-4 text-center">
                           <button

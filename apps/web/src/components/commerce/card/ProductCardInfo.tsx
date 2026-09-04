@@ -54,14 +54,9 @@ export function ProductCardInfo({ product, href, locale }: ProductCardInfoProps)
           )}
         </div>
         {savingMinorUnits > 0 && (
-          <div className="flex flex-col items-end gap-0.5 shrink-0">
-            <span className="inline-flex items-center rounded-xs bg-feedback-success-bg text-feedback-success text-[11px] font-bold px-1.5 py-0.5">
-              {discountPct}% off
-            </span>
-            <span className="text-[11px] text-feedback-success font-semibold">
-              Save <PriceDisplay amountMinorUnits={savingMinorUnits} currencyCode={product.currencyCode} size="sm" locale={locale} />
-            </span>
-          </div>
+          <span className="inline-flex items-center rounded-full bg-deal text-white text-[11px] font-extrabold px-2.5 py-1 shrink-0">
+            -{discountPct}%
+          </span>
         )}
       </div>
     </div>

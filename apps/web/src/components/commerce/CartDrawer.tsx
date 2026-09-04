@@ -153,7 +153,7 @@ export function CartItemRow({ line, locale = 'en-US' }: { line: CartItemLine; lo
               type="button"
               onClick={() => setQuantity(line.productId, line.variantId, line.quantity - 1)}
               aria-label="Decrease quantity"
-              className="w-8 h-8 grid place-items-center font-bold hover:bg-surface-raised hover:text-action-primary transition-colors"
+              className="w-9 h-9 grid place-items-center font-bold hover:bg-surface-raised hover:text-action-primary transition-colors"
             >
               −
             </button>
@@ -162,12 +162,18 @@ export function CartItemRow({ line, locale = 'en-US' }: { line: CartItemLine; lo
               type="button"
               onClick={() => setQuantity(line.productId, line.variantId, Math.min(line.quantity + 1, line.stock ?? 99))}
               aria-label="Increase quantity"
-              className="w-8 h-8 grid place-items-center font-bold hover:bg-surface-raised hover:text-action-primary transition-colors"
+              className="w-9 h-9 grid place-items-center font-bold hover:bg-surface-raised hover:text-action-primary transition-colors"
             >
               +
             </button>
           </div>
-          <PriceDisplay amountMinorUnits={line.unitPriceMinorUnits * line.quantity} currencyCode={line.currencyCode} size="sm" locale={locale} />
+          <PriceDisplay
+            amountMinorUnits={line.unitPriceMinorUnits * line.quantity}
+            listMinorUnits={line.listPriceMinorUnits ? line.listPriceMinorUnits * line.quantity : undefined}
+            currencyCode={line.currencyCode}
+            size="sm"
+            locale={locale}
+          />
         </div>
         <button
           type="button"

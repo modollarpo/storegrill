@@ -42,13 +42,6 @@ export interface ProductCardProps {
   locale?: string;
 }
 
-const BADGE_STYLES: Record<string, string> = {
-  sale: 'bg-feedback-danger text-white',
-  new: 'bg-black text-white',
-  deal: 'bg-ember text-white',
-  sponsored: 'bg-surface text-text-secondary border border-border',
-  bestseller: 'bg-ember text-white',
-};
 
 const BADGE_LABELS: Record<string, string> = {
   sale: 'Sale',
@@ -73,7 +66,7 @@ export function ProductCard({ product, variant = 'grid', locale = 'en-US' }: Pro
         <div className="min-w-0 flex-1 flex flex-col justify-center">
           <p className="text-sm font-normal leading-snug line-clamp-2 text-text-primary group-hover:text-ember transition-colors">{product.name}</p>
           <div className="mt-1">
-            <PriceDisplay amountMinorUnits={product.price} currencyCode={product.currencyCode} size="sm" />
+            <PriceDisplay amountMinorUnits={product.price} listMinorUnits={product.listPrice} currencyCode={product.currencyCode} size="sm" />
           </div>
         </div>
       </Link>
@@ -112,9 +105,9 @@ function ListCard({ product, images, href, locale }: { product: ProductCardData;
   const discountPct = savingMinorUnits > 0 && product.listPrice ? Math.round((savingMinorUnits / product.listPrice) * 100) : 0;
 
   return (
-    <article aria-label={product.name} className="group flex gap-5 p-4 rounded-lg bg-surface shadow-card hover:shadow-md transition-shadow">
+    <article aria-label={product.name} className="group flex flex-col sm:flex-row gap-5 p-4 rounded-lg bg-surface shadow-card hover:shadow-md transition-shadow">
       <Link href={href} tabIndex={-1} aria-label={product.name} className="shrink-0">
-        <div className="relative w-[180px] h-[180px] overflow-hidden rounded-lg bg-surface-sunken">
+        <div className="relative w-full h-[180px] sm:w-[180px] sm:h-[180px] overflow-hidden rounded-lg bg-surface-sunken">
           {images[0] ? (
             <Image
               src={images[0]}
@@ -176,8 +169,8 @@ function ListCard({ product, images, href, locale }: { product: ProductCardData;
             </span>
           )}
           {savingMinorUnits > 0 && (
-            <span className="inline-flex items-center rounded-xs bg-feedback-success-bg text-feedback-success text-[11px] font-bold px-1.5 py-0.5">
-              {discountPct}% off
+            <span className="inline-flex items-center rounded-full bg-deal text-white text-[11px] font-extrabold px-2.5 py-1">
+              -{discountPct}%
             </span>
           )}
         </div>
@@ -191,8 +184,8 @@ function ListCard({ product, images, href, locale }: { product: ProductCardData;
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-2">
-        <WishlistButton product={product} className="w-9 h-9 shrink-0" />
+      <div className="hidden sm:flex flex-col items-center gap-2">
+        <WishlistButton product={product} className="w-11 h-11 shrink-0" />
         <CompareButton productId={product.id} className="mt-2" />
       </div>
     </article>

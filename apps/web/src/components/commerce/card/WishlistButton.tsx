@@ -17,7 +17,7 @@ export function WishlistButton({ product, className }: { product: ProductCardDat
         wishlist.toggle({
           productId: product.id, name: product.name, slug: product.slug,
           image: product.thumbnail || product.images?.[0],
-          unitPriceMinorUnits: product.price, currencyCode: product.currencyCode,
+          unitPriceMinorUnits: product.price, listPriceMinorUnits: product.listPrice, currencyCode: product.currencyCode,
         });
         toast({ variant: saved ? 'info' : 'success', title: saved ? 'Removed from wishlist' : 'Saved to wishlist', description: product.name });
       }}

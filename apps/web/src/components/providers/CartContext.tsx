@@ -10,6 +10,7 @@ export interface CartItemLine {
   slug?: string;
   image?: string;
   unitPriceMinorUnits: number;
+  listPriceMinorUnits?: number;
   currencyCode: string;
   quantity: number;
   stock?: number;

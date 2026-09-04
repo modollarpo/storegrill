@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../index.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import { slugify } from '../utils/slugify.js';
+import { generatePayouts } from '../services/payouts.js';
 
 const router = Router();
 
@@ -761,6 +762,48 @@ router.delete('/coupons/:id', async (req: AuthRequest, res: Response) => {
   await prisma.coupon.delete({ where: { id } });
   await audit(req, 'COUPON_DELETED', 'Coupon', id, { code: existing.code });
   res.status(204).end();
+});
+
+router.put('/payouts/:id/status', async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const body = z.object({ status: z.enum(['PROCESSING', 'PAID', 'CANCELLED']) }).parse(req.body);
+
+  const existing = await prisma.payout.findUnique({ where: { id } });
+  if (!existing) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Payout not found' } });
+  }
+  if (existing.status === 'PAID' && body.status !== 'CANCELLED') {
+    return res.status(409).json({ error: { code: 'INVALID_STATE', message: 'A paid payout can only be re-opened to CANCELLED' } });
+  }
+
+  const processedAt = body.status === 'PAID' ? new Date() : body.status === 'CANCELLED' ? existing.processedAt : null;
+  const payout = await prisma.payout.update({ where: { id }, data: { status: body.status, processedAt } });
+
+  await audit(req, 'PAYOUT_STATUS_CHANGED', 'Payout', id, { status: body.status });
+  res.json({ payout: { ...payout, amountMinorUnits: Number(payout.amountMinorUnits) } });
+});
+
+router.post('/payouts/generate', async (req: AuthRequest, res: Response) => {
+  const created = await generatePayouts();
+  await audit(req, 'PAYOUTS_GENERATED', 'Payout', undefined, { created });
+  res.json({ created });
+});
+
+router.get('/payouts', async (_req: AuthRequest, res: Response) => {
+  const payouts = await prisma.payout.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: {
+      vendor: { select: { id: true, storeName: true, slug: true } },
+      _count: { select: { lines: true } },
+    },
+  });
+  res.json({
+    payouts: payouts.map(p => ({
+      ...p,
+      amountMinorUnits: Number(p.amountMinorUnits),
+      lineCount: p._count.lines,
+    })),
+  });
 });
 
 export { router as adminRouter };

@@ -15,7 +15,7 @@ interface VendorPageProps {
 
 async function fetchVendor(slug: string) {
   try {
-    const res = await fetch(`${API_BASE}/api/v1/vendors/slug/${slug}`, { next: { revalidate: 120 } });
+    const res = await fetch(`${API_BASE}/api/v1/vendors/${slug}`, { next: { revalidate: 120 } });
     if (res.status === 404) return null;
     if (!res.ok) throw new Error();
     return await res.json();
@@ -48,7 +48,7 @@ export default async function VendorStorefront({ params }: VendorPageProps) {
   if (!data?.vendor) notFound();
 
   const vendor = data.vendor;
-  let products = Array.isArray(data.products) ? data.products : [];
+  let products = Array.isArray(data.vendor?.products) ? data.vendor.products : Array.isArray(data.products) ? data.products : [];
   products = await localizeProducts(products.slice(0, 24), language);
 
   return (

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getRequestContext } from '@/lib/server-context';
 import { localizeProducts } from '@/lib/server-translate';
 import { API_BASE } from '@/lib/api';
+import { getCategories } from '@/lib/api-client';
 import { buildMetadata, organizationJsonLd, webSiteJsonLd } from '@/lib/seo';
 import { regionPromoContent, regionConfig, categoryBannerFor } from '@/lib/region-content';
 
@@ -13,7 +14,6 @@ import {
   CampaignHero,
   TabbedProductCarousel,
   DealsOfTheDay,
-  RecommendedForYou,
   RegionalTrust,
   BrandLogoBar,
   CategoryBannerWithProducts,
@@ -182,17 +182,9 @@ export default async function HomePage() {
     href: d.slug ? `/products/${d.slug}` : d.productId ? `/products/${d.productId}` : '/deals',
   }));
 
-  const categoryRows = new Map<string, { name: string; slug: string; minPrice: number }>();
-  for (const p of products) {
-    const cat = p.category;
-    if (!cat?.slug || !cat.name) continue;
-    const price = p.price ?? 0;
-    const existing = categoryRows.get(cat.slug);
-    if (!existing) categoryRows.set(cat.slug, { name: cat.name, slug: cat.slug, minPrice: price });
-    else if (price > 0 && (existing.minPrice === 0 || price < existing.minPrice)) existing.minPrice = price;
-  }
-  const availableCategories: QuickNavItem[] = Array.from(categoryRows.values())
-    .filter(c => c.minPrice > 0)
+  const allCategories = await getCategories(regionKey);
+  const availableCategories: QuickNavItem[] = allCategories
+    .filter(c => c.parentId === null && c.slug !== 'uncategorised')
     .map(c => ({ name: c.name, slug: c.slug }));
 
   const spotlightVendors = vendors
@@ -245,7 +237,7 @@ export default async function HomePage() {
 
       <TrustBar freeShippingThreshold={promo.freeShippingThresholdMinorUnits} currency={promo.currency} />
 
-      <CampaignHero dealTicker={dealTicker} regionKey={regionKey} />
+      <CampaignHero dealTicker={dealTicker} regionKey={regionKey} deals={dealCards} />
 
       <BrandLogoBar />
 
@@ -253,51 +245,45 @@ export default async function HomePage() {
 
       <DealsOfTheDay deals={dealCards} />
 
-      <section className="py-16 md:py-24" aria-labelledby="products-heading">
-        <div className="container-fluid">
-          <TabbedProductCarousel
-            tabs={[
-              {
-                label: 'What\'s Trending Right Now',
-                products: [...localized]
-                  .sort((a, b) => (b.rating ?? 0) * (b.reviewCount ?? 0) - (a.rating ?? 0) * (a.reviewCount ?? 0))
-                  .slice(0, 8)
-                  .map(product => (
-                    <ProductCard key={`trending-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'trending' }} />
-                  )),
-              },
-              {
-                label: 'New Arrivals',
-                products: localizedNewArrivals.map(product => (
-                  <ProductCard key={`new-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'new' }} />
-                )),
-              },
-              {
-                label: 'Best Sellers',
-                products: localized.slice(0, 8).map(product => (
-                  <ProductCard key={`best-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'bestseller' }} />
-                )),
-              },
-              {
-                label: 'Top Rated',
-                products: localizedTopRated.map(product => (
-                  <ProductCard key={`top-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined }} />
-                )),
-              },
-              {
-                label: 'On Sale',
-                products: localized
-                  .filter(p => (p.listPriceMinorUnits ?? 0) > (p.basePriceMinorUnits ?? p.price ?? 0))
-                  .map(product => (
-                    <ProductCard key={`sale-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'sale' }} />
-                  )),
-              },
-            ]}
-          />
-        </div>
-      </section>
-
-      <RecommendedForYou products={featuredCards} />
+      <TabbedProductCarousel
+        tabs={[
+          {
+            label: 'What\'s Trending Right Now',
+            products: [...localized]
+              .sort((a, b) => (b.rating ?? 0) * (b.reviewCount ?? 0) - (a.rating ?? 0) * (a.reviewCount ?? 0))
+              .slice(0, 8)
+              .map(product => (
+                <ProductCard key={`trending-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'trending' }} />
+              )),
+          },
+          {
+            label: 'New Arrivals',
+            products: localizedNewArrivals.map(product => (
+              <ProductCard key={`new-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'new' }} />
+            )),
+          },
+          {
+            label: 'Best Sellers',
+            products: localized.slice(0, 8).map(product => (
+              <ProductCard key={`best-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'bestseller' }} />
+            )),
+          },
+          {
+            label: 'Top Rated',
+            products: localizedTopRated.map(product => (
+              <ProductCard key={`top-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined }} />
+            )),
+          },
+          {
+            label: 'On Sale',
+            products: localized
+              .filter(p => (p.listPriceMinorUnits ?? 0) > (p.basePriceMinorUnits ?? p.price ?? 0))
+              .map(product => (
+                <ProductCard key={`sale-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'sale' }} />
+              )),
+          },
+        ]}
+      />
 
       <VendorSpotlight vendors={spotlightVendors} />
 

@@ -112,94 +112,199 @@ export function TrustBar({ freeShippingThreshold, currency }: { freeShippingThre
   );
 }
 
+// ─── DealCardData (shared by CampaignHero + DealsOfTheDay) ───────────────────
+
+export interface DealCardData {
+  id: string;
+  slug?: string;
+  productId?: string;
+  productName: string;
+  image?: string;
+  priceMinorUnits: number;
+  listPriceMinorUnits?: number;
+  currencyCode: string;
+  endsAt?: string;
+  dealLabel: string;
+}
+
 // ─── §2 CampaignHero ─────────────────────────────────────────────────────────
 
 export interface DealTickerItem { label: string; href: string; }
 
-export function CampaignHero({ dealTicker = [], regionKey }: { dealTicker?: DealTickerItem[]; regionKey: string }) {
+interface HeroSlide {
+  eyebrow: string;
+  headline: string;
+  subtitle: string;
+  cta: { label: string; href: string };
+  ghost: { label: string; href: string };
+  image?: string;
+}
+
+export function CampaignHero({ dealTicker = [], regionKey, deals = [] }: { dealTicker?: DealTickerItem[]; regionKey: string; deals?: DealCardData[] }) {
   const hero = regionPromoContent(regionKey);
   const [slide, setSlide] = useState(0);
+  const [fading, setFading] = useState(false);
 
-  const slides = [
+  const dealSlides: HeroSlide[] = deals.slice(0, 3).map(d => ({
+    eyebrow: d.dealLabel,
+    headline: d.productName,
+    subtitle: `Limited time deal — ends ${new Date(d.endsAt ?? 0).toLocaleDateString()}`,
+    cta: { label: 'Shop deal', href: d.slug ? `/products/${d.slug}` : `/products/${d.productId}` },
+    ghost: { label: 'Browse all', href: '/deals' },
+    image: d.image,
+  }));
+
+  const fallbackSlides: HeroSlide[] = [
     {
       eyebrow: 'Live deals today',
-      headline: 'Shop Smarter,\nSave Bigger.',
+      headline: 'Prices that make\nyou look twice.',
       subtitle: hero.heroSubtitle,
       cta: { label: 'Shop the sale', href: '/deals' },
       ghost: { label: 'Browse all products', href: '/products' },
-      accent: 'bg-amber-400',
     },
     {
-      eyebrow: 'New arrivals — just landed',
-      headline: 'Fresh Picks,\nFresh Prices.',
-      subtitle: `New products from verified sellers, delivered across ${hero.currency} markets.`,
+      eyebrow: 'New arrivals',
+      headline: 'Just landed.\nJust better.',
+      subtitle: `Fresh products from verified sellers, delivered across ${hero.currency} markets.`,
       cta: { label: 'Discover new', href: '/products?sort=newest' },
       ghost: { label: 'Meet our sellers', href: '/vendors' },
-      accent: 'bg-emerald-400',
     },
     ...(hero.couponCode
       ? [{
           eyebrow: 'Limited-time code',
-          headline: 'Extra Savings\nWaiting.',
-          subtitle: `Use code ${hero.couponCode} for ${hero.couponDiscountPercent}% off today.`,
+          headline: `${hero.couponDiscountPercent}% off\neverything.`,
+          subtitle: `Use code ${hero.couponCode} at checkout for instant savings.`,
           cta: { label: 'Shop now', href: '/deals' },
           ghost: { label: 'Browse all products', href: '/products' },
-          accent: 'bg-yellow-300',
         }]
       : [{
           eyebrow: 'Secure checkout',
-          headline: 'Shop with\nConfidence.',
+          headline: 'Shop with\nconfidence.',
           subtitle: 'Stripe and PayPal protected checkout with easy returns on every order.',
           cta: { label: 'Start shopping', href: '/products' },
           ghost: { label: 'Delivery options', href: '/shipping' },
-          accent: 'bg-yellow-300',
         }]),
   ];
 
+  const slides = dealSlides.length > 0 ? dealSlides : fallbackSlides;
   const current = slides[slide];
 
+  function goTo(i: number) {
+    if (i === slide) return;
+    setFading(true);
+    setTimeout(() => {
+      setSlide(i);
+      setFading(false);
+    }, 180);
+  }
+
   useEffect(() => {
-    const t = setInterval(() => setSlide(s => (s + 1) % slides.length), 6000);
+    const t = setInterval(() => {
+      setFading(true);
+      setTimeout(() => {
+        setSlide(s => (s + 1) % slides.length);
+        setFading(false);
+      }, 180);
+    }, 6000);
     return () => clearInterval(t);
   }, [slides.length]);
 
   return (
-    <section aria-label="Featured campaign" className="relative overflow-hidden bg-midnight">
-      {/* Abstract Mesh Background Elements */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[120%] bg-ember rounded-full blur-[120px] opacity-70 pointer-events-none mix-blend-screen" />
-      <div className="absolute top-[20%] right-[-10%] w-[40%] h-[100%] bg-ember-dark rounded-full blur-[140px] opacity-40 pointer-events-none mix-blend-screen" />
-      <div className="absolute bottom-[-30%] left-[20%] w-[60%] h-[80%] bg-ember-light rounded-full blur-[100px] opacity-50 pointer-events-none mix-blend-screen" />
-      <div className="relative container-fluid py-12 md:py-20">
-        <div className="grid md:grid-cols-1 gap-10">
-          <div>
-            <span className="inline-flex items-center gap-2 mb-4">
-              <span className={`w-2.5 h-2.5 rounded-full ${current.accent} animate-pulse`} />
-              <span className="text-white/70 text-sm font-bold uppercase tracking-widest">{current.eyebrow}</span>
+    <section aria-label="Featured campaign" className="relative overflow-hidden bg-smoke-25">
+      {/* Content */}
+      <div className="relative container-site py-10 sm:py-14 md:py-20 lg:py-24">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 md:gap-6 lg:gap-12 items-center">
+          {/* Copy */}
+          <div className={cn('transition-opacity duration-180', fading ? 'opacity-0' : 'opacity-100')}>
+            {/* Eyebrow pill */}
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-ember/8 border border-ember/15 mb-5 md:mb-6">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-ember opacity-75 animate-ping" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-ember" />
+              </span>
+              <span className="text-xs font-bold uppercase tracking-widest text-ember">{current.eyebrow}</span>
             </span>
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-none mb-5 whitespace-pre-line">{current.headline}</h2>
-            <p className="text-white/70 text-base md:text-lg leading-relaxed max-w-lg mb-8">{current.subtitle}</p>
+
+            {/* Headline */}
+            <h2 className="text-[2.5rem] sm:text-5xl lg:text-[3.5rem] xl:text-6xl font-extrabold text-text-primary tracking-[-0.03em] leading-[0.95] mb-4 md:mb-5 whitespace-pre-line">
+              {current.headline}
+            </h2>
+
+            {/* Subtitle */}
+            <p className="text-text-secondary text-base md:text-lg leading-relaxed max-w-md mb-8 md:mb-10">
+              {current.subtitle}
+            </p>
+
+            {/* CTAs */}
             <div className="flex flex-wrap items-center gap-3">
-              <Link href={current.cta.href} className="h-12 px-8 rounded-full bg-white text-ember font-extrabold text-sm shadow-xl hover:bg-white/90 hover:shadow-2xl transition-all inline-flex items-center">
+              <Link
+                href={current.cta.href}
+                className="h-12 px-7 md:px-9 rounded-full bg-ember text-white font-extrabold text-sm tracking-wide shadow-lg shadow-ember/20 hover:bg-ember-dark hover:shadow-xl hover:shadow-ember/30 hover:-translate-y-0.5 active:translate-y-0 active:shadow-md transition-all inline-flex items-center gap-2"
+              >
                 {current.cta.label}
-                <svg className="ml-2 w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
               </Link>
-              <Link href={current.ghost.href} className="h-12 px-8 rounded-full bg-white/10 text-white font-bold text-sm border border-white/20 hover:bg-white/20 transition-all inline-flex items-center backdrop-blur-sm">{current.ghost.label}</Link>
+              <Link
+                href={current.ghost.href}
+                className="h-12 px-7 md:px-9 rounded-full bg-transparent text-text-primary font-bold text-sm border border-border-strong hover:bg-surface-sunken hover:border-text-tertiary transition-all inline-flex items-center"
+              >
+                {current.ghost.label}
+              </Link>
             </div>
-            <div className="flex gap-2 mt-8">
-              {slides.map((_, i) => (
-                <button key={i} type="button" aria-label={`Slide ${i + 1}`} onClick={() => setSlide(i)}
-                  className={cn('rounded-full transition-all', i === slide ? 'w-6 h-2.5 bg-white' : 'w-2.5 h-2.5 bg-white/30 hover:bg-white/60')} />
+
+            {/* Slide indicators */}
+            <div className="flex items-center gap-2 mt-8 md:mt-10">
+              {slides.map((s, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={`Slide ${i + 1}: ${s.eyebrow}`}
+                  onClick={() => goTo(i)}
+                  className={cn(
+                    'rounded-full transition-all duration-300',
+                    i === slide ? 'w-8 h-2 bg-ember' : 'w-2 h-2 bg-text-disabled hover:bg-text-tertiary'
+                  )}
+                />
               ))}
+              <span className="ml-2 text-xs font-medium text-text-tertiary tabular-nums">
+                {slide + 1}/{slides.length}
+              </span>
             </div>
           </div>
+
+          {/* Product image — only shown for deal slides or when there's an image */}
+          {current.image && (
+            <div className={cn(
+              'relative w-full max-w-[320px] md:max-w-none md:w-[380px] lg:w-[440px] aspect-square mx-auto md:mx-0 transition-opacity duration-180',
+              fading ? 'opacity-0' : 'opacity-100'
+            )}>
+              <div className="absolute inset-4 md:inset-8 rounded-3xl bg-surface shadow-2xl shadow-black/5 border border-border/50 overflow-hidden">
+                <Image
+                  src={storefrontImage(current.image) || '/product-placeholder.svg'}
+                  alt={current.headline}
+                  fill
+                  className="object-contain p-6 md:p-10"
+                  sizes="(max-width: 768px) 320px, 440px"
+                />
+              </div>
+              {/* Decorative ring */}
+              <div className="absolute inset-0 rounded-3xl border-2 border-dashed border-ember/10 pointer-events-none" />
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Deal ticker */}
       {dealTicker.length > 0 && (
-        <div className="relative bg-black/30 backdrop-blur-sm border-t border-white/10 py-2 overflow-hidden">
-          <div className="flex whitespace-nowrap" style={{ animation: 'marquee 30s linear infinite' }}>
+        <div className="relative bg-surface border-t border-border overflow-hidden">
+          <div className="flex whitespace-nowrap animate-marquee">
             {[...dealTicker, ...dealTicker].map((item, i) => (
-              <Link key={i} href={item.href} className="inline-flex items-center gap-3 px-6 text-xs font-bold text-white/80 hover:text-white transition-colors shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+              <Link
+                key={i}
+                href={item.href}
+                className="inline-flex items-center gap-2.5 px-6 py-2.5 text-xs font-bold text-text-secondary hover:text-ember transition-colors shrink-0"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-ember/60 shrink-0" />
                 {item.label}
               </Link>
             ))}
@@ -209,6 +314,7 @@ export function CampaignHero({ dealTicker = [], regionKey }: { dealTicker?: Deal
     </section>
   );
 }
+
 
 // ─── §3 BrandLogoBar ─────────────────────────────────────────────────────────
 
@@ -257,6 +363,125 @@ const CATEGORY_ACCENTS = [
   'from-ember to-ember-dark',
 ];
 
+function categoryIcon(slug: string): React.ReactNode {
+  const s = slug.toLowerCase();
+  if (/electron|phone|mobile|gadget|tablet|headphon|audio|speaker|camera|smart/.test(s)) {
+    return (
+      <svg className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+        <line x1="12" y1="18" x2="12.01" y2="18" />
+      </svg>
+    );
+  }
+  if (/computer|laptop|pc|tech|monitor|keyboard|mouse|printer|software/.test(s)) {
+    return (
+      <svg className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+        <line x1="8" y1="21" x2="16" y2="21" />
+        <line x1="12" y1="17" x2="12" y2="21" />
+      </svg>
+    );
+  }
+  if (/home|kitchen|furniture|appliance|decor|garden|outdoor|living/.test(s)) {
+    return (
+      <svg className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
+      </svg>
+    );
+  }
+  if (/fashion|cloth|wear|apparel|shoe|bag|accessor|jewel|watch/.test(s)) {
+    return (
+      <svg className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z" />
+      </svg>
+    );
+  }
+  if (/beauty|personal|care|health|cosmetic|skincare|hair|makeup/.test(s)) {
+    return (
+      <svg className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+        <path d="M2 17l10 5 10-5" />
+        <path d="M2 12l10 5 10-5" />
+      </svg>
+    );
+  }
+  if (/sport|fitness|gym|outdoor|camp|hik|run|cycl|swim|yoga/.test(s)) {
+    return (
+      <svg className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 6v6l4 2" />
+      </svg>
+    );
+  }
+  if (/book|read|novel|magaz|comic|educat/.test(s)) {
+    return (
+      <svg className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+      </svg>
+    );
+  }
+  if (/toy|game|kid|baby|child/.test(s)) {
+    return (
+      <svg className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="8" width="18" height="13" rx="2" />
+        <path d="M8 8V6a4 4 0 118 0v2" />
+        <line x1="12" y1="12" x2="12" y2="16" />
+        <line x1="10" y1="14" x2="14" y2="14" />
+      </svg>
+    );
+  }
+  if (/automot|car|vehicle|motor|bike/.test(s)) {
+    return (
+      <svg className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 16H9m10 0h3v-3.15a1 1 0 00-.84-.99L16 11l-2.7-6.06A1 1 0 0012.38 4H5.62a1 1 0 00-.92.61L2 11l-2 1.15V16h3" />
+        <circle cx="6.5" cy="16.5" r="2.5" />
+        <circle cx="16.5" cy="16.5" r="2.5" />
+      </svg>
+    );
+  }
+  if (/pet|animal|dog|cat|bird|fish/.test(s)) {
+    return (
+      <svg className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+        <line x1="9" y1="9" x2="9.01" y2="9" />
+        <line x1="15" y1="9" x2="15.01" y2="9" />
+      </svg>
+    );
+  }
+  if (/food|grocer|snack|drink|beverage|coffee|tea/.test(s)) {
+    return (
+      <svg className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 8h1a4 4 0 010 8h-1" />
+        <path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" />
+        <line x1="6" y1="1" x2="6" y2="4" />
+        <line x1="10" y1="1" x2="10" y2="4" />
+        <line x1="14" y1="1" x2="14" y2="4" />
+      </svg>
+    );
+  }
+  if (/office|stationer|pen|paper/.test(s)) {
+    return (
+      <svg className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+      </svg>
+    );
+  }
+  return (
+    <svg className="w-8 h-8 md:w-10 md:h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="14" y="14" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
+    </svg>
+  );
+}
+
 export function CategoryQuickNav({ categories = [] }: { categories?: QuickNavItem[] }) {
   const scroller = useRef<HTMLUListElement>(null);
   if (categories.length < 4) return null;
@@ -275,7 +500,7 @@ export function CategoryQuickNav({ categories = [] }: { categories?: QuickNavIte
               <li key={cat.slug} className="snap-start shrink-0">
                 <Link href={`/products?category=${encodeURIComponent(cat.slug)}`} aria-label={cat.name} className="group block w-[96px] md:w-[112px] text-center">
                   <span className={`relative block w-[96px] h-[96px] md:w-[112px] md:h-[112px] rounded-full bg-gradient-to-br ${CATEGORY_ACCENTS[i % CATEGORY_ACCENTS.length]} text-white grid place-items-center mx-auto mb-3 shadow-md group-hover:ring-2 group-hover:ring-ember/20 group-hover:shadow-lg transition-all`}>
-                    <span className="text-3xl md:text-4xl font-extrabold">{cat.name.slice(0, 1).toUpperCase()}</span>
+                    {categoryIcon(cat.slug)}
                   </span>
                   <span className="block text-xs font-bold text-text-primary group-hover:text-ember transition-colors leading-tight truncate">{cat.name}</span>
                 </Link>
@@ -292,19 +517,6 @@ export function CategoryQuickNav({ categories = [] }: { categories?: QuickNavIte
 
 // ─── §5 DealsOfTheDay ────────────────────────────────────────────────────────
 
-export interface DealCardData {
-  id: string;
-  slug?: string;
-  productId?: string;
-  productName: string;
-  image?: string;
-  priceMinorUnits: number;
-  listPriceMinorUnits?: number;
-  currencyCode: string;
-  endsAt?: string;
-  dealLabel: string;
-}
-
 function useMidnightCountdown() {
   const [remaining, setRemaining] = useState<number>(0);
   useEffect(() => {
@@ -320,6 +532,22 @@ function useMidnightCountdown() {
   }, []);
   const s = Math.floor(remaining / 1000);
   return { hours: String(Math.floor(s / 3600)).padStart(2, '0'), minutes: String(Math.floor((s % 3600) / 60)).padStart(2, '0'), seconds: String(s % 60).padStart(2, '0') };
+}
+
+function MidnightTimer() {
+  const time = useMidnightCountdown();
+  return (
+    <div className="flex items-center gap-1" role="timer" aria-label="Deals reset at midnight">
+      {([time.hours, time.minutes, time.seconds] as const).map((v, i) => (
+        <span key={i} className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-surface-sunken border border-border text-sm font-extrabold text-text-primary tabular-nums">
+            {v}
+          </span>
+          {i < 2 && <span className="text-xs font-bold text-text-tertiary">:</span>}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 function useCountdown(endsAt?: string) {
@@ -341,27 +569,10 @@ function DealCountdown({ endsAt }: { endsAt?: string }) {
   const time = useCountdown(endsAt);
   if (!time) return null;
   return (
-    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-deal bg-deal/10 rounded-full px-2 py-0.5 tabular-nums mt-2" role="timer">
+    <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-deal mt-2" role="timer">
       <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
-      {time.hours}:{time.minutes}:{time.seconds}
+      Ends in {time.hours}:{time.minutes}:{time.seconds}
     </span>
-  );
-}
-
-function MidnightTimer() {
-  const time = useMidnightCountdown();
-  return (
-    <div className="flex items-center gap-1.5" role="timer" aria-label="Deals reset at midnight">
-      {[time.hours, time.minutes, time.seconds].map((v, i) => (
-        <span key={i} className="flex items-center gap-1">
-          <span className="inline-flex flex-col items-center">
-            <span className="text-lg font-extrabold text-ember tabular-nums leading-none">{v}</span>
-            <span className="text-[9px] font-bold text-text-tertiary uppercase tracking-wider">{['hr', 'min', 'sec'][i]}</span>
-          </span>
-          {i < 2 && <span className="text-ember font-extrabold text-lg leading-none mb-3">:</span>}
-        </span>
-      ))}
-    </div>
   );
 }
 
@@ -369,55 +580,113 @@ export function DealsOfTheDay({ deals }: { deals: DealCardData[] }) {
   const scroller = useRef<HTMLUListElement>(null);
   if (deals.length === 0) return null;
   return (
-    <section className="border-b border-border border-t-4 border-t-ember bg-surface" aria-label="Deals of the day">
-      <div className="container-fluid py-10 md:py-12">
+    <section className="bg-surface-sunken border-b border-border" aria-label="Deals of the day">
+      <div className="container-site py-10 md:py-14">
+        {/* Header */}
         <header className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl" aria-hidden="true">&#9889;</span>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight">Deals of the Day</h2>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-ember/10" aria-hidden="true">
+                <svg className="w-5 h-5 text-ember" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+              </span>
+              <div>
+                <h2 className="text-xl md:text-2xl font-extrabold text-text-primary tracking-tight">Deals of the Day</h2>
+                <p className="text-xs font-medium text-text-tertiary mt-0.5">Refreshes daily at midnight</p>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="hidden sm:flex flex-col items-end">
-              <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-1">Ends in</span>
+
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-3">
+              <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest">Resets in</span>
               <MidnightTimer />
             </div>
-            <div className="flex gap-2">
-              <button type="button" onClick={() => snapScroll(scroller.current, -1)} aria-label="Scroll deals left" className="w-10 h-10 grid place-items-center rounded-full bg-surface-sunken border border-border shadow-sm hover:border-ember hover:text-ember transition-all">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => snapScroll(scroller.current, -1)}
+                aria-label="Scroll deals left"
+                className="w-9 h-9 grid place-items-center rounded-full bg-surface border border-border shadow-sm hover:border-ember hover:text-ember hover:shadow-md transition-all"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
               </button>
-              <button type="button" onClick={() => snapScroll(scroller.current, 1)} aria-label="Scroll deals right" className="w-10 h-10 grid place-items-center rounded-full bg-surface-sunken border border-border shadow-sm hover:border-ember hover:text-ember transition-all">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+              <button
+                type="button"
+                onClick={() => snapScroll(scroller.current, 1)}
+                aria-label="Scroll deals right"
+                className="w-9 h-9 grid place-items-center rounded-full bg-surface border border-border shadow-sm hover:border-ember hover:text-ember hover:shadow-md transition-all"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
               </button>
             </div>
+
             <Link href="/deals" className="text-sm font-bold text-ember hover:underline underline-offset-4 hidden md:inline-flex items-center gap-1">
-              View all deals <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+              View all <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
             </Link>
           </div>
         </header>
-        <ul ref={scroller} className="flex gap-4 pb-2 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-pl-0" role="list">
+
+        {/* Cards grid */}
+        <ul ref={scroller} className="flex gap-4 md:gap-5 pb-2 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-pl-0" role="list">
           {deals.map(deal => {
             const saving = (deal.listPriceMinorUnits ?? 0) > deal.priceMinorUnits ? (deal.listPriceMinorUnits! - deal.priceMinorUnits) : 0;
             const savePct = deal.listPriceMinorUnits && saving > 0 ? Math.round((saving / deal.listPriceMinorUnits) * 100) : 0;
             const fmt = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode }).format(n / 100);
+            const href = deal.slug ? `/products/${deal.slug}` : deal.productId ? `/products/${deal.productId}` : '/deals';
             return (
-              <li key={deal.id} className="snap-start shrink-0 w-[68%] sm:w-[calc(33.333%-12px)] lg:w-[calc(25%-12px)]">
-                <Link href={deal.slug ? `/products/${deal.slug}` : deal.productId ? `/products/${deal.productId}` : '/deals'}
-                  className="group block bg-surface border border-border rounded-2xl overflow-hidden hover:shadow-xl hover:border-ember transition-all h-full flex flex-col" suppressHydrationWarning>
-                  <div className="relative aspect-[4/3] bg-surface-sunken shrink-0 overflow-hidden">
-                    {deal.image && <Image src={storefrontImage(deal.image) || '/product-placeholder.svg'} alt="" fill sizes="300px" loading="lazy" className="object-contain p-4 group-hover:scale-105 transition-transform duration-500" />}
-                    {savePct > 0 && <span className="absolute top-2 right-2 bg-deal text-white text-xs font-extrabold px-2 py-1 rounded-full shadow">-{savePct}%</span>}
-                    <span className="absolute top-2 left-2 bg-ember text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">{deal.dealLabel}</span>
+              <li key={deal.id} className="snap-start shrink-0 w-[72%] sm:w-[calc(33.333%-14px)] lg:w-[calc(25%-15px)]">
+                <Link
+                  href={href}
+                  className="group block bg-surface rounded-xl border border-border overflow-hidden hover:shadow-lg hover:border-ember/30 transition-all duration-300 h-full flex flex-col"
+                  suppressHydrationWarning
+                >
+                  {/* Image */}
+                  <div className="relative aspect-square bg-surface-sunken shrink-0 overflow-hidden">
+                    {deal.image && (
+                      <Image
+                        src={storefrontImage(deal.image) || '/product-placeholder.svg'}
+                        alt=""
+                        fill
+                        sizes="(max-width: 640px) 280px, (max-width: 1024px) 300px, 260px"
+                        loading="lazy"
+                        className="object-contain p-5 group-hover:scale-105 transition-transform duration-500 ease-out"
+                      />
+                    )}
+                    {savePct > 0 && (
+                      <span className="absolute top-3 right-3 bg-deal text-white text-[11px] font-extrabold px-2.5 py-1 rounded-full shadow-sm">
+                        -{savePct}%
+                      </span>
+                    )}
                   </div>
-                  <div className="flex-1 flex flex-col p-4">
-                    <p className="text-sm font-semibold text-text-primary group-hover:text-ember transition-colors mb-3 line-clamp-2 leading-snug">{deal.productName}</p>
-                    <div className="mt-auto">
-                      <span className="block text-xl font-extrabold text-text-primary" suppressHydrationWarning>{fmt(deal.priceMinorUnits)}</span>
-                      {saving > 0 && deal.listPriceMinorUnits && (
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-xs text-text-tertiary line-through" suppressHydrationWarning>{fmt(deal.listPriceMinorUnits)}</span>
-                          <span className="text-xs text-deal font-bold" suppressHydrationWarning>Save {fmt(saving)}</span>
-                        </div>
+
+                  {/* Content */}
+                  <div className="flex-1 flex flex-col p-4 pt-3.5">
+                    <p className="text-sm font-semibold text-text-primary group-hover:text-ember transition-colors line-clamp-2 leading-snug mb-auto">
+                      {deal.productName}
+                    </p>
+
+                    <div className="mt-3">
+                      {/* Price row */}
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-lg font-extrabold text-text-primary tabular-nums" suppressHydrationWarning>
+                          {fmt(deal.priceMinorUnits)}
+                        </span>
+                        {saving > 0 && deal.listPriceMinorUnits && (
+                          <span className="text-xs text-text-tertiary line-through tabular-nums" suppressHydrationWarning>
+                            {fmt(deal.listPriceMinorUnits)}
+                          </span>
+                        )}
+                      </div>
+
+                      {saving > 0 && (
+                        <span className="inline-flex items-center text-[11px] font-bold text-deal mt-1" suppressHydrationWarning>
+                          Save {fmt(saving)}
+                        </span>
                       )}
+
                       <DealCountdown endsAt={deal.endsAt} />
                     </div>
                   </div>
@@ -426,6 +695,14 @@ export function DealsOfTheDay({ deals }: { deals: DealCardData[] }) {
             );
           })}
         </ul>
+
+        {/* Mobile: View all deals link */}
+        <div className="mt-6 text-center md:hidden">
+          <Link href="/deals" className="inline-flex items-center gap-1.5 text-sm font-bold text-ember hover:underline underline-offset-4">
+            View all deals
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+          </Link>
+        </div>
       </div>
     </section>
   );
@@ -440,12 +717,12 @@ export function TabbedProductCarousel({ tabs }: { tabs: TabbedProductTab[] }) {
   const scroller = useRef<HTMLUListElement>(null);
   const activeProducts = tabs[active]?.products ?? [];
   return (
-    <section className="bg-surface-sunken border-b border-border py-12 md:py-16" aria-labelledby="trending-heading">
-      <div className="container-fluid">
+    <section className="bg-surface-sunken border-b border-border" aria-labelledby="trending-heading">
+      <div className="container-site py-10 md:py-14">
         <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
           <div>
-            <p className="text-xs font-bold text-ember uppercase tracking-widest mb-1">Updated daily from our top vendors</p>
-            <h2 id="trending-heading" className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight">What&apos;s Trending Right Now</h2>
+            <h2 id="trending-heading" className="text-xl md:text-2xl font-extrabold text-text-primary tracking-tight">What&apos;s Trending Right Now</h2>
+            <p className="text-xs font-medium text-text-tertiary mt-1">Updated daily from our top vendors</p>
           </div>
           <div className="flex items-center gap-2 bg-surface rounded-xl border border-border p-1">
             {tabs.map((tab, i) => (
@@ -478,7 +755,7 @@ export interface CategoryBannerWithProductsProps {
 export function CategoryBannerWithProducts({ title, subtitle, description, ctaLabel, ctaHref, bannerImage, bannerBg, fromPrice, products }: CategoryBannerWithProductsProps) {
   return (
     <section className="border-b border-border bg-surface">
-      <div className="container-fluid py-10 md:py-16">
+      <div className="container-site py-10 md:py-14">
         <div className="grid lg:grid-cols-[320px_1fr] gap-6 md:gap-8">
           <Link href={ctaHref} className="group relative overflow-hidden rounded-2xl min-h-[320px] lg:min-h-0 flex flex-col justify-end" style={{ backgroundColor: bannerBg }}>
             <Image src={bannerImage} alt={title} fill sizes="320px" className="object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -502,42 +779,18 @@ export function CategoryBannerWithProducts({ title, subtitle, description, ctaLa
   );
 }
 
-// ─── §9 RecommendedForYou ────────────────────────────────────────────────────
-
-export function RecommendedForYou({ products }: { products: ProductCardData[] }) {
-  if (!products?.length) return null;
-  return (
-    <section className="py-12 md:py-16 border-b border-border bg-surface" aria-labelledby="reco-heading">
-      <div className="container-fluid">
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
-          <div>
-            <p className="text-xs font-bold text-ember uppercase tracking-widest mb-1">Trending now</p>
-            <h2 id="reco-heading" className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight">Recommended for you</h2>
-          </div>
-          <Link href="/products" className="text-sm font-bold text-ember hover:underline underline-offset-4 hidden sm:inline-flex items-center gap-1">
-            Browse all <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-          </Link>
-        </div>
-        <TrendingSlider>
-          {products.map(product => <ProductCard key={product.id} product={{ ...product, vendor: product.vendor ?? undefined }} />)}
-        </TrendingSlider>
-      </div>
-    </section>
-  );
-}
-
 // ─── §10 AppDownloadBanner ───────────────────────────────────────────────────
 
 export function AppDownloadBanner() {
   return (
-    <section className="py-12 md:py-20 border-b border-border bg-surface-sunken" aria-labelledby="app-heading">
-      <div className="container-fluid">
-        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-midnight via-ember-deep to-ember text-white shadow-2xl flex flex-col lg:flex-row items-center justify-between px-8 md:px-16 py-[53px] lg:py-[5px] gap-10">
+    <section className="bg-surface-sunken border-b border-border" aria-labelledby="app-heading">
+      <div className="container-site py-10 md:py-16">
+        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-midnight via-ember-deep to-ember text-white shadow-2xl flex flex-col lg:flex-row items-center justify-between px-8 md:px-16 py-12 lg:py-0 gap-10">
           <div className="absolute -right-24 -top-24 w-96 h-96 rounded-full blur-3xl bg-white/10" />
           <div className="absolute -left-12 -bottom-12 w-64 h-64 rounded-full blur-2xl bg-white/5" />
           <div className="relative z-10 lg:py-16 max-w-lg text-center lg:text-left">
             <h2 id="app-heading" className="text-3xl md:text-5xl font-extrabold mb-4 tracking-tight leading-tight text-white">Get the Storegrill App</h2>
-            <p className="text-white/60 text-base md:text-lg mb-8 leading-relaxed">Shop faster, track orders in real-time, and unlock exclusive mobile-only deals. Available free on iOS and Android.</p>
+            <p className="text-white/60 text-base md:text-lg mb-8 leading-relaxed">Shop faster, track orders in real-time, and unlock exclusive mobile-only deals.</p>
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
               <button className="px-6 py-3 rounded-2xl bg-white text-midnight font-extrabold hover:bg-white/90 transition-colors inline-flex items-center gap-2.5 shadow-xl">
                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.04 2.26-.7 3.58-.8 1.58-.1 2.94.43 3.84 1.44-3.21 1.77-2.6 6.1.48 7.33-.76 1.76-1.89 3.29-2.98 4.2zm-4.32-13.6c-.19-1.8 1.14-3.56 2.9-3.79.28 1.83-1.39 3.55-2.9 3.79z" /></svg>
@@ -588,11 +841,11 @@ export function VendorSpotlight({ vendors }: { vendors: VendorSpotlightItem[] })
   if (vendors.length === 0) return null;
   return (
     <section className="border-b border-border bg-surface" aria-labelledby="vendor-spotlight-heading">
-      <div className="container-fluid py-12 md:py-16">
+      <div className="container-site py-10 md:py-14">
         <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
           <div>
-            <p className="text-xs font-bold text-ember uppercase tracking-widest mb-1">Curated marketplace</p>
-            <h2 id="vendor-spotlight-heading" className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight">Meet Our Top Sellers</h2>
+            <h2 id="vendor-spotlight-heading" className="text-xl md:text-2xl font-extrabold text-text-primary tracking-tight">Meet Our Top Sellers</h2>
+            <p className="text-xs font-medium text-text-tertiary mt-1">Curated marketplace</p>
           </div>
           <Link href="/vendor/apply" className="h-10 px-5 rounded-full border-2 border-ember text-ember text-sm font-bold hover:bg-ember hover:text-white transition-all inline-flex items-center gap-1.5">
             Become a seller <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
@@ -633,8 +886,8 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 export function RegionalTrust({ paymentMethods, carriers }: RegionalTrustProps) {
   return (
-    <section className="bg-surface-sunken border-t border-border py-10 md:py-14" aria-label="Shopping trust signals">
-      <div className="container-fluid">
+    <section className="bg-surface-sunken border-t border-border" aria-label="Shopping trust signals">
+      <div className="container-site py-10 md:py-14">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
           {paymentMethods.length > 0 && (
             <div>
@@ -662,8 +915,8 @@ export function RegionalTrust({ paymentMethods, carriers }: RegionalTrustProps) 
           <div>
             <p className="text-xs font-extrabold text-text-tertiary uppercase tracking-widest mb-4">Your data is protected</p>
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl grid place-items-center shrink-0 bg-[success]/10">
-                <svg className="w-5 h-5 text-[success]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <div className="w-10 h-10 rounded-xl grid place-items-center shrink-0 bg-success/10">
+                <svg className="w-5 h-5 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                 </svg>
               </div>
@@ -677,7 +930,7 @@ export function RegionalTrust({ paymentMethods, carriers }: RegionalTrustProps) 
             <p className="text-xs font-extrabold text-text-tertiary uppercase tracking-widest mb-4">Our guarantee</p>
             <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
               <div className="flex items-center gap-3 mb-2">
-                <svg className="w-6 h-6 shrink-0 text-[success]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-6 h-6 shrink-0 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                 </svg>
                 <p className="text-sm font-extrabold text-text-primary">Buyer Protection</p>
@@ -701,11 +954,11 @@ export function Testimonials({ items = [] }: { items?: TestimonialItem[] }) {
   useEffect(() => { setIsClient(true); }, []);
   if (items.length === 0 || !isClient) return null;
   return (
-    <section className="border-b border-border py-12 md:py-16 bg-surface" aria-labelledby="testimonials-heading">
-      <div className="container-fluid">
+    <section className="border-b border-border bg-surface" aria-labelledby="testimonials-heading">
+      <div className="container-site py-10 md:py-14">
         <div className="text-center mb-10">
-          <p className="text-xs font-bold text-ember uppercase tracking-widest mb-2">Real customers, real reviews</p>
-          <h2 id="testimonials-heading" className="text-2xl md:text-3xl font-extrabold text-text-primary tracking-tight">What Our Customers Say</h2>
+          <h2 id="testimonials-heading" className="text-xl md:text-2xl font-extrabold text-text-primary tracking-tight">What Our Customers Say</h2>
+          <p className="text-xs font-medium text-text-tertiary mt-1">Real customers, real reviews</p>
         </div>
         <Swiper modules={[Autoplay, Pagination]} spaceBetween={20} slidesPerView={1}
           breakpoints={{ 640: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } }}
@@ -714,7 +967,7 @@ export function Testimonials({ items = [] }: { items?: TestimonialItem[] }) {
           {items.map((t, i) => (
             <SwiperSlide key={i} className="h-auto">
               <div className="bg-surface border border-border rounded-2xl p-6 h-full flex flex-col shadow-sm hover:shadow-md hover:border-ember/30 transition-all">
-                <span className="text-5xl font-extrabold leading-none mb-2 -mt-2" style={{ color: 'rgba(76,18,161,0.2)' }} aria-hidden="true">&ldquo;</span>
+                <span className="text-5xl font-extrabold leading-none mb-2 -mt-2 text-ember/20" aria-hidden="true">&ldquo;</span>
                 <div className="flex items-center gap-0.5 mb-4">
                   {[0,1,2,3,4].map(j => <svg key={j} className="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>)}
                 </div>
@@ -722,7 +975,7 @@ export function Testimonials({ items = [] }: { items?: TestimonialItem[] }) {
                 <div className="flex items-center gap-3 mt-5 pt-4 border-t border-border">
                   <Image src={t.avatar} alt={t.name} width={40} height={40} className="rounded-full border border-border" />
                   <div><p className="text-sm font-bold text-text-primary">{t.name}</p><p className="text-xs text-text-tertiary">{t.role}</p></div>
-                  <span className="ml-auto inline-flex items-center text-[10px] font-bold gap-1 text-[success]">
+                  <span className="ml-auto inline-flex items-center text-[10px] font-bold gap-1 text-success">
                     <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M9 12.75L11.25 15 15 9.75" /></svg>
                     Verified
                   </span>
@@ -738,7 +991,7 @@ export function Testimonials({ items = [] }: { items?: TestimonialItem[] }) {
 
 // ─── RecentlyViewed (preserved for PDP) ──────────────────────────────────────
 
-interface ViewedItem { slug: string; name: string; unitPriceMinorUnits: number; currencyCode: string; thumbnail?: string; }
+interface ViewedItem { slug: string; name: string; unitPriceMinorUnits: number; listPriceMinorUnits?: number; currencyCode: string; thumbnail?: string; }
 const RECENTLY_VIEWED_KEY = 'storegrill-recently-viewed';
 
 export function RecentlyViewed({ currentSlug }: { currentSlug?: string }) {
@@ -786,6 +1039,11 @@ export function RecentlyViewed({ currentSlug }: { currentSlug?: string }) {
                     <span className="text-base font-extrabold mt-2 text-text-primary">
                       {new Intl.NumberFormat('en-US', { style: 'currency', currency: item.currencyCode }).format(item.unitPriceMinorUnits / 100)}
                     </span>
+                    {item.listPriceMinorUnits && item.listPriceMinorUnits > item.unitPriceMinorUnits && (
+                      <span className="text-xs text-text-tertiary line-through mt-0.5">
+                        {new Intl.NumberFormat('en-US', { style: 'currency', currency: item.currencyCode }).format(item.listPriceMinorUnits / 100)}
+                      </span>
+                    )}
                   </span>
                 </Link>
               </li>

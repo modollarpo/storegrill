@@ -63,6 +63,12 @@ router.get('/', async (req: Request, res: Response) => {
   const rows = await prisma.category.findMany({
     orderBy: { name: 'asc' },
   });
+
+  if (req.query.all === 'true') {
+    res.json({ categories: buildTree(rows) });
+    return;
+  }
+
   const activeCountById = new Map(
     (
       await prisma.product.groupBy({

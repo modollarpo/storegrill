@@ -16,11 +16,11 @@ export function PdpPricing({ activeUnitPrice, currency, listPrice, discountPct, 
     <div className="flex items-baseline gap-3 mb-6 flex-wrap">
       {fromMinorUnits !== undefined && toMinorUnits !== undefined ? (
         <>
-          <span className="text-5xl font-black text-text-primary tracking-tight whitespace-nowrap">
+          <span className="text-3xl md:text-5xl font-black text-text-primary tracking-tight">
             {formatMoney(fromMinorUnits, currency)}–{formatMoney(toMinorUnits, currency)}
           </span>
           {discountPct > 0 && listPrice && (
-            <span className="text-lg text-text-tertiary line-through">
+            <span className="text-base md:text-lg text-text-tertiary line-through">
               {formatMoney(listPrice, currency)}
             </span>
           )}
@@ -28,11 +28,11 @@ export function PdpPricing({ activeUnitPrice, currency, listPrice, discountPct, 
         </>
       ) : (
         <>
-          <span className="text-5xl font-black text-text-primary tracking-tight">
+          <span className="text-3xl md:text-5xl font-black text-text-primary tracking-tight">
             <PriceDisplay amountMinorUnits={activeUnitPrice} currencyCode={currency} size="xl" locale={locale} />
           </span>
           {discountPct > 0 && listPrice && (
-            <span className="text-lg text-text-tertiary line-through">
+            <span className="text-base md:text-lg text-text-tertiary line-through">
               {formatMoney(listPrice, currency)}
             </span>
           )}

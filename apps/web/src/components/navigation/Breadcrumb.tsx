@@ -30,7 +30,7 @@ export function Breadcrumb({ items, regionKey, className }: BreadcrumbProps) {
         {all.slice(1, -1).map((item, i) => (
           <li key={`${item.path}-${i}`} className={cn('flex items-center gap-1', i > 0 && 'max-md:hidden')}>
             <Chevron />
-            <Link href={item.path} className="inline-block py-1.5 -my-1.5 text-tealink hover:text-tealink-hover hover:underline truncate max-w-[16ch]">
+            <Link href={item.path} className="inline-flex items-center min-h-[44px] py-1.5 -my-1.5 text-tealink hover:text-tealink-hover hover:underline truncate max-w-[16ch]">
               {item.name}
             </Link>
           </li>
@@ -52,7 +52,7 @@ export function Breadcrumb({ items, regionKey, className }: BreadcrumbProps) {
 function MobileFirst({ item }: { item: BreadcrumbItem }) {
   return (
     <li className="flex items-center">
-      <Link href={item.path} className="text-tealink hover:text-tealink-hover hover:underline">
+      <Link href={item.path} className="inline-flex items-center min-h-[44px] py-1.5 -my-1.5 text-tealink hover:text-tealink-hover hover:underline">
         {item.name}
       </Link>
     </li>

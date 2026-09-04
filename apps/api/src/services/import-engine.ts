@@ -238,7 +238,13 @@ async function runImport(jobId: string): Promise<void> {
       });
       adapted = adaptAosomUkRows(merged);
       profile = AOSOM_UK_PROFILE;
-      console.log('[DIAG] sellable=', adapted.products.length, 'outOfStock=', adapted.outOfStock.length, 'errors=', adapted.errors.length, 'merged=', merged.length, 'merged0_stock=', merged[0]?.stock);
+      const _stocks = merged.map(r => r.stock);
+      const _minStock = _stocks.length ? Math.min(..._stocks) : null;
+      const _maxStock = _stocks.length ? Math.max(..._stocks) : null;
+      const _ge20 = _stocks.filter(s => s >= 20).length;
+      const _eq0 = _stocks.filter(s => s === 0).length;
+      const _nonNum = _stocks.filter(s => typeof s !== 'number' || Number.isNaN(s)).length;
+      console.log('[DIAG] sellable=', adapted.products.length, 'outOfStock=', adapted.outOfStock.length, 'errors=', adapted.errors.length, 'merged=', merged.length, 'minStock=', _minStock, 'maxStock=', _maxStock, 'ge20=', _ge20, 'eq0=', _eq0, 'nonNumStock=', _nonNum, 'merged0=', JSON.stringify(merged[0] ?? null).slice(0, 300));
     }
 
     await prisma.importJob.update({

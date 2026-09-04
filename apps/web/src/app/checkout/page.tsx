@@ -171,7 +171,7 @@ export default function CheckoutPage() {
 
   if (cart.items.length === 0) {
     return (
-      <div className="container mx-auto max-w-[1460px] px-[30px] py-16 text-center">
+      <div className="container-site py-16 text-center">
         <h1 className="text-3xl font-extrabold text-text-primary">Nothing to check out</h1>
         <Link href="/products" className="btn btn-primary mt-4">Browse products</Link>
       </div>
@@ -179,7 +179,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-[1460px] px-[30px] py-6" data-testid="checkout">
+    <div className="container-site py-6 md:py-10" data-testid="checkout">
       <h1 className="text-2xl font-extrabold text-text-primary mb-6">Checkout</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-[30px] items-start">

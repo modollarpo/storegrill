@@ -987,4 +987,131 @@ router.get('/payouts', async (_req: AuthRequest, res: Response) => {
   });
 });
 
+router.get('/content', async (_req: AuthRequest, res: Response) => {
+  const pages = await prisma.contentPage.findMany({ orderBy: { updatedAt: 'desc' } });
+  res.json({ pages });
+});
+
+router.get('/content/:id', async (req: AuthRequest, res: Response) => {
+  const page = await prisma.contentPage.findUnique({ where: { id: req.params.id } });
+  if (!page) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Content page not found' } });
+  }
+  res.json({ page });
+});
+
+router.post('/content', async (req: AuthRequest, res: Response) => {
+  const body = z.object({
+    slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/),
+    title: z.string().min(1).max(200),
+    body: z.string(),
+    status: z.enum(['DRAFT', 'PUBLISHED']).default('DRAFT'),
+    regionKey: z.string().max(10).optional().nullable(),
+  }).parse(req.body);
+
+  const existing = await prisma.contentPage.findUnique({ where: { slug: body.slug } });
+  if (existing) {
+    return res.status(409).json({
+      error: { code: 'SLUG_EXISTS', message: 'A content page with this slug already exists' },
+    });
+  }
+
+  const page = await prisma.contentPage.create({
+    data: {
+      slug: body.slug,
+      title: body.title,
+      body: body.body,
+      status: body.status,
+      regionKey: body.regionKey ?? null,
+      publishedAt: body.status === 'PUBLISHED' ? new Date() : null,
+    },
+  });
+  await audit(req, 'CONTENT_PAGE_CREATED', 'ContentPage', page.id, { slug: page.slug });
+  res.status(201).json({ page });
+});
+
+router.put('/content/:id', async (req: AuthRequest, res: Response) => {
+  const existing = await prisma.contentPage.findUnique({ where: { id: req.params.id } });
+  if (!existing) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Content page not found' } });
+  }
+
+  const body = z.object({
+    slug: z.string().min(1).max(100).regex(/^[a-z0-9-]+$/),
+    title: z.string().min(1).max(200),
+    body: z.string(),
+    status: z.enum(['DRAFT', 'PUBLISHED']),
+    regionKey: z.string().max(10).optional().nullable(),
+  }).parse(req.body);
+
+  const slugTaken = await prisma.contentPage.findFirst({
+    where: { slug: body.slug, NOT: { id: existing.id } },
+  });
+  if (slugTaken) {
+    return res.status(409).json({
+      error: { code: 'SLUG_EXISTS', message: 'A content page with this slug already exists' },
+    });
+  }
+
+  const becamePublished = body.status === 'PUBLISHED' && existing.status !== 'PUBLISHED';
+  const page = await prisma.contentPage.update({
+    where: { id: existing.id },
+    data: {
+      slug: body.slug,
+      title: body.title,
+      body: body.body,
+      status: body.status,
+      regionKey: body.regionKey ?? null,
+      publishedAt: becamePublished ? new Date() : existing.status === 'PUBLISHED' && body.status !== 'PUBLISHED' ? null : existing.publishedAt,
+    },
+  });
+  await audit(req, 'CONTENT_PAGE_UPDATED', 'ContentPage', page.id, { slug: page.slug, status: page.status });
+  res.json({ page });
+});
+
+router.delete('/content/:id', async (req: AuthRequest, res: Response) => {
+  const existing = await prisma.contentPage.findUnique({ where: { id: req.params.id } });
+  if (!existing) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Content page not found' } });
+  }
+  await prisma.contentPage.delete({ where: { id: existing.id } });
+  await audit(req, 'CONTENT_PAGE_DELETED', 'ContentPage', existing.id, { slug: existing.slug });
+  res.status(204).end();
+});
+
+router.get('/settings', async (_req: AuthRequest, res: Response) => {
+  const settings = await prisma.siteSetting.findMany({ orderBy: { group: 'asc' } });
+  res.json({
+    settings: settings.map(s => ({ ...s, value: safeJsonParse(s.value) })),
+  });
+});
+
+router.put('/settings', async (req: AuthRequest, res: Response) => {
+  const body = z.object({
+    settings: z.array(z.object({
+      key: z.string().min(1).max(100),
+      value: z.unknown().optional().nullable(),
+      group: z.string().max(100).optional().default('general'),
+    })),
+  }).parse(req.body);
+
+  const results = await Promise.all(body.settings.map(async s => {
+    const value = JSON.stringify(s.value ?? '');
+    const key = s.key.trim();
+    return prisma.siteSetting.upsert({
+      where: { key },
+      create: { key, value, group: s.group },
+      update: { value, group: s.group },
+    });
+  }));
+  await audit(req, 'SETTINGS_UPDATED', 'SiteSetting', undefined, { keys: results.map(r => r.key) });
+  res.json({
+    settings: results.map(r => ({ ...r, value: safeJsonParse(r.value) })),
+  });
+});
+
+function safeJsonParse(raw: string) {
+  try { return JSON.parse(raw); } catch { return raw; }
+}
+
 export { router as adminRouter };

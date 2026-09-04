@@ -755,6 +755,7 @@ router.get('/:slug', async (req: AuthRequest, res: Response) => {
       id: true, storeName: true, slug: true, logo: true, banner: true,
       description: true, returnPolicy: true, shippingPolicy: true,
       supportEmail: true, supportPhone: true, rating: true, reviewCount: true,
+      status: true, kycStatus: true,
       createdAt: true,
       user: { select: { name: true } },
       products: {

@@ -579,6 +579,110 @@ router.get('/imports', async (req: AuthRequest, res: Response) => {
   });
 });
 
+router.get('/analytics', async (_req: AuthRequest, res: Response) => {
+  const delivered = { status: 'DELIVERED' };
+
+  const [totals, regionGroup, recentItems] = await Promise.all([
+    prisma.order.aggregate({
+      where: delivered,
+      _sum: { totalMinorUnits: true },
+      _count: true,
+    }),
+    prisma.order.groupBy({
+      by: ['regionKey'],
+      where: delivered,
+      _sum: { totalMinorUnits: true },
+      _count: true,
+    }),
+    prisma.orderItem.findMany({
+      where: { order: delivered },
+      select: {
+        totalMinorUnits: true,
+        quantity: true,
+        vendorId: true,
+        productId: true,
+        order: { select: { createdAt: true } },
+        product: { select: { name: true, categoryId: true, category: { select: { name: true } } } },
+        vendor: { select: { storeName: true } },
+      },
+    }),
+  ]);
+
+  const byVendor = new Map<string, { storeName: string; revenue: number; units: number }>();
+  const byCategory = new Map<string, { name: string; revenue: number; units: number }>();
+  const byProductId = new Map<string, { name: string; category: string; revenue: number; units: number }>();
+  const byDay = new Map<string, { date: string; revenue: number; orders: number }>();
+
+  for (const item of recentItems) {
+    const created = item.order.createdAt;
+    const day = created.toISOString().slice(0, 10);
+
+    const vendorAgg = byVendor.get(item.vendorId) ?? { storeName: item.vendor?.storeName ?? 'Unknown', revenue: 0, units: 0 };
+    vendorAgg.revenue += item.totalMinorUnits;
+    vendorAgg.units += item.quantity;
+    byVendor.set(item.vendorId, vendorAgg);
+
+    const catId = item.product.categoryId;
+    const catAgg = byCategory.get(catId) ?? { name: item.product.category?.name ?? 'Uncategorised', revenue: 0, units: 0 };
+    catAgg.revenue += item.totalMinorUnits;
+    catAgg.units += item.quantity;
+    byCategory.set(catId, catAgg);
+
+    const prodAgg = byProductId.get(item.productId) ?? {
+      name: item.product.name,
+      category: item.product.category?.name ?? '—',
+      revenue: 0,
+      units: 0,
+    };
+    prodAgg.revenue += item.totalMinorUnits;
+    prodAgg.units += item.quantity;
+    byProductId.set(item.productId, prodAgg);
+
+    const dayAgg = byDay.get(day) ?? { date: day, revenue: 0, orders: 0 };
+    dayAgg.revenue += item.totalMinorUnits;
+    dayAgg.orders += 1;
+    byDay.set(day, dayAgg);
+  }
+
+  const days = 14;
+  const series: Array<{ date: string; revenue: number; orders: number }> = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000);
+    const key = d.toISOString().slice(0, 10);
+    const agg = byDay.get(key) ?? { date: key, revenue: 0, orders: 0 };
+    series.push({ date: key, revenue: agg.revenue, orders: agg.orders });
+  }
+
+  const regionBreakdown = regionGroup.map(r => ({
+    regionKey: r.regionKey,
+    revenue: Number(r._sum.totalMinorUnits || 0),
+    orders: r._count,
+  }));
+
+  res.json({
+    analytics: {
+      totals: {
+        revenue: Number(totals._sum.totalMinorUnits || 0),
+        orders: totals._count,
+      },
+      revenueByDay: series,
+      revenueByRegion: regionBreakdown,
+      salesByVendor: [...byVendor.entries()]
+        .map(([vendorId, v]) => ({ vendorId, ...v, revenue: v.revenue }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10),
+      salesByCategory: [...byCategory.entries()]
+        .map(([categoryId, c]) => ({ categoryId, ...c }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10),
+      topProducts: [...byProductId.entries()]
+        .map(([productId, p]) => ({ productId, ...p }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10),
+    },
+  });
+});
+
 router.get('/audit-logs', async (req: AuthRequest, res: Response) => {
   const query = z.object({
     entity: z.string().optional(),

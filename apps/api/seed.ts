@@ -98,6 +98,7 @@ const PRODUCTS: Array<{
   attributes: Array<{ name: string; value: string }>;
   variants?: Array<{ name: string; sku: string; price: number; stock: number; attributes: string }>;
   stock: number;
+  image: string;
 }> = [
   {
     name: 'ProMax Wireless Earbuds',
@@ -121,6 +122,7 @@ const PRODUCTS: Array<{
       { name: 'Navy', sku: 'TV-ear-001-NVY', price: 8499, stock: 80, attributes: '{"Color":"Navy"}' },
     ],
     stock: 350,
+    image: 'https://images.unsplash.com/photo-1590658268037-6bf12f032f55?w=600&h=600&fit=crop',
   },
   {
     name: 'UltraSlim Laptop Stand',
@@ -139,6 +141,7 @@ const PRODUCTS: Array<{
       { name: 'Compatible', value: 'Up to 17"' },
     ],
     stock: 200,
+    image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=600&h=600&fit=crop',
   },
   {
     name: 'Smart Fitness Watch',
@@ -162,6 +165,7 @@ const PRODUCTS: Array<{
       { name: 'Rose Gold', sku: 'PF-watch-001-RG', price: 15999, stock: 60, attributes: '{"Color":"Rose Gold"}' },
     ],
     stock: 240,
+    image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&h=600&fit=crop',
   },
   {
     name: 'Organic Cotton T-Shirt',
@@ -185,6 +189,7 @@ const PRODUCTS: Array<{
       { name: 'XL', sku: 'US-tee-001-XL', price: 2699, stock: 40, attributes: '{"Size":"XL"}' },
     ],
     stock: 240,
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&h=600&fit=crop',
   },
   {
     name: 'Professional Camera Lens 50mm',
@@ -203,6 +208,7 @@ const PRODUCTS: Array<{
       { name: 'Mount', value: 'Universal' },
     ],
     stock: 45,
+    image: 'https://images.unsplash.com/photo-1617005082133-548c4dd27f35?w=600&h=600&fit=crop',
   },
   {
     name: 'Ergonomic Office Chair',
@@ -221,6 +227,7 @@ const PRODUCTS: Array<{
       { name: 'Adjustable', value: 'Height, Arms, Tilt' },
     ],
     stock: 30,
+    image: 'https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=600&h=600&fit=crop',
   },
   {
     name: 'Camping Tent 4-Person',
@@ -239,6 +246,7 @@ const PRODUCTS: Array<{
       { name: 'Waterproof', value: 'Yes' },
     ],
     stock: 60,
+    image: 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600&h=600&fit=crop',
   },
   {
     name: 'Stainless Steel Water Bottle',
@@ -261,6 +269,7 @@ const PRODUCTS: Array<{
       { name: 'Blue', sku: 'PF-bottle-001-BLU', price: 1999, stock: 150, attributes: '{"Color":"Blue"}' },
     ],
     stock: 530,
+    image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&h=600&fit=crop',
   },
   {
     name: 'Bestseller Novel Collection',
@@ -278,6 +287,7 @@ const PRODUCTS: Array<{
       { name: 'Pages', value: '900+ total' },
     ],
     stock: 100,
+    image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=600&h=600&fit=crop',
   },
   {
     name: 'Wireless Bluetooth Speaker',
@@ -300,6 +310,7 @@ const PRODUCTS: Array<{
       { name: 'Red', sku: 'TV-speaker-001-RED', price: 5999, stock: 80, attributes: '{"Color":"Red"}' },
     ],
     stock: 180,
+    image: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=600&h=600&fit=crop',
   },
   {
     name: 'Premium Yoga Mat',
@@ -318,6 +329,7 @@ const PRODUCTS: Array<{
       { name: 'Size', value: '183cm x 61cm' },
     ],
     stock: 90,
+    image: 'https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=600&h=600&fit=crop',
   },
   {
     name: 'LED Desk Lamp',
@@ -335,6 +347,7 @@ const PRODUCTS: Array<{
       { name: 'Color Temperature', value: '3000K-6500K' },
     ],
     stock: 120,
+    image: 'https://images.unsplash.com/photo-1507473885765-e6ed057ab6fe?w=600&h=600&fit=crop',
   },
 ];
 
@@ -516,7 +529,8 @@ async function main() {
       isHouseVendor: true,
       autoPublishImports: true,
       shippingMode: 'FLAT',
-      shippingFlatMinorUnits: 1000,
+      shippingFlatMinorUnits: 999,
+      shippingCountries: JSON.stringify(['GB']),
     },
   });
 
@@ -537,8 +551,8 @@ async function main() {
         sku: product.sku,
         categoryId: categoryMap.get(product.categorySlug) || categoryMap.values().next().value,
         brandId: brandMap.get(product.brandSlug),
-        images: jsonArr([`https://placehold.co/800x800?text=${encodeURIComponent(product.name)}`]),
-        thumbnail: `https://placehold.co/400x400?text=${encodeURIComponent(product.name)}`,
+        images: jsonArr([product.image]),
+        thumbnail: product.image,
         basePriceMinorUnits: product.price,
         currencyCode: 'USD',
         weightGrams: product.weight,
@@ -562,7 +576,7 @@ async function main() {
             sku: v.sku,
             basePriceMinorUnits: v.price,
             stock: v.stock,
-            images: jsonArr([`https://placehold.co/400x400?text=${encodeURIComponent(v.name)}`]),
+            images: jsonArr([product.image]),
             attributes: v.attributes,
           },
         });

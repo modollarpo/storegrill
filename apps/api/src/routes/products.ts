@@ -4,18 +4,61 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../index.js';
 import { authenticate, optionalAuth, authorize, AuthRequest } from '../middleware/auth.js';
 import { cache, TTL } from '../lib/cache.js';
-import { ProductFilterSchema } from '@storegrill/shared';
+import { ProductFilterSchema } from '@Storegrill/shared';
 import { slugify } from '../utils/slugify.js';
+import { getCompanions } from '../lib/companions.js';
 
 const router = Router();
+
+function compareAtPriceOf(product: any): number | undefined {
+  const attributes = Array.isArray(product.variants)
+    ? product.variants.flatMap((v: any) => {
+        try {
+          return typeof v.attributes === 'string' ? JSON.parse(v.attributes) : v.attributes;
+        } catch {
+          return [];
+        }
+      })
+    : [];
+  for (const attr of attributes) {
+    if (attr && String(attr.name).toLowerCase() === 'compare at price') {
+      const value = Number(attr.value);
+      if (Number.isFinite(value) && value > Number(product.basePriceMinorUnits)) return value;
+    }
+  }
+  return undefined;
+}
 
 router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
   const query = ProductFilterSchema.parse(req.query);
   const regionKey = query.regionKey;
 
+  let categoryId = query.categoryId;
+  if (!categoryId && query.category) {
+    const cat = await prisma.category.findUnique({ where: { slug: query.category }, select: { id: true } });
+    if (cat) categoryId = cat.id;
+  }
+
+  let categoryIds: string[] = [];
+  if (categoryId) {
+    categoryIds = [categoryId];
+    const pending = [categoryId];
+    while (pending.length > 0) {
+      const batch = pending.splice(0);
+      const children = await prisma.category.findMany({
+        where: { parentId: { in: batch } },
+        select: { id: true },
+      });
+      for (const child of children) {
+        categoryIds.push(child.id);
+        pending.push(child.id);
+      }
+    }
+  }
+
   const where: Prisma.ProductWhereInput = {
     status: 'ACTIVE',
-    ...(query.categoryId && { categoryId: query.categoryId }),
+    ...(categoryIds.length > 0 && { categoryId: { in: categoryIds } }),
     ...(query.brandId && { brandId: query.brandId }),
     ...(query.vendorId && { vendorId: query.vendorId }),
     ...(query.minRating && { rating: { gte: query.minRating } }),
@@ -67,23 +110,25 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
         vendor: { select: { id: true, storeName: true, slug: true } },
         category: { select: { id: true, name: true, slug: true } },
         regionPrices: { where: { regionKey }, take: 1 },
-        variants: { select: { id: true, stock: true }, take: 1 },
+        variants: true,
+        _count: { select: { variants: { where: { stock: { gt: 0 } } } } },
       },
     }),
     prisma.product.count({ where }),
   ]);
 
-  const enriched = products.map(p => ({
+  const enriched = products.map((p: any) => ({
     ...p,
     images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
     tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
     basePriceMinorUnits: Number(p.basePriceMinorUnits),
     price: p.regionPrices[0] ? Number(p.regionPrices[0].priceMinorUnits) : Number(p.basePriceMinorUnits),
+    listPriceMinorUnits: compareAtPriceOf(p),
     currencyCode: p.regionPrices[0]?.currencyCode || p.currencyCode,
-    inStock: p.variants.some(v => v.stock > 0) || true,
+    inStock: p._count.variants > 0,
     rating: Number(p.rating),
     regionPrices: undefined,
-    variants: undefined,
+    _count: undefined,
   }));
 
   res.json({
@@ -108,19 +153,22 @@ router.get('/featured', optionalAuth, async (req: AuthRequest, res: Response) =>
       vendor: { select: { id: true, storeName: true, slug: true } },
       category: { select: { id: true, name: true, slug: true } },
       regionPrices: { where: { regionKey }, take: 1 },
+      variants: true,
     },
   });
 
   res.json({
-    products: products.map(p => ({
+    products: products.map((p: any) => ({
       ...p,
       images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
       tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
       basePriceMinorUnits: Number(p.basePriceMinorUnits),
       price: p.regionPrices[0] ? Number(p.regionPrices[0].priceMinorUnits) : Number(p.basePriceMinorUnits),
+      listPriceMinorUnits: compareAtPriceOf(p),
       currencyCode: p.regionPrices[0]?.currencyCode || p.currencyCode,
       rating: Number(p.rating),
       regionPrices: undefined,
+      variants: undefined,
     })),
   });
 });
@@ -169,15 +217,17 @@ router.get('/:identifier', optionalAuth, async (req: AuthRequest, res: Response)
       price: product.regionPrices[0]
         ? Number(product.regionPrices[0].priceMinorUnits)
         : Number(product.basePriceMinorUnits),
+      listPriceMinorUnits: compareAtPriceOf(product as any),
       currencyCode: product.regionPrices[0]?.currencyCode || product.currencyCode,
       rating: Number(product.rating),
-      variants: product.variants.map(v => ({
+      inventoryCount: product.variants.reduce((sum: number, v: { stock: number }) => sum + v.stock, 0),
+      variants: product.variants.map((v: any) => ({
         ...v,
         basePriceMinorUnits: Number(v.basePriceMinorUnits),
         images: typeof v.images === 'string' ? JSON.parse(v.images) : v.images,
         attributes: typeof v.attributes === 'string' ? JSON.parse(v.attributes) : v.attributes,
       })),
-      reviews: product.reviews.map(r => ({
+      reviews: product.reviews.map((r: any) => ({
         ...r,
         user: r.user,
       })),
@@ -186,6 +236,70 @@ router.get('/:identifier', optionalAuth, async (req: AuthRequest, res: Response)
   };
 
   cache.set(cacheKey, payload, TTL.product);
+  res.setHeader('X-Cache', 'MISS');
+  res.json(payload);
+});
+
+router.get('/:identifier/companions', optionalAuth, async (req: AuthRequest, res: Response) => {
+  const { identifier } = req.params;
+  const regionKey = (req.query.regionKey as string) || 'UK';
+  const limit = Math.max(1, Math.min(24, Number(req.query.limit) || 6));
+  const cacheKey = `companions:${identifier}:${regionKey}:${limit}`;
+
+  const cached = cache.get<object>(cacheKey);
+  if (cached) {
+    res.setHeader('X-Cache', 'HIT');
+    return res.json(cached);
+  }
+
+  const candidates = await getCompanions(identifier, { limit });
+
+  if (candidates.length === 0) {
+    const payload = { companions: [] };
+    cache.set(cacheKey, payload, TTL.products);
+    res.setHeader('X-Cache', 'MISS');
+    return res.json(payload);
+  }
+
+  const productIds = candidates.map(c => c.productId);
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds }, status: 'ACTIVE' },
+    include: {
+      vendor: { select: { storeName: true, slug: true } },
+      category: { select: { name: true, slug: true } },
+      regionPrices: { where: { regionKey }, take: 1 },
+      variants: { select: { stock: true } },
+    },
+  });
+
+  const orderById = new Map(products.map((p, idx) => [p.id, idx]));
+  const companions = candidates
+    .filter(c => products.some(p => p.id === c.productId))
+    .sort((a, b) => (orderById.get(a.productId) ?? 0) - (orderById.get(b.productId) ?? 0))
+    .map(c => {
+      const p = products.find(x => x.id === c.productId)!;
+      return {
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        thumbnail: p.thumbnail ?? null,
+        priceMinorUnits: p.regionPrices[0]
+          ? Number(p.regionPrices[0].priceMinorUnits)
+          : Number(p.basePriceMinorUnits),
+        currencyCode: p.regionPrices[0]?.currencyCode || p.currencyCode,
+        rating: Number(p.rating),
+        reviewCount: p.reviewCount,
+        inStock: p.variants.some(v => v.stock > 0),
+        vendorSlug: p.vendor?.slug ?? null,
+        vendorName: p.vendor?.storeName ?? null,
+        categorySlug: p.category?.slug ?? null,
+        reason: c.reason,
+        weight: c.weight,
+      };
+    });
+
+  const payload = { companions };
+  cache.set(cacheKey, payload, TTL.products);
   res.setHeader('X-Cache', 'MISS');
   res.json(payload);
 });
@@ -288,13 +402,13 @@ router.post('/', authenticate, authorize('VENDOR', 'ADMIN'), async (req: AuthReq
       tags: typeof product.tags === 'string' ? JSON.parse(product.tags) : product.tags,
       attributes: typeof product.attributes === 'string' ? JSON.parse(product.attributes) : product.attributes,
       basePriceMinorUnits: Number(product.basePriceMinorUnits),
-      variants: product.variants.map(v => ({
+      variants: product.variants.map((v: any) => ({
         ...v,
         basePriceMinorUnits: Number(v.basePriceMinorUnits),
         images: typeof v.images === 'string' ? JSON.parse(v.images) : v.images,
         attributes: typeof v.attributes === 'string' ? JSON.parse(v.attributes) : v.attributes,
       })),
-      regionPrices: product.regionPrices.map(rp => ({
+      regionPrices: product.regionPrices.map((rp: any) => ({
         ...rp,
         priceMinorUnits: Number(rp.priceMinorUnits),
       })),
@@ -371,7 +485,7 @@ router.put('/:id', authenticate, authorize('VENDOR', 'ADMIN'), async (req: AuthR
       tags: typeof product.tags === 'string' ? JSON.parse(product.tags) : product.tags,
       attributes: typeof product.attributes === 'string' ? JSON.parse(product.attributes) : product.attributes,
       basePriceMinorUnits: Number(product.basePriceMinorUnits),
-      variants: product.variants.map(v => ({
+      variants: product.variants.map((v: any) => ({
         ...v,
         basePriceMinorUnits: Number(v.basePriceMinorUnits),
         images: typeof v.images === 'string' ? JSON.parse(v.images) : v.images,

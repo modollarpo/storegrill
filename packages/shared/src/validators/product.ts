@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const ProductFilterSchema = z.object({
   q: z.string().optional(),
   categoryId: z.string().optional(),
+  category: z.string().optional(),
   brandId: z.string().optional(),
   vendorId: z.string().optional(),
   minPrice: z.coerce.number().int().nonnegative().optional(),

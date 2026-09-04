@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 :root {
+  /* Type — Outfit (self-hosted variable font, @fontsource-variable/outfit).
+     No third-party runtime requests (Google Fonts CDN raises GDPR concerns
+     in EU regions); system stack remains the fallback chain. */
+  --font-sans: 'Outfit Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", "Fira Code", Menlo, Consolas, "Liberation Mono", monospace;
+
   /* Brand — Storegrill purple */
   --color-ember: #4c12a1;
   --color-ember-dark: #400e8a;
@@ -78,13 +84,13 @@
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   
   /* Radii */
-  --radius-xs: 4px;
-  --radius-sm: 4px;
-  --radius-md: 4px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
-  --radius-2xl: 8px;
-  --radius-3xl: 8px;
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 22px;
+  --radius-3xl: 28px;
   --radius-pill: 9999px;
 
   /* Z-Index */
@@ -172,11 +178,11 @@
     gap: 0.4em;
     height: 2.5rem;
     padding-inline: 1.25rem;
-    border-radius: var(--radius-xs);
+    border-radius: var(--radius-pill);
     font-size: 0.9375rem;
     transition: all var(--duration-fast) var(--ease-out);
   }
-  .btn:disabled, .btn[aria-disabled="true"] { cursor: not-allowed; opacity: 0.5; }
+  .btn:disabled, .btn[aria-disabled="true"] { cursor: not-allowed; opacity: 0.5; box-shadow: none !important; }
   .btn-xs  { height: 1.75rem;  padding-inline: 0.625rem; font-size: 0.8125rem; }
   .btn-sm  { height: 2.125rem; padding-inline: 0.875rem; font-size: 0.875rem;  }
   .btn-lg  { height: 2.875rem; padding-inline: 1.75rem;  font-size: 1rem;      }
@@ -185,9 +191,16 @@
   .btn-primary {
     background-color: var(--color-action-primary);
     color: var(--color-action-primary-fg);
+    box-shadow: 0 4px 14px 0 rgba(76, 18, 161, 0.39);
   }
-  .btn-primary:hover:not(:disabled) { background-color: var(--color-action-primary-hover); }
-  .btn-primary:active:not(:disabled) { background-color: var(--color-action-primary-active); }
+  .btn-primary:hover:not(:disabled) { 
+    background-color: var(--color-action-primary-hover); 
+    transform: scale(1.02);
+  }
+  .btn-primary:active:not(:disabled) { 
+    background-color: var(--color-action-primary-active);
+    transform: scale(0.95);
+  }
 
   .btn-secondary { 
     background-color: var(--color-action-secondary); 
@@ -243,12 +256,12 @@
   .input[aria-invalid="true"] { border-color: var(--color-feedback-danger); box-shadow: 0 0 0 3px rgba(196,25,25,0.25); }
   textarea.input { @apply py-3 h-auto; }
 
-  /* Cards — flat, edge-defined */
+  /* Cards — hairline edge + subtle elevation for a premium, enterprise feel */
   .card {
     background-color: var(--color-surface-raised);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xs);
-    box-shadow: none;
+    box-shadow: var(--shadow-xs);
   }
   .card-hover {
     @apply card transition-all;
@@ -265,7 +278,7 @@
   .container-content { @apply w-full max-w-content mx-auto px-4 md:px-8; }
 
   .section { @apply py-8 md:py-12; }
-  .section-title { @apply text-heading-xl font-bold text-text-primary uppercase tracking-wide mb-6; }
+  .section-title { @apply text-heading-xl font-bold text-text-primary mb-6; }
   .section-header { @apply flex items-center justify-between mb-6; }
 
   /* Utilities */
@@ -287,10 +300,11 @@
 }
 
 @layer utilities {
-  .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-none { -ms-overflow-style: none; }
   .scrollbar-none::-webkit-scrollbar { display: none; }
+  @supports (scrollbar-width: none) { .scrollbar-none { scrollbar-width: none; } }
 
-  .text-balance { text-wrap: balance; }
+  @supports (text-wrap: balance) { .text-balance { text-wrap: balance; } }
 
   /* ── Skeleton shimmer ── */
   @keyframes shimmer { 0% { background-position: 200% center; } 100% { background-position: -200% center; } }
@@ -358,6 +372,12 @@
     to   { opacity: 1; }
   }
   .animate-fade-in { animation: fade-in 300ms ease-out forwards; }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .animate-float { animation: float 6s ease-in-out infinite; }
 
   .skip-link {
     position: absolute;

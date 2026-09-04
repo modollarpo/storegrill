@@ -74,7 +74,7 @@ export function Drawer({ open, onClose, side = 'left', title, children, classNam
         aria-label={title}
         tabIndex={-1}
         className={cn(
-          'absolute top-0 h-full w-full max-w-[420px] min-w-[280px] bg-white shadow-xl flex flex-col outline-none transition-transform duration-slow ease-default',
+          'absolute top-0 h-full w-full max-w-[420px] min-w-[280px] bg-surface-raised shadow-xl flex flex-col outline-none transition-transform duration-slow ease-default',
           side === 'left' ? 'left-0' : 'right-0',
           'translate-x-0',
           className

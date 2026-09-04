@@ -14,10 +14,9 @@ terraform {
 }
 
 locals {
-  suffix       = "${var.environment}-${var.region_key}"
+  suffix       = lower("${var.environment}-${var.region_key}")
   flat_suffix  = lower(replace(local.suffix, "-", ""))
   cors_header  = join(",", var.cors_origins)
-  api_hostname = "app-storegrill-api-${local.suffix}.azurewebsites.net"
 }
 
 variable "environment" {
@@ -28,6 +27,12 @@ variable "environment" {
 variable "region_key" {
   type        = string
   description = "StoreGrill region identifier served by this pod (UK/US/DE/...)"
+}
+
+variable "dns_zone_name" {
+  type        = string
+  default     = "storegrill.net"
+  description = "Apex DNS zone the pod's custom domains are created under"
 }
 
 variable "azure_location" {
@@ -81,14 +86,6 @@ resource "azurerm_user_assigned_identity" "apps" {
   resource_group_name = azurerm_resource_group.pod.name
 }
 
-resource "azurerm_service_plan" "main" {
-  name                = "asp-storegrill-${local.suffix}"
-  resource_group_name = azurerm_resource_group.pod.name
-  location            = azurerm_resource_group.pod.location
-  os_type             = "Linux"
-  sku_name            = "F1"
-}
-
 resource "azurerm_log_analytics_workspace" "logs" {
   name                = "log-storegrill-${local.suffix}"
   location            = azurerm_resource_group.pod.location
@@ -116,7 +113,7 @@ resource "random_password" "db_admin" {
 }
 
 resource "azurerm_postgresql_flexible_server" "db" {
-  name                         = "pg-storegrill-${local.flat_suffix}"
+  name                         = "pg-storegrill-${lower(var.region_key)}-${lower(var.environment)}"
   resource_group_name          = azurerm_resource_group.pod.name
   location                     = azurerm_resource_group.pod.location
   version                      = "16"
@@ -163,12 +160,12 @@ locals {
 }
 
 resource "azurerm_key_vault" "vault" {
-  name                          = "kv-storegrill-${local.flat_suffix}"
+  name                          = "kv-storegrill-${lower(var.region_key)}-${lower(var.environment)}"
   location                      = azurerm_resource_group.pod.location
   resource_group_name           = azurerm_resource_group.pod.name
   tenant_id                     = data.azurerm_client_config.current.tenant_id
   sku_name                      = "standard"
-  enable_rbac_authorization     = true
+  enable_rbac_authorization     = false
   soft_delete_retention_days    = 7
   purge_protection_enabled      = false
   public_network_access_enabled = true
@@ -178,10 +175,20 @@ resource "azurerm_key_vault" "vault" {
 
 data "azurerm_client_config" "current" {}
 
-resource "azurerm_role_assignment" "identity_kv_secrets" {
-  scope                = azurerm_key_vault.vault.id
-  role_definition_name = "Key Vault Secrets User"
-  principal_id         = azurerm_user_assigned_identity.apps.principal_id
+resource "azurerm_key_vault_access_policy" "deployer" {
+  key_vault_id = azurerm_key_vault.vault.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = data.azurerm_client_config.current.object_id
+
+  secret_permissions = ["Get", "List", "Set", "Delete", "Recover"]
+}
+
+resource "azurerm_key_vault_access_policy" "apps" {
+  key_vault_id = azurerm_key_vault.vault.id
+  tenant_id    = data.azurerm_client_config.current.tenant_id
+  object_id    = azurerm_user_assigned_identity.apps.principal_id
+
+  secret_permissions = ["Get", "List"]
 }
 
 resource "azurerm_key_vault_secret" "jwt" {
@@ -189,7 +196,7 @@ resource "azurerm_key_vault_secret" "jwt" {
   value        = random_password.jwt.result
   key_vault_id = azurerm_key_vault.vault.id
 
-  depends_on = [azurerm_role_assignment.identity_kv_secrets]
+  depends_on = [azurerm_key_vault_access_policy.deployer]
 }
 
 resource "azurerm_key_vault_secret" "postgres_connection" {
@@ -197,7 +204,7 @@ resource "azurerm_key_vault_secret" "postgres_connection" {
   value        = "${local.pg_url_for_prefix}/${var.database_names[0]}?sslmode=require"
   key_vault_id = azurerm_key_vault.vault.id
 
-  depends_on = [azurerm_role_assignment.identity_kv_secrets]
+  depends_on = [azurerm_key_vault_access_policy.deployer]
 }
 
 resource "azurerm_key_vault_secret" "slots" {
@@ -212,11 +219,11 @@ resource "azurerm_key_vault_secret" "slots" {
   value        = each.value
   key_vault_id = azurerm_key_vault.vault.id
 
-  depends_on = [azurerm_role_assignment.identity_kv_secrets]
+  depends_on = [azurerm_key_vault_access_policy.deployer]
 }
 
 resource "azurerm_storage_account" "media" {
-  name                     = "ststoregrill${local.flat_suffix}"
+  name                     = "ststoregrill${lower(var.region_key)}${lower(var.environment)}"
   resource_group_name      = azurerm_resource_group.pod.name
   location                 = azurerm_resource_group.pod.location
   account_tier             = "Standard"
@@ -244,55 +251,139 @@ resource "azurerm_role_assignment" "identity_blob" {
   principal_id         = azurerm_user_assigned_identity.apps.principal_id
 }
 
-resource "azurerm_linux_web_app" "api" {
-  name                = "app-storegrill-api-${local.suffix}"
-  resource_group_name = azurerm_resource_group.pod.name
-  location            = azurerm_service_plan.main.location
-  service_plan_id     = azurerm_service_plan.main.id
+resource "azurerm_container_app_environment" "env" {
+  name                       = "env-storegrill-${local.suffix}"
+  location                   = azurerm_resource_group.pod.location
+  resource_group_name        = azurerm_resource_group.pod.name
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.logs.id
+
+  tags = azurerm_resource_group.pod.tags
+}
+
+resource "azurerm_container_app" "api" {
+  name                         = "app-storegrill-api-${local.suffix}"
+  container_app_environment_id = azurerm_container_app_environment.env.id
+  resource_group_name          = azurerm_resource_group.pod.name
+  revision_mode                = "Single"
 
   identity {
     type         = "SystemAssigned, UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.apps.id]
   }
 
-  app_settings = {
-    WEBSITE_RUN_FROM_PACKAGE              = "1"
-    NODE_ENV                              = "production"
-    SG_REGION_KEY                         = var.region_key
-    DATABASE_URL                          = "${local.pg_url_for_prefix}/${var.database_names[0]}?schema=public&sslmode=require&connection_limit=10"
-    JWT_SECRET                            = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.jwt.id})"
-    LIBRETRANSLATE_URL                    = var.deploy_translator ? "https://${azurerm_linux_web_app.translator[0].default_hostname}/translate" : null
-    CORS_ORIGIN                           = local.cors_header
-    WEB_BASE_URL                          = var.cors_origins[0]
-    API_BASE_URL                          = "https://${local.api_hostname}"
-    AZURE_MEDIA_STORAGE_ACCOUNT           = azurerm_storage_account.media.name
-    AZURE_MEDIA_CONTAINER                 = azurerm_storage_container.product_media.name
-    STRIPE_SECRET_KEY                     = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.slots["stripe-secret-key"].id})"
-    STRIPE_WEBHOOK_SECRET                 = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.slots["stripe-webhook-secret"].id})"
-    PAYPAL_CLIENT_ID                      = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.slots["paypal-client-id"].id})"
-    PAYPAL_CLIENT_SECRET                  = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.slots["paypal-client-secret"].id})"
-    ACS_CONNECTION_STRING                 = "@Microsoft.KeyVault(SecretUri=${azurerm_key_vault_secret.slots["acs-connection-string"].id})"
-    APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.insights.connection_string
+  secret {
+    name  = "jwt-secret"
+    value = random_password.jwt.result
+  }
+  secret {
+    name  = "postgres-connection"
+    value = "${local.pg_url_for_prefix}/${var.database_names[0]}?sslmode=require"
+  }
+  secret {
+    name  = "stripe-secret-key"
+    value = azurerm_key_vault_secret.slots["stripe-secret-key"].value
+  }
+  secret {
+    name  = "stripe-webhook-secret"
+    value = azurerm_key_vault_secret.slots["stripe-webhook-secret"].value
+  }
+  secret {
+    name  = "paypal-client-id"
+    value = azurerm_key_vault_secret.slots["paypal-client-id"].value
+  }
+  secret {
+    name  = "paypal-client-secret"
+    value = azurerm_key_vault_secret.slots["paypal-client-secret"].value
+  }
+  secret {
+    name  = "acs-connection-string"
+    value = azurerm_key_vault_secret.slots["acs-connection-string"].value
   }
 
-  site_config {
-    always_on           = false
-    http2_enabled       = true
-    minimum_tls_version = "1.2"
-    health_check_path   = "/api/health"
-    application_stack {
-      node_version = "20-lts"
+  ingress {
+    external_enabled = true
+    target_port      = 80
+    transport        = "auto"
+
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
     }
   }
 
-  logs {
-    application_logs {
-      file_system_level = "Information"
-    }
-    http_logs {
-      file_system {
-        retention_in_days = 7
-        retention_in_mb   = 35
+  template {
+    min_replicas = 0
+    max_replicas = 10
+
+    container {
+      name   = "api"
+      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+      cpu    = 0.5
+      memory = "1Gi"
+
+      env {
+        name  = "NODE_ENV"
+        value = "production"
+      }
+      env {
+        name  = "SG_REGION_KEY"
+        value = var.region_key
+      }
+      env {
+        name        = "DATABASE_URL"
+        secret_name = "postgres-connection"
+      }
+      env {
+        name        = "JWT_SECRET"
+        secret_name = "jwt-secret"
+      }
+      env {
+        name  = "CORS_ORIGIN"
+        value = local.cors_header
+      }
+      env {
+        name  = "WEB_BASE_URL"
+        value = var.cors_origins[0]
+      }
+      env {
+        name  = "API_BASE_URL"
+        value = "https://${lower(var.region_key)}-api.${var.dns_zone_name}"
+      }
+      env {
+        name  = "AZURE_MEDIA_STORAGE_ACCOUNT"
+        value = azurerm_storage_account.media.name
+      }
+      env {
+        name  = "AZURE_MEDIA_CONTAINER"
+        value = azurerm_storage_container.product_media.name
+      }
+      env {
+        name        = "STRIPE_SECRET_KEY"
+        secret_name = "stripe-secret-key"
+      }
+      env {
+        name        = "STRIPE_WEBHOOK_SECRET"
+        secret_name = "stripe-webhook-secret"
+      }
+      env {
+        name        = "PAYPAL_CLIENT_ID"
+        secret_name = "paypal-client-id"
+      }
+      env {
+        name        = "PAYPAL_CLIENT_SECRET"
+        secret_name = "paypal-client-secret"
+      }
+      env {
+        name        = "ACS_CONNECTION_STRING"
+        secret_name = "acs-connection-string"
+      }
+      env {
+        name  = "LIBRETRANSLATE_URL"
+        value = var.deploy_translator ? "https://${azurerm_container_app.translator[0].latest_revision_fqdn}/translate" : ""
+      }
+      env {
+        name  = "APPLICATIONINSIGHTS_CONNECTION_STRING"
+        value = azurerm_application_insights.insights.connection_string
       }
     }
   }
@@ -300,45 +391,55 @@ resource "azurerm_linux_web_app" "api" {
   tags = azurerm_resource_group.pod.tags
 }
 
-resource "azurerm_linux_web_app" "next_apps" {
+resource "azurerm_container_app" "next_apps" {
   for_each = toset(["web", "admin", "vendor"])
 
-  name                = "app-storegrill-${each.value}-${local.suffix}"
-  resource_group_name = azurerm_resource_group.pod.name
-  location            = azurerm_service_plan.main.location
-  service_plan_id     = azurerm_service_plan.main.id
+  name                         = "app-storegrill-${each.value}-${local.suffix}"
+  container_app_environment_id = azurerm_container_app_environment.env.id
+  resource_group_name          = azurerm_resource_group.pod.name
+  revision_mode                = "Single"
 
   identity {
     type         = "SystemAssigned, UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.apps.id]
   }
 
-  app_settings = {
-    WEBSITE_RUN_FROM_PACKAGE              = "1"
-    NODE_ENV                              = "production"
-    NEXT_PUBLIC_API_URL                   = "https://${azurerm_linux_web_app.api.default_hostname}"
-    SG_REGION_KEY                         = var.region_key
-    APPLICATIONINSIGHTS_CONNECTION_STRING = azurerm_application_insights.insights.connection_string
-  }
+  ingress {
+    external_enabled = true
+    target_port      = 80
+    transport        = "auto"
 
-  site_config {
-    always_on           = false
-    http2_enabled       = true
-    minimum_tls_version = "1.2"
-    health_check_path   = "/api/healthz"
-    application_stack {
-      node_version = "20-lts"
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
     }
   }
 
-  logs {
-    application_logs {
-      file_system_level = "Information"
-    }
-    http_logs {
-      file_system {
-        retention_in_days = 7
-        retention_in_mb   = 35
+  template {
+    min_replicas = 0
+    max_replicas = 10
+
+    container {
+      name   = each.value
+      image  = "mcr.microsoft.com/azuredocs/containerapps-helloworld:latest"
+      cpu    = 0.5
+      memory = "1Gi"
+
+      env {
+        name  = "NODE_ENV"
+        value = "production"
+      }
+      env {
+        name  = "NEXT_PUBLIC_API_URL"
+        value = "https://${lower(var.region_key)}-api.${var.dns_zone_name}"
+      }
+      env {
+        name  = "SG_REGION_KEY"
+        value = var.region_key
+      }
+      env {
+        name  = "APPLICATIONINSIGHTS_CONNECTION_STRING"
+        value = azurerm_application_insights.insights.connection_string
       }
     }
   }
@@ -346,29 +447,43 @@ resource "azurerm_linux_web_app" "next_apps" {
   tags = merge(azurerm_resource_group.pod.tags, { service = each.value })
 }
 
-resource "azurerm_linux_web_app" "translator" {
+resource "azurerm_container_app" "translator" {
   count = var.deploy_translator ? 1 : 0
 
-  name                = "app-storegrill-i18n-${local.suffix}"
-  resource_group_name = azurerm_resource_group.pod.name
-  location            = azurerm_service_plan.main.location
-  service_plan_id     = azurerm_service_plan.main.id
+  name                         = "app-storegrill-i18n-${local.suffix}"
+  container_app_environment_id = azurerm_container_app_environment.env.id
+  resource_group_name          = azurerm_resource_group.pod.name
+  revision_mode                = "Single"
 
-  app_settings = {
-    WEBSITES_ENABLE_APP_SERVICE_STORAGE = "false"
-    LT_LOAD_ONLY                        = "en,de,fr,es,it,ar,hi,pt"
-    LT_UPDATE_MODELS                    = "false"
-    LT_THREADS                          = "4"
+  ingress {
+    external_enabled = true
+    target_port      = 80
+    transport        = "auto"
+
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
   }
 
-  site_config {
-    always_on                               = false
-    http2_enabled                           = true
-    minimum_tls_version                     = "1.2"
-    container_registry_use_managed_identity = false
-    application_stack {
-      docker_image     = "libretranslate/libretranslate"
-      docker_image_tag = "latest"
+  template {
+    min_replicas = 0
+    max_replicas = 2
+
+    container {
+      name   = "libretranslate"
+      image  = "libretranslate/libretranslate:latest"
+      cpu    = 1.0
+      memory = "2Gi"
+
+      env {
+        name  = "LT_LOAD_ONLY"
+        value = "en,de,fr,es,it,ar,hi,pt"
+      }
+      env {
+        name  = "LT_UPDATE_MODELS"
+        value = "false"
+      }
     }
   }
 
@@ -388,53 +503,101 @@ resource "azurerm_redis_cache" "cache" {
   tags = azurerm_resource_group.pod.tags
 }
 
+variable "custom_domain_certificate_name" {
+  description = "Name of the TLS certificate uploaded to the Container App environment and bound to all custom domains. The free managed certificate is unreliable with external (Cloudflare) DNS, so we upload our own. Leave empty to derive storegrill-<region>-cert-v2."
+  type        = string
+  default     = ""
+}
+
+variable "web_extra_domains" {
+  description = "Extra custom domains bound to the web app (e.g. the apex + www for the pod that owns storegrill.net). Empty for non-apex pods."
+  type        = list(string)
+  default     = []
+}
+
+locals {
+  pod_custom_domains = {
+    web    = "${lower(var.region_key)}.${var.dns_zone_name}"
+    admin  = "${lower(var.region_key)}-admin.${var.dns_zone_name}"
+    vendor = "${lower(var.region_key)}-vendor.${var.dns_zone_name}"
+    api    = "${lower(var.region_key)}-api.${var.dns_zone_name}"
+  }
+  custom_domain_certificate_name = var.custom_domain_certificate_name == "" ? "storegrill-${lower(var.region_key)}-cert-v2" : var.custom_domain_certificate_name
+  custom_domain_certificate_id   = "${azurerm_container_app_environment.env.id}/certificates/${local.custom_domain_certificate_name}"
+}
+
+resource "azurerm_container_app_custom_domain" "next_apps" {
+  for_each = toset(["web", "admin", "vendor"])
+
+  name                               = local.pod_custom_domains[each.value]
+  container_app_id                   = azurerm_container_app.next_apps[each.value].id
+  certificate_binding_type           = "SniEnabled"
+  container_app_environment_certificate_id = local.custom_domain_certificate_id
+}
+
+resource "azurerm_container_app_custom_domain" "api" {
+  name                               = local.pod_custom_domains["api"]
+  container_app_id                   = azurerm_container_app.api.id
+  certificate_binding_type           = "SniEnabled"
+  container_app_environment_certificate_id = local.custom_domain_certificate_id
+}
+
+resource "azurerm_container_app_custom_domain" "web_extra" {
+  for_each = toset(var.web_extra_domains)
+
+  name                               = each.value
+  container_app_id                   = azurerm_container_app.next_apps["web"].id
+  certificate_binding_type           = "SniEnabled"
+  container_app_environment_certificate_id = local.custom_domain_certificate_id
+}
+
 output "resource_group_name" {
-  value = azurerm_resource_group.pod.name
+  value = try(azurerm_resource_group.pod.name, "pending")
 }
 
 output "web_hostname" {
-  value = azurerm_linux_web_app.next_apps["web"].default_hostname
+  value = try(azurerm_container_app.next_apps["web"].latest_revision_fqdn, "pending")
 }
 
 output "admin_hostname" {
-  value = azurerm_linux_web_app.next_apps["admin"].default_hostname
+  value = try(azurerm_container_app.next_apps["admin"].latest_revision_fqdn, "pending")
 }
 
 output "vendor_hostname" {
-  value = azurerm_linux_web_app.next_apps["vendor"].default_hostname
+  value = try(azurerm_container_app.next_apps["vendor"].latest_revision_fqdn, "pending")
 }
 
 output "api_hostname" {
-  value = azurerm_linux_web_app.api.default_hostname
+  value = local.pod_custom_domains["api"]
 }
 
 output "translator_hostname" {
-  value = var.deploy_translator ? azurerm_linux_web_app.translator[0].default_hostname : ""
+  value = var.deploy_translator ? try(azurerm_container_app.translator[0].latest_revision_fqdn, "pending") : ""
 }
 
 output "web_custom_domain_verification_id" {
-  value = azurerm_linux_web_app.next_apps["web"].custom_domain_verification_id
-  sensitive   = true
+  value     = try(azurerm_container_app.next_apps["web"].custom_domain_verification_id, "pending")
+  sensitive = true
 }
 
 output "admin_custom_domain_verification_id" {
-  value = azurerm_linux_web_app.next_apps["admin"].custom_domain_verification_id
-  sensitive   = true
+  value     = try(azurerm_container_app.next_apps["admin"].custom_domain_verification_id, "pending")
+  sensitive = true
 }
 
 output "vendor_custom_domain_verification_id" {
-  value = azurerm_linux_web_app.next_apps["vendor"].custom_domain_verification_id
-  sensitive   = true
+  value     = try(azurerm_container_app.next_apps["vendor"].custom_domain_verification_id, "pending")
+  sensitive = true
 }
 
 output "postgres_fqdn" {
-  value = local.pg_fqdn
+  value = try(local.pg_fqdn, "pending")
 }
 
 output "key_vault_name" {
-  value = azurerm_key_vault.vault.name
+  value = try(azurerm_key_vault.vault.name, "pending")
 }
 
 output "media_storage_account_name" {
-  value = azurerm_storage_account.media.name
+  value = try(azurerm_storage_account.media.name, "pending")
 }

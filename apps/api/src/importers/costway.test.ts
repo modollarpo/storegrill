@@ -11,6 +11,7 @@ import {
   parseCategoryPath,
   parseFlags,
   parsePriceToMinor,
+  parseSpec,
   splitBaseNameAndSuffix,
   type CostwayFeedRow,
 } from './costway.js';
@@ -48,20 +49,18 @@ describe('applyIngestPricing', () => {
     expect(applyIngestPricing(4495)).toBe(5399);
   });
 
-  it('reduces flash-sale items by 15% off the marked-up price before charm rounding', () => {
-    expect(applyIngestPricing(10495, { flashSale: true })).toBe(10799);
-    expect(applyIngestPricing(10000, { flashSale: true })).toBe(10299);
+  it('no longer bakes a flash-sale discount at ingest (handled by the deal engine)', () => {
+    expect(applyIngestPricing(10495, {})).toBe(12599);
+    expect(applyIngestPricing(10000, {})).toBe(12099);
   });
 
-  it('prices clearance items at a reduced 10-point markup', () => {
+  it('prices clearance items at a reduced 10-point markup (net 10%)', () => {
     expect(applyIngestPricing(10495, { clearance: true })).toBe(11599);
     expect(applyIngestPricing(2495, { clearance: true })).toBe(2799);
   });
 
-  it('lets flash-sale take precedence over clearance when both flags are set', () => {
-    expect(applyIngestPricing(10495, { flashSale: true, clearance: true })).toBe(
-      applyIngestPricing(10495, { flashSale: true }),
-    );
+  it('treats clearance independently of the flash-sale flag', () => {
+    expect(applyIngestPricing(10495, { clearance: true })).toBe(11599);
   });
 });
 
@@ -147,16 +146,16 @@ describe('adaptCostwayRows', () => {
 it('clamps stock at or below the out-of-stock threshold while preserving supplier count', () => {
 const adapted = adaptCostwayRows([
 { ...rows[0], SKU: 'LOW1', Stock: '7' },
-{ ...rows[0], SKU: 'EDGE', Stock: '10' },
-{ ...rows[0], SKU: 'OK1', Stock: '11' },
+{ ...rows[0], SKU: 'EDGE', Stock: '20' },
+{ ...rows[0], SKU: 'OK1', Stock: '21' },
 { ...rows[0], SKU: 'GARBAGE', Stock: '' },
 ] as CostwayFeedRow[]);
 const bySku = new Map(
 adapted.products.flatMap(p => p.variants.map(v => [v.sku, v])),
 );
 expect(bySku.get('LOW1')).toMatchObject({ stock: 0, supplierStock: 7 });
-expect(bySku.get('EDGE')).toMatchObject({ stock: 0, supplierStock: 10 });
-expect(bySku.get('OK1')).toMatchObject({ stock: 11, supplierStock: 11 });
+expect(bySku.get('EDGE')).toMatchObject({ stock: 0, supplierStock: 20 });
+expect(bySku.get('OK1')).toMatchObject({ stock: 21, supplierStock: 21 });
 expect(bySku.get('GARBAGE')).toMatchObject({ stock: 0, supplierStock: 0 });
 });
 
@@ -210,5 +209,27 @@ expect(bySku.get('GARBAGE')).toMatchObject({ stock: 0, supplierStock: 0 });
     ] as CostwayFeedRow[]);
     expect(bad.errors.map(e => e.field)).toEqual(['SKU', 'Price']);
     expect(bad.products).toHaveLength(1);
+  });
+});
+
+describe('parseSpec', () => {
+  it('extracts net weight in grams', () => {
+    expect(parseSpec('Net weight: 8 kg')).toEqual({ weightGrams: 8000 });
+    expect(parseSpec('Net weight: 1.5 kg')).toEqual({ weightGrams: 1500 });
+  });
+
+  it('extracts overall dimensions', () => {
+    expect(parseSpec('Overall dimension: 54 cm x 54 cm x 177 cm (LA-WA-H)')).toEqual({
+      dimensions: { length: 54, width: 54, height: 177, unit: 'cm' },
+    });
+  });
+
+  it('extracts weight and dimensions together', () => {
+    const spec = 'Box Qty:1 Net weight: 2 kg Overall dimension: 30 cm x 20 cm x 10 cm (L-W-H)';
+    expect(parseSpec(spec)).toEqual({ weightGrams: 2000, dimensions: { length: 30, width: 20, height: 10, unit: 'cm' } });
+  });
+
+  it('returns an empty object when no weight/dimensions are present', () => {
+    expect(parseSpec('No specs here')).toEqual({});
   });
 });

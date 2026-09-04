@@ -1,0 +1,50 @@
+# ACR build context exclusions – keeps the tarball small
+.git
+**/.git
+node_modules
+**/node_modules
+node_modules_backup
+**/node_modules_backup
+
+# Infrastructure – never needed in app image
+infra/
+deploy/
+
+# Large log/scratch files in repo root
+*.log
+*.tmp
+*.zip
+**/*.tar.gz
+
+# VCS / CI / docs
+.gitignore
+.gitattributes
+*.md
+.github/
+
+# Test / QA
+e2e/
+playwright-report/
+test-results/
+coverage/
+**/__mocks__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+
+# Terraform local state
+.terraform/
+*.tfstate
+*.tfplan
+
+# Packages/API source not needed for admin/vendor builds (only shared is built)
+apps/api/src
+apps/api/prisma
+apps/api/dev.db
+apps/api/test.db
+
+# Secrets
+.env
+**/.env
+**/.env.*
+apps/api/.env

@@ -57,7 +57,7 @@ export default function OrdersPage() {
                   <ul className="flex gap-3 flex-wrap" role="list" aria-label={`Items in order ${order.orderNumber}`}>
                     {(order.items || []).slice(0, 4).map(item => (
                       <li key={item.id} className="flex items-center gap-2">
-                        <span className="relative w-11 h-11 rounded-sm border border-smoke-150 bg-white overflow-hidden shrink-0">
+                        <span className="relative w-11 h-11 rounded-sm border border-smoke-150 bg-surface-raised overflow-hidden shrink-0">
                           {item.product?.thumbnail && <Image src={item.product.thumbnail} alt="" fill sizes="44px" className="object-contain p-0.5" />}
                         </span>
                         <span className="text-xs text-smoke-600 max-w-[24ch] truncate">{item.name} ×{item.quantity}</span>

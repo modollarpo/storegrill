@@ -34,7 +34,7 @@ export function Switch({ checked, onChange, label, description, disabled, classN
         <span
           aria-hidden="true"
           className={cn(
-            'inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-150',
+            'inline-block h-4 w-4 rounded-full bg-surface-raised shadow transition-transform duration-150',
             checked ? 'translate-x-[18px]' : 'translate-x-0.5'
           )}
         />

@@ -6,9 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useCart, CartItemLine } from '@/components/providers/CartContext';
 import { useRegion } from '@/components/providers/RegionContext';
 import { useToast } from '@/components/feedback/Toast';
-import { PriceDisplay } from '@/components/commerce/PriceDisplay';
-import { api, ApiError } from '@/lib/api';
-import { DEFAULT_REGIONS, PAYMENT_METHOD_PROVIDER, paymentMethodLabel, PaymentMethodId } from '@Storegrill/shared';
+import { api, ApiError, API_BASE } from '@/lib/api';
+import { DEFAULT_REGIONS, PAYMENT_METHOD_PROVIDER, PaymentMethodId } from '@Storegrill/shared';
 import { cn } from '@/lib/utils';
 import { CheckoutOrderSummary } from '@/components/checkout/CheckoutOrderSummary';
 import { CheckoutCoupon } from '@/components/checkout/CheckoutCoupon';
@@ -53,7 +52,7 @@ export default function CheckoutPage() {
   const [notes, setNotes] = useState('');
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sandboxNotice, setSandboxNotice] = useState(false);
+  const [, setSandboxNotice] = useState(false);
 
   const regionConfig = DEFAULT_REGIONS.find(r => r.key === regionKey) ?? DEFAULT_REGIONS[0];
   const zone = regionConfig.shippingZones[0];
@@ -67,14 +66,50 @@ export default function CheckoutPage() {
     zone.freeShippingThresholdMinorUnits && subtotal >= zone.freeShippingThresholdMinorUnits
       ? 0
       : (zone.baseRateMinorUnits ?? 599) + (zone.perKgRateMinorUnits ? 0 : 0);
-  const tax = Math.round(subtotal * (regionConfig.taxRules[0]?.rate ?? 0));
-  const total = subtotal + shippingCost + tax;
+  const discount = Math.min(cart.appliedCoupon?.discountMinorUnits ?? 0, subtotal);
+  const discountedSubtotal = Math.max(0, subtotal - discount);
+  const tax = Math.round(discountedSubtotal * (regionConfig.taxRules[0]?.rate ?? 0));
+  const total = discountedSubtotal + shippingCost + tax;
 
   const stepValid = useMemo(() => {
     if (step === 1) return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) && address.street.length > 2 && address.city.length > 1 && address.zip.length > 2;
     if (step === 2) return Boolean(activePayment);
     return true;
   }, [step, email, address, activePayment]);
+
+  async function applyCoupon(code: string) {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/deals/apply-coupon`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          regionKey,
+          subtotalMinorUnits: subtotal,
+          items: cart.items.map(i => ({
+            productId: i.productId,
+            categoryId: i.categoryId,
+            quantity: i.quantity,
+            unitMinorUnits: i.unitPriceMinorUnits,
+            currencyCode: i.currencyCode,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        cart.setAppliedCoupon(null);
+        toast({ variant: 'error', title: 'Invalid code', description: data?.error?.message });
+        return;
+      }
+      cart.setAppliedCoupon({
+        code: data.coupon.code,
+        dealName: data.coupon.dealName,
+        discountMinorUnits: data.coupon.discountMinorUnits,
+      });
+    } catch {
+      cart.setAppliedCoupon(null);
+    }
+  }
 
   async function placeOrder() {
     setPlacing(true);
@@ -104,6 +139,7 @@ export default function CheckoutPage() {
           },
           paymentMethod: activePayment === 'cod' ? 'cod' : PAYMENT_METHOD_PROVIDER[activePayment as PaymentMethodId] === 'paypal' ? 'paypal' : 'stripe',
           regionKey,
+          couponCode: cart.appliedCoupon?.code,
           email,
           notes: `language=${language};displayMethod=${activePayment};notes=${notes}`,
         }),
@@ -136,7 +172,7 @@ export default function CheckoutPage() {
   if (cart.items.length === 0) {
     return (
       <div className="container mx-auto max-w-[1460px] px-[30px] py-16 text-center">
-        <h1 className="text-3xl font-extrabold text-gray-900">Nothing to check out</h1>
+        <h1 className="text-3xl font-extrabold text-text-primary">Nothing to check out</h1>
         <Link href="/products" className="btn btn-primary mt-4">Browse products</Link>
       </div>
     );
@@ -144,14 +180,14 @@ export default function CheckoutPage() {
 
   return (
     <div className="container mx-auto max-w-[1460px] px-[30px] py-6" data-testid="checkout">
-      <h1 className="text-2xl font-extrabold text-gray-900 mb-6">Checkout</h1>
+      <h1 className="text-2xl font-extrabold text-text-primary mb-6">Checkout</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-[30px] items-start">
         <div className="space-y-5">
           <Section title="Contact & Delivery" step={1} currentStep={step} onEdit={() => setStep(1)}>
             <div className="space-y-3.5">
               <label className="block">
-                <span className="block text-xs font-semibold mb-1.5 text-gray-900">Email</span>
+                <span className="block text-xs font-semibold mb-1.5 text-text-primary">Email</span>
                 <input
                   type="email"
                   required
@@ -164,7 +200,7 @@ export default function CheckoutPage() {
               </label>
 
               <fieldset className="space-y-3">
-                <legend className="text-xs font-semibold mb-1.5 text-gray-900">Shipping address</legend>
+                <legend className="text-xs font-semibold mb-1.5 text-text-primary">Shipping address</legend>
                 <input
                   required
                   autoComplete="address-line1"
@@ -253,9 +289,14 @@ export default function CheckoutPage() {
             <CheckoutOrderSummary 
                 items={(cart.items as CartItemLine[]).map(i => ({id: i.productId+i.variantId, name: i.name, quantity: i.quantity, unitPriceMinorUnits: i.unitPriceMinorUnits, currencyCode: i.currencyCode, thumbnail: i.image}))}
                 subtotal={subtotal} 
-                currency={currency} 
+                currency={currency}
+                discount={discount}
+                shipping={shippingCost}
+                tax={tax}
+                total={total}
+                couponCode={cart.appliedCoupon?.code}
             />
-            <CheckoutCoupon onApply={(code) => console.log('apply', code)} />
+            <CheckoutCoupon onApply={applyCoupon} />
             <CheckoutShippingMethod 
                 methods={[{id: 'std', name: 'Standard', description: `${zone.estimatedDaysMin}-${zone.estimatedDaysMax} business days`, priceMinorUnits: shippingCost, currencyCode: currency}]}
                 selectedId="std"
@@ -283,9 +324,9 @@ function Section({
 }) {
   const isCurrent = currentStep === step;
   return (
-    <section className={cn('card p-5 bg-white border border-gray-200 rounded-lg shadow-sm', !isCurrent && 'opacity-60')}>
+    <section className={cn('card p-5 bg-surface-raised border border-border rounded-lg shadow-sm', !isCurrent && 'opacity-60')}>
       <header className="flex items-center justify-between mb-3">
-        <h2 className={cn('text-sm font-bold', isCurrent ? 'text-gray-900' : 'text-gray-500')}>{title}</h2>
+        <h2 className={cn('text-sm font-bold', isCurrent ? 'text-text-primary' : 'text-text-secondary')}>{title}</h2>
         {currentStep > step && (
           <button type="button" onClick={onEdit} className="btn btn-link text-xs">Edit</button>
         )}

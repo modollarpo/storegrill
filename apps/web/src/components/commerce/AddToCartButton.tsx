@@ -17,10 +17,12 @@ export interface AddToCartButtonProps {
   quantity?: number;
   stock?: number;
   vendorName?: string;
+  categoryId?: string;
   label?: string;
   fullWidth?: boolean;
   size?: 'sm' | 'md' | 'lg';
   mode?: 'add' | 'buynow';
+  className?: string;
 }
 
 const SIZE_CLASS = {
@@ -51,6 +53,7 @@ export function AddToCartButton(props: AddToCartButtonProps) {
       quantity: props.quantity || 1,
       stock: props.stock,
       vendorName: props.vendorName,
+      categoryId: props.categoryId,
     };
     cart.addItem(line);
     
@@ -75,7 +78,7 @@ export function AddToCartButton(props: AddToCartButtonProps) {
       <button
         type="button"
         onClick={() => toast({ variant: 'success', title: 'We will notify you', description: `${props.name} is back in stock` })}
-        className={cn('inline-flex items-center justify-center font-bold border-2 border-surface-200 text-surface-900 bg-surface hover:bg-surface-100 transition-colors', props.fullWidth && 'w-full', SIZE_CLASS[props.size ?? 'md'])}
+        className={cn('inline-flex items-center justify-center font-bold border-2 border-border text-text-primary bg-surface hover:bg-surface-sunken transition-colors', props.fullWidth && 'w-full', SIZE_CLASS[props.size ?? 'md'])}
       >
         Notify Me
       </button>
@@ -89,6 +92,7 @@ export function AddToCartButton(props: AddToCartButtonProps) {
         className={cn(
           'relative overflow-hidden inline-flex items-center justify-center font-bold transition-colors duration-fast',
           props.fullWidth && 'w-full',
+          props.className,
           SIZE_CLASS[props.size ?? 'md'],
           isBuyNow
             ? 'border border-action-primary text-action-primary bg-surface hover:bg-action-primary/5'

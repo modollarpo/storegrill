@@ -1,0 +1,88 @@
+name: Deploy web (ACA)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Image tag version'
+        required: true
+        default: v4
+  push:
+    branches:
+      - enterprise-refactor-session
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/deploy-web-aca.yml'
+      - 'package.json'
+      - 'package-lock.json'
+
+env:
+  ACR: storegrillcr.azurecr.io
+  VERSION: v9
+
+jobs:
+  deploy-web:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - region: UK
+            region_lc: uk
+            app: app-storegrill-web-prod-uk
+            rg: rg-storegrill-prod-uk
+            api: https://uk-api.storegrill.net
+          - region: US
+            region_lc: us
+            app: app-storegrill-web-prod-us
+            rg: rg-storegrill-prod-us
+            api: https://us-api.storegrill.net
+          - region: EU
+            region_lc: eu
+            app: app-storegrill-web-prod-eu
+            rg: rg-storegrill-prod-eu
+            api: https://eu-api.storegrill.net
+          - region: AE
+            region_lc: ae
+            app: app-storegrill-web-prod-ae
+            rg: rg-storegrill-prod-ae
+            api: https://ae-api.storegrill.net
+          - region: NG
+            region_lc: ng
+            app: app-storegrill-web-prod-ng
+            rg: rg-storegrill-prod-ng
+            api: https://ng-api.storegrill.net
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker login to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build web image
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=${{ matrix.api }} \
+            -t ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.VERSION }} \
+            -f apps/web/Dockerfile .
+
+      - name: Push web image
+        run: docker push ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.VERSION }}
+
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Container App
+        run: |
+          az account set -s "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          az containerapp update \
+            --resource-group ${{ matrix.rg }} \
+            --name ${{ matrix.app }} \
+            --image ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.VERSION }} \
+            --set-env-vars NEXT_PUBLIC_API_URL=${{ matrix.api }} \
+            --output none

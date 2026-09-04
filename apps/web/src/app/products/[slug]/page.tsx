@@ -8,7 +8,7 @@ import { DEFAULT_REGIONS } from '@Storegrill/shared';
 import { Breadcrumb } from '@/components/navigation/Breadcrumb';
 import { ProductDetailClient } from '@/components/commerce/ProductDetailClient';
 import { Tabs } from '@/components/navigation/Tabs';
-import { ReviewSummary, ReviewCard } from '@/components/feedback/Reviews';
+import { ReviewsTab } from '@/components/feedback/ReviewsTab';
 import { ProductCard, type ProductCardData } from '@/components/commerce/ProductCard';
 import { FrequentlyBoughtTogether } from '@/components/commerce/FrequentlyBoughtTogether';
 import { RecentlyViewed, TrackRecentlyViewed } from '@/components/commerce/RecentlyViewed';
@@ -83,22 +83,56 @@ export default async function ProductPage({ params }: PdpProps) {
     daysMax: zone?.estimatedDaysMax ?? 7,
   };
 
+  const companionsRes = await fetch(`${API_BASE}/api/v1/products/${encodeURIComponent(product.slug || product.id)}/companions?regionKey=${regionKey}&limit=8`, { next: { revalidate: 300 } }).catch(() => null);
+  const companionsData = companionsRes && companionsRes.ok ? await companionsRes.json().catch(() => ({ companions: [] })) : { companions: [] };
+  interface CompanionItem { id: string; slug: string; name: string; priceMinorUnits: number; currencyCode: string; thumbnail: string | null; rating: number; reviewCount: number; inStock: boolean; reason: string; vendorName?: string | null; vendorSlug?: string | null; }
+  const companions: CompanionItem[] = (companionsData.companions || []) as CompanionItem[];
+
   const relatedRes = await fetch(`${API_BASE}/api/v1/products?regionKey=${regionKey}&category=${product.category?.slug ?? ''}&limit=8`, { next: { revalidate: 300 } }).catch(() => null);
   const relatedData = relatedRes && relatedRes.ok ? await relatedRes.json().catch(() => ({ products: [] })) : { products: [] };
-  const related = ((relatedData.products || []) as ProductCardData[]).filter(p => p.id !== product.id).slice(0, 8);
+  const relatedBase = ((relatedData.products || []) as ProductCardData[]).filter(p => p.id !== product.id).slice(0, 8);
 
-  const bundleCompanions = [...related]
-    .filter(p => p.price <= product.price * 2)
-    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-    .slice(0, 2)
-    .map(p => ({
-      id: p.id,
-      slug: p.slug,
-      name: p.name,
-      unitPriceMinorUnits: Number(p.price),
-      currencyCode: String(p.currencyCode),
-      thumbnail: p.thumbnail ?? null,
-    }));
+  const bundleCompanions: Array<{ id: string; slug?: string; name: string; unitPriceMinorUnits: number; currencyCode: string; thumbnail: string | null }> =
+    companions.length > 0
+      ? companions
+          .filter(c => c.inStock && (c.reason === 'authored' || c.reason === 'similar'))
+          .slice(0, 2)
+          .map(c => ({
+            id: c.id,
+            slug: c.slug,
+            name: c.name,
+            unitPriceMinorUnits: Number(c.priceMinorUnits),
+            currencyCode: String(c.currencyCode),
+            thumbnail: c.thumbnail ?? null,
+          }))
+      : [...relatedBase]
+          .filter(p => p.price <= product.price * 2)
+          .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+          .slice(0, 2)
+          .map(p => ({
+            id: p.id,
+            slug: p.slug,
+            name: p.name,
+            unitPriceMinorUnits: Number(p.price),
+            currencyCode: String(p.currencyCode),
+            thumbnail: p.thumbnail ?? null,
+          }));
+
+  const companionIds = new Set(bundleCompanions.map(c => c.id));
+  const related: ProductCardData[] = companions.length > 0
+    ? companions.filter(c => c.inStock && c.reason === 'similar' && !companionIds.has(c.id)).slice(0, 8).map(c => ({
+        id: c.id,
+        slug: c.slug,
+        name: c.name,
+        thumbnail: c.thumbnail ?? undefined,
+        price: c.priceMinorUnits,
+        currencyCode: c.currencyCode,
+        rating: c.rating,
+        reviewCount: 0,
+        inventoryCount: c.inStock ? 1 : 0,
+        vendor: c.vendorName && c.vendorSlug ? { storeName: c.vendorName, slug: c.vendorSlug } : null,
+      }))
+    : relatedBase;
 
   const protectionTiers = [
     { id: 'care-1', title: '1 year StoreCare protection', months: 12 },
@@ -115,6 +149,39 @@ export default async function ProductPage({ params }: PdpProps) {
     `Customer reviews (${product.reviewCount})`,
   ];
   const translatedTabs = await translateBatch(reviewTexts, language);
+
+  const reviewsRes = await fetch(`${API_BASE}/api/v1/reviews/product/${encodeURIComponent(product.id)}?page=1&limit=8`, { next: { revalidate: 60 } }).catch(() => null);
+  const reviewsData = reviewsRes && reviewsRes.ok ? await reviewsRes.json().catch(() => null) : null;
+  const reviewSource = (((reviewsData as { reviews?: unknown[] } | null)?.reviews) || (product as Record<string, unknown>).reviews || []) as Array<Record<string, unknown>>;
+  const reviewAverage = ((reviewsData as { stats?: { average?: number } } | null)?.stats?.average) ?? product.rating ?? 0;
+  const reviewTotal = ((reviewsData as { stats?: { total?: number } } | null)?.stats?.total) ?? product.reviewCount ?? reviewSource.length;
+  const reviewDistribution = ((((reviewsData as { stats?: { distribution?: Array<{ rating: number; count: number }> } } | null)?.stats?.distribution) || [])).map(d => ({ stars: d.rating, count: d.count }));
+  const reviewInitial = reviewSource.map(r => ({
+    id: String(r.id),
+    authorName: String(
+      (r.user as Record<string, unknown> | undefined)?.name ||
+      (r.authorName as string | undefined) ||
+      'Verified Storegrill customer'
+    ),
+    createdAt: String(r.createdAt),
+    rating: Number(r.rating),
+    title: r.title ? String(r.title) : undefined,
+    body: r.body ? String(r.body) : undefined,
+    verified: Boolean(r.verified),
+    vendorReply: r.vendorReply ? String(r.vendorReply) : undefined,
+    images: Array.isArray(r.images)
+      ? (r.images as string[])
+      : typeof r.images === 'string'
+        ? (() => { try { const p = JSON.parse(r.images as string); return Array.isArray(p) ? (p as string[]) : []; } catch { return []; } })()
+        : [],
+  }));
+
+  const freeShipFmt = new Intl.NumberFormat(language, { style: 'currency', currency: String(product.currencyCode) }).format(shipping.freeThresholdMinorUnits / 100);
+
+  const pdpRecord = product as unknown as Record<string, unknown>;
+  const tags = (pdpRecord.tags as string[] | undefined) || [];
+  const inStock = (product.inventoryCount ?? 0) > 0;
+  const freeShipEligible = Number(product.price) >= shipping.freeThresholdMinorUnits;
 
   return (
     <div className="container-site py-4">
@@ -134,7 +201,7 @@ export default async function ProductPage({ params }: PdpProps) {
                 reviewCount: product.reviewCount,
                 vendorName: product.vendor?.storeName,
                 slug: product.slug,
-                inStock: true,
+                inStock: (product.inventoryCount ?? 0) > 0,
               },
               regionKey
             )
@@ -151,7 +218,7 @@ export default async function ProductPage({ params }: PdpProps) {
       />
 
       <ProductDetailClient
-        product={{ ...product, inventoryCount: 25 }}
+        product={product}
         shipping={shipping}
         locale={language}
         tabs={{
@@ -162,55 +229,117 @@ export default async function ProductPage({ params }: PdpProps) {
                 {
                   id: 'description',
                   label: translatedTabs[0],
+                  icon: <DescriptionIcon />,
                   content: (
-                    <div className="max-w-prose text-sm text-text-secondary leading-relaxed whitespace-pre-line" id="reviews-tab-anchor">
-                      {product.description || product.shortDescription || 'No description provided by the seller.'}
+                    <div id="reviews-tab-anchor">
+                      {product.shortDescription && (
+                        <p className="text-base font-semibold text-text-primary leading-relaxed">{product.shortDescription}</p>
+                      )}
+                      <div className="mt-4 text-sm text-text-secondary leading-relaxed whitespace-pre-line">
+                        {product.description || product.shortDescription || 'No description provided by the seller.'}
+                      </div>
+                      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {product.brand?.name && (
+                          <div className="rounded-lg border border-border bg-surface-sunken px-3 py-2.5">
+                            <p className="text-2xs font-extrabold uppercase tracking-wide text-text-tertiary">Brand</p>
+                            <p className="mt-0.5 text-sm font-semibold text-text-primary">{product.brand.name}</p>
+                          </div>
+                        )}
+                        {product.category?.name && (
+                          <div className="rounded-lg border border-border bg-surface-sunken px-3 py-2.5">
+                            <p className="text-2xs font-extrabold uppercase tracking-wide text-text-tertiary">Category</p>
+                            <p className="mt-0.5 text-sm font-semibold text-text-primary">{product.category.name}</p>
+                          </div>
+                        )}
+                        <div className="rounded-lg border border-border bg-surface-sunken px-3 py-2.5">
+                          <p className="text-2xs font-extrabold uppercase tracking-wide text-text-tertiary">Delivery</p>
+                          <p className="mt-0.5 text-sm font-semibold text-text-primary">{shipping.daysMin}–{shipping.daysMax} days</p>
+                        </div>
+                        <div className="rounded-lg border border-border bg-surface-sunken px-3 py-2.5">
+                          <p className="text-2xs font-extrabold uppercase tracking-wide text-text-tertiary">Stock</p>
+                          <p className="mt-0.5 text-sm font-semibold text-text-primary">{inStock ? 'In stock' : 'Unavailable'}</p>
+                        </div>
+                      </div>
+                      {tags.length > 0 && (
+                        <div className="mt-6">
+                          <h3 className="text-xs font-extrabold uppercase tracking-wide text-text-tertiary mb-2">Key details</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {tags.map(tag => (
+                              <span key={tag} className="inline-flex items-center rounded-xs bg-surface-sunken border border-border px-2.5 py-1 text-xs font-semibold text-text-secondary">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ),
                 },
                 {
                   id: 'specs',
                   label: translatedTabs[1],
-                  content: <SpecsTable product={product} />,
+                  icon: <SpecsIcon />,
+                  content: <SpecsSections product={product as unknown as Record<string, unknown>} />,
                 },
                 {
                   id: 'shipping',
                   label: translatedTabs[2],
+                  icon: <ShippingIcon />,
                   content: (
-                    <div className="max-w-prose text-sm text-text-secondary space-y-3 leading-relaxed">
-                      <p><strong className="text-text-primary">Delivery:</strong> Standard shipping arrives in {shipping.daysMin}–{shipping.daysMax} business days.</p>
-                      <p><strong className="text-text-primary">Returns:</strong> Free returns within 30 days of delivery through your Storegrill account.</p>
-                      <p><strong className="text-text-primary">Shipping origin:</strong> Regional warehouse network — no surprise customs fees.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="shipping-tab">
+                      <ShippingCard
+                        icon={<TruckIcon />}
+                        title="Delivery"
+                        tone="ember"
+                      >
+                        <p className="text-2xs text-text-tertiary mb-1.5">Estimated arrival</p>
+                        <p className="text-sm font-bold text-text-primary">{shipping.daysMin}–{shipping.daysMax} business days</p>
+                        <p className="text-xs text-text-secondary mt-2 leading-relaxed">
+                          {freeShipEligible
+                            ? 'This item qualifies for free standard shipping.'
+                            : `Free standard shipping on orders over ${freeShipFmt}.`}
+                        </p>
+                      </ShippingCard>
+                      <ShippingCard
+                        icon={<RotateIcon />}
+                        title="Returns"
+                        tone="success"
+                      >
+                        <p className="text-2xs text-text-tertiary mb-1.5">Return window</p>
+                        <p className="text-sm font-bold text-text-primary">30-day free returns</p>
+                        <p className="text-xs text-text-secondary mt-2 leading-relaxed">
+                          {product.vendor?.returnPolicy || 'Covers items returned in original condition within 30 days of delivery.'}
+                        </p>
+                      </ShippingCard>
+                      <ShippingCard
+                        icon={<ShieldIcon />}
+                        title="Protection"
+                        tone="charcoal"
+                      >
+                        <p className="text-2xs text-text-tertiary mb-1.5">Buyer protection</p>
+                        <p className="text-sm font-bold text-text-primary">{product.category?.name || 'Every' } order is protected</p>
+                        <p className="text-xs text-text-secondary mt-2 leading-relaxed">
+                          Regional warehouse dispatch with no surprise customs duties or fees.
+                        </p>
+                      </ShippingCard>
                     </div>
                   ),
                 },
                 {
                   id: 'reviews',
                   label: translatedTabs[3],
+                  icon: <ReviewsIcon />,
+                  badge: product.reviewCount,
                   content: (
-                    <div id="reviews-tab">
-                      <ReviewSummary average={product.rating} total={product.reviewCount} />
-                      {(product.reviews || []).length > 0 ? (
-                        <div className="mt-6 divide-y divide-border">
-                          {product.reviews.map((r: Record<string, unknown>) => (
-                            <ReviewCard
-                              key={String(r.id)}
-                              locale={language}
-                              review={{
-                                id: String(r.id),
-                                authorName: String((r.user as Record<string, unknown>)?.name || 'Storegrill Customer'),
-                                createdAt: String(r.createdAt),
-                                rating: Number(r.rating),
-                                title: r.title ? String(r.title) : undefined,
-                                body: r.body ? String(r.body) : undefined,
-                                verified: Boolean(r.verified),
-                              }}
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="mt-6 text-sm text-text-secondary">No written reviews yet — be the first after purchase.</p>
-                      )}
+                    <div id="reviews-tab" aria-label="Customer reviews">
+                      <ReviewsTab
+                        productId={product.id}
+                        initial={reviewInitial}
+                        average={reviewAverage}
+                        total={reviewTotal}
+                        distribution={reviewDistribution}
+                        locale={language}
+                      />
                     </div>
                   ),
                 },
@@ -281,28 +410,104 @@ export default async function ProductPage({ params }: PdpProps) {
   );
 }
 
-function SpecsTable({ product }: { product: Record<string, unknown> }) {
-  const rows: Array<[string, string]> = [];
-  if (product.brand) rows.push(['Brand', String((product.brand as { name?: string })?.name)]);
-  if (product.sku) rows.push(['SKU', String(product.sku)]);
-  if (product.weightGrams) rows.push(['Weight', `${product.weightGrams} g`]);
-  if (product.dimensions) rows.push(['Dimensions', String(product.dimensions)]);
-  for (const attr of (product.attributes as Array<{ name: string; value: string }> | undefined) || []) {
-    rows.push([attr.name, attr.value]);
+function SpecsSections({ product }: { product: Record<string, unknown> }) {
+  const brand = (product.brand as { name?: string } | null | undefined)?.name;
+  const category = (product.category as { name?: string } | null | undefined)?.name;
+  const attrs = (product.attributes as Array<{ name: string; value: string }> | undefined) || [];
+
+  const identityRows: Array<[string, string]> = [];
+  if (brand) identityRows.push(['Brand', brand]);
+  if (product.sku) identityRows.push(['SKU', String(product.sku)]);
+
+  const physicalRows: Array<[string, string]> = [];
+  if (product.weightGrams) physicalRows.push(['Weight', `${product.weightGrams} g`]);
+  if (product.dimensions) physicalRows.push(['Dimensions', String(product.dimensions)]);
+
+  const featureRows: Array<[string, string]> = attrs.map(a => [a.name, a.value]);
+
+  const sections: Array<{ title: string; rows: Array<[string, string]> }> = [
+    ...(identityRows.length ? [{ title: 'Product identity', rows: identityRows }] : []),
+    ...(physicalRows.length ? [{ title: 'Physical specifications', rows: physicalRows }] : []),
+    ...(featureRows.length ? [{ title: 'Features & options', rows: featureRows }] : []),
+    ...(category ? [{ title: 'Classification', rows: [['Category', category] as [string, string]] }] : []),
+  ];
+
+  if (sections.length === 0) {
+    return <p className="text-sm text-text-secondary">No specifications listed by the seller yet.</p>;
   }
 
-  if (rows.length === 0) return <p className="text-sm text-text-secondary">No specifications listed.</p>;
-
   return (
-    <table className="w-full max-w-2xl text-sm border-collapse">
-      <tbody>
-        {rows.map(([label, value]) => (
-          <tr key={label} className="border-b border-border last:border-b-0 hover:bg-surface-sunken transition-colors">
-            <th scope="row" className="text-left font-bold py-3 pr-8 w-48 text-text-primary align-top">{label}</th>
-            <td className="py-3 text-text-secondary">{value}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8" data-testid="specs-tab">
+      {sections.map(section => (
+        <section key={section.title} aria-label={section.title}>
+          <h3 className="text-xs font-extrabold uppercase tracking-wide text-text-tertiary border-b border-smoke-150 pb-2 mb-3">{section.title}</h3>
+          <dl className="divide-y divide-smoke-100">
+            {section.rows.map(([label, value]) => (
+              <div key={label} className="grid grid-cols-[minmax(0,40%)_minmax(0,60%)] gap-4 py-2.5 text-sm">
+                <dt className="text-text-tertiary pr-2">{label}</dt>
+                <dd className="text-text-primary font-medium text-left break-words">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function ShippingCard({ icon, title, tone, children }: { icon: React.ReactNode; title: string; tone: 'ember' | 'success' | 'charcoal'; children: React.ReactNode }) {
+  const tones: Record<string, string> = {
+    ember: 'bg-ember-pale text-ember',
+    success: 'bg-feedback-success-bg text-feedback-success',
+    charcoal: 'bg-smoke-100 text-charcoal',
+  };
+  return (
+    <div className="rounded-lg border border-border bg-surface-sunken p-4">
+      <div className={`inline-flex items-center justify-center w-9 h-9 rounded-md ${tones[tone]}`} aria-hidden="true">{icon}</div>
+      <h3 className="mt-3 text-sm font-bold text-text-primary">{title}</h3>
+      <div className="mt-2">{children}</div>
+    </div>
+  );
+}
+
+function DescriptionIcon() {
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h10"/></svg>
+  );
+}
+
+function SpecsIcon() {
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l3.5 0M10 8h11M3 16h3.5M10 16h11M6.75 5v2.5M6.75 14.5V17"/></svg>
+  );
+}
+
+function ShippingIcon() {
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M8 6h10l2 4v7h-2M8 6v11h7m-7-11H4v11h4m10 0a2 2 0 100-.001M9 17a2 2 0 100-.001"/></svg>
+  );
+}
+
+function ReviewsIcon() {
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h10M4 18h7"/></svg>
+  );
+}
+
+function TruckIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7h11v9H3zM14 10h4l3 3v3h-7zM7 18a2 2 0 100-4 2 2 0 000 4zm10-0a2 2 0 100-4 2 2 0 000 4z"/></svg>
+  );
+}
+
+function RotateIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M3 4v6h6M21 20v-6h-6M3 10a9 9 0 0115.5-3.6L21 10M21 14a9 9 0 01-15.5 3.6L3 14"/></svg>
+  );
+}
+
+function ShieldIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3l7 3v5c0 4.5-3 8.4-7 10-4-1.6-7-5.5-7-10V6l7-3zM9 12l2 2 4-4"/></svg>
   );
 }

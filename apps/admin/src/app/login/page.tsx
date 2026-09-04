@@ -41,7 +41,7 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen grid place-items-center bg-slate-900 px-4">
-      <div className="w-full max-w-sm bg-white rounded-xl shadow-xl p-7">
+      <div className="w-full max-w-sm bg-surface-raised rounded-xl shadow-xl p-7">
         <p className="text-[10px] uppercase tracking-[0.25em] font-bold text-orange-600 mb-1">StoreGrill</p>
         <h1 className="text-lg font-bold text-slate-900 mb-5">Admin Console</h1>
 

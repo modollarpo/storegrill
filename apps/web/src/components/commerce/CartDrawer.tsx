@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
@@ -20,7 +20,7 @@ export function CartDrawer({ open, onClose, locale = 'en-US' }: CartDrawerProps)
   const cart = useCart();
 
   return (
-    <Drawer open={open} onClose={onClose} side="right" title={`Basket · ${cart.count} item${cart.count === 1 ? '' : 's'}`} className="w-[var(--drawer-width)]">
+    <Drawer open={open} onClose={onClose} side="right" title={`Basket · ${cart.count} item${cart.count === 1 ? '' : 's'}`} className="w-full sm:w-[var(--drawer-width)]">
       <CartLines onNavigate={onClose} locale={locale} />
     </Drawer>
   );
@@ -110,7 +110,7 @@ function CartLines({ onNavigate, locale }: { onNavigate: () => void; locale: str
         <Link
           href="/checkout"
           onClick={onNavigate}
-          className="flex items-center justify-center gap-2 w-full h-12 rounded-xs bg-action-primary text-action-primary-fg font-extrabold text-base hover:bg-action-primary-hover active:bg-action-primary-active transition-colors"
+          className="flex items-center justify-center gap-2 w-full h-[52px] rounded-full bg-ember text-white font-extrabold text-base shadow-lg shadow-ember/30 hover:bg-deal hover:scale-[1.02] active:scale-95 transition-all"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
           Checkout securely
@@ -132,7 +132,7 @@ export function CartItemRow({ line, locale = 'en-US' }: { line: CartItemLine; lo
 
   return (
     <div className="flex gap-4 py-4" data-testid="cart-item-row">
-      <Link href={`/products/${line.slug || line.productId}`} className="relative w-16 h-16 shrink-0 rounded-xs overflow-hidden border border-border bg-white">
+      <Link href={`/products/${line.slug || line.productId}`} className="relative w-16 h-16 shrink-0 rounded-xs overflow-hidden border border-border bg-surface-raised">
         {line.image && <Image src={storefrontImage(line.image) || '/product-placeholder.svg'} alt="" fill sizes="64px" className="object-contain p-1.5 mix-blend-multiply" />}
       </Link>
       <div className="min-w-0 flex-1">

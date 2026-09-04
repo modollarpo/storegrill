@@ -4,12 +4,12 @@ export default function HomeLoading() {
   return (
     <div className="animate-fade-in w-full pb-20">
       {/* Premium Hero skeleton */}
-      <div className="relative w-full h-[400px] md:h-[500px] bg-surface-950 overflow-hidden mb-8 md:mb-16">
+      <div className="relative w-full h-[400px] md:h-[500px] bg-gray-950 overflow-hidden mb-8 md:mb-16">
         <div className="absolute inset-0 bg-shimmer bg-[length:200%_100%] animate-shimmer opacity-10" />
         <div className="container-site h-full flex flex-col justify-center">
-          <Skeleton width="50%" height="3.5rem" rounded="lg" className="mb-4 bg-surface-800" />
-          <Skeleton width="40%" height="1.5rem" rounded="md" className="mb-8 bg-surface-800" />
-          <Skeleton width="180px" height="3rem" rounded="full" className="bg-surface-800" />
+          <Skeleton width="50%" height="3.5rem" rounded="lg" className="mb-4 bg-gray-800" />
+          <Skeleton width="40%" height="1.5rem" rounded="md" className="mb-8 bg-gray-800" />
+          <Skeleton width="180px" height="3rem" rounded="full" className="bg-gray-800" />
         </div>
       </div>
 

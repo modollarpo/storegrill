@@ -6,7 +6,7 @@ import { authenticate, authorize, requireVerifiedEmail, AuthRequest } from '../m
 import {
   UpdateVendorSchema,
   VendorApplicationPatchSchema,
-} from '@storegrill/shared';
+} from '@Storegrill/shared';
 import { slugify } from '../utils/slugify.js';
 
 const KYC_CONTAINER = process.env.AZURE_STORAGE_KYC_CONTAINER || 'kyc-docs';
@@ -58,7 +58,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   ]);
 
   res.json({
-    vendors: vendors.map(v => ({
+    vendors: vendors.map((v: any) => ({
       ...v,
       rating: Number(v.rating),
       productCount: v._count.products,
@@ -386,7 +386,7 @@ router.get('/me/products', authenticate, authorize('VENDOR'), async (req: AuthRe
   });
 
   res.json({
-    products: products.map(p => ({
+    products: products.map((p: any) => ({
       ...p,
       basePriceMinorUnits: Number(p.basePriceMinorUnits),
       images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
@@ -502,7 +502,7 @@ router.get('/me/orders', authenticate, authorize('VENDOR'), async (req: AuthRequ
   let entries = [...byOrder.entries()];
   if (query.status) {
     const filtered = await prisma.order.findMany({ where: { id: { in: entries.map(([id]) => id) }, status: query.status }, select: { id: true } });
-    const allowed = new Set(filtered.map(o => o.id));
+    const allowed = new Set(filtered.map((o: any) => o.id));
     entries = entries.filter(([id]) => allowed.has(id));
   }
 
@@ -517,7 +517,7 @@ router.get('/me/orders', authenticate, authorize('VENDOR'), async (req: AuthRequ
     },
   });
 
-  const orderMap = new Map(orders.map(o => [o.id, o]));
+  const orderMap = new Map(orders.map((o: any) => [o.id, o]));
 
   res.json({
     orders: paged.flatMap(([orderId, agg]) => {
@@ -579,7 +579,7 @@ router.get('/me/orders/:id', authenticate, authorize('VENDOR'), async (req: Auth
       customerEmail: order.user?.email,
       shippingAddress: JSON.parse(order.shippingAddress || '{}'),
       notes: order.notes,
-      items: order.items.map(i => ({
+      items: order.items.map((i: any) => ({
         id: i.id,
         name: i.name,
         sku: i.sku,
@@ -588,13 +588,13 @@ router.get('/me/orders/:id', authenticate, authorize('VENDOR'), async (req: Auth
         unitPriceMinorUnits: Number(i.unitPriceMinorUnits),
         totalMinorUnits: Number(i.totalMinorUnits),
       })),
-      shipments: order.shipments.map(s => ({
+      shipments: order.shipments.map((s: any) => ({
         id: s.id,
         carrier: s.carrier,
         trackingNumber: s.trackingNumber,
         status: s.status,
         estimatedDelivery: s.estimatedDelivery,
-        events: s.events.map(e => ({ id: e.id, status: e.status, description: e.description, timestamp: e.timestamp })),
+        events: s.events.map((e: any) => ({ id: e.id, status: e.status, description: e.description, timestamp: e.timestamp })),
       })),
     },
   });
@@ -659,7 +659,7 @@ router.post('/me/orders/:id/ship', authenticate, authorize('VENDOR'), async (req
     },
   });
 
-  const allVendorIds = [...new Set(order.items.map(i => i.vendorId))];
+  const allVendorIds = [...new Set(order.items.map((i: any) => i.vendorId))];
   const shippedCount = await prisma.shipment.count({ where: { orderId: order.id, status: 'SHIPPED' } });
   const fullyShipped = shippedCount >= allVendorIds.length;
 
@@ -691,7 +691,7 @@ router.get('/me/payouts', authenticate, authorize('VENDOR'), async (req: AuthReq
   });
 
   res.json({
-    payouts: payouts.map(p => ({
+    payouts: payouts.map((p: any) => ({
       ...p,
       amountMinorUnits: Number(p.amountMinorUnits),
       lineCount: p._count.lines,
@@ -737,7 +737,7 @@ router.get('/me/dashboard', authenticate, authorize('VENDOR'), async (req: AuthR
       orderCount,
       totalRevenue: Number(totalRevenue._sum.totalMinorUnits || 0),
       totalPayouts: Number(payoutSummary._sum.amountMinorUnits || 0),
-      recentOrders: recentOrders.map(o => ({
+      recentOrders: recentOrders.map((o: any) => ({
         ...o,
         unitPriceMinorUnits: Number(o.unitPriceMinorUnits),
         totalMinorUnits: Number(o.totalMinorUnits),
@@ -780,7 +780,7 @@ router.get('/:slug', async (req: AuthRequest, res: Response) => {
     vendor: {
       ...vendor,
       rating: Number(vendor.rating),
-      products: vendor.products.map(p => ({
+      products: vendor.products.map((p: any) => ({
         ...p,
         basePriceMinorUnits: Number(p.basePriceMinorUnits),
         rating: Number(p.rating),

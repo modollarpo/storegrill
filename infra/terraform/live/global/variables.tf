@@ -31,3 +31,9 @@ variable "apex_region" {
   default     = "UK"
   description = "Region served at the apex domain storegrill.net"
 }
+
+variable "cloudflare_zone_id" {
+  type        = string
+  default     = "664c2c4f2fd9cbb8e14e0042a1973535"
+  description = "Cloudflare zone id for storegrill.net (authoritative DNS)"
+}

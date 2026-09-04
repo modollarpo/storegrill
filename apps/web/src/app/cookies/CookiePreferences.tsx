@@ -137,7 +137,7 @@ function ToggleRow({
           onChange={e => onChange(e.target.checked)}
           className="sr-only peer"
         />
-        <span className="relative w-10 h-[22px] rounded-full bg-smoke-300 peer-checked:bg-feedback-success transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-ember after:absolute after:top-[3px] after:left-[3px] after:w-4 after:h-4 after:rounded-full after:bg-white after:transition-transform peer-checked:after:translate-x-[18px]" />
+        <span className="relative w-10 h-[22px] rounded-full bg-smoke-300 peer-checked:bg-feedback-success transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-ember after:absolute after:top-[3px] after:left-[3px] after:w-4 after:h-4 after:rounded-full after:bg-surface-raised after:transition-transform peer-checked:after:translate-x-[18px]" />
       </label>
     </div>
   );

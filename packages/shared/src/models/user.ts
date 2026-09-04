@@ -54,6 +54,12 @@ export const VendorProfileSchema = z.object({
   status: z.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'BANNED']).default('PENDING'),
   rating: z.number().min(0).max(5).default(0),
   reviewCount: z.number().int().nonnegative().default(0),
+  regionKey: z.string().optional(),
+  warehouseRegionKey: z.string().optional(),
+  servingRegions: z.array(z.string()).min(1).default(['UK']),
+  corridor: z.boolean().default(false),
+  shippingMode: z.enum(['REGION', 'FLAT']).default('REGION'),
+  shippingFlatMinorUnits: z.number().int().nonnegative().optional(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

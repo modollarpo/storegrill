@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { VendorShell, PageHeader } from '@/components/VendorShell';
-import { FormRow, FormSection } from '@/components/ui/FormLayout';
+import { FormSection } from '@/components/ui/FormLayout';
 import { Switch } from '@/components/ui/Switch';
 import { toastSuccess } from '@/components/ui/Toast';
 

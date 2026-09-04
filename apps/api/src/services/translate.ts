@@ -71,7 +71,7 @@ export async function translateBatch(
     where: { hash: { in: [...hashes.keys()] } },
   });
 
-  const byHash = new Map(cached.map(c => [c.hash, c.translatedText]));
+  const byHash = new Map(cached.map((c: any) => [c.hash, c.translatedText]));
   const misses: string[] = [];
   for (const [hash, text] of hashes) {
     if (!byHash.has(hash)) misses.push(text);

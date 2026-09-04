@@ -74,7 +74,7 @@ export default function VendorDashboardPage() {
       {error && <p role="alert" className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-md px-4 py-3">Failed to load dashboard.</p>}
       {!data && !error && (
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-white rounded-lg border border-slate-200 animate-pulse" />)}
+          {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-surface-raised rounded-lg border border-slate-200 animate-pulse" />)}
         </div>
       )}
 
@@ -100,7 +100,7 @@ export default function VendorDashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 mb-8">
             {/* Sales bar chart */}
-            <section aria-labelledby="sales-heading" className="bg-white rounded-2xl border border-surface-200 p-6 shadow-sm">
+            <section aria-labelledby="sales-heading" className="bg-surface-raised rounded-2xl border border-surface-200 p-6 shadow-sm">
               <div className="mb-6">
                 <h2 id="sales-heading" className="text-base font-extrabold text-surface-900">Sales by day</h2>
                 <p className="text-xs font-medium text-surface-500 mt-1">Derived from your most recent order items (last 7 days)</p>
@@ -126,7 +126,7 @@ export default function VendorDashboardPage() {
             </section>
 
             {/* Action items */}
-            <section aria-labelledby="actions-heading" className="bg-white rounded-2xl border border-surface-200 p-6 shadow-sm">
+            <section aria-labelledby="actions-heading" className="bg-surface-raised rounded-2xl border border-surface-200 p-6 shadow-sm">
               <h2 id="actions-heading" className="text-base font-extrabold text-surface-900 mb-5">Action items</h2>
               <ul className="space-y-3 text-sm">
                 <ActionItem
@@ -141,7 +141,7 @@ export default function VendorDashboardPage() {
           </div>
 
           {/* Recent orders */}
-          <section aria-labelledby="recent-heading" className="bg-white rounded-2xl border border-surface-200 overflow-hidden shadow-sm">
+          <section aria-labelledby="recent-heading" className="bg-surface-raised rounded-2xl border border-surface-200 overflow-hidden shadow-sm">
             <div className="flex items-center justify-between px-6 py-5 border-b border-surface-100">
               <h2 id="recent-heading" className="text-base font-extrabold text-surface-900">Recent orders</h2>
               <Link href="/orders" className="text-sm font-bold text-brand-600 hover:text-brand-700 transition-colors">View all →</Link>
@@ -159,7 +159,7 @@ function ApplicationPending({ application }: { application: ApplicationState }) 
   return (
     <VendorShell>
       <PageHeader title="Seller application" subtitle="Your application status" />
-      <div className="bg-white rounded-lg border border-slate-200 p-8 text-center max-w-xl mx-auto mt-6" data-testid="applicant-state">
+      <div className="bg-surface-raised rounded-lg border border-slate-200 p-8 text-center max-w-xl mx-auto mt-6" data-testid="applicant-state">
         <span
           aria-hidden="true"
           className={`inline-grid place-items-center w-12 h-12 rounded-full text-xl font-bold ${isRejected ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700'}`}

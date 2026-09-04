@@ -1,0 +1,76 @@
+
+Error: creating Container App Custom Domain (Subscription: "a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-us"
+Container App Name: "app-storegrill-web-prod-us"
+Custom Domain Name: "us.storegrill.net"): performing CreateOrUpdate: unexpected status 400 (400 Bad Request) with error: CertificateNotFound: Certificate '/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-us/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-us/certificates/storegrill-us-cert-v2' doesn't exist.
+
+  with module.pod.azurerm_container_app_custom_domain.next_apps["web"],
+  on ..\..\..\modules\pod\main.tf line 529, in resource "azurerm_container_app_custom_domain" "next_apps":
+ 529: resource "azurerm_container_app_custom_domain" "next_apps" {
+
+creating Container App Custom Domain (Subscription:
+"a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-us"
+Container App Name: "app-storegrill-web-prod-us"
+Custom Domain Name: "us.storegrill.net"): performing CreateOrUpdate:
+unexpected status 400 (400 Bad Request) with error: CertificateNotFound:
+Certificate
+'/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-us/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-us/certificates/storegrill-us-cert-v2'
+doesn't exist.
+
+Error: creating Container App Custom Domain (Subscription: "a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-us"
+Container App Name: "app-storegrill-vendor-prod-us"
+Custom Domain Name: "us-vendor.storegrill.net"): performing CreateOrUpdate: unexpected status 400 (400 Bad Request) with error: CertificateNotFound: Certificate '/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-us/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-us/certificates/storegrill-us-cert-v2' doesn't exist.
+
+  with module.pod.azurerm_container_app_custom_domain.next_apps["vendor"],
+  on ..\..\..\modules\pod\main.tf line 529, in resource "azurerm_container_app_custom_domain" "next_apps":
+ 529: resource "azurerm_container_app_custom_domain" "next_apps" {
+
+creating Container App Custom Domain (Subscription:
+"a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-us"
+Container App Name: "app-storegrill-vendor-prod-us"
+Custom Domain Name: "us-vendor.storegrill.net"): performing CreateOrUpdate:
+unexpected status 400 (400 Bad Request) with error: CertificateNotFound:
+Certificate
+'/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-us/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-us/certificates/storegrill-us-cert-v2'
+doesn't exist.
+
+Error: creating Container App Custom Domain (Subscription: "a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-us"
+Container App Name: "app-storegrill-admin-prod-us"
+Custom Domain Name: "us-admin.storegrill.net"): performing CreateOrUpdate: unexpected status 400 (400 Bad Request) with error: CertificateNotFound: Certificate '/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-us/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-us/certificates/storegrill-us-cert-v2' doesn't exist.
+
+  with module.pod.azurerm_container_app_custom_domain.next_apps["admin"],
+  on ..\..\..\modules\pod\main.tf line 529, in resource "azurerm_container_app_custom_domain" "next_apps":
+ 529: resource "azurerm_container_app_custom_domain" "next_apps" {
+
+creating Container App Custom Domain (Subscription:
+"a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-us"
+Container App Name: "app-storegrill-admin-prod-us"
+Custom Domain Name: "us-admin.storegrill.net"): performing CreateOrUpdate:
+unexpected status 400 (400 Bad Request) with error: CertificateNotFound:
+Certificate
+'/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-us/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-us/certificates/storegrill-us-cert-v2'
+doesn't exist.
+
+Error: creating Container App Custom Domain (Subscription: "a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-us"
+Container App Name: "app-storegrill-api-prod-us"
+Custom Domain Name: "us-api.storegrill.net"): performing CreateOrUpdate: unexpected status 400 (400 Bad Request) with error: CertificateNotFound: Certificate '/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-us/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-us/certificates/storegrill-us-cert-v2' doesn't exist.
+
+  with module.pod.azurerm_container_app_custom_domain.api,
+  on ..\..\..\modules\pod\main.tf line 538, in resource "azurerm_container_app_custom_domain" "api":
+ 538: resource "azurerm_container_app_custom_domain" "api" {
+
+creating Container App Custom Domain (Subscription:
+"a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-us"
+Container App Name: "app-storegrill-api-prod-us"
+Custom Domain Name: "us-api.storegrill.net"): performing CreateOrUpdate:
+unexpected status 400 (400 Bad Request) with error: CertificateNotFound:
+Certificate
+'/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/resourceGroups/rg-storegrill-prod-us/providers/Microsoft.App/managedEnvironments/env-storegrill-prod-us/certificates/storegrill-us-cert-v2'
+doesn't exist.

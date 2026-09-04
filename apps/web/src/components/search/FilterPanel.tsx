@@ -6,8 +6,15 @@ import { cn } from '@/lib/utils';
 import { Select } from '../ui/Select';
 import { Drawer } from '../ui/Drawer';
 
+export interface FacetCategory {
+  name: string;
+  slug: string;
+  count?: number;
+  children?: FacetCategory[];
+}
+
 export interface FacetData {
-  categories: Array<{ name: string; slug: string; count?: number }>;
+  categories: FacetCategory[];
   brands: string[];
   vendors: Array<{ id: string; name: string }>;
   maxPriceMinorUnits: number;
@@ -81,31 +88,43 @@ export function FilterPanel({ facets, className }: FilterPanelProps) {
 
   return (
     <div className={cn('space-y-6', className)} data-testid="filter-panel">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-extrabold uppercase tracking-wide text-text-primary flex items-center gap-2">
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+          </svg>
+          Filters
+        </h3>
+        <button
+          type="button"
+          onClick={() => router.replace(pathname, { scroll: false })}
+          disabled={[...params.keys()].length === 0}
+          className="text-xs font-bold text-action-primary hover:underline disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Clear all
+        </button>
+      </div>
+      <div className="h-px bg-border" />
+
       <FilterGroup title="Category">
-        <ul className="space-y-1.5">
-          {facets.categories.map(cat => {
-            const active = params.get('category') === cat.slug;
-            return (
-              <li key={cat.slug}>
-                <button
-                  type="button"
-                  onClick={() => updateParam('category', active ? null : cat.slug)}
-                  aria-pressed={active}
-                  className={cn(
-                    'w-full text-left text-sm py-1 flex items-center justify-between group transition-colors',
-                    active ? 'text-action-primary font-bold' : 'text-text-primary hover:text-action-primary'
-                  )}
-                >
-                  <span className={cn(active && 'underline underline-offset-4', 'group-hover:underline underline-offset-4 truncate')}>{cat.name}</span>
-                  {cat.count !== undefined && <span className="text-xs text-text-tertiary ml-2">({cat.count})</span>}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <button
+          type="button"
+          onClick={() => updateParam('category', null)}
+          className={cn(
+            'flex items-center gap-2 text-sm py-1 transition-colors',
+            !params.get('category') ? 'font-bold text-action-primary' : 'text-text-primary hover:text-action-primary'
+          )}
+        >
+          All categories
+        </button>
+        <CategoryTree
+          categories={facets.categories}
+          activeSlug={params.get('category') ?? ''}
+          onPick={slug => updateParam('category', params.get('category') === slug ? null : slug)}
+        />
       </FilterGroup>
 
-      <FilterGroup title={`Price`}>
+      <FilterGroup title="Price">
         <RangeSlider
           min={0}
           max={facets.maxPriceMinorUnits}
@@ -122,6 +141,44 @@ export function FilterPanel({ facets, className }: FilterPanelProps) {
             router.replace(`${pathname}?${next.toString()}`, { scroll: false });
           }}
         />
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <label className="text-xs font-medium text-text-secondary">
+            Min
+            <input
+              type="number"
+              min={0}
+              value={minPrice === '0' ? '' : minPrice}
+              placeholder={facets.currencySymbol + '0'}
+              onChange={e => {
+                const next = new URLSearchParams(params.toString());
+                const v = Number(e.target.value);
+                if (v > 0) next.set('min', String(Math.round(v)));
+                else next.delete('min');
+                next.delete('page');
+                router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+              }}
+              className="mt-1 w-full h-9 rounded-lg border border-border bg-surface px-2 text-sm text-text-primary focus:border-action-primary focus:ring-1 focus:ring-action-primary"
+            />
+          </label>
+          <label className="text-xs font-medium text-text-secondary">
+            Max
+            <input
+              type="number"
+              min={0}
+              value={maxPrice === String(facets.maxPriceMinorUnits) ? '' : maxPrice}
+              placeholder={facets.currencySymbol}
+              onChange={e => {
+                const next = new URLSearchParams(params.toString());
+                const v = Number(e.target.value);
+                if (v > 0 && v < facets.maxPriceMinorUnits) next.set('max', String(Math.round(v)));
+                else next.delete('max');
+                next.delete('page');
+                router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+              }}
+              className="mt-1 w-full h-9 rounded-lg border border-border bg-surface px-2 text-sm text-text-primary focus:border-action-primary focus:ring-1 focus:ring-action-primary"
+            />
+          </label>
+        </div>
       </FilterGroup>
 
       <FilterGroup title="Customer Reviews">
@@ -144,8 +201,8 @@ export function FilterPanel({ facets, className }: FilterPanelProps) {
         </div>
       </FilterGroup>
 
-      {facets.brands.length > 0 && (
-        <FilterGroup title="Brand">
+      <FilterGroup title="Brand">
+        {facets.brands.length > 0 ? (
           <div className="space-y-2">
             {(showAllBrands ? facets.brands : facets.brands.slice(0, 5)).map(brand => (
               <label key={brand} className="flex items-center gap-3 text-sm cursor-pointer hover:text-action-primary text-text-primary transition-colors">
@@ -168,11 +225,13 @@ export function FilterPanel({ facets, className }: FilterPanelProps) {
               </button>
             )}
           </div>
-        </FilterGroup>
-      )}
+        ) : (
+          <p className="text-xs text-text-tertiary">No brands listed for this category.</p>
+        )}
+      </FilterGroup>
 
-      {facets.vendors.length > 0 && (
-        <FilterGroup title="Seller">
+      <FilterGroup title="Seller">
+        {facets.vendors.length > 0 ? (
           <div className="space-y-2">
             {facets.vendors.slice(0, 6).map(v => (
               <label key={v.id} className="flex items-center gap-3 text-sm cursor-pointer hover:text-action-primary text-text-primary transition-colors">
@@ -186,8 +245,10 @@ export function FilterPanel({ facets, className }: FilterPanelProps) {
               </label>
             ))}
           </div>
-        </FilterGroup>
-      )}
+        ) : (
+          <p className="text-xs text-text-tertiary">No sellers listed for this category.</p>
+        )}
+      </FilterGroup>
 
       <FilterGroup title="Availability & Shipping">
         <div className="space-y-2">
@@ -225,6 +286,87 @@ function CheckParam({
   );
 }
 
+function CategoryTree({
+  categories,
+  activeSlug,
+  onPick,
+  depth = 0,
+}: {
+  categories: FacetCategory[];
+  activeSlug: string;
+  onPick: (slug: string) => void;
+  depth?: number;
+}) {
+  return (
+    <ul className={depth === 0 ? 'space-y-1.5' : 'ml-3 pl-2 border-l border-border space-y-0.5 mt-0.5'}>
+      {categories.map(cat => (
+        <CategoryNode key={cat.slug} cat={cat} activeSlug={activeSlug} onPick={onPick} depth={depth} />
+      ))}
+    </ul>
+  );
+}
+
+function CategoryNode({
+  cat,
+  activeSlug,
+  onPick,
+  depth,
+}: {
+  cat: FacetCategory;
+  activeSlug: string;
+  onPick: (slug: string) => void;
+  depth: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const active = activeSlug === cat.slug;
+  const hasChildren = (cat.children?.length ?? 0) > 0;
+
+  return (
+    <li>
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={() => onPick(cat.slug)}
+          aria-pressed={active}
+          className={cn(
+            'flex-1 text-left py-1 group transition-colors',
+            depth > 0 ? 'text-[13px]' : 'text-sm',
+            active ? 'text-action-primary font-bold' : 'text-text-primary hover:text-action-primary'
+          )}
+        >
+          <span className={cn(active && 'underline underline-offset-4', 'group-hover:underline underline-offset-4 truncate')}>
+            {cat.name}
+          </span>
+          {cat.count !== undefined && <span className="text-xs text-text-tertiary ml-2">({cat.count})</span>}
+        </button>
+        {hasChildren && (
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-label={`${open ? 'Collapse' : 'Expand'} ${cat.name}`}
+            onClick={() => setOpen(o => !o)}
+            className="p-1 text-text-tertiary hover:text-text-primary transition-colors"
+          >
+            <svg
+              className={cn('w-3.5 h-3.5 transition-transform duration-200', open && 'rotate-180')}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              aria-hidden="true"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+        )}
+      </div>
+      {hasChildren && open && (
+        <CategoryTree categories={cat.children!} activeSlug={activeSlug} onPick={onPick} depth={depth + 1} />
+      )}
+    </li>
+  );
+}
+
 function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section aria-label={title}>
@@ -251,10 +393,7 @@ export function RangeSlider({ min, max, minValue, maxValue, symbol, onChange }: 
   const pctHi = ((localMax - min) / Math.max(1, max - min)) * 100;
 
   function format(v: number): string {
-    if (max >= 100000000) return `${symbol}${Math.round(v / 100000000)}Cr`;
-    if (max >= 10000000) return `${symbol}${Math.round(v / 10000000)}M`;
-    if (max >= 100000) return `${symbol}${Math.round(v / 100000)}L`;
-    return `${symbol}${Math.round(v / 100)}`;
+    return `${symbol}${Math.round(v / 100).toLocaleString()}`;
   }
 
   function commit() {
@@ -281,7 +420,7 @@ export function RangeSlider({ min, max, minValue, maxValue, symbol, onChange }: 
           onMouseUp={commit}
           onTouchEnd={commit}
           onKeyUp={commit}
-          className="absolute inset-0 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-action-primary [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-action-primary [&::-moz-range-thumb]:shadow-md"
+          className="absolute inset-0 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-surface-raised [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-action-primary [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-surface-raised [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-action-primary [&::-moz-range-thumb]:shadow-md"
         />
         <input
           type="range"
@@ -295,7 +434,7 @@ export function RangeSlider({ min, max, minValue, maxValue, symbol, onChange }: 
           onMouseUp={commit}
           onTouchEnd={commit}
           onKeyUp={commit}
-          className="absolute inset-0 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-action-primary [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-action-primary [&::-moz-range-thumb]:shadow-md"
+          className="absolute inset-0 w-full appearance-none bg-transparent pointer-events-none [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-surface-raised [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-action-primary [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-surface-raised [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-action-primary [&::-moz-range-thumb]:shadow-md"
         />
       </div>
       <p className="text-xs font-medium text-text-secondary text-center">
@@ -382,7 +521,7 @@ export function SortDropdown() {
       <label htmlFor="sort-select" className="text-sm font-medium text-text-secondary whitespace-nowrap">Sort by:</label>
       <Select
         id="sort-select"
-        className="h-10 text-sm font-bold bg-surface border-border shadow-sm rounded-md focus:border-action-primary focus:ring-action-primary"
+        className="h-11 min-w-[220px] text-sm font-bold bg-surface border-border shadow-sm rounded-full focus:border-action-primary focus:ring-action-primary"
         placeholder="Featured"
         value={value}
         onChange={v => {
@@ -397,7 +536,7 @@ export function SortDropdown() {
           { value: 'price_desc', label: 'Price: High to Low' },
           { value: 'rating', label: 'Avg. Customer Review' },
           { value: 'newest', label: 'Newest Arrivals' },
-          { value: 'bestselling', label: 'Best Selling' },
+          { value: 'popular', label: 'Best Selling' },
         ]}
       />
     </div>

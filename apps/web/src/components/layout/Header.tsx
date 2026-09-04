@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -12,25 +12,10 @@ import { SearchBar } from '../search/SearchBar';
 import { CategoryMegaMenu, type MegaMenuCategory } from '../navigation/CategoryMegaMenu';
 import { CartDrawer } from '../commerce/CartDrawer';
 import { Drawer } from '../ui/Drawer';
-
-const CATEGORY_LINKS = [
-  ['Electronics', 'electronics'],
-  ['Computers', 'computers'],
-  ['Home & Kitchen', 'home'],
-  ['Fashion', 'fashion'],
-  ['Beauty', 'beauty'],
-  ['Sports', 'sports'],
-  ['Books', 'books'],
-] as const;
-
-const MEGA_MENU_CATEGORIES: MegaMenuCategory[] = CATEGORY_LINKS.map(([name, slug]) => ({
-  name,
-  slug,
-  children: [],
-}));
+import type { CategoryNode } from '@/lib/api-client';
 
 export interface HeaderProps {
-  announcementMessages: string[];
+  categories: CategoryNode[];
 }
 
 function useOutsideClick<T extends HTMLElement>(
@@ -74,12 +59,12 @@ function RegionPicker({
       ref={ref}
       role="dialog"
       aria-label="Choose your country or region"
-      className="fixed inset-0 z-[var(--z-dropdown)] flex items-start justify-center pt-20"
+      className="fixed inset-0 z-[9999] flex items-start justify-center pt-20"
     >
       <div className="fixed inset-0 bg-black/30" onClick={onClose} aria-hidden="true" />
-      <div className="relative w-[30rem] max-h-[70vh] overflow-y-auto bg-white rounded-md shadow-md p-5 z-10 text-gray-900">
+      <div className="relative w-[30rem] max-h-[70vh] overflow-y-auto bg-surface-raised rounded-md shadow-md p-5 z-10 text-text-primary">
         <h3 className="text-sm font-bold mb-1">Choose your country or region</h3>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-text-secondary mb-3">
           Shopping on <strong>{currentKey.toLowerCase()}.storegrill.net</strong> — local
           currency, payments and delivery.
         </p>
@@ -89,13 +74,13 @@ function RegionPicker({
               <a
                 href={regionUrl(r.key)}
                 className={cn(
-                  'flex items-center gap-1.5 px-2 py-1.5 rounded text-xs hover:bg-gray-100 transition-colors',
+                  'flex items-center gap-1.5 px-2 py-1.5 rounded text-xs hover:bg-surface-sunken transition-colors',
                   r.key === currentKey && 'font-bold bg-blue-50'
                 )}
               >
                 <span aria-hidden="true">{r.flag}</span>
                 <span className="truncate">{r.name}</span>
-                <span className="ml-auto text-gray-400">{r.currency}</span>
+                <span className="ml-auto text-text-tertiary">{r.currency}</span>
               </a>
             </li>
           ))}
@@ -111,26 +96,48 @@ function RegionPicker({
   );
 }
 
-function Header({ announcementMessages }: HeaderProps) {
+const HIDDEN_CATEGORY_SLUGS = new Set(['costway', 'uncategorised']);
+
+function isHiddenCategory(category: { name: string; slug: string }): boolean {
+  if (HIDDEN_CATEGORY_SLUGS.has(category.slug)) return true;
+  if (category.name.toLowerCase() === 'makeup vanities') return true;
+  if (category.slug === 'makeup-vanities' || category.slug.startsWith('makeup-vanities-')) return true;
+  return false;
+}
+
+function Header({ categories }: HeaderProps) {
   const { regionKey, language, setLanguage } = useRegion();
   const cart = useCart();
   const wishlist = useWishlist();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
+  const [openDept, setOpenDept] = useState<string | null>(null);
+
+  const filteredCategories = categories.filter(c => !isHiddenCategory(c));
+
+  const megaMenuCategories: MegaMenuCategory[] = filteredCategories.map(c => ({
+    name: c.name,
+    slug: c.slug,
+    children: c.children.map(child => ({
+      name: child.name,
+      slug: child.slug,
+      children: (child.children || []).map(grandchild => ({ name: grandchild.name, slug: grandchild.slug })),
+    })),
+    featured: c.featured,
+  }));
 
   return (
     <>
       <header
         id="masthead"
-        className="site-header"
+        className="site-header sticky top-0 z-[var(--z-header)]"
         dir={language === 'ar' ? 'rtl' : 'ltr'}
       >
-        {/* ═══ ROW 1: TOPBAR ═══ */}
+        {/* ——— ROW 1: TOPBAR ——— */}
         <div
           id="header-top"
-          className="hidden lg:block"
-          style={{ backgroundColor: '#0071DC', color: '#fff' }}
+          className="hidden lg:block bg-ember-deep text-white"
         >
           <div className="container-fluid">
             <div className="flex items-center justify-between h-10">
@@ -161,7 +168,7 @@ function Header({ announcementMessages }: HeaderProps) {
                     aria-label="Switch language"
                     value={language}
                     onChange={e => setLanguage(e.target.value)}
-                    className="bg-transparent border-none text-[13px] font-medium text-white cursor-pointer outline-none [&>option]:text-gray-900"
+                    className="bg-transparent border-none text-[13px] font-medium text-white cursor-pointer outline-none [&>option]:text-text-primary"
                   >
                     {(REGION_META.find(r => r.key === regionKey)?.languages || []).map(l => (
                       <option key={l.code} value={l.code}>{l.nativeName}</option>
@@ -173,21 +180,19 @@ function Header({ announcementMessages }: HeaderProps) {
           </div>
         </div>
 
-        {/* ═══ ROW 2: MAIN HEADER ═══ */}
+        {/* â•â•â• ROW 2: MAIN HEADER â•â•â• */}
         <div
           id="header-main"
-          style={{ backgroundColor: '#0071DC', color: '#fff' }}
-          className="border-t border-white/20"
+          className="bg-ember text-white border-t border-white/20 shadow-sm"
         >
           <div className="container-fluid">
-            <div className="flex items-center h-[74px] gap-4 lg:gap-6">
+            <div className="flex items-center h-[74px] gap-2 lg:gap-6">
               {/* Mobile hamburger */}
               <button
                 type="button"
                 onClick={() => setMobileOpen(true)}
                 aria-label="Open menu"
-                className="lg:hidden p-2 -ml-2 hover:opacity-80 transition-opacity"
-                style={{ color: '#fff' }}
+                className="lg:hidden p-2 -ml-2 hover:opacity-80 transition-opacity text-white"
               >
                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path strokeLinecap="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -201,20 +206,16 @@ function Header({ announcementMessages }: HeaderProps) {
                 className="shrink-0 flex items-center transition-transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo-white.svg" alt="Storegrill" className="h-12 lg:h-[48px] w-auto" />
+                <img src="/logo-white.svg" alt="Storegrill" className="h-6 sm:h-8 lg:h-[48px] w-auto max-w-[9.5rem] max-[400px]:max-w-[7rem]" />
               </Link>
 
               {/* Desktop: Categories dropdown + Search */}
               <div className="hidden lg:flex items-center flex-1 gap-3">
-                <CategoryMegaMenu categories={MEGA_MENU_CATEGORIES} language={language} />
+                <CategoryMegaMenu categories={megaMenuCategories} language={language} />
 
                 <div className="flex-1">
                   <SearchBar regionKey={regionKey} />
                 </div>
-                
-                <Link href="/blog" className="text-sm font-semibold hover:opacity-80 transition-opacity whitespace-nowrap">
-                  Blog
-                </Link>
               </div>
 
               {/* Mobile spacer */}
@@ -223,7 +224,7 @@ function Header({ announcementMessages }: HeaderProps) {
               {/* Icons row */}
               <div className="flex items-center gap-1 lg:gap-3 shrink-0">
                 {/* Mobile: Region + Wishlist + Account */}
-                <div className="flex items-center gap-1 lg:hidden" style={{ color: '#fff' }}>
+                <div className="flex items-center gap-1 lg:hidden text-white">
                   <button
                     type="button"
                     onClick={() => setRegionOpen(true)}
@@ -260,7 +261,7 @@ function Header({ announcementMessages }: HeaderProps) {
                 </div>
 
                 {/* Desktop: Wishlist + Account + Cart */}
-                <div className="hidden lg:flex items-center gap-3" style={{ color: '#fff' }}>
+                <div className="hidden lg:flex items-center gap-3 text-white">
                   <button
                     type="button"
                     onClick={() => setRegionOpen(true)}
@@ -282,7 +283,7 @@ function Header({ announcementMessages }: HeaderProps) {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
                     </svg>
                     {wishlist.items.length > 0 && (
-                      <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-secondary text-gray-900 text-[10px] font-bold rounded-full px-1">
+                      <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-secondary text-text-primary text-[10px] font-bold rounded-full px-1">
                         {wishlist.items.length}
                       </span>
                     )}
@@ -305,8 +306,7 @@ function Header({ announcementMessages }: HeaderProps) {
                 <button
                   type="button"
                   onClick={() => setCartOpen(true)}
-                  className="relative flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity"
-                  style={{ color: '#fff' }}
+                  className="relative flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity text-white"
                   aria-label={`Open cart, ${cart.count} items`}
                   data-testid="cart-button"
                 >
@@ -314,7 +314,7 @@ function Header({ announcementMessages }: HeaderProps) {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                   </svg>
                   {cart.count > 0 && (
-                    <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-white text-[#0071DC] text-[10px] font-bold rounded-full px-1">
+                    <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-surface-raised text-ember text-[10px] font-bold rounded-full px-1">
                       {cart.count}
                     </span>
                   )}
@@ -325,36 +325,39 @@ function Header({ announcementMessages }: HeaderProps) {
           </div>
         </div>
 
-        {/* ═══ ROW 3: BOTTOM NAVIGATION BAR ═══ */}
+        {/* â•â•â• ROW 3: BOTTOM NAVIGATION BAR â•â•â• */}
         <nav
           id="header-bottom"
           aria-label="Categories"
-          className="hidden lg:block"
-          style={{ backgroundColor: '#0071DC', color: '#fff' }}
+          className="hidden lg:block bg-ember-deep text-white"
         >
           <div className="container-fluid">
-            <div className="flex items-center h-[56px] gap-6">
-              {/* Left: categories + nav */}
-              <div className="flex items-center gap-6 flex-1 overflow-x-auto scrollbar-none">
-                <CategoryMegaMenu categories={MEGA_MENU_CATEGORIES} language={language} />
-                {CATEGORY_LINKS.map(([label, slug]) => (
-                  <Link
-                    key={slug}
-                    href={`/products?category=${slug}`}
-                    className="text-[16px] font-semibold whitespace-nowrap hover:opacity-80 transition-opacity"
+            <div className="flex items-center h-[56px] gap-4 w-full justify-between">
+              {/* Left spacer for perfect centering */}
+              <div className="w-[120px] shrink-0 hidden lg:block" />
+
+              {/* Center: category links */}
+              <div className="flex items-center justify-center gap-4 xl:gap-6 flex-1 overflow-x-auto scrollbar-none">
+                {filteredCategories.map(cat => (
+                  <a
+                    key={cat.slug}
+                    href={`/categories/${cat.slug}`}
+                    className="text-[15px] xl:text-[16px] font-semibold whitespace-nowrap hover:opacity-80 transition-opacity"
                   >
-                    {label}
-                  </Link>
+                    {cat.name}
+                  </a>
                 ))}
               </div>
 
               {/* Right: deals link */}
-              <Link
-                href="/deals"
-                className="shrink-0 text-[16px] font-semibold text-secondary hover:opacity-80 transition-opacity inline-flex items-center gap-1.5"
-              >
-                Today&apos;s Deal
-              </Link>
+              <div className="w-[120px] shrink-0 flex justify-end">
+                <Link
+                  href="/deals"
+                  className="text-[15px] xl:text-[16px] font-semibold text-secondary hover:opacity-80 transition-opacity whitespace-nowrap"
+                >
+                  Today&apos;s Deal
+                </Link>
+              </div>
             </div>
           </div>
         </nav>
@@ -377,7 +380,7 @@ function Header({ announcementMessages }: HeaderProps) {
         className="!max-w-full sm:!max-w-full w-full"
       >
         <div className="flex-1 overflow-y-auto pb-8">
-          <div className="p-4 bg-white text-gray-900 flex items-center justify-between sticky top-0 z-10 border-b border-gray-200">
+          <div className="p-4 bg-surface-raised text-text-primary flex items-center justify-between sticky top-0 z-10 border-b border-border">
             <p className="text-sm font-bold">
               {t(language, 'hello')}, {t(language, 'signIn').toLowerCase()}
             </p>
@@ -388,60 +391,115 @@ function Header({ announcementMessages }: HeaderProps) {
 
           <section className="py-3" aria-label="Shop by department">
             <h3 className="px-4 py-2 text-base font-bold">Shop by Department</h3>
-            {CATEGORY_LINKS.map(([label, slug]) => (
-              <Link
-                key={slug}
-                href={`/products?category=${slug}`}
-                onClick={() => setMobileOpen(false)}
-                className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
-              >
-                {label}
-              </Link>
-            ))}
+            {filteredCategories.map(cat => {
+              const expanded = openDept === cat.slug;
+              return (
+                <div key={cat.slug}>
+                  <div className="flex items-center">
+                    <Link
+                      href={`/categories/${cat.slug}`}
+                      onClick={() => setMobileOpen(false)}
+                      className="flex-1 px-4 py-2.5 text-sm font-semibold hover:bg-surface-sunken transition-colors"
+                    >
+                      {cat.name}
+                    </Link>
+                    {(cat.children?.length ?? 0) > 0 && (
+                      <button
+                        type="button"
+                        aria-expanded={expanded}
+                        aria-label={`${expanded ? 'Collapse' : 'Expand'} ${cat.name}`}
+                        onClick={() => setOpenDept(expanded ? null : cat.slug)}
+                        className="px-3 py-2.5 text-text-tertiary hover:text-text-primary transition-colors"
+                      >
+                        <svg
+                          className={cn('w-4 h-4 transition-transform duration-200', expanded && 'rotate-180')}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          aria-hidden="true"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                  {expanded && (
+                    <div className="pl-5 border-l border-border ml-4 pb-1">
+                      {cat.children.map(child => (
+                        <div key={child.slug}>
+                          <Link
+                            href={`/categories/${child.slug}`}
+                            onClick={() => setMobileOpen(false)}
+                            className="block px-4 py-2 text-sm text-text-secondary hover:bg-surface-sunken transition-colors"
+                          >
+                            {child.name}
+                          </Link>
+                          {(child.children?.length ?? 0) > 0 && (
+                            <div className="pl-4">
+                              {child.children.map(grandchild => (
+                                <Link
+                                  key={grandchild.slug}
+                                  href={`/categories/${grandchild.slug}`}
+                                  onClick={() => setMobileOpen(false)}
+                                  className="block px-4 py-1.5 text-xs text-text-tertiary hover:bg-surface-sunken transition-colors"
+                                >
+                                  {grandchild.name}
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </section>
 
-          <hr className="border-gray-200" />
+          <hr className="border-border" />
 
           <section className="py-3" aria-label="Programs">
             <h3 className="px-4 py-2 text-base font-bold">Programs</h3>
             <Link
               href="/deals"
               onClick={() => setMobileOpen(false)}
-              className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+              className="block px-4 py-2.5 text-sm hover:bg-surface-sunken transition-colors"
             >
               Today&apos;s Deal
             </Link>
             <Link
               href="/vendors"
               onClick={() => setMobileOpen(false)}
-              className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+              className="block px-4 py-2.5 text-sm hover:bg-surface-sunken transition-colors"
             >
               Vendors
             </Link>
             <Link
               href="/vendor/apply"
               onClick={() => setMobileOpen(false)}
-              className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+              className="block px-4 py-2.5 text-sm hover:bg-surface-sunken transition-colors"
             >
               Sell on Storegrill
             </Link>
           </section>
 
-          <hr className="border-gray-200" />
+          <hr className="border-border" />
 
           <section className="py-3" aria-label="Help & Settings">
             <h3 className="px-4 py-2 text-base font-bold">Help & Settings</h3>
             <Link
               href="/help"
               onClick={() => setMobileOpen(false)}
-              className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+              className="block px-4 py-2.5 text-sm hover:bg-surface-sunken transition-colors"
             >
               Help Centre
             </Link>
             <Link
               href="/track"
               onClick={() => setMobileOpen(false)}
-              className="block px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors"
+              className="block px-4 py-2.5 text-sm hover:bg-surface-sunken transition-colors"
             >
               Track Order
             </Link>

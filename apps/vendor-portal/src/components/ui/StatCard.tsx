@@ -38,7 +38,7 @@ export function StatCard({ label, value, trend, tone = 'default', href }: StatCa
   );
 
   const cls = cn(
-    'block bg-white rounded-lg border p-4 transition-all',
+    'block bg-surface-raised rounded-lg border p-4 transition-all',
     href
       ? 'border-slate-200 hover:border-indigo-300 hover:shadow-card cursor-pointer'
       : 'border-slate-200 shadow-card',

@@ -66,7 +66,7 @@ function AccordionPanel({ item, isOpen, onToggle, variant }: AccordionPanelProps
 
   return (
     <div className={cn(
-      variant === 'card' && 'rounded-xl border border-surface-200 bg-white overflow-hidden shadow-sm',
+      variant === 'card' && 'rounded-xl border border-surface-200 bg-surface-raised overflow-hidden shadow-sm',
     )}>
       <h3>
         <button

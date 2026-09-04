@@ -1,6 +1,6 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId } from 'react';
 import { cn } from '@/lib/utils';
 
 interface RangeSliderProps {
@@ -41,7 +41,7 @@ export function RangeSlider({
   return (
     <div className={cn('w-full', className)}>
       {/* Track */}
-      <div className="relative h-1.5 bg-surface-200 rounded-full mx-2 my-5">
+      <div className="relative h-1.5 bg-surface-sunken rounded-full mx-2 my-5">
         {/* Active range fill */}
         <div
           className="absolute h-full bg-action-primary rounded-full"
@@ -86,12 +86,12 @@ export function RangeSlider({
 
         {/* Visual thumbs */}
         <div
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white border-2 border-action-primary shadow-md transition-transform hover:scale-110 active:scale-95 focus-within:ring-2 focus-within:ring-action-primary/30"
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-surface-raised border-2 border-action-primary shadow-md transition-transform hover:scale-110 active:scale-95 focus-within:ring-2 focus-within:ring-action-primary/30"
           style={{ left: `${pctLow}%` }}
           aria-hidden="true"
         />
         <div
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white border-2 border-action-primary shadow-md transition-transform hover:scale-110 active:scale-95"
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-surface-raised border-2 border-action-primary shadow-md transition-transform hover:scale-110 active:scale-95"
           style={{ left: `${pctHigh}%` }}
           aria-hidden="true"
         />
@@ -101,14 +101,14 @@ export function RangeSlider({
       <div className="flex items-center justify-between mt-3 gap-2">
         <div className="flex-1">
           <label htmlFor={`${id}-low`} className="sr-only">Min</label>
-          <div className="h-10 px-3 flex items-center rounded-lg border border-surface-200 bg-surface text-sm font-bold text-text-primary tabular-nums">
+          <div className="h-10 px-3 flex items-center rounded-lg border border-border bg-surface text-sm font-bold text-text-primary tabular-nums">
             {formatLabel(low)}
           </div>
         </div>
         <span className="text-text-tertiary font-bold text-sm shrink-0">–</span>
         <div className="flex-1">
           <label htmlFor={`${id}-high`} className="sr-only">Max</label>
-          <div className="h-10 px-3 flex items-center rounded-lg border border-surface-200 bg-surface text-sm font-bold text-text-primary tabular-nums">
+          <div className="h-10 px-3 flex items-center rounded-lg border border-border bg-surface text-sm font-bold text-text-primary tabular-nums">
             {formatLabel(high)}
           </div>
         </div>

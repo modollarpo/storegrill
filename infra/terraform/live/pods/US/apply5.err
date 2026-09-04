@@ -1,0 +1,9 @@
+
+Error: creating Flexible Server (Subscription: "a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d"
+Resource Group Name: "rg-storegrill-prod-us"
+Flexible Server Name: "pg-storegrill-us-prod"): performing Create: unexpected status 400 (400 Bad Request) with error: ParameterOutOfRange: The value of the 'Version' should be in: []. Verify that the specified parameter value is correct.
+
+  with module.pod.azurerm_postgresql_flexible_server.db,
+  on ..\..\..\modules\pod\main.tf line 115, in resource "azurerm_postgresql_flexible_server" "db":
+ 115: resource "azurerm_postgresql_flexible_server" "db" {
+

@@ -19,7 +19,7 @@ One brand color owns everything interactive. Errors are never brand-colored:
 
 ## Foundations
 
-- **Type**: system sans (`-apple-system, Segoe UI, Roboto, Helvetica Neue, Arial`). JetBrains Mono only for code/order IDs.
+- **Type**: Outfit (self-hosted variable font via `@fontsource-variable/outfit`; weights 100–900), falling back to system sans (`-apple-system, Segoe UI, Roboto, Helvetica Neue, Arial`). JetBrains Mono only for code/order IDs.
 - **Radii**: 4px component language (`rounded-xs`). Max 6px on oversized surfaces.
 - **Elevation**: flat by default; borders over shadows; shadows for overlays, sticky header, card hover only.
 - **Rails**: `.container-fluid` / `.container-site` = 1504px centered, gutters 16/32/56.
@@ -43,7 +43,7 @@ One brand color owns everything interactive. Errors are never brand-colored:
 
 ## Component inventory (storefront)
 
-AnnouncementBar (marquee, 24h dismiss cookie) · Header (utility bar, mega categories strip, search, region/account/basket) · Footer (newsletter, 5 columns, PaymentLogos, legal) · CampaignHero promo grid · CategoryQuickNav chips · ProductCard · DealsOfTheDay + Countdown chip · PromoSlider · TrustBar (SVG icons) · RecentlyViewed · CartDrawer (focus-trapped) · PriceDisplay · AddToCartButton · WishlistButton · Badge · StarRating · Toast · Skeleton/SkeletonProductGrid · Drawer · Button/Input/Select · CookieBanner.
+AnnouncementBar (marquee, 24h dismiss cookie) · Header (utility bar, mega categories strip, search, region/account/basket) · Footer (newsletter, 5 columns, PaymentLogos, legal) · CampaignHero promo grid · CategoryQuickNav chips · ProductCard · DealsOfTheDay + Countdown chip · TrustBar (SVG icons) · RecentlyViewed · CartDrawer (focus-trapped) · PriceDisplay · AddToCartButton · WishlistButton · Badge · StarRating · Toast · Skeleton/SkeletonProductGrid · Drawer · Button/Input/Select · CookieBanner.
 
 ## Verification
 

@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { getCurrencyDecimals } from '@Storegrill/shared';
 
 export interface PaymentOrderContext {
   orderNumber: string;
@@ -71,11 +72,20 @@ async function paypalToken(): Promise<string> {
 }
 
 export function paypalMoney(ctx: { currencyCode: string; totalMinorUnits: number }): { currency_code: string; value: string } {
-  const decimals = ['JPY', 'KRW', 'UGX'].includes(ctx.currencyCode) ? 0 : 2;
+  const decimals = getCurrencyDecimals(ctx.currencyCode);
   const divisor = 10 ** decimals;
   return {
     currency_code: ctx.currencyCode,
     value: (ctx.totalMinorUnits / divisor).toFixed(decimals),
+  };
+}
+
+export function paypalUnitAmount(minorUnits: number, currencyCode: string): { currency_code: string; value: string } {
+  const decimals = getCurrencyDecimals(currencyCode);
+  const divisor = 10 ** decimals;
+  return {
+    currency_code: currencyCode,
+    value: (minorUnits / divisor).toFixed(decimals),
   };
 }
 
@@ -168,10 +178,7 @@ export async function initiatePaypalPayment(ctx: PaymentOrderContext): Promise<P
           items: ctx.items.map(item => ({
             name: item.name.slice(0, 127),
             quantity: String(item.quantity),
-            unit_amount: {
-              currency_code: ctx.currencyCode,
-              value: (item.unitPriceMinorUnits / 100).toFixed(2),
-            },
+            unit_amount: paypalUnitAmount(item.unitPriceMinorUnits, ctx.currencyCode),
           })),
         },
       ],
@@ -214,4 +221,44 @@ export async function capturePaypalOrder(paypalOrderId: string): Promise<{ compl
     completed: data.status === 'COMPLETED',
     orderNumber: unit?.custom_id || unit?.reference_id || null,
   };
+}
+
+export interface PaypalWebhookHeaders {
+  transmissionId: string | undefined;
+  transmissionTime: string | undefined;
+  certUrl: string | undefined;
+  authAlgo: string | undefined;
+  transmissionSig: string | undefined;
+}
+
+export async function verifyPaypalWebhook(
+  rawBody: Buffer,
+  headers: PaypalWebhookHeaders
+): Promise<boolean> {
+  const webhookId = process.env.PAYPAL_WEBHOOK_ID;
+  if (!webhookId) return true; // skip verification in dev when env var not set
+
+  const { transmissionId, transmissionTime, certUrl, authAlgo, transmissionSig } = headers;
+  if (!transmissionId || !transmissionTime || !certUrl || !authAlgo || !transmissionSig) return false;
+
+  try {
+    const token = await paypalToken();
+    const res = await fetch(`${PAYPAL_API}/v1/notifications/verify-webhook-signature`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        transmission_id: transmissionId,
+        transmission_time: transmissionTime,
+        cert_url: certUrl,
+        auth_algo: authAlgo,
+        transmission_sig: transmissionSig,
+        webhook_id: webhookId,
+        webhook_event: JSON.parse(rawBody.toString('utf8')),
+      }),
+    });
+    const data = (await res.json()) as { verification_status?: string };
+    return data.verification_status === 'SUCCESS';
+  } catch {
+    return false;
+  }
 }

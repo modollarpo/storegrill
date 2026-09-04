@@ -2,12 +2,13 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../index.js';
 import { authenticate, authorize, AuthRequest, requireVerifiedEmail } from '../middleware/auth.js';
-import { CheckoutSchema, DEFAULT_REGIONS } from '@storegrill/shared';
-import { calculateTax, TaxRule } from '@storegrill/shared';
-import { ShippingZone, VendorShippingPolicy, calculateGroupedShipping } from '@storegrill/shared';
-import { createMoney } from '@storegrill/shared';
+import { CheckoutSchema, DEFAULT_REGIONS } from '@Storegrill/shared';
+import { calculateTax, TaxRule } from '@Storegrill/shared';
+import { ShippingZone, VendorShippingPolicy, calculateGroupedShipping, planFulfillment } from '@Storegrill/shared';
+import { createMoney, convertMoney } from '@Storegrill/shared';
 import { v4 as uuid } from 'uuid';
 import { initiatePaypalPayment, initiateStripePayment, type PaymentOrderContext } from '../payments/providers.js';
+import { validateCoupon } from '../services/coupons.js';
 
 const router = Router();
 
@@ -45,14 +46,14 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   ]);
 
   res.json({
-    orders: orders.map(o => ({
+    orders: orders.map((o: any) => ({
       ...o,
       subtotalMinorUnits: Number(o.subtotalMinorUnits),
       taxMinorUnits: Number(o.taxMinorUnits),
       shippingMinorUnits: Number(o.shippingMinorUnits),
       discountMinorUnits: Number(o.discountMinorUnits),
       totalMinorUnits: Number(o.totalMinorUnits),
-      items: o.items.map(i => ({
+      items: o.items.map((i: any) => ({
         ...i,
         unitPriceMinorUnits: Number(i.unitPriceMinorUnits),
         totalMinorUnits: Number(i.totalMinorUnits),
@@ -101,7 +102,7 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
       shippingMinorUnits: Number(order.shippingMinorUnits),
       discountMinorUnits: Number(order.discountMinorUnits),
       totalMinorUnits: Number(order.totalMinorUnits),
-      items: order.items.map(i => ({
+      items: order.items.map((i: any) => ({
         ...i,
         unitPriceMinorUnits: Number(i.unitPriceMinorUnits),
         totalMinorUnits: Number(i.totalMinorUnits),
@@ -124,7 +125,7 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
               basePriceMinorUnits: true, currencyCode: true,
               vendorId: true, categoryId: true, status: true,
               vendor: {
-                select: { shippingMode: true, shippingFlatMinorUnits: true },
+                select: { storeName: true, shippingMode: true, shippingFlatMinorUnits: true, shippingCountries: true },
               },
             },
           },
@@ -145,6 +146,16 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
     });
   }
 
+  const regionConfig = DEFAULT_REGIONS.find(r => r.key === (body.regionKey || 'UK')) || DEFAULT_REGIONS[0];
+  const currencyCode = regionConfig.defaultCurrency;
+  const shipCountry = body.shippingAddress?.country || 'GB';
+
+  const productIds = cart.items.map((item: any) => item.product.id);
+  const regionPrices = await prisma.productRegionPrice.findMany({
+    where: { productId: { in: productIds }, regionKey: regionConfig.key },
+  });
+  const regionPriceByProduct = new Map(regionPrices.map((rp: any) => [rp.productId, rp]));
+
   for (const item of cart.items) {
     if (item.product.status !== 'ACTIVE') {
       return res.status(400).json({
@@ -158,10 +169,19 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
     }
   }
 
-  const orderItems = cart.items.map(item => {
-    const unitPrice = item.variant
+  const orderItems = cart.items.map((item: any) => {
+    const basePrice = item.variant
       ? Number(item.variant.basePriceMinorUnits)
       : Number(item.product.basePriceMinorUnits);
+    const productCurrency = item.product.currencyCode || 'USD';
+    let unitPrice = basePrice;
+    const regionPrice = regionPriceByProduct.get(item.product.id);
+    if (regionPrice) {
+      unitPrice = Number(regionPrice.priceMinorUnits);
+    } else if (productCurrency !== currencyCode) {
+      const converted = convertMoney(createMoney(BigInt(basePrice), productCurrency), currencyCode);
+      unitPrice = Number(converted.amountMinorUnits);
+    }
     return {
       productId: item.product.id,
       variantId: item.variantId,
@@ -181,10 +201,19 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
     };
   });
 
-  const subtotal = orderItems.reduce((sum, item) => sum + item.totalMinorUnits, 0);
+  const subtotal = orderItems.reduce((sum: any, item: any) => sum + item.totalMinorUnits, 0);
 
-  const regionConfig = DEFAULT_REGIONS.find(r => r.key === (body.regionKey || 'UK')) || DEFAULT_REGIONS[0];
-  const currencyCode = regionConfig.defaultCurrency;
+  let discount = 0;
+  let appliedCouponId: string | null = null;
+  if (body.couponCode) {
+    const couponResult = await validateCoupon(body.couponCode, subtotal, currencyCode);
+    if (!couponResult.ok) {
+      return res.status(couponResult.status).json({ error: { code: couponResult.code, message: couponResult.message } });
+    }
+    discount = couponResult.coupon.discountMinorUnits;
+    appliedCouponId = couponResult.coupon.couponId;
+  }
+  const discountedSubtotal = subtotal - discount;
 
   const taxRules: TaxRule[] = regionConfig.taxRules.map((r, i) => ({
     id: `region-${i}`,
@@ -197,8 +226,8 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
 
   const taxResult = calculateTax(
     {
-      subtotal: createMoney(BigInt(subtotal), currencyCode),
-      items: orderItems.map(item => ({
+      subtotal: createMoney(BigInt(discountedSubtotal), currencyCode),
+      items: orderItems.map((item: any) => ({
         productId: item.productId,
         categoryId: item.categoryId || '',
         priceMinorUnits: BigInt(item.unitPriceMinorUnits),
@@ -227,12 +256,19 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
   const vendorPolicies: Record<string, VendorShippingPolicy> = {};
   const itemSubtotals: Record<string, bigint> = {};
   for (const oi of orderItems) {
-    const vendor = cart.items.find(item => item.product.vendorId === oi.vendorId)?.product.vendor;
+    const vendor = cart.items.find((item: any) => item.product.vendorId === oi.vendorId)?.product.vendor;
     if (vendor && !vendorPolicies[oi.vendorId]) {
+      const allowedCountries = vendor.shippingCountries ? JSON.parse(vendor.shippingCountries) : undefined;
+      if (Array.isArray(allowedCountries) && allowedCountries.length > 0 && !allowedCountries.includes(shipCountry)) {
+        return res.status(400).json({
+          error: { code: 'VENDOR_SHIPPING_RESTRICTED', message: `${vendor.storeName} ships only within: ${allowedCountries.join(', ')}` },
+        });
+      }
       vendorPolicies[oi.vendorId] = {
         vendorId: oi.vendorId,
         mode: vendor.shippingMode === 'FLAT' ? 'FLAT' : 'REGION',
         flatRateMinorUnits: vendor.shippingFlatMinorUnits != null ? BigInt(vendor.shippingFlatMinorUnits) : undefined,
+        countries: Array.isArray(allowedCountries) ? allowedCountries : undefined,
       };
     }
     itemSubtotals[oi.vendorId] = (itemSubtotals[oi.vendorId] ?? 0n) + BigInt(oi.totalMinorUnits);
@@ -240,13 +276,13 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
 
   const grouped = calculateGroupedShipping(
     {
-      items: cart.items.map(item => ({
+      items: cart.items.map((item: any) => ({
         vendorId: item.product.vendorId,
         weightGrams: 500,
         quantity: item.quantity,
       })),
       itemSubtotals,
-      country: body.shippingAddress?.country || 'GB',
+      country: shipCountry,
       regionKey: regionConfig.key,
     },
     vendorPolicies,
@@ -255,7 +291,19 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
 
   const tax = Number(taxResult.totalTax.amountMinorUnits);
   const shipping = grouped ? Number(grouped.totalMinorUnits) : 0;
-  const total = subtotal + tax + shipping;
+  const total = discountedSubtotal + tax + shipping;
+
+  const fulfillment = planFulfillment(
+    orderItems.map((item: any) => ({
+      productId: item.productId,
+      vendorId: item.vendorId,
+      unitPriceMinorUnits: item.unitPriceMinorUnits,
+      quantity: item.quantity,
+    })),
+    [],
+    regionConfig.key,
+    regionConfig,
+  );
 
   const orderNumber = `SG-${Date.now().toString(36).toUpperCase()}-${uuid().slice(0, 4).toUpperCase()}`;
 
@@ -266,7 +314,7 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
     orderNumber,
     currencyCode,
     totalMinorUnits: total,
-    items: orderItems.map(item => ({
+    items: orderItems.map((item: any) => ({
       name: item.name,
       unitPriceMinorUnits: item.unitPriceMinorUnits,
       quantity: item.quantity,
@@ -300,49 +348,60 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
       ? 'PENDING'
       : 'CAPTURED';
 
-  const order = await prisma.order.create({
-    data: {
-      orderNumber,
-      userId: req.user!.id,
-      status: orderStatus,
-      regionKey: regionConfig.key,
-      currencyCode: currencyCode,
-      subtotalMinorUnits: subtotal,
-      taxMinorUnits: tax,
-      shippingMinorUnits: shipping,
-      discountMinorUnits: 0,
-      totalMinorUnits: total,
-      shippingAddress: JSON.stringify(body.shippingAddress),
-      billingAddress: JSON.stringify(body.billingAddress || body.shippingAddress),
-      paymentMethod: body.paymentMethod,
-      paymentStatus,
-      items: {
-        create: orderItems.map(item => ({
-          productId: item.productId,
-          variantId: item.variantId,
-          vendorId: item.vendorId,
-          name: item.name,
-          sku: item.sku,
-          image: item.image,
-          quantity: item.quantity,
-          unitPriceMinorUnits: item.unitPriceMinorUnits,
-          totalMinorUnits: item.totalMinorUnits,
-        })),
-      },
-      ...(initiated && {
-        payments: {
-          create: {
-            method: body.paymentMethod,
-            providerPaymentId: initiated.providerPaymentId,
-            amountMinorUnits: total,
-            currencyCode,
-            status: initiated.status === 'CAPTURED' ? 'CAPTURED' : 'REQUIRES_REDIRECT',
-            metadata: JSON.stringify({ provider: initiated.provider, mode: initiated.mode }),
-          },
+  const order = await prisma.$transaction(async (tx: any) => {
+    const created = await tx.order.create({
+      data: {
+        orderNumber,
+        userId: req.user!.id,
+        status: orderStatus,
+        regionKey: regionConfig.key,
+        currencyCode: currencyCode,
+        subtotalMinorUnits: subtotal,
+        taxMinorUnits: tax,
+        shippingMinorUnits: shipping,
+        discountMinorUnits: discount,
+        totalMinorUnits: total,
+        shippingAddress: JSON.stringify(body.shippingAddress),
+        billingAddress: JSON.stringify(body.billingAddress || body.shippingAddress),
+        paymentMethod: body.paymentMethod,
+        paymentStatus,
+        items: {
+          create: orderItems.map((item: any) => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            vendorId: item.vendorId,
+            name: item.name,
+            sku: item.sku,
+            image: item.image,
+            quantity: item.quantity,
+            unitPriceMinorUnits: item.unitPriceMinorUnits,
+            totalMinorUnits: item.totalMinorUnits,
+          })),
         },
-      }),
-    },
-    include: { items: true, payments: true },
+        ...(initiated && {
+          payments: {
+            create: {
+              method: body.paymentMethod,
+              providerPaymentId: initiated.providerPaymentId,
+              amountMinorUnits: total,
+              currencyCode,
+              status: initiated.status === 'CAPTURED' ? 'CAPTURED' : 'REQUIRES_REDIRECT',
+              metadata: JSON.stringify({ provider: initiated.provider, mode: initiated.mode }),
+            },
+          },
+        }),
+      },
+      include: { items: true, payments: true },
+    });
+
+    if (appliedCouponId) {
+      await tx.coupon.update({
+        where: { id: appliedCouponId },
+        data: { usedCount: { increment: 1 } },
+      });
+    }
+
+    return created;
   });
 
   for (const item of cart.items) {
@@ -367,7 +426,7 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
       taxMinorUnits: Number(order.taxMinorUnits),
       shippingMinorUnits: Number(order.shippingMinorUnits),
       totalMinorUnits: Number(order.totalMinorUnits),
-      items: order.items.map(i => ({
+      items: order.items.map((i: any) => ({
         ...i,
         unitPriceMinorUnits: Number(i.unitPriceMinorUnits),
         totalMinorUnits: Number(i.totalMinorUnits),

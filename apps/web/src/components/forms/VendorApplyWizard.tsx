@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
 import { REGION_META } from '@/lib/regions';
 
@@ -75,7 +74,6 @@ function parseJsonField(value: unknown): Record<string, unknown> {
 }
 
 export function VendorApplyWizard() {
-  const router = useRouter();
   const [gate, setGate] = useState<'loading' | 'anonymous' | 'unverified' | 'ready'>('loading');
   const [appStatus, setAppStatus] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState<string | null>(null);
@@ -167,12 +165,6 @@ export function VendorApplyWizard() {
     };
   }, []);
 
-  useEffect(() => {
-    if (gate === 'anonymous') {
-      router.replace('/auth/signin?next=/vendor/apply');
-    }
-  }, [gate, router]);
-
   const persist = async (payload: Record<string, unknown>) => {
     setSaving(true);
     setStepError('');
@@ -257,49 +249,64 @@ export function VendorApplyWizard() {
   };
 
   if (gate === 'loading') {
-    return <p className="text-sm text-smoke-500 py-16 text-center">Loading your application…</p>;
+    return <p className="text-body-md text-text-tertiary py-16 text-center animate-pulse">Loading your application…</p>;
+  }
+
+  if (gate === 'anonymous') {
+    return (
+      <div className="text-center py-8">
+        <h2 className="text-heading-xl font-bold text-text-primary">Sign in to apply</h2>
+        <p className="mt-4 text-body-md text-text-secondary max-w-md mx-auto">
+          To sell on Storegrill you need an account. Sign in or create one to start your seller application — we&apos;ll remember your progress.
+        </p>
+        <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Link href="/auth/signin?next=/vendor/apply" className="btn btn-primary">Sign in</Link>
+          <Link href="/auth/signup" className="btn btn-outline">Create account</Link>
+        </div>
+      </div>
+    );
   }
 
   if (gate === 'unverified') {
     return (
-      <div className="card p-8 text-center">
-        <h2 className="text-displaysm font-semibold text-charcoal">Verify your email first</h2>
-        <p className="mt-2 text-sm text-smoke-600">
+      <div className="text-center py-8">
+        <h2 className="text-heading-xl font-bold text-text-primary">Verify your email first</h2>
+        <p className="mt-4 text-body-md text-text-secondary max-w-md mx-auto">
           Seller applications require a verified email address. Open the verification link we sent you, then come back here.
         </p>
-        <Link href="/account" className="btn btn-outline mt-6 inline-block">Go to account settings</Link>
+        <Link href="/account" className="btn btn-outline mt-8">Go to account settings</Link>
       </div>
     );
   }
 
   if (appStatus === 'UNDER_REVIEW') {
     return (
-      <div className="card p-8 text-center" data-testid="under-review">
-        <span aria-hidden="true" className="inline-grid place-items-center w-12 h-12 rounded-full bg-tealink/10 text-tealink text-xl font-bold">✓</span>
-        <h2 className="text-displaysm font-semibold text-charcoal mt-4">Application received</h2>
-        <p className="mt-2 text-sm text-smoke-600 max-w-md mx-auto leading-relaxed">
+      <div className="text-center py-8" data-testid="under-review">
+        <span aria-hidden="true" className="inline-grid place-items-center w-16 h-16 rounded-full bg-feedback-success-bg text-feedback-success text-3xl font-bold mb-6">✓</span>
+        <h2 className="text-heading-xl font-bold text-text-primary">Application received</h2>
+        <p className="mt-4 text-body-md text-text-secondary max-w-md mx-auto leading-relaxed">
           Thank you — our team reviews new applications within two working days. We will email your decision; meanwhile your answers are saved.
         </p>
-        <Link href="/" className="btn btn-primary mt-6 inline-block">Back to shopping</Link>
+        <Link href="/" className="btn btn-primary mt-8">Back to shopping</Link>
       </div>
     );
   }
 
   if (appStatus === 'ACTIVE') {
     return (
-      <div className="card p-8 text-center">
-        <h2 className="text-displaysm font-semibold text-charcoal">Your store is live</h2>
-        <p className="mt-2 text-sm text-smoke-600">Manage listings, orders and payouts in the vendor portal.</p>
-        <a href={process.env.NEXT_PUBLIC_VENDOR_PORTAL_URL || '/vendor'} className="btn btn-primary mt-6 inline-block">Open vendor portal</a>
+      <div className="text-center py-8">
+        <h2 className="text-heading-xl font-bold text-text-primary">Your store is live</h2>
+        <p className="mt-4 text-body-md text-text-secondary max-w-md mx-auto">Manage listings, orders and payouts in the vendor portal.</p>
+        <a href={process.env.NEXT_PUBLIC_VENDOR_PORTAL_URL || '/vendor'} className="btn btn-primary mt-8">Open vendor portal</a>
       </div>
     );
   }
 
   if (appStatus && appStatus !== 'REJECTED' && appStatus !== 'PENDING') {
     return (
-      <div className="card p-8 text-center">
-        <h2 className="text-displaysm font-semibold text-charcoal">Application {appStatus.toLowerCase().replace('_', ' ')}</h2>
-        <p className="mt-2 text-sm text-smoke-600">Contact vendor support for the current status of your store.</p>
+      <div className="text-center py-8">
+        <h2 className="text-heading-xl font-bold text-text-primary">Application {appStatus.toLowerCase().replace('_', ' ')}</h2>
+        <p className="mt-4 text-body-md text-text-secondary">Contact vendor support for the current status of your store.</p>
       </div>
     );
   }
@@ -307,27 +314,33 @@ export function VendorApplyWizard() {
   return (
     <div data-testid="vendor-apply-wizard">
       {reviewNotes && (
-        <div role="alert" className="mb-6 border border-feedback-danger/30 bg-feedback-danger/5 rounded p-4">
-          <p className="text-xs font-bold text-feedback-danger uppercase tracking-wide">Previous application was declined</p>
-          <p className="text-xs text-smoke-600 mt-1 leading-relaxed">{reviewNotes}</p>
-          <p className="text-xs text-smoke-600 mt-1">Update your answers below and resubmit.</p>
+        <div role="alert" className="mb-6 border border-feedback-danger/30 bg-feedback-danger-bg rounded-lg p-4">
+          <p className="text-label-md text-feedback-danger uppercase tracking-wide">Previous application was declined</p>
+          <p className="text-body-md text-text-secondary mt-1">{reviewNotes}</p>
+          <p className="text-body-sm text-text-secondary mt-1">Update your answers below and resubmit.</p>
         </div>
       )}
 
-      <ol className="flex gap-2 mb-8" aria-label="Application progress">
-        {STEP_TITLES.map((title, i) => (
-          <li key={title} className="flex-1" aria-current={i === step ? 'step' : undefined}>
-            <span className={`block h-1.5 rounded-full ${i <= step ? 'bg-ember' : 'bg-smoke-200'}`} />
-            <span className={`block text-2xs mt-1.5 font-semibold ${i <= step ? 'text-charcoal' : 'text-smoke-400'}`}>{i + 1}. {title}</span>
-          </li>
-        ))}
+      <ol className="flex gap-3 mb-10" aria-label="Application progress">
+        {STEP_TITLES.map((title, i) => {
+          const isCompleted = i < step;
+          const isCurrent = i === step;
+          const bgClass = isCompleted || isCurrent ? 'bg-action-primary' : 'bg-surface-sunken';
+          const textClass = isCurrent ? 'text-text-primary font-bold' : isCompleted ? 'text-text-primary font-medium' : 'text-text-tertiary font-medium';
+          return (
+            <li key={title} className="flex-1" aria-current={isCurrent ? 'step' : undefined}>
+              <span className={`block h-2 rounded-full transition-colors duration-300 ${bgClass}`} />
+              <span className={`block text-caption mt-2 ${textClass}`}>{i + 1}. {title}</span>
+            </li>
+          );
+        })}
       </ol>
 
-      {stepError && <p role="alert" className="mb-4 text-xs text-feedback-danger">{stepError}</p>}
+      {stepError && <p role="alert" className="mb-6 text-label-md text-feedback-danger">{stepError}</p>}
 
       {step === 0 && (
-        <fieldset disabled={saving} className="space-y-4">
-          <legend className="text-displaysm font-semibold text-charcoal mb-4">Tell us about your business</legend>
+        <fieldset disabled={saving} className="space-y-5">
+          <legend className="text-heading-lg font-bold text-text-primary mb-6">Tell us about your business</legend>
           <Field label="Legal business name" required>
             <input className="input" value={business.businessLegalName} onChange={e => setBusiness({ ...business, businessLegalName: e.target.value })} placeholder="Grill Gear Ltd" />
           </Field>
@@ -338,7 +351,7 @@ export function VendorApplyWizard() {
               <option value="company">Registered company</option>
             </select>
           </Field>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="Registration number" required>
               <input className="input" value={business.registrationNumber} onChange={e => setBusiness({ ...business, registrationNumber: e.target.value })} />
             </Field>
@@ -346,7 +359,7 @@ export function VendorApplyWizard() {
               <input className="input" value={business.taxId} onChange={e => setBusiness({ ...business, taxId: e.target.value })} />
             </Field>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="Country of registration" required>
               <input className="input" maxLength={2} value={business.countryOfRegistration} onChange={e => setBusiness({ ...business, countryOfRegistration: e.target.value.toUpperCase() })} placeholder="GB" />
             </Field>
@@ -354,22 +367,24 @@ export function VendorApplyWizard() {
               <input className="input" value={business.website} onChange={e => setBusiness({ ...business, website: e.target.value })} placeholder="https://" />
             </Field>
           </div>
-          <button type="button" onClick={nextFromBusiness} disabled={saving} className="btn btn-primary w-full sm:w-auto">
-            {saving ? 'Saving…' : 'Continue'}
-          </button>
+          <div className="pt-2">
+            <button type="button" onClick={nextFromBusiness} disabled={saving} className="btn btn-primary w-full sm:w-auto">
+              {saving ? 'Saving…' : 'Continue'}
+            </button>
+          </div>
         </fieldset>
       )}
 
       {step === 1 && (
-        <fieldset disabled={saving} className="space-y-4">
-          <legend className="text-displaysm font-semibold text-charcoal mb-4">Set up your storefront profile</legend>
+        <fieldset disabled={saving} className="space-y-5">
+          <legend className="text-heading-lg font-bold text-text-primary mb-6">Set up your storefront profile</legend>
           <Field label="Store name" required>
             <input className="input" value={store.storeName} onChange={e => setStore({ ...store, storeName: e.target.value })} placeholder="Shown to shoppers" />
           </Field>
           <Field label="About your store" required hint={`${store.description.length}/2000 — minimum 20 characters`}>
             <textarea className="input min-h-[110px]" maxLength={2000} value={store.description} onChange={e => setStore({ ...store, description: e.target.value })} />
           </Field>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="Support email" required>
               <input className="input" type="email" value={store.supportEmail} onChange={e => setStore({ ...store, supportEmail: e.target.value })} />
             </Field>
@@ -383,7 +398,7 @@ export function VendorApplyWizard() {
           <Field label="Shipping policy">
             <textarea className="input min-h-[80px]" maxLength={2000} value={store.shippingPolicy} onChange={e => setStore({ ...store, shippingPolicy: e.target.value })} placeholder="e.g. Dispatched within 1 working day…" />
           </Field>
-          <div className="flex gap-3">
+          <div className="flex gap-4 pt-2">
             <button type="button" onClick={() => setStep(0)} className="btn btn-outline">Back</button>
             <button type="button" onClick={nextFromStore} disabled={saving} className="btn btn-primary flex-1 sm:flex-none">
               {saving ? 'Saving…' : 'Continue'}
@@ -393,8 +408,8 @@ export function VendorApplyWizard() {
       )}
 
       {step === 2 && (
-        <fieldset disabled={saving} className="space-y-4">
-          <legend className="text-displaysm font-semibold text-charcoal mb-4">Where do you ship from?</legend>
+        <fieldset disabled={saving} className="space-y-5">
+          <legend className="text-heading-lg font-bold text-text-primary mb-6">Where do you ship from?</legend>
           <Field label="Primary warehouse region" required hint="Your storefront launches here first — more regions can be added later.">
             <select className="input" value={operations.warehouseRegionKey} onChange={e => setOperations({ ...operations, warehouseRegionKey: e.target.value })}>
               {REGION_META.map(r => (
@@ -405,7 +420,7 @@ export function VendorApplyWizard() {
           <Field label="Product categories" required hint="Up to 10, comma-separated — used by our catalog team when reviewing your application.">
             <input className="input" value={operations.plannedCategories} onChange={e => setOperations({ ...operations, plannedCategories: e.target.value })} placeholder="kitchen, outdoor, tools" />
           </Field>
-          <div className="flex gap-3">
+          <div className="flex gap-4 pt-2">
             <button type="button" onClick={() => setStep(1)} className="btn btn-outline">Back</button>
             <button type="button" onClick={nextFromOperations} disabled={saving} className="btn btn-primary flex-1 sm:flex-none">
               {saving ? 'Saving…' : 'Continue'}
@@ -415,26 +430,26 @@ export function VendorApplyWizard() {
       )}
 
       {step === 3 && (
-        <fieldset disabled={submitting} className="space-y-4">
-          <legend className="text-displaysm font-semibold text-charcoal mb-4">Get paid & submit</legend>
+        <fieldset disabled={submitting} className="space-y-5">
+          <legend className="text-heading-lg font-bold text-text-primary mb-6">Get paid & submit</legend>
           <Field label="Payout method" required>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-4">
               {(['bank', 'paypal'] as const).map(t => (
-                <label key={t} className={`flex-1 card p-4 cursor-pointer flex items-center gap-2 ${payout.type === t ? 'ring-2 ring-ember' : ''}`}>
+                <label key={t} className={`flex-1 p-5 rounded-lg border-2 cursor-pointer flex items-center gap-4 transition-colors ${payout.type === t ? 'border-border-focus bg-surface shadow-sm' : 'border-border bg-surface-raised hover:bg-surface-sunken'}`}>
                   <input
                     type="radio"
                     name="payout-type"
                     checked={payout.type === t}
                     onChange={() => setPayout({ ...payout, type: t })}
-                    className="accent-[var(--color-ember)]"
+                    className="accent-[var(--color-action-primary)] w-5 h-5 shrink-0"
                   />
-                  <span className="text-sm font-semibold">{t === 'bank' ? 'Bank transfer' : 'PayPal'}</span>
+                  <span className="text-label-md text-text-primary">{t === 'bank' ? 'Bank transfer' : 'PayPal'}</span>
                 </label>
               ))}
             </div>
           </Field>
           {payout.type === 'bank' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <Field label="Bank name" required>
                 <input className="input" value={payout.bankName} onChange={e => setPayout({ ...payout, bankName: e.target.value })} />
               </Field>
@@ -451,20 +466,20 @@ export function VendorApplyWizard() {
           <Field label="Supporting documents" hint="Registration certificates or tax documents (PDF/images, up to 5 MB each). Optional — speeds up review.">
             <DocumentsUploader />
           </Field>
-          <label className="flex items-start gap-2 cursor-pointer">
+          <label className="flex items-start gap-3 cursor-pointer mt-6 p-4 rounded-lg bg-surface-sunken">
             <input
               type="checkbox"
               checked={payout.acceptTerms}
               onChange={() => setPayout({ ...payout, acceptTerms: !payout.acceptTerms })}
-              className="w-[18px] h-[18px] mt-0.5 accent-[var(--color-ember)]"
+              className="w-5 h-5 mt-0.5 shrink-0 accent-[var(--color-action-primary)] rounded border-border"
             />
-            <span className="text-xs text-smoke-600 leading-relaxed">
+            <span className="text-body-sm text-text-secondary leading-relaxed">
               I confirm the information provided is accurate and I accept the{' '}
-              <Link href="/terms" className="font-medium hover:text-tealink underline underline-offset-2">Vendor Agreement</Link>{' '}
+              <Link href="/terms" className="font-semibold text-text-link hover:text-text-link-hover underline underline-offset-2">Vendor Agreement</Link>{' '}
               including the flat 12% commission on each sale.
             </span>
           </label>
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-4 pt-4">
             <button type="button" onClick={() => setStep(2)} disabled={submitting} className="btn btn-outline">Back</button>
             <button type="button" onClick={submitApplication} disabled={submitting} className="btn btn-primary flex-1 sm:flex-none" data-testid="submit-application">
               {submitting ? 'Submitting…' : 'Submit application'}
@@ -516,7 +531,7 @@ function DocumentsUploader() {
 
   return (
     <div>
-      <label className="inline-flex items-center gap-2 rounded-md border border-dashed border-smoke-300 px-4 py-2.5 text-xs font-semibold text-smoke-600 cursor-pointer hover:bg-smoke-50">
+      <label className="inline-flex items-center gap-2 rounded-md border border-dashed border-border-strong px-4 py-2.5 text-body-sm font-semibold text-text-primary cursor-pointer hover:bg-surface-sunken transition-colors">
         <input
           type="file"
           accept=".pdf,.png,.jpg,.jpeg"
@@ -531,28 +546,29 @@ function DocumentsUploader() {
         {uploading ? 'Uploading…' : 'Attach a file'}
       </label>
       {docs.length > 0 && (
-        <ul role="list" className="mt-2 space-y-1">
+        <ul role="list" className="mt-3 space-y-2">
           {docs.map(d => (
-            <li key={d.name + d.uploadedAt} className="text-xs text-smoke-600">
-              ✓ {d.name} <span className="text-smoke-400">({d.size < 1024 * 1024 ? `${Math.round(d.size / 1024)} KB` : `${(d.size / (1024 * 1024)).toFixed(1)} MB`})</span>
+            <li key={d.name + d.uploadedAt} className="text-body-sm text-text-secondary flex items-center gap-2">
+              <span aria-hidden="true" className="text-feedback-success">✓</span>
+              <span className="font-medium text-text-primary">{d.name}</span> <span className="text-text-tertiary">({d.size < 1024 * 1024 ? `${Math.round(d.size / 1024)} KB` : `${(d.size / (1024 * 1024)).toFixed(1)} MB`})</span>
             </li>
           ))}
         </ul>
       )}
-      {notice && <p role="alert" className="text-2xs text-feedback-danger mt-1.5">{notice}</p>}
+      {notice && <p role="alert" className="text-caption text-feedback-danger mt-2">{notice}</p>}
     </div>
   );
 }
 
 function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
-    <div>
-      <span className="block text-xs font-semibold mb-1.5">
+    <div className="space-y-1.5">
+      <span className="block text-label-md text-text-primary">
         {label}
-        {required && <span aria-hidden="true" className="text-feedback-danger"> *</span>}
+        {required && <span aria-hidden="true" className="text-feedback-danger ml-1">*</span>}
       </span>
       {children}
-      {hint && <span className="block text-2xs text-smoke-400 mt-1">{hint}</span>}
+      {hint && <span className="block text-caption text-text-tertiary">{hint}</span>}
     </div>
   );
 }

@@ -2,8 +2,10 @@
 import { z } from 'zod';
 import { prisma } from '../index.js';
 import { optionalAuth, authenticate, authorize, AuthRequest } from '../middleware/auth.js';
-import { CreateDealSchema, CreateCouponSchema, ApplyCouponSchema } from '@storegrill/shared';
+import { CreateDealSchema, CreateCouponSchema, ApplyCouponSchema, DEFAULT_REGIONS } from '@Storegrill/shared';
 import { slugify } from '../utils/slugify.js';
+import { validateCoupon } from '../services/coupons.js';
+import { loadActiveDeals } from '../services/deal-eval.js';
 
 const router = Router();
 
@@ -37,10 +39,10 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
   });
 
   res.json({
-    deals: deals.map(d => ({
+    deals: deals.map((d: any) => ({
       ...d,
       value: Number(d.value),
-      variants: d.variants.map(v => ({
+      variants: d.variants.map((v: any) => ({
         ...v,
         product: {
           ...v.product,
@@ -50,6 +52,12 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
       })),
     })),
   });
+});
+
+router.get('/active', optionalAuth, async (req: AuthRequest, res: Response) => {
+  const vendorId = req.query.vendorId as string | undefined;
+  const deals = await loadActiveDeals(prisma, vendorId ? { vendorId } : undefined);
+  res.json({ deals });
 });
 
 router.get('/:slug', optionalAuth, async (req: AuthRequest, res: Response) => {
@@ -84,7 +92,7 @@ router.get('/:slug', optionalAuth, async (req: AuthRequest, res: Response) => {
     deal: {
       ...deal,
       value: Number(deal.value),
-      variants: deal.variants.map(v => ({
+      variants: deal.variants.map((v: any) => ({
         ...v,
         product: {
           ...v.product,
@@ -123,58 +131,20 @@ router.post('/', authenticate, authorize('VENDOR', 'ADMIN'), async (req: AuthReq
 
 router.post('/apply-coupon', optionalAuth, async (req: AuthRequest, res: Response) => {
   const body = ApplyCouponSchema.parse(req.body);
+  const region = DEFAULT_REGIONS.find(r => r.key === body.regionKey);
+  const currencyCode = region?.defaultCurrency ?? 'USD';
+  const result = await validateCoupon(body.code, body.subtotalMinorUnits, currencyCode, body.items);
 
-  const coupon = await prisma.coupon.findUnique({
-    where: { code: body.code },
-    include: { deal: true },
-  });
-
-  if (!coupon || !coupon.enabled) {
-    return res.status(404).json({
-      error: { code: 'INVALID_COUPON', message: 'Invalid or expired coupon code' },
-    });
-  }
-
-  if (coupon.expiresAt && coupon.expiresAt < new Date()) {
-    return res.status(400).json({
-      error: { code: 'COUPON_EXPIRED', message: 'Coupon has expired' },
-    });
-  }
-
-  if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
-    return res.status(400).json({
-      error: { code: 'COUPON_EXHAUSTED', message: 'Coupon has been fully used' },
-    });
-  }
-
-  if (!coupon.deal.enabled || coupon.deal.startsAt > new Date() || coupon.deal.endsAt < new Date()) {
-    return res.status(400).json({
-      error: { code: 'DEAL_INACTIVE', message: 'Deal is not currently active' },
-    });
-  }
-
-  if (coupon.deal.minOrderAmount && body.subtotalMinorUnits < Number(coupon.deal.minOrderAmount)) {
-    return res.status(400).json({
-      error: { code: 'MIN_ORDER_NOT_MET', message: `Minimum order amount not met` },
-    });
-  }
-
-  let discount = 0;
-  if (coupon.deal.type === 'PERCENTAGE_OFF') {
-    discount = Math.round(body.subtotalMinorUnits * Number(coupon.deal.value) / 100);
-    if (coupon.deal.maxDiscount) {
-      discount = Math.min(discount, Number(coupon.deal.maxDiscount));
-    }
-  } else if (coupon.deal.type === 'FIXED_AMOUNT') {
-    discount = Number(coupon.deal.value) * 100;
+  if (!result.ok) {
+    return res.status(result.status).json({ error: { code: result.code, message: result.message } });
   }
 
   res.json({
     coupon: {
-      code: coupon.code,
-      dealName: coupon.deal.name,
-      dealType: coupon.deal.type,
-      discountMinorUnits: discount,
+      code: result.coupon.code,
+      dealName: result.coupon.dealName,
+      dealType: result.coupon.dealType,
+      discountMinorUnits: result.coupon.discountMinorUnits,
     },
   });
 });

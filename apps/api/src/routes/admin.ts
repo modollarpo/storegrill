@@ -535,6 +535,50 @@ router.post('/regions', async (req: AuthRequest, res: Response) => {
   res.status(201).json({ region });
 });
 
+router.get('/imports', async (req: AuthRequest, res: Response) => {
+  const query = z.object({
+    status: z.string().optional(),
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+  }).parse(req.query);
+
+  const where = query.status ? { status: query.status as any } : {};
+
+  const [jobs, total] = await Promise.all([
+    prisma.importJob.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (query.page - 1) * query.limit,
+      take: query.limit,
+      include: {
+        vendor: { select: { id: true, storeName: true, slug: true } },
+        _count: { select: { results: true } },
+      },
+    }),
+    prisma.importJob.count({ where }),
+  ]);
+
+  const scheduleIds = [...new Set(jobs.flatMap(j => j.scheduleId ? [j.scheduleId] : []))];
+  const schedules = scheduleIds.length > 0
+    ? await prisma.importSchedule.findMany({ where: { id: { in: scheduleIds } }, select: { id: true, name: true } })
+    : [];
+  const scheduleNameById = new Map(schedules.map(s => [s.id, s.name]));
+
+  res.json({
+    jobs: jobs.map((j: any) => ({
+      ...j,
+      processedRows: Number(j.processedRows),
+      totalRows: Number(j.totalRows),
+      successRows: Number(j.successRows),
+      errorRows: Number(j.errorRows),
+      vendorName: j.vendor.storeName,
+      scheduleName: j.scheduleId ? scheduleNameById.get(j.scheduleId) ?? null : null,
+      resultCount: j._count.results,
+    })),
+    pagination: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) },
+  });
+});
+
 router.get('/audit-logs', async (req: AuthRequest, res: Response) => {
   const query = z.object({
     entity: z.string().optional(),

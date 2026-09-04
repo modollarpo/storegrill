@@ -83,7 +83,7 @@ export function Drawer({ open, onClose, side = 'left', title, children, classNam
         {title && (
           <header className="flex items-center justify-between px-5 py-3.5 border-b border-smoke-150 shrink-0">
             <h2 className="text-sm font-bold text-charcoal uppercase tracking-wide">{title}</h2>
-            <button type="button" onClick={onClose} aria-label="Close drawer" className="p-1 text-smoke-400 hover:text-charcoal transition-colors">
+            <button type="button" onClick={onClose} aria-label="Close drawer" className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-smoke-400 hover:text-charcoal transition-colors">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" />
               </svg>

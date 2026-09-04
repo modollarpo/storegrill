@@ -62,7 +62,7 @@ function RegionPicker({
       className="fixed inset-0 z-[9999] flex items-start justify-center pt-20"
     >
       <div className="fixed inset-0 bg-black/30" onClick={onClose} aria-hidden="true" />
-      <div className="relative w-[30rem] max-h-[70vh] overflow-y-auto bg-surface-raised rounded-md shadow-md p-5 z-10 text-text-primary">
+      <div className="relative w-[min(30rem,calc(100vw-2rem))] max-h-[70vh] overflow-y-auto bg-surface-raised rounded-md shadow-md p-5 z-10 text-text-primary">
         <h3 className="text-sm font-bold mb-1">Choose your country or region</h3>
         <p className="text-xs text-text-secondary mb-3">
           Shopping on <strong>{currentKey.toLowerCase()}.storegrill.net</strong> — local
@@ -218,8 +218,10 @@ function Header({ categories }: HeaderProps) {
                 </div>
               </div>
 
-              {/* Mobile spacer */}
-              <div className="flex-1 lg:hidden" />
+              {/* Mobile search — visible below lg */}
+              <div className="flex-1 lg:hidden px-2">
+                <SearchBar regionKey={regionKey} />
+              </div>
 
               {/* Icons row */}
               <div className="flex items-center gap-1 lg:gap-3 shrink-0">
@@ -228,7 +230,7 @@ function Header({ categories }: HeaderProps) {
                   <button
                     type="button"
                     onClick={() => setRegionOpen(true)}
-                    className="flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity"
+                    className="flex flex-col items-center gap-0.5 p-2 min-w-[44px] min-h-[44px] justify-center hover:opacity-80 transition-opacity"
                     aria-label="Select region"
                   >
                     <svg className="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -239,7 +241,7 @@ function Header({ categories }: HeaderProps) {
 
                   <Link
                     href="/account/wishlist"
-                    className="flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity"
+                    className="flex flex-col items-center gap-0.5 p-2 min-w-[44px] min-h-[44px] justify-center hover:opacity-80 transition-opacity"
                     aria-label={`Wishlist, ${wishlist.items.length} items`}
                   >
                     <svg className="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -250,7 +252,7 @@ function Header({ categories }: HeaderProps) {
 
                   <Link
                     href="/auth/signin"
-                    className="flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity"
+                    className="flex flex-col items-center gap-0.5 p-2 min-w-[44px] min-h-[44px] justify-center hover:opacity-80 transition-opacity"
                     aria-label="Account"
                   >
                     <svg className="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -265,7 +267,7 @@ function Header({ categories }: HeaderProps) {
                   <button
                     type="button"
                     onClick={() => setRegionOpen(true)}
-                    className="flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity"
+                    className="flex flex-col items-center gap-0.5 p-2 min-w-[44px] min-h-[44px] justify-center hover:opacity-80 transition-opacity"
                     aria-label="Select region"
                   >
                     <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -276,7 +278,7 @@ function Header({ categories }: HeaderProps) {
 
                   <Link
                     href="/account/wishlist"
-                    className="relative flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity"
+                    className="relative flex flex-col items-center gap-0.5 p-2 min-w-[44px] min-h-[44px] justify-center hover:opacity-80 transition-opacity"
                     aria-label={`Wishlist, ${wishlist.items.length} items`}
                   >
                     <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -292,7 +294,7 @@ function Header({ categories }: HeaderProps) {
 
                   <Link
                     href="/auth/signin"
-                    className="flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity"
+                    className="flex flex-col items-center gap-0.5 p-2 min-w-[44px] min-h-[44px] justify-center hover:opacity-80 transition-opacity"
                     aria-label="Account"
                   >
                     <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -306,7 +308,7 @@ function Header({ categories }: HeaderProps) {
                 <button
                   type="button"
                   onClick={() => setCartOpen(true)}
-                  className="relative flex flex-col items-center gap-0.5 p-1.5 hover:opacity-80 transition-opacity text-white"
+                  className="relative flex flex-col items-center gap-0.5 p-2 min-w-[44px] min-h-[44px] justify-center hover:opacity-80 transition-opacity text-white"
                   aria-label={`Open cart, ${cart.count} items`}
                   data-testid="cart-button"
                 >

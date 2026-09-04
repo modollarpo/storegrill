@@ -66,10 +66,10 @@ export function Footer() {
             <div>
               <h3 className="text-[14px] font-bold mb-5 text-white">Categories</h3>
               <ul className="space-y-3.5 text-[15px] font-medium">
-                <li><Link href="/products?sort=newest" className="hover:opacity-70 transition-opacity">New arrivals</Link></li>
-                <li><Link href="/products?sort=popular" className="hover:opacity-70 transition-opacity">Best Sellers</Link></li>
-                <li><Link href="/deals" className="hover:opacity-70 transition-opacity">Sale items</Link></li>
-                <li><Link href="/blog" className="hover:opacity-70 transition-opacity">Blog</Link></li>
+                <li><Link href="/products?sort=newest" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">New arrivals</Link></li>
+                <li><Link href="/products?sort=popular" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Best Sellers</Link></li>
+                <li><Link href="/deals" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Sale items</Link></li>
+                <li><Link href="/blog" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Blog</Link></li>
               </ul>
             </div>
 
@@ -77,10 +77,10 @@ export function Footer() {
             <div>
               <h3 className="text-[14px] font-bold mb-5 text-white">Features</h3>
               <ul className="space-y-3.5 text-[15px] font-medium">
-                <li><Link href="/deals" className="hover:opacity-70 transition-opacity">Today&apos;s Deal</Link></li>
-                <li><Link href="/vendors" className="hover:opacity-70 transition-opacity">Vendors</Link></li>
-                <li><Link href="/regions" className="hover:opacity-70 transition-opacity">Regions</Link></li>
-                <li><Link href="/vendor/apply" className="hover:opacity-70 transition-opacity">Sell on Storegrill</Link></li>
+                <li><Link href="/deals" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Today&apos;s Deal</Link></li>
+                <li><Link href="/vendors" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Vendors</Link></li>
+                <li><Link href="/regions" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Regions</Link></li>
+                <li><Link href="/vendor/apply" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Sell on Storegrill</Link></li>
               </ul>
             </div>
 
@@ -88,10 +88,10 @@ export function Footer() {
             <div>
               <h3 className="text-[14px] font-bold mb-5 text-white">Customer Services</h3>
               <ul className="space-y-3.5 text-[15px] font-medium mb-6">
-                <li><Link href="/help" className="hover:opacity-70 transition-opacity">Help Centre</Link></li>
-                <li><Link href="/track" className="hover:opacity-70 transition-opacity">Track Order</Link></li>
-                <li><Link href="/returns" className="hover:opacity-70 transition-opacity">Returns &amp; Refunds</Link></li>
-                <li><Link href="/shipping" className="hover:opacity-70 transition-opacity">Delivery Information</Link></li>
+                <li><Link href="/help" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Help Centre</Link></li>
+                <li><Link href="/track" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Track Order</Link></li>
+                <li><Link href="/returns" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Returns &amp; Refunds</Link></li>
+                <li><Link href="/shipping" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Delivery Information</Link></li>
               </ul>
 
               <Newsletter />
@@ -104,9 +104,9 @@ export function Footer() {
       <div className="border-t border-white/20">
         <div className="container-fluid py-5 flex flex-col lg:flex-row items-center justify-between gap-5">
           <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2 text-[13px] font-medium">
-            <Link href="/terms" className="hover:opacity-70 transition-opacity">Terms &amp; Conditions</Link>
-            <Link href="/privacy" className="hover:opacity-70 transition-opacity">Privacy Policy</Link>
-            <Link href="/sitemap" className="hover:opacity-70 transition-opacity">Sitemap</Link>
+            <Link href="/terms" className="inline-flex items-center min-h-[44px] hover:opacity-70 transition-opacity">Terms &amp; Conditions</Link>
+            <Link href="/privacy" className="inline-flex items-center min-h-[44px] hover:opacity-70 transition-opacity">Privacy Policy</Link>
+            <Link href="/sitemap" className="inline-flex items-center min-h-[44px] hover:opacity-70 transition-opacity">Sitemap</Link>
           </div>
           <p className="text-[13px] font-medium text-center lg:text-right">
             © {new Date().getFullYear()} Storegrill Inc Ltd. All rights reserved.

@@ -25,7 +25,7 @@ export default async function AccountPage() {
                 {{'/account/orders':'📦','/account/wishlist':'♥','/account/addresses':'📍','/account/preferences':'⚙️'}[href] ?? '•'}
               </span>
               <span>
-                <span className="block text-sm font-semibold text-charcoal">{title}</span>
+                <span className="block text-sm md:text-base font-semibold text-charcoal">{title}</span>
                 <span className="block text-xs text-smoke-500 mt-0.5">{body}</span>
               </span>
             </a>

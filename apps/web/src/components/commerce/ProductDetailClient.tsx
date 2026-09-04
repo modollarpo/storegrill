@@ -5,11 +5,6 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { storefrontImage } from '@/lib/images';
 import { StarRating } from '../StarRating';
-import { AddToCartButton } from './AddToCartButton';
-import { ProductShare } from './ProductShare';
-import { CompareButton } from './CompareButton';
-import { useWishlist } from '../providers/WishlistContext';
-import { useToast } from '../feedback/Toast';
 
 // Imported PDP sub-components
 import { PdpImageGallery } from './pdp/PdpImageGallery';
@@ -58,7 +53,7 @@ export interface ProductDetailClientProps {
   tabs: { description: React.ReactNode; specs: React.ReactNode; shippingInfo: React.ReactNode; reviews: React.ReactNode };
 }
 
-export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs }: ProductDetailClientProps) {
+export function ProductDetailClient({ product, shipping: _shipping, locale = 'en-US', tabs }: ProductDetailClientProps) {
   const images = useMemo(() => {
     const variantImages = product.variants?.flatMap(v => v.images || []) || [];
     return [...(product.images || []), ...variantImages].map(storefrontImage).filter((image): image is string => Boolean(image));
@@ -87,7 +82,6 @@ export function ProductDetailClient({ product, shipping, locale = 'en-US', tabs 
       ? Math.round(((listPrice - activeUnitPrice) / listPrice) * 100)
       : 0;
 
-  const freeShipEligible = activeUnitPrice >= shipping.freeThresholdMinorUnits;
 
   const getAttr = (v: PdpVariant, name: string): string | undefined =>
     v.attributes?.find(a => a.name.toLowerCase() === name)?.value;

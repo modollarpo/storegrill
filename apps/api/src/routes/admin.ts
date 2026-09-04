@@ -2,8 +2,41 @@
 import { z } from 'zod';
 import { prisma } from '../index.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
+import { slugify } from '../utils/slugify.js';
 
 const router = Router();
+
+const dateOrIso = z.union([z.date(), z.string()]).transform(v => (typeof v === 'string' ? new Date(v) : v));
+
+const adminDealCreate = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().max(2000).optional(),
+  type: z.enum(['PERCENTAGE_OFF', 'FIXED_AMOUNT', 'BOGO', 'BUNDLE', 'FLASH_SALE']),
+  value: z.number().nonnegative(),
+  minOrderAmount: z.number().int().nonnegative().optional(),
+  maxDiscount: z.number().int().nonnegative().optional(),
+  maxUsesPerCustomer: z.number().int().positive().optional(),
+  totalUses: z.number().int().positive().optional(),
+  startsAt: dateOrIso,
+  endsAt: dateOrIso,
+  enabled: z.boolean().default(true),
+  regionKey: z.string().optional(),
+  vendorId: z.string().optional(),
+  categoryIds: z.array(z.string()).default([]),
+  productIds: z.array(z.string()).default([]),
+});
+
+const adminDealUpdate = adminDealCreate.partial();
+
+const adminCouponCreate = z.object({
+  dealId: z.string().min(1),
+  code: z.string().min(3).max(50),
+  maxUses: z.number().int().positive().optional(),
+  expiresAt: dateOrIso.optional(),
+  enabled: z.boolean().default(true),
+});
+
+const adminCouponUpdate = adminCouponCreate.partial();
 
 router.use(authenticate, authorize('ADMIN'));
 
@@ -524,6 +557,210 @@ router.get('/audit-logs', async (req: AuthRequest, res: Response) => {
     logs,
     pagination: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) },
   });
+});
+
+router.get('/deals', async (_req: AuthRequest, res: Response) => {
+  const deals = await prisma.deal.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: {
+      vendor: { select: { id: true, storeName: true, slug: true } },
+      region: { select: { key: true, name: true } },
+      variants: {
+        include: {
+          product: { select: { id: true, name: true, slug: true, thumbnail: true, basePriceMinorUnits: true, currencyCode: true } },
+        },
+      },
+      _count: { select: { coupons: true } },
+    },
+  });
+  res.json({
+    deals: deals.map(d => ({ ...d, value: Number(d.value) })),
+  });
+});
+
+router.post('/deals', async (req: AuthRequest, res: Response) => {
+  const body = adminDealCreate.parse(req.body);
+  if (new Date(body.endsAt) <= new Date(body.startsAt)) {
+    return res.status(400).json({ error: { code: 'INVALID_RANGE', message: 'endsAt must be after startsAt' } });
+  }
+
+  const slug = slugify(body.name);
+  const existingSlug = await prisma.deal.findUnique({ where: { slug } });
+  const finalSlug = existingSlug ? `${slug}-${Date.now()}` : slug;
+
+  const { productIds, regionKey, vendorId, categoryIds, ...rest } = body;
+
+  const deal = await prisma.deal.create({
+    data: {
+      ...rest,
+      slug: finalSlug,
+      categoryIds: JSON.stringify(categoryIds),
+      ...(regionKey && { region: { connect: { key: regionKey } } }),
+      ...(vendorId && { vendor: { connect: { id: vendorId } } }),
+      ...(productIds.length > 0 && {
+        variants: {
+          create: productIds.map(productId => ({ productId })),
+        },
+      }),
+    },
+    include: {
+      vendor: { select: { id: true, storeName: true } },
+      region: { select: { key: true, name: true } },
+      variants: { include: { product: { select: { id: true, name: true, slug: true } } } },
+    },
+  });
+
+  await audit(req, 'DEAL_CREATED', 'Deal', deal.id, { name: deal.name, slug: deal.slug, type: deal.type });
+  res.status(201).json({ deal: { ...deal, value: Number(deal.value) } });
+});
+
+router.put('/deals/:id', async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const body = adminDealUpdate.parse(req.body);
+
+  const existing = await prisma.deal.findUnique({ where: { id }, include: { variants: { select: { id: true, productId: true } } } });
+  if (!existing) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
+  }
+
+  const { productIds, regionKey, vendorId, categoryIds, name, ...rest } = body;
+  if (rest.endsAt && rest.startsAt && new Date((rest.endsAt as unknown as Date)) <= new Date(rest.startsAt as unknown as Date)) {
+    return res.status(400).json({ error: { code: 'INVALID_RANGE', message: 'endsAt must be after startsAt' } });
+  }
+
+  const slug = name ? slugify(name) : existing.slug;
+  const existingSlug = slug !== existing.slug ? await prisma.deal.findUnique({ where: { slug } }) : null;
+  const finalSlug = existingSlug ? `${slug}-${Date.now()}` : slug;
+
+  const updated = await prisma.deal.update({
+    where: { id },
+    data: {
+      ...rest,
+      ...(name && { name, slug: finalSlug }),
+      ...(categoryIds !== undefined && { categoryIds: JSON.stringify(categoryIds) }),
+      ...(regionKey !== undefined && { region: { connect: { key: regionKey } } }),
+      ...(regionKey === null && { region: { disconnect: true } }),
+      ...(vendorId !== undefined && { vendor: { connect: { id: vendorId } } }),
+      ...(vendorId === null && { vendor: { disconnect: true } }),
+    },
+    include: {
+      vendor: { select: { id: true, storeName: true } },
+      region: { select: { key: true, name: true } },
+      variants: { include: { product: { select: { id: true, name: true, slug: true } } } },
+    },
+  });
+
+  if (productIds) {
+    const existingIds = new Set(existing.variants.map(v => v.productId));
+    const toAdd = productIds.filter(pid => !existingIds.has(pid));
+    if (toAdd.length > 0) {
+      await prisma.dealVariant.createMany({ data: toAdd.map(pid => ({ dealId: id, productId: pid })) });
+    }
+  }
+
+  await audit(req, 'DEAL_UPDATED', 'Deal', id, { name: updated.name, enabled: updated.enabled });
+  res.json({ deal: { ...updated, value: Number(updated.value) } });
+});
+
+router.delete('/deals/:id', async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const existing = await prisma.deal.findUnique({ where: { id } });
+  if (!existing) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
+  }
+  await prisma.deal.delete({ where: { id } });
+  await audit(req, 'DEAL_DELETED', 'Deal', id, { name: existing.name });
+  res.status(204).end();
+});
+
+router.post('/deals/:id/products', async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const body = z.object({ productId: z.string().min(1) }).parse(req.body);
+
+  const deal = await prisma.deal.findUnique({ where: { id } });
+  if (!deal) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
+  }
+  const existing = await prisma.dealVariant.findFirst({ where: { dealId: id, productId: body.productId } });
+  if (!existing) {
+    await prisma.dealVariant.create({ data: { dealId: id, productId: body.productId } });
+  }
+  await audit(req, 'DEAL_PRODUCT_ADDED', 'Deal', id, { productId: body.productId });
+  const dealWithVariants = await prisma.deal.findUnique({
+    where: { id },
+    include: { variants: { include: { product: { select: { id: true, name: true, slug: true } } } } },
+  });
+  res.json({ deal: dealWithVariants });
+});
+
+router.delete('/deals/:id/products/:productId', async (req: AuthRequest, res: Response) => {
+  const { id, productId } = req.params;
+  await prisma.dealVariant.deleteMany({ where: { dealId: id, productId } });
+  await audit(req, 'DEAL_PRODUCT_REMOVED', 'Deal', id, { productId });
+  res.status(204).end();
+});
+
+router.get('/coupons', async (_req: AuthRequest, res: Response) => {
+  const coupons = await prisma.coupon.findMany({
+    orderBy: { createdAt: 'desc' },
+    include: { deal: { select: { id: true, name: true, type: true } } },
+  });
+  res.json({ coupons });
+});
+
+router.post('/coupons', async (req: AuthRequest, res: Response) => {
+  const body = adminCouponCreate.parse(req.body);
+  const deal = await prisma.deal.findUnique({ where: { id: body.dealId } });
+  if (!deal) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
+  }
+
+  const existingCode = await prisma.coupon.findUnique({ where: { code: body.code } });
+  if (existingCode) {
+    return res.status(409).json({ error: { code: 'COUPON_EXISTS', message: 'Coupon code already exists' } });
+  }
+
+  const coupon = await prisma.coupon.create({ data: body });
+  await audit(req, 'COUPON_CREATED', 'Coupon', coupon.id, { code: coupon.code, dealId: coupon.dealId });
+  res.status(201).json({ coupon });
+});
+
+router.put('/coupons/:id', async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const body = adminCouponUpdate.parse(req.body);
+
+  const existing = await prisma.coupon.findUnique({ where: { id } });
+  if (!existing) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Coupon not found' } });
+  }
+
+  if (body.dealId) {
+    const deal = await prisma.deal.findUnique({ where: { id: body.dealId } });
+    if (!deal) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
+    }
+  }
+  if (body.code && body.code !== existing.code) {
+    const dup = await prisma.coupon.findUnique({ where: { code: body.code } });
+    if (dup) {
+      return res.status(409).json({ error: { code: 'COUPON_EXISTS', message: 'Coupon code already exists' } });
+    }
+  }
+
+  const coupon = await prisma.coupon.update({ where: { id }, data: body });
+  await audit(req, 'COUPON_UPDATED', 'Coupon', id, { code: coupon.code, enabled: coupon.enabled });
+  res.json({ coupon });
+});
+
+router.delete('/coupons/:id', async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const existing = await prisma.coupon.findUnique({ where: { id } });
+  if (!existing) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Coupon not found' } });
+  }
+  await prisma.coupon.delete({ where: { id } });
+  await audit(req, 'COUPON_DELETED', 'Coupon', id, { code: existing.code });
+  res.status(204).end();
 });
 
 export { router as adminRouter };

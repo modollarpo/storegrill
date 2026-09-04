@@ -4,7 +4,7 @@ import { useRegion } from '../providers/RegionContext';
 import { REGION_META, regionUrl } from '@/lib/regions';
 
 export function RegionPreferenceForm() {
-  const { regionKey, language, setRegion, setLanguage } = useRegion();
+  const { regionKey, language, setLanguage } = useRegion();
   const region = REGION_META.find(r => r.key === regionKey) ?? REGION_META[0];
 
   return (

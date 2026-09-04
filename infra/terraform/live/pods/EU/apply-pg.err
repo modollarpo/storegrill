@@ -1,0 +1,7 @@
+
+Error: populating Resource Provider cache: listing Resource Providers: loading results: Get "https://management.azure.com/subscriptions/a7d8e706-d6e4-41b1-9b21-aab49e3a8e6d/providers?api-version=2022-09-01": dial tcp: lookup management.azure.com: no such host
+
+  with provider["registry.terraform.io/hashicorp/azurerm"],
+  on backend.tf line 10, in provider "azurerm":
+  10: provider "azurerm" {
+

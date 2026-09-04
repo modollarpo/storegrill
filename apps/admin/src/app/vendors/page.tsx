@@ -132,7 +132,7 @@ function VendorsInner() {
 
       <div className="mb-4 flex items-center gap-2">
         <label htmlFor="vendor-status" className="text-xs font-semibold text-slate-600">Status:</label>
-        <select id="vendor-status" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="h-8 rounded-md border border-slate-300 text-xs px-2 bg-white">
+        <select id="vendor-status" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="h-8 rounded-md border border-slate-300 text-xs px-2 bg-surface-raised">
           {STATUS_FILTERS.map(([value, label]) => (
             <option key={value} value={value}>{label}</option>
           ))}
@@ -144,7 +144,7 @@ function VendorsInner() {
       <div className="grid gap-4">
         {vendors === null && <div className="h-24 rounded-xl bg-slate-200 animate-pulse" />}
         {vendors?.length === 0 && (
-          <div className="bg-white rounded-xl border border-slate-200 p-10 text-center text-sm text-slate-400">No sellers match this filter.</div>
+          <div className="bg-surface-raised rounded-xl border border-slate-200 p-10 text-center text-sm text-slate-400">No sellers match this filter.</div>
         )}
         {vendors?.map(v => {
           const categories: string[] = (() => {
@@ -158,7 +158,7 @@ function VendorsInner() {
           const payout = parseJson(v.payoutMethod);
 
           return (
-            <article key={v.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <article key={v.id} className="bg-surface-raised rounded-xl border border-slate-200 overflow-hidden">
               <div className="p-5 flex flex-wrap items-center gap-x-8 gap-y-3">
                 <button type="button" onClick={() => toggleExpand(v)} className="min-w-[220px] text-left group" aria-expanded={expandedId === v.id}>
                   <p className="text-sm font-bold text-slate-900 group-hover:text-indigo-700 group-hover:underline">{v.storeName}</p>
@@ -203,7 +203,7 @@ function VendorsInner() {
                     className="w-full rounded-md border border-slate-300 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                   <div className="mt-3 flex gap-2 justify-end">
-                    <button type="button" onClick={() => setRejectingId(null)} className="rounded-md border border-slate-300 text-slate-600 text-xs font-semibold px-3 py-1.5 hover:bg-white">Cancel</button>
+                    <button type="button" onClick={() => setRejectingId(null)} className="rounded-md border border-slate-300 text-slate-600 text-xs font-semibold px-3 py-1.5 hover:bg-surface-raised">Cancel</button>
                     <button type="button" disabled={busyId === v.id || notes.trim().length < 5} onClick={() => act(v.id, 'reject')} className="rounded-md bg-red-600 text-white text-xs font-bold px-4 py-1.5 hover:bg-red-500 disabled:opacity-50">Send rejection</button>
                   </div>
                 </div>
@@ -260,7 +260,7 @@ function VendorsInner() {
                     <ul className="space-y-1.5">
                       {docs[v.id]?.map(d => (
                         <li key={d.blob ?? d.name} className="flex items-center gap-2">
-                          <span className="w-7 h-7 rounded bg-white border border-slate-200 grid place-items-center text-[9px] font-bold text-slate-400 shrink-0">DOC</span>
+                          <span className="w-7 h-7 rounded bg-surface-raised border border-slate-200 grid place-items-center text-[9px] font-bold text-slate-400 shrink-0">DOC</span>
                           {d.url ? (
                             <a href={d.url} target="_blank" rel="noreferrer noopener" className="font-medium text-indigo-700 hover:underline truncate max-w-[240px]">{d.name}</a>
                           ) : (

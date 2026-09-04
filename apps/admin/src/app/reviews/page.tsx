@@ -49,12 +49,12 @@ export default function AdminReviewsPage() {
       <div className="grid gap-3">
         {reviews === null && <div className="h-24 rounded-xl bg-slate-200 animate-pulse" />}
         {reviews?.length === 0 && (
-          <div className="bg-white rounded-xl border border-slate-200 p-10 text-center text-sm text-slate-400">
+          <div className="bg-surface-raised rounded-xl border border-slate-200 p-10 text-center text-sm text-slate-400">
             ✓ Moderation queue is clear.
           </div>
         )}
         {reviews?.map(r => (
-          <article key={r.id} className="bg-white rounded-xl border border-slate-200 p-5">
+          <article key={r.id} className="bg-surface-raised rounded-xl border border-slate-200 p-5">
             <header className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
               <span className="text-amber-500 text-xs tracking-tight" aria-label={`${r.rating} out of 5 stars`}>
                 {'★'.repeat(r.rating)}<span className="text-slate-300">{'★'.repeat(5 - r.rating)}</span>

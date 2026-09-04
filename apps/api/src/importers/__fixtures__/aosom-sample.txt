@@ -1,0 +1,7 @@
+SKU	Title	Short Description	Base image	Image	Colour	Price	Special Price	Stock
+720-021	HOMCOM Cleaning Carts On Wheels, Janitorial Trolley, Household Storage Cart|Aosom Ireland	<ul style="list-style:disc;margin-left:15px;"><li>Multifunctional cleaning trolley with wheels.</li><li>Four roomy shelves keep everything organised.</li></ul>	https://img.aosomcdn.com/100/product/a.jpg,http://img.aosomcdn.com/100/product/b.jpg	https://img.aosomcdn.com/100/product/a.jpg,https://img.aosomcdn.com/100/product/c.jpg	Blue	139.99 EUR	113.99 EUR	In Stock
+02-0693	HOMCOM Cosmetic Stool 360 Degree Rotate Height Adjustable Salon Massage Spa Chair|Aosom Ireland	<ul style="list-style:disc;margin-left:15px;"><li>Wide use: This salon chair is versatile.</li>
+<li>Adjustable height for your needs.</li>
+<li>Padded seat for comfort.</li></ul>	https://img.aosomcdn.com/100/product/d.jpg	https://img.aosomcdn.com/100/product/d.jpg,https://img.aosomcdn.com/100/product/e.jpg	Black	89.99 EUR	69.99 EUR	In Stock
+02-0694	HOMCOM Cosmetic Stool 360 Degree Rotate Height Adjustable Salon Massage Spa Chair|Aosom Ireland	<ul style="list-style:disc;margin-left:15px;"><li>Wide use salon chair.</li></ul>	https://img.aosomcdn.com/100/product/d.jpg	https://img.aosomcdn.com/100/product/d.jpg,https://img.aosomcdn.com/100/product/f.jpg	White	89.99 EUR	69.99 EUR	In Stock
+CM19701	HOMCOM Christmas Tree Artificial with Metal Stand 6 ft|Aosom Ireland	<ul><li>Realistic green branches.</li></ul>	https://img.aosomcdn.com/100/product/g.jpg	https://img.aosomcdn.com/100/product/g.jpg	Green	45.00 EUR		Out of Stock

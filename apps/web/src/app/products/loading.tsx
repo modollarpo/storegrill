@@ -18,18 +18,18 @@ export default function ProductsLoading() {
             </div>
           </div>
           
-          <hr className="border-surface-200" />
+          <hr className="border-border" />
           
           <div>
             <Skeleton width={90} height={24} rounded="sm" className="w-full mb-4" />
             <div className="flex items-center justify-between">
               <Skeleton width={70} height={36} rounded="md" />
-              <span className="text-surface-400 font-bold">-</span>
+              <span className="text-text-tertiary font-bold">-</span>
               <Skeleton width={70} height={36} rounded="md" />
             </div>
           </div>
 
-          <hr className="border-surface-200" />
+          <hr className="border-border" />
           
           <div>
             <Skeleton width={110} height={24} rounded="sm" className="mb-6" />
@@ -49,7 +49,7 @@ export default function ProductsLoading() {
           {/* Header & Sort bar */}
           <div className="mb-8">
             <Skeleton width="40%" height={36} rounded="sm" className="mb-6" />
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 border-y border-surface-200">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-4 border-y border-border">
               <Skeleton width={180} height={16} rounded="sm" />
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <Skeleton width={200} height={44} rounded="lg" />

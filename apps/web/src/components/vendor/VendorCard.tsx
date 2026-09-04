@@ -92,7 +92,7 @@ export interface StorefrontHeroProps {
 
 export function StorefrontHero({ vendor }: StorefrontHeroProps) {
   return (
-    <section className="relative overflow-hidden rounded-xl border border-smoke-150 bg-white">
+    <section className="relative overflow-hidden rounded-xl border border-smoke-150 bg-surface-raised">
       <div className={cn('h-40 md:h-52 relative', !vendor.banner && 'bg-gradient-to-r from-charcoal via-charcoal-light to-charcoal-mid')}>
         {vendor.banner && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -102,7 +102,7 @@ export function StorefrontHero({ vendor }: StorefrontHeroProps) {
       </div>
       <div className="px-5 md:px-8 pb-5 -mt-10 relative">
         <div className="flex flex-wrap items-end gap-4">
-          <div className="w-20 h-20 rounded-xl bg-white border border-smoke-150 shadow-md grid place-items-center overflow-hidden shrink-0">
+          <div className="w-20 h-20 rounded-xl bg-surface-raised border border-smoke-150 shadow-md grid place-items-center overflow-hidden shrink-0">
             {vendor.logo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={vendor.logo} alt="" className="w-full h-full object-cover" />

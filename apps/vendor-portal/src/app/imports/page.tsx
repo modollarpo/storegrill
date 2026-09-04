@@ -99,7 +99,7 @@ export default function VendorImportsPage() {
       <PageHeader title="Bulk Imports" subtitle="CSV upload or scheduled feed URL — rows are validated before anything goes live" />
 
       <div className="grid md:grid-cols-2 gap-4 mb-5">
-        <section aria-labelledby="csv-heading" className="bg-white rounded-lg border border-slate-200 p-5">
+        <section aria-labelledby="csv-heading" className="bg-surface-raised rounded-lg border border-slate-200 p-5">
           <h2 id="csv-heading" className="text-sm font-bold text-slate-900 mb-3">CSV upload</h2>
           <div
             ref={dropRef}
@@ -141,7 +141,7 @@ export default function VendorImportsPage() {
           />
         </section>
 
-        <section aria-labelledby="url-heading" className="bg-white rounded-lg border border-slate-200 p-5">
+        <section aria-labelledby="url-heading" className="bg-surface-raised rounded-lg border border-slate-200 p-5">
           <h2 id="url-heading" className="text-sm font-bold text-slate-900 mb-1">Feed URL</h2>
           <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">HTTP(S) JSON or CSV feed with webhook signature validation.</p>
           <form onSubmit={importFromUrl} className="space-y-2">

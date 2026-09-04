@@ -3,12 +3,15 @@ export const colors = {
     charcoal: { DEFAULT: '#1c1c1c', light: '#3d454a', mid: '#5a6268', soft: '#8c9296', line: '#141414' },
     ember: { DEFAULT: '#4c12a1', dark: '#400e8a', deep: '#320b6e', light: '#7a4bc9', pale: '#f2ebfb' },
     tealink: { DEFAULT: '#4c12a1', hover: '#380d80' },
+    success: { DEFAULT: '#007B4B', bg: 'rgba(0,123,75,0.08)' },
+    midnight: { DEFAULT: '#1c073d' },
   },
   smoke: {
     25: '#fafafa', 50: '#f7f7f7', 100: '#f2f2f2', 150: '#e0e0e0',
     200: '#d4d4d4', 300: '#b8b8b8', 400: '#949494', 500: '#717171',
     600: '#525252', 700: '#3d3d3d', 800: '#292929', 900: '#141414', 950: '#0a0a0a',
   },
+  deal: { DEFAULT: '#E53E3E', hover: '#C53030', light: '#FFF5F5' },
   footer: '#33434A',
 } as const;
 
@@ -43,6 +46,9 @@ export const semantic = {
   actionSecondaryHover: '#333333',
   actionDestructive:    '#C41919',
   actionSuccess:        '#007B4B',
+  dealAccent:           '#E53E3E',
+  dealAccentHover:      '#C53030',
+  dealAccentLight:      '#FFF5F5',
 
   // Feedback
   feedbackSuccess:     '#007B4B',
@@ -117,14 +123,26 @@ export const motion = {
 
 export const radii = {
   none: '0',
-  xs:   '4px',
-  sm:   '4px',
-  md:   '4px',
-  lg:   '4px',
-  xl:   '6px',
-  '2xl':'8px',
-  '3xl':'8px',
+  xs:   '6px',
+  sm:   '8px',
+  md:   '10px',
+  lg:   '14px',
+  xl:   '18px',
+  '2xl':'22px',
+  '3xl':'28px',
   pill: '9999px',
+} as const;
+
+// Decorative-only backgrounds for editorial promo banners (never interactive,
+// never used for text/links/CTAs — those stay on the ember action palette).
+export const promoPalette = {
+  royal: '#4c12a1',
+  deep: '#320b6e',
+  light: '#7a4bc9',
+  plum: '#6C597C',
+  slate: '#323E4D',
+  harbor: '#1a3a4a',
+  dealRed: '#E53E3E',
 } as const;
 
 export const zIndexLayers = {

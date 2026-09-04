@@ -41,6 +41,17 @@ router.get('/:provider/start', (req: Request, res: Response) => {
     path: `/api/v1/auth/oauth/${provider}/callback`,
   });
 
+  const sgOauthNext = req.query.sg_oauth_next as string | undefined;
+  if (sgOauthNext) {
+    res.cookie('sg_oauth_next', sgOauthNext, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 10 * 60 * 1000,
+      path: '/',
+    });
+  }
+
   return res.redirect(302, buildAuthorizeUrl(provider, clientId, redirectUri, state));
 });
 

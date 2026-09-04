@@ -59,7 +59,7 @@ export function CountdownTimer({ endsAt, className }: CountdownTimerProps) {
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-1 bg-surface-900 text-white rounded-xl px-4 py-2 shadow-lg select-none',
+        'inline-flex items-center gap-1 bg-gray-900 text-white rounded-xl px-4 py-2 shadow-lg select-none',
         className
       )}
       aria-label={`Ends in ${time.h} hours ${time.m} minutes ${time.s} seconds`}
@@ -69,12 +69,12 @@ export function CountdownTimer({ endsAt, className }: CountdownTimerProps) {
         <Digit value={time.h[0]} />
         <Digit value={time.h[1]} />
       </div>
-      <span className="text-xl font-black text-surface-400 pb-0.5">:</span>
+      <span className="text-xl font-black text-text-tertiary pb-0.5">:</span>
       <div className="flex items-center gap-0.5">
         <Digit value={time.m[0]} />
         <Digit value={time.m[1]} />
       </div>
-      <span className="text-xl font-black text-surface-400 pb-0.5">:</span>
+      <span className="text-xl font-black text-text-tertiary pb-0.5">:</span>
       <div className="flex items-center gap-0.5">
         <Digit value={time.s[0]} />
         <Digit value={time.s[1]} />

@@ -51,6 +51,318 @@ export function lawFor(regionKey: string): LawInfo {
   return LAW_MAP[regionKey] ?? FALLBACK_LAW;
 }
 
-export function supportEmailFor(regionKey: string): string {
-  return `${regionKey.toLowerCase()}@support.storegrill.net`;
+export function supportEmailFor(_regionKey: string): string {
+  return 'support@storegrill.net';
 }
+
+export interface RegionPromoContent {
+  currency: string;
+  freeShippingThresholdMinorUnits: number;
+  couponCode: string;
+  couponDiscountPercent: number;
+  cashbackPercent: number;
+  heroHeadline: string;
+  heroSubtitle: string;
+  heroCta: string;
+  heroImage?: string;
+  heroExpiresAt?: string;
+}
+
+export interface HeroSlide {
+  headline: string;
+  subtitle: string;
+  ctaLabel: string;
+  ctaHref: string;
+  bgClass: string;
+  eyebrow?: string;
+}
+
+const PURPLE_GRADIENTS: string[] = [
+  'bg-gradient-to-r from-[#4c12a1] to-[#7a4bc9]',
+  'bg-gradient-to-r from-[#320b6e] to-[#6C597C]',
+  'bg-gradient-to-r from-[#4c12a1] to-[#323E4D]',
+  'bg-gradient-to-r from-[#6C597C] to-[#4c12a1]',
+];
+
+export interface CategoryBannerContent {
+  title: string;
+  subtitle: string;
+  description: string;
+  ctaLabel: string;
+  ctaHref: string;
+  bannerImage: string;
+  bannerBg: string;
+}
+
+export interface VendorSpotlightContent {
+  storeName: string;
+  slug: string;
+  rating: number;
+  reviewCount: number;
+  logo?: string;
+  description?: string;
+}
+
+const REGIONAL_CONTENT: Record<string, { hero: HeroSlide[]; promo: RegionPromoContent; categoryBanner: CategoryBannerContent; vendorSpotlight: VendorSpotlightContent[] }> = {
+  UK: {
+    hero: [
+      {
+        headline: "Unbeatable Deals in the UK",
+        subtitle: "Free shipping on orders over £500. Get an extra 20% off with code SAVE20-UK.",
+        ctaLabel: "Shop UK Deals",
+        ctaHref: "/deals",
+        bgClass: PURPLE_GRADIENTS[0],
+        eyebrow: "Featured",
+      },
+      {
+        headline: "Fresh Arrivals for UK Shoppers",
+        subtitle: "Explore our latest curation for the UK market.",
+        ctaLabel: "Discover Now",
+        ctaHref: "/products?sort=newest",
+        bgClass: PURPLE_GRADIENTS[1],
+        eyebrow: "Just In",
+      },
+    ],
+    promo: {
+      currency: 'GBP',
+      freeShippingThresholdMinorUnits: 50000,
+      couponCode: 'SAVE20-UK',
+      couponDiscountPercent: 20,
+      cashbackPercent: 5,
+      heroHeadline: "Shop the best UK deals",
+      heroSubtitle: "Free shipping over £500 · 20% off with code SAVE20-UK",
+      heroCta: "Shop UK",
+    },
+    categoryBanner: {
+      title: "UK Tech Essentials",
+      subtitle: "Top rated technology",
+      description: "Upgrade your workspace with curated picks available now in the UK.",
+      ctaLabel: "Shop Tech",
+      ctaHref: "/products?category=electronics",
+      bannerImage: "/banners/category/uk-tech.jpg",
+      bannerBg: "#4c12a1",
+    },
+    vendorSpotlight: [
+      { storeName: "Storegrill UK", slug: "storegrill-uk", rating: 4.9, reviewCount: 1250 },
+      { storeName: "Tech Hub UK", slug: "tech-hub-uk", rating: 4.7, reviewCount: 890 },
+    ],
+  },
+  US: {
+    hero: [
+      {
+        headline: "Exclusive US Offers",
+        subtitle: "Free shipping on orders over $650. Get 20% off with code SAVE20-US.",
+        ctaLabel: "Shop US Deals",
+        ctaHref: "/deals",
+        bgClass: PURPLE_GRADIENTS[0],
+        eyebrow: "Featured",
+      },
+      {
+        headline: "Top US Trends",
+        subtitle: "The latest curated for our US customers.",
+        ctaLabel: "Shop Trends",
+        ctaHref: "/products?sort=newest",
+        bgClass: PURPLE_GRADIENTS[1],
+        eyebrow: "Just In",
+      },
+    ],
+    promo: {
+      currency: 'USD',
+      freeShippingThresholdMinorUnits: 65000,
+      couponCode: 'SAVE20-US',
+      couponDiscountPercent: 20,
+      cashbackPercent: 5,
+      heroHeadline: "Shop the best US deals",
+      heroSubtitle: "Free shipping over $650 · 20% off with code SAVE20-US",
+      heroCta: "Shop US",
+    },
+    categoryBanner: {
+      title: "US Tech Essentials",
+      subtitle: "Top rated technology",
+      description: "Upgrade your workspace with curated picks available now in the US.",
+      ctaLabel: "Shop Tech",
+      ctaHref: "/products?category=electronics",
+      bannerImage: "/banners/category/us-tech.jpg",
+      bannerBg: "#4c12a1",
+    },
+    vendorSpotlight: [
+      { storeName: "Storegrill US", slug: "storegrill-us", rating: 4.8, reviewCount: 3200 },
+      { storeName: "Tech Hub US", slug: "tech-hub-us", rating: 4.6, reviewCount: 1500 },
+    ],
+  },
+  EU: {
+    hero: [
+      {
+        headline: "Top Deals Across Europe",
+        subtitle: "Free shipping on orders over €600. Get 20% off with code SAVE20-EU.",
+        ctaLabel: "Shop EU Deals",
+        ctaHref: "/deals",
+        bgClass: PURPLE_GRADIENTS[0],
+        eyebrow: "Featured",
+      },
+      {
+        headline: "Curated Styles for Europe",
+        subtitle: "Discover the latest trends across the EU.",
+        ctaLabel: "Shop Trends",
+        ctaHref: "/products?sort=newest",
+        bgClass: PURPLE_GRADIENTS[1],
+        eyebrow: "Just In",
+      },
+    ],
+    promo: {
+      currency: 'EUR',
+      freeShippingThresholdMinorUnits: 60000,
+      couponCode: 'SAVE20-EU',
+      couponDiscountPercent: 20,
+      cashbackPercent: 5,
+      heroHeadline: "Shop the best EU deals",
+      heroSubtitle: "Free shipping over €600 · 20% off with code SAVE20-EU",
+      heroCta: "Shop EU",
+    },
+    categoryBanner: {
+      title: "EU Tech Essentials",
+      subtitle: "Top rated technology",
+      description: "Upgrade your workspace with curated picks available now in the EU.",
+      ctaLabel: "Shop Tech",
+      ctaHref: "/products?category=electronics",
+      bannerImage: "/banners/category/eu-tech.jpg",
+      bannerBg: "#4c12a1",
+    },
+    vendorSpotlight: [
+      { storeName: "Storegrill EU", slug: "storegrill-eu", rating: 4.7, reviewCount: 950 },
+      { storeName: "Tech Hub EU", slug: "tech-hub-eu", rating: 4.5, reviewCount: 600 },
+    ],
+  },
+  AE: {
+    hero: [
+      {
+        headline: "Unbeatable Deals in the UAE",
+        subtitle: "Free shipping on orders over AED 2,400. Get 20% off with code SAVE20-AE.",
+        ctaLabel: "Shop UAE Deals",
+        ctaHref: "/deals",
+        bgClass: PURPLE_GRADIENTS[0],
+        eyebrow: "Featured",
+      },
+      {
+        headline: "Premium Styles for UAE Shoppers",
+        subtitle: "Curated selections for the UAE market.",
+        ctaLabel: "Explore Now",
+        ctaHref: "/products?sort=newest",
+        bgClass: PURPLE_GRADIENTS[1],
+        eyebrow: "Just In",
+      },
+    ],
+    promo: {
+      currency: 'AED',
+      freeShippingThresholdMinorUnits: 240000,
+      couponCode: 'SAVE20-AE',
+      couponDiscountPercent: 20,
+      cashbackPercent: 5,
+      heroHeadline: "Shop the best UAE deals",
+      heroSubtitle: "Free shipping over AED 2,400 · 20% off with code SAVE20-AE",
+      heroCta: "Shop UAE",
+    },
+    categoryBanner: {
+      title: "UAE Tech Essentials",
+      subtitle: "Top rated technology",
+      description: "Upgrade your workspace with curated picks available now in the UAE.",
+      ctaLabel: "Shop Tech",
+      ctaHref: "/products?category=electronics",
+      bannerImage: "/banners/category/ae-tech.jpg",
+      bannerBg: "#4c12a1",
+    },
+    vendorSpotlight: [
+      { storeName: "Storegrill UAE", slug: "storegrill-ae", rating: 4.8, reviewCount: 800 },
+      { storeName: "Tech Hub UAE", slug: "tech-hub-ae", rating: 4.6, reviewCount: 450 },
+    ],
+  },
+  NG: {
+    hero: [
+      {
+        headline: "Mega Deals for Nigeria",
+        subtitle: "Free shipping on orders over ₦1,000,000. Get 20% off with code SAVE20-NG.",
+        ctaLabel: "Shop NG Deals",
+        ctaHref: "/deals",
+        bgClass: PURPLE_GRADIENTS[0],
+        eyebrow: "Featured",
+      },
+      {
+        headline: "Fresh Trends for Nigeria",
+        subtitle: "Explore our latest curation for Nigerian shoppers.",
+        ctaLabel: "Shop Trends",
+        ctaHref: "/products?sort=newest",
+        bgClass: PURPLE_GRADIENTS[1],
+        eyebrow: "Just In",
+      },
+    ],
+    promo: {
+      currency: 'NGN',
+      freeShippingThresholdMinorUnits: 100000000,
+      couponCode: 'SAVE20-NG',
+      couponDiscountPercent: 20,
+      cashbackPercent: 5,
+      heroHeadline: "Shop the best Nigeria deals",
+      heroSubtitle: "Free shipping over ₦1,000,000 · 20% off with code SAVE20-NG",
+      heroCta: "Shop NG",
+    },
+    categoryBanner: {
+      title: "Nigeria Tech Essentials",
+      subtitle: "Top rated technology",
+      description: "Upgrade your workspace with curated picks available now in Nigeria.",
+      ctaLabel: "Shop Tech",
+      ctaHref: "/products?category=electronics",
+      bannerImage: "/banners/category/ng-tech.jpg",
+      bannerBg: "#4c12a1",
+    },
+    vendorSpotlight: [
+      { storeName: "Storegrill NG", slug: "storegrill-ng", rating: 4.7, reviewCount: 1100 },
+      { storeName: "Tech Hub NG", slug: "tech-hub-ng", rating: 4.5, reviewCount: 750 },
+    ],
+  },
+};
+
+export function heroSlidesFor(regionKey: string): HeroSlide[] {
+  const cfg = REGIONAL_CONTENT[regionKey];
+  if (cfg) return cfg.hero;
+  return [{
+    headline: 'Shop smarter with Storegrill',
+    subtitle: regionPromoContent(regionKey).heroSubtitle,
+    ctaLabel: 'Shop now',
+    ctaHref: '/products',
+    bgClass: PURPLE_GRADIENTS[0],
+  }];
+}
+
+function formatMinorUnits(currency: string, minorUnits: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(minorUnits / 100);
+}
+
+export function regionPromoContent(regionKey: string): RegionPromoContent {
+  const defined = REGIONAL_CONTENT[regionKey]?.promo;
+  if (defined) return defined;
+  const cfg = regionConfig(regionKey);
+  return {
+    currency: cfg.defaultCurrency,
+    freeShippingThresholdMinorUnits: cfg.freeShippingThresholdMinorUnits,
+    couponCode: '',
+    couponDiscountPercent: 0,
+    cashbackPercent: 0,
+    heroHeadline: 'Shop smarter with Storegrill',
+    heroSubtitle: `Free shipping on eligible orders over ${formatMinorUnits(cfg.defaultCurrency, cfg.freeShippingThresholdMinorUnits)}. Secure checkout and easy returns.`,
+    heroCta: 'Shop now',
+  };
+}
+
+export function categoryBannerFor(regionKey: string): CategoryBannerContent | null {
+  return REGIONAL_CONTENT[regionKey]?.categoryBanner ?? null;
+}
+
+export function vendorSpotlightFor(regionKey: string): VendorSpotlightContent[] {
+  return REGIONAL_CONTENT[regionKey]?.vendorSpotlight ?? [];
+}
+

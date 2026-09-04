@@ -1,6 +1,0 @@
-﻿{
-  "name": "storegrill-api",
-  "private": true,
-  "scripts": { "start": "node index.js" },
-  "engines": { "node": "20.x" }
-}

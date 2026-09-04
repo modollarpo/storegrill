@@ -228,6 +228,21 @@ describe('calculateGroupedShipping', () => {
     expect(result!.currencyCode).toBe('GBP');
   });
 
+  it('does not charge the flat fee outside the vendor shipping countries', () => {
+    const ukOnlyPolicy = { vendorId: 'house', mode: 'FLAT' as const, flatRateMinorUnits: 1000n, countries: ['GB'] };
+    const result = calculateGroupedShipping(
+      {
+        items: [{ vendorId: 'house', weightGrams: 500, quantity: 1 }],
+        itemSubtotals: { house: 30000n },
+        country: 'US',
+        regionKey: 'US',
+      },
+      { house: ukOnlyPolicy },
+      ukZones,
+    );
+    expect(result).toBeNull();
+  });
+
   it('charges the flat fee once per vendor regardless of item count', () => {
     const result = calculateGroupedShipping(
       {

@@ -97,7 +97,7 @@ export function DataTable<T>({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden" aria-busy="true">
+      <div className="bg-surface-raised rounded-lg border border-slate-200 overflow-hidden" aria-busy="true">
         <div className="h-10 bg-slate-50 border-b border-slate-200" />
         {[...Array(6)].map((_, i) => (
           <div key={i} className="h-12 border-b border-slate-100 last:border-0 animate-pulse bg-slate-50/50" />
@@ -108,7 +108,7 @@ export function DataTable<T>({
 
   if (rows.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-slate-200 p-12 text-center" data-testid="datatable-empty">
+      <div className="bg-surface-raised rounded-lg border border-slate-200 p-12 text-center" data-testid="datatable-empty">
         <p className="text-sm font-semibold text-slate-700">{emptyTitle}</p>
         {emptyAction && <div className="mt-3">{emptyAction}</div>}
       </div>
@@ -116,7 +116,7 @@ export function DataTable<T>({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden" data-testid="datatable">
+    <div className="bg-surface-raised rounded-lg border border-slate-200 overflow-hidden" data-testid="datatable">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs [font-variant-numeric:tabular-nums]">
           <caption className="sr-only">{caption}</caption>
@@ -201,7 +201,7 @@ export function DataTable<T>({
             <select
               value={pageSize}
               onChange={e => { setPageSize(Number(e.target.value)); setPage(1); }}
-              className="h-7 rounded border border-slate-300 bg-white px-1.5 text-[11px]"
+              className="h-7 rounded border border-slate-300 bg-surface-raised px-1.5 text-[11px]"
               aria-label="Rows per page"
             >
               {PAGE_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -225,7 +225,7 @@ function PageBtn({ disabled, onClick, label, children }: { disabled: boolean; on
       disabled={disabled}
       onClick={onClick}
       aria-label={label}
-      className="rounded border border-slate-300 bg-white px-2 py-1 font-medium hover:border-indigo-400 hover:text-indigo-600 transition-colors disabled:opacity-40 disabled:hover:border-slate-300 disabled:hover:text-slate-500"
+      className="rounded border border-slate-300 bg-surface-raised px-2 py-1 font-medium hover:border-indigo-400 hover:text-indigo-600 transition-colors disabled:opacity-40 disabled:hover:border-slate-300 disabled:hover:text-slate-500"
     >
       {children}
     </button>

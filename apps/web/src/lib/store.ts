@@ -23,10 +23,17 @@ interface PrefsState {
   language: string;
 }
 
+export interface AppliedCoupon {
+  code: string;
+  dealName: string;
+  discountMinorUnits: number;
+}
+
 interface StoreState extends PrefsState {
   cartLines: CartLine[];
   favorites: CartLine[];
   hydrated: boolean;
+  appliedCoupon: AppliedCoupon | null;
   setRegion: (key: string) => void;
   setLanguage: (lang: string) => void;
   setCurrencyOverride: (code: string | null) => void;
@@ -35,6 +42,7 @@ interface StoreState extends PrefsState {
   removeFromCart: (productId: string, variantId?: string) => void;
   clearCart: () => void;
   toggleFavorite: (line: CartLine) => void;
+  setAppliedCoupon: (coupon: AppliedCoupon | null) => void;
   markHydrated: () => void;
 }
 
@@ -56,6 +64,7 @@ export const useStore = create<StoreState>()(
       cartLines: [],
       favorites: [],
       hydrated: false,
+      appliedCoupon: null,
 
       setRegion: (key) => {
         const meta = regionByKey(key);
@@ -103,7 +112,9 @@ export const useStore = create<StoreState>()(
           cartLines: state.cartLines.filter(l => !sameLine(l, { productId, variantId })),
         })),
 
-      clearCart: () => set({ cartLines: [] }),
+      clearCart: () => set({ cartLines: [], appliedCoupon: null }),
+
+      setAppliedCoupon: (coupon) => set({ appliedCoupon: coupon }),
 
       toggleFavorite: (line) =>
         set((state) => {

@@ -140,7 +140,14 @@ export function detectRegionAndLanguage(
   let source: DetectedLocale['source'] = countryCode ? 'geo' : 'default';
 
   if (!regionKey) {
-    for (const { base } of tags) {
+    for (const { tag, base } of tags) {
+      const subtag = tag.includes('-') ? tag.split('-')[1] : undefined;
+      const subtagRegion = subtag ? resolveRegionForCountry(subtag) : null;
+      if (subtagRegion) {
+        regionKey = subtagRegion;
+        source = 'accept-language';
+        break;
+      }
       const candidate = LANGUAGE_TO_REGION[base];
       if (candidate) {
         regionKey = candidate;

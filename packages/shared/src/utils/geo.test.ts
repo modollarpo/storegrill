@@ -106,4 +106,23 @@ describe('detectRegionAndLanguage', () => {
     expect(result.regionKey).toBe('AE');
     expect(result.language).toBe('ar');
   });
+
+  it('resolves Austria via de-AT region subtag, not Germany', () => {
+    const result = detectRegionAndLanguage('de-AT,de;q=0.9,en;q=0.8');
+    expect(result.regionKey).toBe('AT');
+    expect(result.source).toBe('accept-language');
+  });
+
+  it('resolves shared-language countries via their region subtag', () => {
+    expect(detectRegionAndLanguage('de-CH,de;q=0.9').regionKey).toBe('CH');
+    expect(detectRegionAndLanguage('fr-CH,fr;q=0.9').regionKey).toBe('CH');
+    expect(detectRegionAndLanguage('fr-BE,fr;q=0.9').regionKey).toBe('BE');
+    expect(detectRegionAndLanguage('nl-BE,nl;q=0.9').regionKey).toBe('BE');
+    expect(detectRegionAndLanguage('en-AU,en;q=0.9').regionKey).toBe('AU');
+    expect(detectRegionAndLanguage('en-US,en;q=0.9').regionKey).toBe('US');
+  });
+
+  it('falls back to language base when region subtag is unmapped', () => {
+    expect(detectRegionAndLanguage('fr-MC,fr;q=0.9').regionKey).toBe('FR');
+  });
 });

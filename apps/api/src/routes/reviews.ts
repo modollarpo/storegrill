@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../index.js';
 import { authenticate, optionalAuth, authorize, AuthRequest, requireVerifiedEmail } from '../middleware/auth.js';
-import { CreateReviewSchema } from '@storegrill/shared';
+import { CreateReviewSchema } from '@Storegrill/shared';
 
 const router = Router();
 
@@ -36,13 +36,13 @@ router.get('/product/:productId', optionalAuth, async (req: AuthRequest, res: Re
   });
 
   res.json({
-    reviews: reviews.map(r => ({ ...r, user: r.user })),
+    reviews: reviews.map((r: any) => ({ ...r, user: r.user })),
     stats: {
       average: Number(stats._avg.rating) || 0,
       total: stats._count.rating,
       distribution: Array.from({ length: 5 }, (_, i) => ({
         rating: 5 - i,
-        count: distribution.find(d => d.rating === 5 - i)?._count.rating || 0,
+        count: distribution.find((d: any) => d.rating === 5 - i)?._count.rating || 0,
       })),
     },
     pagination: {

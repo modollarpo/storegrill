@@ -3,23 +3,25 @@ import { getRequestContext } from '@/lib/server-context';
 import { localizeProducts } from '@/lib/server-translate';
 import { API_BASE } from '@/lib/api';
 import { buildMetadata, organizationJsonLd, webSiteJsonLd } from '@/lib/seo';
-import { regionPromoContent } from '@/lib/region-content';
+import { regionPromoContent, regionConfig, categoryBannerFor } from '@/lib/region-content';
 
-import { ProductCard } from '@/components/commerce/ProductCard';
+import { ProductCard, type ProductCardData } from '@/components/commerce/ProductCard';
 import {
   CategoryQuickNav,
   TrustBar,
   VendorSpotlight,
   CampaignHero,
-  BrandLogos,
   TabbedProductCarousel,
-  CouponBanner,
-  ThreeColumnBanners,
-  CashBackBanner,
+  DealsOfTheDay,
+  RecommendedForYou,
+  RegionalTrust,
+  BrandLogoBar,
   CategoryBannerWithProducts,
-  PromoBlockWithImages,
-  BlogPosts,
   Testimonials,
+  AppDownloadBanner,
+  type QuickNavItem,
+  type DealCardData,
+  type TestimonialItem,
 } from '@/components/home/Sections';
 
 export const revalidate = 60;
@@ -41,6 +43,61 @@ export async function generateMetadata(_props: PageProps): Promise<Metadata> {
   return meta;
 }
 
+interface RawDealVariant {
+  product: {
+    id: string;
+    name: string;
+    slug: string;
+    thumbnail?: string | null;
+    basePriceMinorUnits: number;
+    currencyCode: string;
+    rating: number;
+  };
+}
+
+interface RawDeal {
+  id: string;
+  name: string;
+  type: string;
+  value: number;
+  maxDiscount?: number | null;
+  endsAt: string;
+  variants: RawDealVariant[];
+}
+
+function dealsToCards(deals: Array<Record<string, unknown>>): DealCardData[] {
+  const cards: DealCardData[] = [];
+  for (const raw of deals as unknown as RawDeal[]) {
+    const label = raw.type === 'PERCENTAGE_OFF' ? `${raw.value}% OFF` : 'DEAL';
+    for (const { product } of raw.variants) {
+      const listPriceMinorUnits = product.basePriceMinorUnits;
+      let discount = 0;
+      if (raw.type === 'PERCENTAGE_OFF') {
+        discount = Math.round((listPriceMinorUnits * raw.value) / 100);
+        if (raw.maxDiscount) discount = Math.min(discount, raw.maxDiscount);
+      } else if (raw.type === 'FIXED_AMOUNT') {
+        discount = raw.value * 100;
+      }
+      const priceMinorUnits = Math.max(0, listPriceMinorUnits - discount);
+      cards.push({
+        id: `${raw.id}-${product.id}`,
+        slug: product.slug,
+        productId: product.id,
+        productName: product.name,
+        image: product.thumbnail ?? undefined,
+        priceMinorUnits,
+        listPriceMinorUnits,
+        currencyCode: product.currencyCode,
+        endsAt: raw.endsAt,
+        dealLabel: label,
+      });
+    }
+  }
+  return cards
+    .sort((a, b) => new Date(a.endsAt ?? 0).getTime() - new Date(b.endsAt ?? 0).getTime())
+    .slice(0, 8);
+}
+
 interface FeaturedProduct {
   id: string;
   name: string;
@@ -56,96 +113,176 @@ interface FeaturedProduct {
   vendor?: { storeName: string; slug: string } | null;
   description?: string;
   shortDescription?: string;
-  category?: { name?: string } | null;
+  category?: { name?: string; slug?: string } | null;
 }
 
-async function fetchHome(regionKey: string) {
+interface RawVendor {
+  id: string;
+  storeName: string;
+  slug: string;
+  logo?: string | null;
+  description?: string | null;
+  rating: number;
+  reviewCount: number;
+  status: string;
+}
+
+interface HomeData {
+  products: FeaturedProduct[];
+  newArrivals: FeaturedProduct[];
+  topRated: FeaturedProduct[];
+  deals: Array<Record<string, unknown>>;
+  vendors: RawVendor[];
+  ok: boolean;
+}
+
+async function fetchHome(regionKey: string): Promise<HomeData> {
+  const productList = (sort: string, limit: number) =>
+    `${API_BASE}/api/v1/products?regionKey=${regionKey}&sort=${sort}&limit=${limit}`;
   try {
-    const [productsRes, dealsRes, vendorsRes] = await Promise.all([
-      fetch(`${API_BASE}/api/v1/products/featured?regionKey=${regionKey}`, { next: { revalidate: 60 } }),
+    const [productsRes, newArrivalsRes, topRatedRes, dealsRes, vendorsRes] = await Promise.all([
+      fetch(productList('popular', 24), { next: { revalidate: 60 } }),
+      fetch(productList('newest', 12), { next: { revalidate: 60 } }),
+      fetch(productList('rating', 12), { next: { revalidate: 60 } }),
       fetch(`${API_BASE}/api/v1/deals?regionKey=${regionKey}&enabled=true`, { next: { revalidate: 60 } }),
       fetch(`${API_BASE}/api/v1/vendors?limit=3&status=ACTIVE`, { next: { revalidate: 300 } }),
     ]);
-    const productsData = productsRes.ok ? await productsRes.json() as { products?: FeaturedProduct[] } : { products: [] as FeaturedProduct[] };
-    const dealsData = dealsRes.ok ? await dealsRes.json().catch(() => ({ deals: [] as Array<Record<string, unknown>> })) as { deals?: Array<Record<string, unknown>> } : { deals: [] as Array<Record<string, unknown>> };
-    const vendorsData = vendorsRes.ok ? await vendorsRes.json().catch(() => ({ vendors: [] as Array<Record<string, unknown>> })) as { vendors?: Array<Record<string, unknown>> } : { vendors: [] as Array<Record<string, unknown>> };
-    const products: FeaturedProduct[] = (productsData.products ?? []).map(p => ({
-      ...p,
-      price: Number(p.basePriceMinorUnits ?? 0),
-    }));
+    const readProducts = async (res: Response) =>
+      res.ok ? ((await res.json().catch(() => ({ products: [] as FeaturedProduct[] }))) as { products?: FeaturedProduct[] }) : { products: [] as FeaturedProduct[] };
+    const productsData = await readProducts(productsRes);
+    const newArrivalsData = await readProducts(newArrivalsRes);
+    const topRatedData = await readProducts(topRatedRes);
+    const dealsData = dealsRes.ok ? (await dealsRes.json().catch(() => ({ deals: [] as Array<Record<string, unknown>> }))) as { deals?: Array<Record<string, unknown>> } : { deals: [] as Array<Record<string, unknown>> };
+    const vendorsData = vendorsRes.ok ? (await vendorsRes.json().catch(() => ({ vendors: [] as RawVendor[] }))) as { vendors?: RawVendor[] } : { vendors: [] as RawVendor[] };
     return {
-      products,
-      deals: (dealsData.deals || []) as Array<Record<string, unknown>>,
-      vendors: (vendorsData.vendors || []) as Array<Record<string, unknown>>,
+      products: productsData.products ?? [],
+      newArrivals: newArrivalsData.products ?? [],
+      topRated: topRatedData.products ?? [],
+      deals: dealsData.deals ?? [],
+      vendors: vendorsData.vendors ?? [],
       ok: true,
     };
   } catch {
-    return { products: [], deals: [], vendors: [], ok: false };
+    return { products: [], newArrivals: [], topRated: [], deals: [], vendors: [], ok: false };
   }
 }
 
 export default async function HomePage() {
   const { regionKey, language } = await getRequestContext();
-  const { products, deals, vendors } = await fetchHome(regionKey);
-  const localized = await localizeProducts(products.slice(0, 8), language);
+  const { products, newArrivals, topRated, deals, vendors } = await fetchHome(regionKey);
+  const localized = await localizeProducts(products, language);
+  const localizedNewArrivals = await localizeProducts(newArrivals, language);
+  const localizedTopRated = await localizeProducts(topRated, language);
   const promo = regionPromoContent(regionKey);
+  const dealCards = dealsToCards(deals);
+  const regionCfg = regionConfig(regionKey);
+
+  const dealTicker = dealCards.slice(0, 6).map(d => ({
+    label: `${d.dealLabel}: ${d.productName}`,
+    href: d.slug ? `/products/${d.slug}` : d.productId ? `/products/${d.productId}` : '/deals',
+  }));
+
+  const categoryRows = new Map<string, { name: string; slug: string; minPrice: number }>();
+  for (const p of products) {
+    const cat = p.category;
+    if (!cat?.slug || !cat.name) continue;
+    const price = p.price ?? 0;
+    const existing = categoryRows.get(cat.slug);
+    if (!existing) categoryRows.set(cat.slug, { name: cat.name, slug: cat.slug, minPrice: price });
+    else if (price > 0 && (existing.minPrice === 0 || price < existing.minPrice)) existing.minPrice = price;
+  }
+  const availableCategories: QuickNavItem[] = Array.from(categoryRows.values())
+    .filter(c => c.minPrice > 0)
+    .map(c => ({ name: c.name, slug: c.slug }));
+
+  const spotlightVendors = vendors
+    .filter(v => v.status === 'ACTIVE')
+    .slice(0, 3)
+    .map(v => ({
+      storeName: String(v.storeName),
+      slug: String(v.slug),
+      rating: Number(v.rating || 0),
+      reviewCount: Number(v.reviewCount || 0),
+      logo: v.logo ? String(v.logo) : undefined,
+      description: v.description ? String(v.description) : undefined,
+    }));
+
+  const featuredCards: ProductCardData[] = localized.slice(12, 20).map(p => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    thumbnail: p.thumbnail,
+    price: p.price,
+    listPrice: p.listPriceMinorUnits,
+    currencyCode: p.currencyCode,
+    rating: p.rating,
+    reviewCount: p.reviewCount,
+    vendor: p.vendor ?? undefined,
+  }));
+
+  const testimonials: TestimonialItem[] = [
+    { name: 'Aisha M.', role: 'Verified buyer · UK', avatar: '/testimonials/avatar-1.png', quote: 'Delivery was faster than promised and the price beat every high street option. The order tracking updates were spot on.' },
+    { name: 'Sam K.', role: 'Verified buyer · US', avatar: '/testimonials/avatar-2.png', quote: 'Ordered a laptop bundle and the “frequently bought together” picks saved me real money. Checkout in local currency made it painless.' },
+    { name: 'Tina D.', role: 'Verified buyer · DE', avatar: '/testimonials/avatar-3.png', quote: 'Customer support resolved a sizing question within minutes. The regional shipping estimate was accurate to the day.' },
+    { name: 'Luis N.', role: 'Verified buyer · US', avatar: '/testimonials/avatar-4.png', quote: 'Great variety of vendors under one roof. I compared two sellers on the same product and the reviews were really helpful.' },
+    { name: 'Rebecca B.', role: 'Verified buyer · UK', avatar: '/testimonials/avatar-5.png', quote: 'The mobile app checkout took under a minute. I have reordered three times since and it has been flawless every time.' },
+    { name: 'Chen P.', role: 'Verified buyer · AE', avatar: '/testimonials/avatar-6.png', quote: 'Transparent pricing and easy returns gave me confidence to try a new brand. It has become my go-to storefront.' },
+  ];
+
+  const categoryBanner = categoryBannerFor(regionKey);
+
+  const fromMinorUnits = featuredCards.reduce((min, p) => (min === 0 || p.price < min ? p.price : min), 0);
+  const fromPrice = fromMinorUnits > 0
+    ? new Intl.NumberFormat(language, { style: 'currency', currency: promo.currency }).format(fromMinorUnits / 100)
+    : undefined;
 
   return (
-    <div className="bg-white">
+    <div className="bg-surface-raised">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd()) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteJsonLd()) }} />
 
       <h1 className="sr-only">Storegrill — Shop millions of products from verified vendors</h1>
 
-      {/* 1. Trust/USP Strip */}
       <TrustBar freeShippingThreshold={promo.freeShippingThresholdMinorUnits} currency={promo.currency} />
 
-      {/* 2. Hero Banners */}
-      <CampaignHero />
+      <CampaignHero dealTicker={dealTicker} regionKey={regionKey} />
 
-      {/* 3. Brand Logo Carousel */}
-      <BrandLogos />
+      <BrandLogoBar />
 
-      {/* Percent pattern divider */}
-      <div className="w-full overflow-hidden leading-none" aria-hidden="true">
-        <img src="/patter-percent-gray.svg" alt="" className="w-full h-auto" />
-      </div>
+      {availableCategories.length >= 4 && <CategoryQuickNav categories={availableCategories} />}
 
-      {/* 4. Coupon Banner (Bevesi "Winter Sale" slot) */}
-      <CouponBanner
-        title="Summer Sale"
-        couponCode={promo.couponCode}
-        description={`Up to ${promo.couponDiscountPercent}% discount offers along with unlimited campaigns and deals`}
-        ctaLabel="Discover More"
-        ctaHref="/deals"
-      />
+      <DealsOfTheDay deals={dealCards} />
 
-      {/* 5. Limited Campaign: Tabbed Product Carousel */}
-      <section className="py-8 md:py-10" aria-labelledby="products-heading">
+      <section className="py-16 md:py-24" aria-labelledby="products-heading">
         <div className="container-fluid">
           <TabbedProductCarousel
             tabs={[
               {
+                label: 'What\'s Trending Right Now',
+                products: [...localized]
+                  .sort((a, b) => (b.rating ?? 0) * (b.reviewCount ?? 0) - (a.rating ?? 0) * (a.reviewCount ?? 0))
+                  .slice(0, 8)
+                  .map(product => (
+                    <ProductCard key={`trending-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'trending' }} />
+                  )),
+              },
+              {
                 label: 'New Arrivals',
-                products: [...localized].reverse().map(product => (
+                products: localizedNewArrivals.map(product => (
                   <ProductCard key={`new-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'new' }} />
                 )),
               },
               {
                 label: 'Best Sellers',
-                products: [...localized]
-                  .sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0))
-                  .map(product => (
-                    <ProductCard key={`best-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'bestseller' }} />
-                  )),
+                products: localized.slice(0, 8).map(product => (
+                  <ProductCard key={`best-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'bestseller' }} />
+                )),
               },
               {
                 label: 'Top Rated',
-                products: [...localized]
-                  .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-                  .map(product => (
-                    <ProductCard key={`top-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined }} />
-                  )),
+                products: localizedTopRated.map(product => (
+                  <ProductCard key={`top-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined }} />
+                )),
               },
               {
                 label: 'On Sale',
@@ -160,131 +297,33 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 6. Three-Column Promo Banners */}
-      <ThreeColumnBanners
-        items={[
-          {
-            href: '/products?category=electronics',
-            title: 'Where Innovation Meets Electronics',
-            subtitle: 'Only this week. Don\'t miss...',
-            description: 'Spark the Future Shop the Latest in Electronics',
-            cta: 'Shop Now',
-            image: '/banners/home4/banner-34.jpg',
-            bgColor: '#5F1616',
-          },
-          {
-            href: '/products?category=computers',
-            title: 'Your Gateway to Tech Excellence',
-            subtitle: 'Only This Week',
-            description: 'There Is No Sore It Will Not Heal, No Electronics We Cannot Fix',
-            cta: 'Shop Now',
-            image: '/banners/home4/banner-35.jpg',
-            bgColor: '#26525C',
-          },
-          {
-            href: '/products?category=electronics',
-            title: 'The Too Good To Hurry Electronics.',
-            subtitle: 'Only this week. Don\'t miss...',
-            description: 'Spark the Future Shop the Latest in Electronics',
-            cta: 'Shop Now',
-            image: '/banners/home4/banner-36.jpg',
-            bgColor: '#323E4D',
-          },
-        ]}
+      <RecommendedForYou products={featuredCards} />
+
+      <VendorSpotlight vendors={spotlightVendors} />
+
+      {categoryBanner && featuredCards.length > 0 && (
+        <CategoryBannerWithProducts
+          title={categoryBanner.title}
+          subtitle={categoryBanner.subtitle}
+          description={categoryBanner.description}
+          ctaLabel={categoryBanner.ctaLabel}
+          ctaHref={categoryBanner.ctaHref}
+          bannerImage={categoryBanner.bannerImage}
+          bannerBg={categoryBanner.bannerBg}
+          fromPrice={fromPrice}
+          products={featuredCards}
+        />
+      )}
+
+      <Testimonials items={testimonials} />
+
+      <RegionalTrust
+        regionKey={regionKey}
+        paymentMethods={regionCfg.paymentMethods}
+        carriers={regionCfg.shippingZones[0]?.carriers ?? []}
       />
 
-      {/* 7. Cash-Back Text Banner */}
-      <CashBackBanner
-        title="Return Cash Back"
-        description={`Earn ${promo.cashbackPercent}% cash back on Storegrill. See if you're pre-approved with no credit risk.`}
-        ctaLabel="Discover More"
-        ctaHref="/payments"
-      />
-
-      {/* 8. Vendor Carousel */}
-      <VendorSpotlight
-        vendors={vendors.map(v => ({
-          storeName: String(v.storeName),
-          slug: String(v.slug),
-          rating: Number(v.rating || 0),
-          reviewCount: Number(v.reviewCount || 0),
-          logo: v.logo ? String(v.logo) : undefined,
-          description: v.description ? String(v.description) : undefined,
-        }))}
-      />
-
-      {/* 10. Category Banner + Product Grid */}
-      <CategoryBannerWithProducts
-        title="Elevating Tech Solutions, Every Step of the Way"
-        subtitle="Only this week. Don't miss..."
-        description="Electrify Your World. Unleash the Power of Technology!"
-        ctaLabel="Shop Now"
-        ctaHref="/products?category=electronics"
-        bannerImage="/banners/home4/banner-37.jpg"
-        bannerBg="#1a3a4a"
-        products={localized.slice(0, 6).map(p => ({
-          id: p.id,
-          name: p.name,
-          slug: p.slug,
-          thumbnail: p.thumbnail,
-          price: p.price,
-          listPrice: p.listPriceMinorUnits,
-          currencyCode: p.currencyCode,
-          rating: p.rating,
-          reviewCount: p.reviewCount,
-          vendor: p.vendor ?? null,
-        }))}
-      />
-
-      {/* 11. Promo Block with Dual Images */}
-      <PromoBlockWithImages
-        leftImage={{ src: '/banners/home4/banner-38.jpg', alt: 'Electronics promo' }}
-        rightImage={{ src: '/banners/home4/banner-39.jpg', alt: 'Smart glasses' }}
-        title="For the ultimate electronic repair experience"
-        subtitle="Electronics Can Do."
-        description="Discover our wide range of electronics repair services and accessories. Quality guaranteed."
-        ctaLabel="Shop Now"
-        ctaHref="/products?category=electronics"
-      />
-
-      {/* 12. Product Categories Carousel */}
-      <CategoryQuickNav />
-
-      {/* 13. Latest Blog Posts */}
-      <BlogPosts
-        posts={[
-          {
-            id: '1',
-            title: 'Top 10 Gadgets You Need in 2026',
-            excerpt: 'From smart home devices to wearables, these are the must-have gadgets of the year.',
-            date: 'Aug 25, 2026',
-            image: '/banners/offers/wk16-block-Sony-TVC.png',
-            href: '/blog/top-gadgets-2026',
-          },
-          {
-            id: '2',
-            title: 'How to Choose the Right Laptop for Work',
-            excerpt: 'A comprehensive guide to picking the perfect laptop based on your workflow needs.',
-            date: 'Aug 22, 2026',
-            image: '/banners/laptops/wk16-block-New-Term-HP.png',
-            href: '/blog/choose-right-laptop',
-          },
-          {
-            id: '3',
-            title: 'Summer Tech Deals: What to Expect',
-            excerpt: 'A preview of the biggest tech deals coming this summer across all categories.',
-            date: 'Aug 18, 2026',
-            image: '/banners/offers/wk16-block-Samsung-S26-watch-GWP.jpeg',
-            href: '/blog/summer-tech-deals',
-          },
-        ]}
-      />
-
-      {/* 14. Testimonials */}
-      <Testimonials />
-
+      <AppDownloadBanner />
     </div>
   );
 }
-
-

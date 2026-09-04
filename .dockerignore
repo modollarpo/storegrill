@@ -1,0 +1,65 @@
+# ─── Node / build artefacts (never needed in image) ──────────────────────────
+node_modules
+**/node_modules
+node_modules_backup
+**/node_modules_backup
+
+# Next.js output (rebuilt inside Docker)
+.next
+**/.next
+apps/web/.next
+
+# TypeScript compiled output (rebuilt inside Docker)
+dist
+**/dist
+packages/shared/dist
+
+# apps/api source and prisma are required by the API image build, so they are
+# NOT excluded here even though the web image build does not need them.
+
+# Build info caches
+**/*.tsbuildinfo
+
+# ─── Secrets ──────────────────────────────────────────────────────────────────
+.env
+**/.env
+**/.env.*
+apps/api/.env
+apps/api/dev.db
+apps/api/test.db
+
+# ─── VCS ──────────────────────────────────────────────────────────────────────
+.git
+**/.git
+.gitignore
+
+# ─── Infrastructure (Terraform providers = 1.7 GB) ────────────────────────────
+infra/
+
+# ─── Deployment scripts / staging assets ─────────────────────────────────────
+deploy/
+
+# Large stray/scratch assets never needed by the web image build
+themeforest-*.zip
+**/Screenshot*.png
+
+# ─── Test & QA artefacts ─────────────────────────────────────────────────────
+e2e/
+playwright-report/
+test-results/
+coverage/
+**/__mocks__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+
+# ─── Docs, prompts, scratch ───────────────────────────────────────────────────
+docs/
+PROMPTS/
+on/
+.gemini/
+*.md
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+logs/
+*.log

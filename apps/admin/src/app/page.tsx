@@ -78,7 +78,7 @@ export default function AdminDashboardPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6 mb-10">
             {STAT_CARDS.map(card => (
-              <Link key={card.key} href={card.href} className="group bg-white rounded-2xl border border-surface-200 p-6 hover:border-brand-400 hover:shadow-md transition-all">
+              <Link key={card.key} href={card.href} className="group bg-surface-raised rounded-2xl border border-surface-200 p-6 hover:border-brand-400 hover:shadow-md transition-all">
                 <div className="flex justify-between items-start mb-4">
                   <div className="w-10 h-10 rounded-xl bg-surface-100 flex items-center justify-center text-surface-500 group-hover:bg-brand-50 group-hover:text-brand-500 transition-colors">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -97,7 +97,7 @@ export default function AdminDashboardPage() {
                 <svg className="w-24 h-24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
               <div className="relative z-10">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-white mb-4 backdrop-blur-sm border border-white/10">
+                <div className="w-10 h-10 rounded-xl bg-surface-raised/10 flex items-center justify-center text-white mb-4 backdrop-blur-sm border border-white/10">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
                 </div>
                 <p className="text-3xl font-extrabold tabular-nums tracking-tight">
@@ -108,7 +108,7 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          <section aria-label="Recent orders" className="bg-white rounded-2xl border border-surface-200 overflow-hidden shadow-sm">
+          <section aria-label="Recent orders" className="bg-surface-raised rounded-2xl border border-surface-200 overflow-hidden shadow-sm">
             <header className="flex items-center justify-between px-6 py-5 border-b border-surface-200 bg-surface-50/50">
               <h2 className="text-base font-extrabold text-surface-900">Recent Orders</h2>
               <Link href="/orders" className="text-sm text-brand-600 hover:text-brand-700 font-bold transition-colors">View all →</Link>

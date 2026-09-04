@@ -14,6 +14,7 @@ export interface BundleItem {
   unitPriceMinorUnits: number;
   currencyCode: string;
   thumbnail?: string | null;
+  categoryId?: string;
 }
 
 export function FrequentlyBoughtTogether({
@@ -53,6 +54,7 @@ export function FrequentlyBoughtTogether({
         currencyCode: line.currencyCode,
         quantity: 1,
         stock: 25,
+        categoryId: line.categoryId,
       });
     }
     setAdded(true);

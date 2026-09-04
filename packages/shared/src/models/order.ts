@@ -122,4 +122,5 @@ export const CheckoutSchema = z.object({
   regionKey: z.string().min(2).max(10).default('US'),
   notes: z.string().max(500).optional(),
   email: z.string().email().optional(),
+  couponCode: z.string().max(64).optional(),
 });

@@ -1,0 +1,18 @@
+
+Error: Error acquiring the state lock
+
+Error message: state blob is already locked
+Lock Info:
+  ID:        8e5514cb-c035-56d2-1d39-d96738b01530
+  Path:      tfstate/pods/us.tfstate
+  Operation: OperationTypeApply
+  Who:       DESKTOP-UN4J8LP\USER@DESKTOP-UN4J8LP
+  Version:   1.14.8
+  Created:   2026-08-29 20:45:39.7423125 +0000 UTC
+  Info:      
+
+
+Terraform acquires a state lock to protect the state from being written
+by multiple users at the same time. Please resolve the issue above and try
+again. For most commands, you can disable locking with the "-lock=false"
+flag, but this is not recommended.

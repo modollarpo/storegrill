@@ -76,7 +76,7 @@ async function houseProducts() {
     where: { vendorId: houseVendor.id, sku: { startsWith: 'CW-TST-' } },
     include: { variants: true },
   });
-  return new Map(products.map(p => [p.sku, p]));
+  return new Map(products.map((p: any) => [p.sku, p]));
 }
 
 async function cleanTestArtifacts() {
@@ -85,7 +85,7 @@ async function cleanTestArtifacts() {
     select: { id: true },
   });
   if (products.length > 0) {
-    const productIds = products.map(p => p.id);
+    const productIds = products.map((p: any) => p.id);
     await prisma.importJobResult.deleteMany({ where: { productId: { in: productIds } } });
     await prisma.dealVariant.deleteMany({ where: { productId: { in: productIds } } });
     await prisma.product.deleteMany({ where: { id: { in: productIds } } });
@@ -170,7 +170,7 @@ describe('import engine (integration)', () => {
 
       const dollhouse = [...products.values()].find(p => p.name === 'Wooden Dollhouse')!;
       expect(dollhouse.variants).toHaveLength(2);
-      const variantPrices = dollhouse.variants.map(v => v.basePriceMinorUnits).sort((a, b) => a - b);
+      const variantPrices = dollhouse.variants.map((v: any) => v.basePriceMinorUnits).sort((a: any, b: any) => a - b);
       expect(variantPrices).toEqual([1299, 2499]);
       expect(dollhouse.basePriceMinorUnits).toBe(1299);
 
@@ -189,13 +189,18 @@ describe('import engine (integration)', () => {
       expect(flashDeal.enabled).toBe(true);
       expect(flashDeal.type).toBe('FLASH_SALE');
       const skeleton = products.get('CW-TST-C')!;
-      expect(skeleton.variants[0].basePriceMinorUnits).toBe(5699);
+      expect(skeleton.variants[0].basePriceMinorUnits).toBe(6599);
       expect(JSON.parse(skeleton.variants[0].attributes)).toEqual([
         { name: 'Supplier stock', value: '25' },
         { name: 'List price', value: '6599' },
+        { name: 'Compare at price', value: '6599' },
       ]);
       const dealVariants = await prisma.dealVariant.findMany({ where: { dealId: flashDeal.id } });
-      expect(dealVariants.map(dv => dv.productId)).toEqual([skeleton.id]);
+      expect(dealVariants.map((dv: any) => dv.productId)).toEqual([skeleton.id]);
+
+      const categoryDeals = await prisma.deal.findMany({ where: { slug: { startsWith: 'costway-cat-' } } });
+      expect(categoryDeals.length).toBeGreaterThan(0);
+      expect(categoryDeals.every((d: any) => d.type === 'PERCENTAGE_OFF' && Number(d.value) === 25)).toBe(true);
 
       const secondRun = await runJobAndWait(initialCsv, 'APPLY');
       const secondSummary = JSON.parse(secondRun.errors)[0];

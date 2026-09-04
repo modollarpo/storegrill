@@ -11,6 +11,15 @@ export const DealSchema = z.object({
   description: z.string().optional(),
   type: DealType,
   value: z.number().nonnegative(),
+  metadata: z
+    .object({
+      buyQty: z.number().int().positive().optional(),
+      getQty: z.number().int().positive().optional(),
+      discountPercent: z.number().nonnegative().max(100).optional(),
+      bundleProductIds: z.array(z.string()).optional(),
+      flashProductIds: z.array(z.string()).optional(),
+    })
+    .optional(),
   minOrderAmount: z.number().int().nonnegative().optional(),
   maxDiscount: z.number().int().nonnegative().optional(),
   maxUsesPerCustomer: z.number().int().positive().optional(),
@@ -49,12 +58,21 @@ export const CreateCouponSchema = CouponSchema.omit({
   id: true, createdAt: true, usedCount: true,
 });
 
+export const ApplyCouponItemSchema = z.object({
+  productId: z.string(),
+  categoryId: z.string().optional(),
+  quantity: z.number().int().positive(),
+  unitMinorUnits: z.number().int().nonnegative(),
+  currencyCode: z.string(),
+});
+
 export const ApplyCouponSchema = z.object({
   code: z.string().min(1),
   regionKey: z.string(),
   subtotalMinorUnits: z.number().int().nonnegative(),
   vendorIds: z.array(z.string()).optional(),
   categoryIds: z.array(z.string()).optional(),
+  items: z.array(ApplyCouponItemSchema).optional(),
 });
 
 export const DealCalculationResult = z.object({

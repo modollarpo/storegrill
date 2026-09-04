@@ -1,4 +1,4 @@
-import { createMoney, roundUpTo99 } from '@storegrill/shared';
+import { createMoney, roundUpTo99 } from '@Storegrill/shared';
 import {
   cleanSourceUrl,
   httpsify,
@@ -160,6 +160,11 @@ export function adaptFragranceXRows(rows: FragranceXFeedRow[]): AdaptResult {
         );
         e.variant.priceMinorUnits = charm99(Math.round(base * (1 - FX_DEAL_DISCOUNT_RATE)));
       }
+    }
+
+    // Skip products priced under $50 (5000 minor units)
+    if (entries.length > 0 && entries[0].variant.priceMinorUnits < 5000) {
+      continue;
     }
 
     const first = bucket[0].row;

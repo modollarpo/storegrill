@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 type ToastVariant = 'success' | 'error' | 'warning' | 'info';
@@ -98,7 +98,7 @@ function ToastCard({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
   return (
     <div
       role="status"
-      className="pointer-events-auto w-full sm:w-96 bg-white rounded-lg shadow-xl border border-smoke-150 overflow-hidden animate-toast-in relative"
+      className="pointer-events-auto w-full sm:w-96 bg-surface-raised rounded-lg shadow-xl border border-smoke-150 overflow-hidden animate-toast-in relative"
     >
       <div className="flex items-start gap-3 p-3.5">
         <span className={cn('w-5 h-5 rounded-full grid place-items-center text-white text-2xs font-bold shrink-0 mt-0.5', styles.bar)}>

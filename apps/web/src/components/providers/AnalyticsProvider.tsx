@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useEffect, ReactNode, useCallback } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 export interface DataLayerEvent {

@@ -1,12 +1,12 @@
-import { createMoney, roundUpTo99 } from '@storegrill/shared';
+import { createMoney, roundUpTo99 } from '@Storegrill/shared';
 
 export const COSTWAY_FEED_URL =
   'https://www.costway.co.uk/media/feed/costway_uk_dropship_products.csv';
 
 export const PRICE_MARKUP_RATE = 0.20;
-export const FLASH_SALE_DISCOUNT_RATE = 0.15;
 export const CLEARANCE_MARKUP_REDUCTION = 0.10;
-export const OUT_OF_STOCK_THRESHOLD = 10;
+export const DEAL_PROMO_RATE = 25;
+export const OUT_OF_STOCK_THRESHOLD = 20;
 
 export const HOUSE_BRAND = 'Costway';
 
@@ -58,6 +58,8 @@ export interface NormalizedProduct {
   attributes: Record<string, string | boolean>;
   sourceUrl: string;
   brandName: string;
+  weightGrams?: number;
+  dimensions?: { length: number; width: number; height: number; unit: string };
   variants: NormalizedVariant[];
 }
 
@@ -97,19 +99,13 @@ function mulPenny(minorUnits: number, factor: number): number {
 }
 
 export interface PricingFlags {
-  flashSale?: boolean;
   clearance?: boolean;
 }
 
 export function applyIngestPricing(feedPriceMinorUnits: number, flags?: PricingFlags): number {
-  let priced: number;
-  if (flags?.flashSale) {
-    priced = mulPenny(mulPenny(feedPriceMinorUnits, 1 + PRICE_MARKUP_RATE), 1 - FLASH_SALE_DISCOUNT_RATE);
-  } else if (flags?.clearance) {
-    priced = mulPenny(feedPriceMinorUnits, 1 + PRICE_MARKUP_RATE - CLEARANCE_MARKUP_REDUCTION);
-  } else {
-    priced = mulPenny(feedPriceMinorUnits, 1 + PRICE_MARKUP_RATE);
-  }
+  const priced = flags?.clearance
+    ? mulPenny(feedPriceMinorUnits, 1 + PRICE_MARKUP_RATE - CLEARANCE_MARKUP_REDUCTION)
+    : mulPenny(feedPriceMinorUnits, 1 + PRICE_MARKUP_RATE);
   return Number(roundUpTo99(createMoney(BigInt(priced), 'GBP')).amountMinorUnits);
 }
 
@@ -204,6 +200,15 @@ export function splitBaseNameAndSuffix(names: string[]): { baseName: string; suf
   return { baseName, suffixes };
 }
 
+export function parseSpec(spec: string): { weightGrams?: number; dimensions?: { length: number; width: number; height: number; unit: string } } {
+  const result: { weightGrams?: number; dimensions?: { length: number; width: number; height: number; unit: string } } = {};
+  const wm = spec.match(/Net weight:\s*(\d+(?:\.\d+)?)\s*kg/i);
+  if (wm) result.weightGrams = Math.round(Number(wm[1]) * 1000);
+  const dm = spec.match(/Overall dimension:\s*(\d+(?:\.\d+)?)\s*cm\s*x\s*(\d+(?:\.\d+)?)\s*cm\s*x\s*(\d+(?:\.\d+)?)\s*cm/i);
+  if (dm) result.dimensions = { length: Number(dm[1]), width: Number(dm[2]), height: Number(dm[3]), unit: 'cm' };
+  return result;
+}
+
 function toVariant(row: CostwayFeedRow, suffix: string | null, flags: DerivedFlags): NormalizedVariant | null {
   const feedPriceMinorUnits = parsePriceToMinor(row.Price);
   if (feedPriceMinorUnits == null) return null;
@@ -215,7 +220,6 @@ function toVariant(row: CostwayFeedRow, suffix: string | null, flags: DerivedFla
     variantSuffix: suffix,
     feedPriceMinorUnits,
     priceMinorUnits: applyIngestPricing(feedPriceMinorUnits, {
-      flashSale: isFlashSale,
       clearance: flags.tags.includes('clearance'),
     }),
     ...(isFlashSale ? { listPriceMinorUnits: applyIngestPricing(feedPriceMinorUnits) } : {}),
@@ -239,6 +243,7 @@ function standaloneProduct(row: CostwayFeedRow): NormalizedProduct | null {
     attributes: flags.attributes,
     sourceUrl: cleanSourceUrl(row['Item Link']),
     brandName: HOUSE_BRAND,
+    ...parseSpec(row.Specification ?? ''),
     variants: [variant],
   };
 }
@@ -304,6 +309,7 @@ export function adaptCostwayRows(rows: CostwayFeedRow[]): AdaptResult {
       attributes: flags.attributes,
       sourceUrl: cleanSourceUrl(first['Item Link']),
       brandName: HOUSE_BRAND,
+      ...parseSpec(first.Specification ?? ''),
       variants,
     });
   }

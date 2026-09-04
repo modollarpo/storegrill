@@ -1,23 +1,21 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Storegrill — marketplace</title>
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#1c073d"/>
       <stop offset="100%" stop-color="#4c12a1"/>
     </linearGradient>
-    <linearGradient id="ember" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#E53E3E"/>
-      <stop offset="100%" stop-color="#ff7043"/>
+    <linearGradient id="s" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#efeafb"/>
     </linearGradient>
   </defs>
-  <!-- Rounded background -->
+
+  <!-- Rounded app-tile background -->
   <rect width="512" height="512" rx="115" fill="url(#bg)"/>
-  <!-- Grill grates top bar -->
-  <rect x="108" y="148" width="296" height="28" rx="14" fill="white" opacity="0.25"/>
-  <!-- Flame shape (teardrop/fire) -->
-  <path d="M256 108 C256 108 168 198 168 288 C168 334 186 364 212 382 C210 362 218 344 232 334 C236 358 248 374 256 384 C264 374 276 358 280 334 C294 344 302 362 300 382 C326 364 344 334 344 288 C344 198 256 108 256 108 Z" fill="white"/>
-  <!-- Ember inner flame -->
-  <path d="M256 200 C256 200 218 248 218 290 C218 316 232 334 248 342 C246 328 252 316 258 308 C262 322 264 334 264 342 C280 334 294 316 294 290 C294 248 256 200 256 200 Z" fill="url(#ember)"/>
-  <!-- Grill grates bottom bars -->
-  <rect x="140" y="330" width="232" height="22" rx="11" fill="white" opacity="0.20"/>
-  <rect x="156" y="370" width="200" height="22" rx="11" fill="white" opacity="0.14"/>
+
+  <!-- True Outfit 900 lowercase "s" glyph (centered on tile) -->
+  <g transform="translate(92.15 425.69) scale(0.687 -0.687)" fill="url(#s)">
+    <path d="M243 -15Q197 -15 151.0 -3.0Q105 9 65.5 30.0Q26 51 -1 78L102 184Q126 160 159.5 146.0Q193 132 230 132Q247 132 256.5 136.5Q266 141 266 149Q266 163 249.5 170.0Q233 177 207.5 183.0Q182 189 153.5 198.5Q125 208 99.0 224.5Q73 241 57.0 270.5Q41 300 41 346Q41 393 67.5 429.5Q94 466 142.5 487.5Q191 509 255 509Q320 509 381.0 487.0Q442 465 478 421L374 315Q349 343 319.0 352.5Q289 362 269 362Q250 362 242.5 356.5Q235 351 235 343Q235 332 251.0 325.0Q267 318 292.5 312.0Q318 306 346.0 296.0Q374 286 399.5 268.0Q425 250 441.0 220.5Q457 191 457 144Q457 71 399.0 28.0Q341 -15 243 -15Z"/>
+  </g>
 </svg>

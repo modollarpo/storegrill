@@ -86,6 +86,14 @@ export type Category = z.infer<typeof CategorySchema>;
 export type Brand = z.infer<typeof BrandSchema>;
 export type ProductStatusEnum = z.infer<typeof ProductStatus>;
 
+export interface StorefrontProductPrice {
+  price: number;
+  basePriceMinorUnits: number;
+  listPriceMinorUnits?: number;
+  originalPriceMinorUnits?: number;
+  currencyCode: string;
+}
+
 export const CreateProductSchema = ProductSchema.omit({
   id: true, createdAt: true, updatedAt: true, rating: true,
   reviewCount: true, totalSales: true,

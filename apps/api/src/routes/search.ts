@@ -1,6 +1,7 @@
 import { Router, Response, Request } from 'express';
 import { z } from 'zod';
 import { prisma } from '../index.js';
+import { compareAtPriceOf } from '../utils/pricing.js';
 
 const router = Router();
 
@@ -35,6 +36,7 @@ router.get('/', async (req: Request, res: Response) => {
         category: { select: { id: true, name: true, slug: true } },
         brand: { select: { id: true, name: true, slug: true } },
         regionPrices: { where: { regionKey: query.regionKey }, take: 1 },
+        variants: true,
       }
     }),
     prisma.product.count({ where })
@@ -64,6 +66,8 @@ router.get('/', async (req: Request, res: Response) => {
       slug: p.slug,
       thumbnail: p.thumbnail,
       priceMinorUnits: Number(p.regionPrices[0]?.priceMinorUnits || p.basePriceMinorUnits),
+      listPriceMinorUnits: compareAtPriceOf(p) ?? Number(p.basePriceMinorUnits),
+      originalPriceMinorUnits: compareAtPriceOf(p) ?? Number(p.basePriceMinorUnits),
       currencyCode: p.regionPrices[0]?.currencyCode || p.currencyCode,
     })),
     facets: {

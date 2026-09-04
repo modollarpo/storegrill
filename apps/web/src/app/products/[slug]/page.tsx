@@ -389,6 +389,7 @@ export default async function ProductPage({ params }: PdpProps) {
           slug: product.slug,
           name: product.name,
           unitPriceMinorUnits: Number(product.price),
+          listPriceMinorUnits: product.listPriceMinorUnits ? Number(product.listPriceMinorUnits) : undefined,
           currencyCode: String(product.currencyCode),
           thumbnail: product.thumbnail || undefined,
         }}

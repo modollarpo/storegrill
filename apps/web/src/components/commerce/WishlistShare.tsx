@@ -11,6 +11,7 @@ interface WishlistShareProps {
     name: string;
     slug?: string;
     price: number;
+    listPrice?: number;
     currencyCode: string;
     image?: string;
   };
@@ -33,6 +34,7 @@ export function WishlistShare({ product, className }: WishlistShareProps) {
             slug: product.slug,
             image: product.image,
             unitPriceMinorUnits: product.price,
+            listPriceMinorUnits: product.listPrice,
             currencyCode: product.currencyCode,
           });
           toast({ variant: saved ? 'info' : 'success', title: saved ? 'Removed from wishlist' : 'Saved to wishlist', description: product.name });

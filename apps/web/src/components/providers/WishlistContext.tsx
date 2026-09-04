@@ -9,6 +9,7 @@ export interface WishlistItem {
   slug?: string;
   image?: string;
   unitPriceMinorUnits: number;
+  listPriceMinorUnits?: number;
   currencyCode: string;
 }
 
@@ -39,6 +40,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         slug: item.slug,
         image: item.image,
         unitPriceMinorUnits: item.unitPriceMinorUnits,
+        listPriceMinorUnits: item.listPriceMinorUnits,
         currencyCode: item.currencyCode,
         quantity: 1,
       }),

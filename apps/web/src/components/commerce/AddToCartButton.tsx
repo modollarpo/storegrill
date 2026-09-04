@@ -13,6 +13,7 @@ export interface AddToCartButtonProps {
   slug?: string;
   image?: string;
   unitPriceMinorUnits: number;
+  listPriceMinorUnits?: number;
   currencyCode: string;
   quantity?: number;
   stock?: number;
@@ -49,6 +50,7 @@ export function AddToCartButton(props: AddToCartButtonProps) {
       slug: props.slug,
       image: props.image,
       unitPriceMinorUnits: props.unitPriceMinorUnits,
+      listPriceMinorUnits: props.listPriceMinorUnits,
       currencyCode: props.currencyCode,
       quantity: props.quantity || 1,
       stock: props.stock,

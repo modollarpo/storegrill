@@ -59,6 +59,7 @@ export function PdpBuyBox({ product, variant, variantId, images, activeUnitPrice
             slug={product.slug}
             image={images[0]}
             unitPriceMinorUnits={activeUnitPrice}
+            listPriceMinorUnits={product.listPriceMinorUnits}
             currencyCode={currency}
             quantity={quantity}
             stock={stock}
@@ -76,6 +77,7 @@ export function PdpBuyBox({ product, variant, variantId, images, activeUnitPrice
             slug={product.slug}
             image={images[0]}
             unitPriceMinorUnits={activeUnitPrice}
+            listPriceMinorUnits={product.listPriceMinorUnits}
             currencyCode={currency}
             quantity={quantity}
             stock={stock}

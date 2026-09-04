@@ -12,6 +12,7 @@ export interface BundleItem {
   slug?: string;
   name: string;
   unitPriceMinorUnits: number;
+  listPriceMinorUnits?: number;
   currencyCode: string;
   thumbnail?: string | null;
   categoryId?: string;
@@ -51,6 +52,7 @@ export function FrequentlyBoughtTogether({
         slug: line.slug,
         image: line.thumbnail || undefined,
         unitPriceMinorUnits: line.unitPriceMinorUnits,
+        listPriceMinorUnits: line.listPriceMinorUnits,
         currencyCode: line.currencyCode,
         quantity: 1,
         stock: 25,
@@ -94,7 +96,7 @@ export function FrequentlyBoughtTogether({
                     <Link href={item.slug ? `/products/${item.slug}` : '#'} className={cnName(item.id === main.id)}>
                       {item.name}
                     </Link>
-                    <PriceDisplay amountMinorUnits={item.unitPriceMinorUnits} currencyCode={item.currencyCode} size="sm" />
+                    <PriceDisplay amountMinorUnits={item.unitPriceMinorUnits} listMinorUnits={item.listPriceMinorUnits} currencyCode={item.currencyCode} size="sm" />
                   </span>
                 </span>
               </label>

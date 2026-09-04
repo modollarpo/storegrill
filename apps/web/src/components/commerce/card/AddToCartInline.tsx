@@ -35,6 +35,7 @@ export function AddToCartInline({ product }: { product: ProductCardData }) {
         addItem({
           productId: product.id, name: product.name, slug: product.slug,
           image: product.thumbnail, unitPriceMinorUnits: product.price,
+          listPriceMinorUnits: product.listPrice,
           currencyCode: product.currencyCode, quantity: 1,
           stock: product.inventoryCount, vendorName: product.vendor?.storeName,
           categoryId: product.categoryId,

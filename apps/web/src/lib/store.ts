@@ -11,6 +11,7 @@ export interface CartLine {
   slug?: string;
   image?: string;
   unitPriceMinorUnits: number;
+  listPriceMinorUnits?: number;
   currencyCode: string;
   quantity: number;
   stock?: number;

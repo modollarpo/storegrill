@@ -78,7 +78,6 @@ jobs:
   deploy:
     name: Deploy ${{ matrix.region }}
     needs: build
-    if: contains(inputs.deploy_regions, matrix.region)
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -125,6 +124,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy API to Container App
+        if: contains(inputs.deploy_regions, matrix.region)
         run: |
           az account set -s "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           az containerapp update \
@@ -134,6 +134,7 @@ jobs:
             --output none
 
       - name: Deploy Web to Container App
+        if: contains(inputs.deploy_regions, matrix.region)
         run: |
           az account set -s "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           az containerapp update \

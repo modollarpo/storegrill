@@ -6,6 +6,8 @@ import { authenticate, authorize, requireVerifiedEmail, AuthRequest } from '../m
 import {
   UpdateVendorSchema,
   VendorApplicationPatchSchema,
+  CarrierShipmentStatus,
+  normalizeCarrierProvider,
 } from '@Storegrill/shared';
 import { slugify } from '../utils/slugify.js';
 
@@ -627,48 +629,115 @@ router.post('/me/orders/:id/ship', authenticate, authorize('VENDOR'), async (req
     });
   }
 
-  const carrier = body.carrier?.trim() || 'Regional Carrier';
+  const allVendorIds = [...new Set(order.items.map((item: { vendorId: string }) => item.vendorId))];
+  const carrier = normalizeCarrierProvider(body.carrier) !== 'REGIONAL' ? normalizeCarrierProvider(body.carrier) : (body.carrier?.trim() || 'Regional Carrier');
   const now = new Date();
 
   const existingShipment = await prisma.shipment.findFirst({
-    where: { orderId: order.id },
+    where: { orderId: order.id, vendorId: vendor.id },
     orderBy: { createdAt: 'desc' },
   });
 
   const shipment = existingShipment
     ? await prisma.shipment.update({
         where: { id: existingShipment.id },
-        data: { status: 'SHIPPED', carrier, trackingNumber: body.trackingNumber, updatedAt: now },
+        data: {
+          status: CarrierShipmentStatus.SHIPPED,
+          carrier,
+          trackingNumber: body.trackingNumber,
+          updatedAt: now,
+        },
       })
     : await prisma.shipment.create({
         data: {
           orderId: order.id,
+          vendorId: vendor.id,
           carrier,
           trackingNumber: body.trackingNumber,
-          status: 'SHIPPED',
+          status: CarrierShipmentStatus.SHIPPED,
           shippingAddress: order.shippingAddress,
           costMinorUnits: 0,
         },
       });
 
-  await prisma.shipmentEvent.create({
-    data: {
+  const eventClash = await prisma.shipmentEvent.findFirst({
+    where: {
       shipmentId: shipment.id,
-      status: 'SHIPPED',
-      description: body.trackingNumber ? `Shipped with tracking ${body.trackingNumber}` : 'Marked as shipped',
+      status: CarrierShipmentStatus.SHIPPED,
     },
   });
 
-  const allVendorIds = [...new Set(order.items.map((i: any) => i.vendorId))];
-  const shippedCount = await prisma.shipment.count({ where: { orderId: order.id, status: 'SHIPPED' } });
-  const fullyShipped = shippedCount >= allVendorIds.length;
+  if (!eventClash) {
+    await prisma.shipmentEvent.create({
+      data: {
+        shipmentId: shipment.id,
+        status: CarrierShipmentStatus.SHIPPED,
+        description: body.trackingNumber ? `Shipped with tracking ${body.trackingNumber}` : 'Marked as shipped',
+      },
+    });
+  }
 
-  const updated = fullyShipped && ['PAID', 'PROCESSING'].includes(order.status)
+  const vendorShippedCount = await prisma.shipment.count({
+    where: {
+      orderId: order.id,
+      vendorId: { in: allVendorIds },
+      status: {
+        in: [
+          CarrierShipmentStatus.SHIPPED,
+          CarrierShipmentStatus.IN_TRANSIT,
+          CarrierShipmentStatus.OUT_FOR_DELIVERY,
+          CarrierShipmentStatus.DELIVERED,
+          CarrierShipmentStatus.ATTEMPTED,
+          CarrierShipmentStatus.EXCEPTION,
+        ],
+      },
+    },
+  });
+  const fullyShipped = vendorShippedCount >= allVendorIds.length;
+
+  const updated = fullyShipped && ['PAID', 'PROCESSING', 'CONFIRMED'].includes(order.status)
     ? await prisma.order.update({ where: { id: order.id }, data: { status: 'SHIPPED' } })
     : order;
 
+  await prisma.auditLog.create({
+    data: {
+      userId: req.user!.id,
+      action: 'SHIPMENT_SHIPPED',
+      entity: 'Shipment',
+      entityId: shipment.id,
+      after: JSON.stringify({
+        orderId: order.id,
+        vendorId: vendor.id,
+        carrier,
+        trackingNumber: body.trackingNumber,
+      }),
+    },
+  });
+
+  await prisma.notification.create({
+    data: {
+      userId: order.userId,
+      type: 'ORDER_SHIPMENT',
+      title: 'Parcel handed to the carrier',
+      body: `${order.orderNumber} — your parcel from ${vendor.storeName} is on its way${body.trackingNumber ? ' (tracking available)' : ''}.`,
+      data: JSON.stringify({
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        shipmentId: shipment.id,
+        trackingStatus: CarrierShipmentStatus.SHIPPED,
+        carrier,
+        trackingNumber: body.trackingNumber,
+      }),
+    },
+  });
+
   res.json({
-    shipment: { id: shipment.id, status: shipment.status, carrier: shipment.carrier, trackingNumber: shipment.trackingNumber },
+    shipment: {
+      id: shipment.id,
+      status: shipment.status,
+      carrier: shipment.carrier,
+      trackingNumber: shipment.trackingNumber,
+    },
     orderStatus: updated.status,
   });
 });

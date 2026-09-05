@@ -367,6 +367,7 @@ CREATE TABLE "OrderItem" (
 CREATE TABLE "Shipment" (
     "id" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
+    "vendorId" TEXT,
     "shippingZoneId" TEXT,
     "carrier" TEXT NOT NULL,
     "trackingNumber" TEXT,
@@ -1086,6 +1087,9 @@ CREATE UNIQUE INDEX "Cart_userId_key" ON "Cart"("userId");
 CREATE UNIQUE INDEX "Order_orderNumber_key" ON "Order"("orderNumber");
 
 -- CreateIndex
+CREATE INDEX "Shipment_vendorId_idx" ON "Shipment"("vendorId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Deal_slug_key" ON "Deal"("slug");
 
 -- CreateIndex
@@ -1282,6 +1286,9 @@ ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_vendorId_fkey" FOREIGN KEY ("v
 
 -- AddForeignKey
 ALTER TABLE "Shipment" ADD CONSTRAINT "Shipment_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Shipment" ADD CONSTRAINT "Shipment_vendorId_fkey" FOREIGN KEY ("vendorId") REFERENCES "VendorProfile"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Shipment" ADD CONSTRAINT "Shipment_shippingZoneId_fkey" FOREIGN KEY ("shippingZoneId") REFERENCES "ShippingZone"("id") ON DELETE SET NULL ON UPDATE CASCADE;

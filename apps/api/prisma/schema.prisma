@@ -130,6 +130,7 @@ model VendorProfile {
   campaigns               MarketingCampaign[]
   balances                VendorBalance[]
   importTemplates         ImportMappingTemplate[]
+  shipments               Shipment[]
 }
 
 model VendorPayoutAccount {
@@ -416,22 +417,26 @@ model OrderItem {
 }
 
 model Shipment {
-  id                String        @id @default(cuid())
+  id                String         @id @default(cuid())
   orderId           String
-  order             Order         @relation(fields: [orderId], references: [id])
+  order             Order          @relation(fields: [orderId], references: [id])
+  vendorId          String?
+  vendor            VendorProfile? @relation(fields: [vendorId], references: [id])
   shippingZoneId    String?
-  shippingZone      ShippingZone? @relation(fields: [shippingZoneId], references: [id])
+  shippingZone      ShippingZone?  @relation(fields: [shippingZoneId], references: [id])
   carrier           String
   trackingNumber    String?
-  status            String        @default("PENDING")
+  status            String         @default("PENDING")
   estimatedDelivery DateTime?
   actualDelivery    DateTime?
   shippingAddress   String
   costMinorUnits    Int
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
   events ShipmentEvent[]
+
+  @@index([vendorId])
 }
 
 model ShipmentEvent {

@@ -111,7 +111,7 @@ router.post('/', authenticate, authorize('VENDOR', 'ADMIN'), async (req: AuthReq
   const existingSlug = await prisma.deal.findUnique({ where: { slug } });
   const finalSlug = existingSlug ? `${slug}-${Date.now()}` : slug;
 
-  const { regionKey, categoryIds, vendorId, ...rest } = body;
+  const { regionKey, categoryIds, vendorId, metadata, ...rest } = body;
 
   const deal = await prisma.deal.create({
     data: {
@@ -120,6 +120,7 @@ router.post('/', authenticate, authorize('VENDOR', 'ADMIN'), async (req: AuthReq
       value: body.value,
       minOrderAmount: body.minOrderAmount || null,
       maxDiscount: body.maxDiscount || null,
+      metadata: metadata ? JSON.stringify(metadata) : undefined,
       categoryIds: JSON.stringify(categoryIds || []),
       ...(regionKey && { region: { connect: { key: regionKey } } }),
       ...(vendorId && { vendor: { connect: { id: vendorId } } }),

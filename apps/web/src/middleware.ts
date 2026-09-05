@@ -71,6 +71,7 @@ export const middleware = (request: NextRequest): NextResponse => {
   const countryPod = resolveCountrySubdomainPod(subdomain);
   if (subdomain && !POD_SUBDOMAINS.has(subdomain) && countryPod) {
     const url = request.nextUrl.clone();
+    url.port = '';
     url.host = `${countryPod}.storegrill.net`;
     return NextResponse.redirect(url, 308);
   }
@@ -92,6 +93,7 @@ export const middleware = (request: NextRequest): NextResponse => {
       const apexPod = resolveApexGeoPod(country);
       if (isApexOrWww && apexPod) {
         const url = request.nextUrl.clone();
+        url.port = '';
         url.host = `${apexPod}.storegrill.net`;
         return NextResponse.redirect(url, 307);
       }

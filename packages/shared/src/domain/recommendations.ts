@@ -11,8 +11,8 @@ export function recommendProducts<T extends RecommendationProduct>(
   targetCategoryId?: string | null,
   limit = 4,
 ): T[] {
-  const filtered = allProducts.filter(p => p.id !== currentProductId);
-  const scored = filtered.map(p => {
+  const filtered = allProducts.filter((p: T) => p.id !== currentProductId);
+  const scored = filtered.map((p: T) => {
     let score = 0;
     if (targetCategoryId && p.categoryId === targetCategoryId) {
       score += 50;
@@ -21,8 +21,8 @@ export function recommendProducts<T extends RecommendationProduct>(
     return { product: p, score };
   });
 
-  scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, limit).map(s => s.product);
+  scored.sort((a: { product: T; score: number }, b: { product: T; score: number }) => b.score - a.score);
+  return scored.slice(0, limit).map((s: { product: T; score: number }) => s.product);
 }
 
 export interface MerchantIntelligenceInput {

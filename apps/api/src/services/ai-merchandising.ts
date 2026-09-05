@@ -21,7 +21,7 @@ export function rewriteProductContent(input: AiRewriteInput): AiRewriteResult {
   const rewrittenDescription = input.description.trim();
 
   const lowerText = (rewrittenTitle + ' ' + rewrittenDescription).toLowerCase();
-  const validated = input.sourceFacts.every(fact => lowerText.includes(fact.toLowerCase()));
+  const validated = input.sourceFacts.every((fact: string) => lowerText.includes(fact.toLowerCase()));
 
   return {
     rewrittenTitle,

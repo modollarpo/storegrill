@@ -25,6 +25,15 @@ const adminDealCreate = z.object({
   vendorId: z.string().optional(),
   categoryIds: z.array(z.string()).default([]),
   productIds: z.array(z.string()).default([]),
+  metadata: z
+    .object({
+      buyQty: z.number().int().positive().optional(),
+      getQty: z.number().int().positive().optional(),
+      discountPercent: z.number().nonnegative().max(100).optional(),
+      bundleProductIds: z.array(z.string()).optional(),
+      flashProductIds: z.array(z.string()).optional(),
+    })
+    .optional(),
 });
 
 const adminDealUpdate = adminDealCreate.partial();
@@ -38,6 +47,24 @@ const adminCouponCreate = z.object({
 });
 
 const adminCouponUpdate = adminCouponCreate.partial();
+
+const adminCommissionCreate = z.object({
+  name: z.string().min(1).max(200),
+  basis: z.enum(['DEAL_PRICE', 'GROSS_ORDER', 'NET_ORDER', 'MERCHANT_PAYOUT', 'MARGIN']),
+  rateBps: z.number().int().nonnegative().max(100000),
+  minAmountMinorUnits: z.number().int().nonnegative().optional(),
+  maxAmountMinorUnits: z.number().int().nonnegative().optional(),
+  maxRateBps: z.number().int().nonnegative().max(100000).optional(),
+  vendorId: z.string().optional(),
+  categoryId: z.string().optional(),
+  regionKey: z.string().optional(),
+  priority: z.number().int().default(0),
+  startsAt: dateOrIso.optional(),
+  endsAt: dateOrIso.optional(),
+  active: z.boolean().default(true),
+});
+
+const adminCommissionUpdate = adminCommissionCreate.partial();
 
 router.use(authenticate, authorize('ADMIN'));
 
@@ -255,7 +282,7 @@ function mergeAcceptedTerms(payoutMethod: string | null): string {
 }
 
 async function provisionStorefronts(vendor: { id: string; slug: string; storeName: string; warehouseRegionKey: string; description: string | null }) {
-  const regionKeys = [...new Set([vendor.warehouseRegionKey, 'UK'])];
+  const regionKeys = [...new Set([vendor.warehouseRegionKey || 'UK'].filter(Boolean))];
   for (const regionKey of regionKeys) {
     const slug = regionKeys.length > 1 ? `${vendor.slug}-${regionKey.toLowerCase()}` : vendor.slug;
     const clash = await prisma.storefront.findFirst({ where: { slug, vendorId: { not: vendor.id } } });
@@ -670,8 +697,14 @@ router.get('/analytics', async (_req: AuthRequest, res: Response) => {
     series.push({ date: key, revenue: agg.revenue, orders: agg.orders });
   }
 
-  const regionBreakdown = regionGroup.map(r => ({
+  const [regionCurrencies, regionBreakdownData] = await Promise.all([
+    prisma.region.findMany({ where: { enabled: true }, select: { key: true, defaultCurrency: true } }),
+    regionGroup,
+  ]);
+  const regionCurrencyMap = new Map(regionCurrencies.map(r => [r.key, r.defaultCurrency]));
+  const regionBreakdown = regionBreakdownData.map(r => ({
     regionKey: r.regionKey,
+    currencyCode: regionCurrencyMap.get(r.regionKey) ?? 'GBP',
     revenue: Number(r._sum.totalMinorUnits || 0),
     orders: r._count,
   }));
@@ -770,12 +803,13 @@ router.post('/deals', async (req: AuthRequest, res: Response) => {
   const existingSlug = await prisma.deal.findUnique({ where: { slug } });
   const finalSlug = existingSlug ? `${slug}-${Date.now()}` : slug;
 
-  const { productIds, regionKey, vendorId, categoryIds, ...rest } = body;
+  const { productIds, regionKey, vendorId, categoryIds, metadata, ...rest } = body;
 
   const deal = await prisma.deal.create({
     data: {
       ...rest,
       slug: finalSlug,
+      metadata: metadata ? JSON.stringify(metadata) : undefined,
       categoryIds: JSON.stringify(categoryIds),
       ...(regionKey && { region: { connect: { key: regionKey } } }),
       ...(vendorId && { vendor: { connect: { id: vendorId } } }),
@@ -805,7 +839,7 @@ router.put('/deals/:id', async (req: AuthRequest, res: Response) => {
     return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
   }
 
-  const { productIds, regionKey, vendorId, categoryIds, name, ...rest } = body;
+  const { productIds, regionKey, vendorId, categoryIds, name, metadata, ...rest } = body;
   if (rest.endsAt && rest.startsAt && new Date((rest.endsAt as unknown as Date)) <= new Date(rest.startsAt as unknown as Date)) {
     return res.status(400).json({ error: { code: 'INVALID_RANGE', message: 'endsAt must be after startsAt' } });
   }
@@ -818,6 +852,7 @@ router.put('/deals/:id', async (req: AuthRequest, res: Response) => {
     where: { id },
     data: {
       ...rest,
+      ...(metadata !== undefined && { metadata: metadata ? JSON.stringify(metadata) : null }),
       ...(name && { name, slug: finalSlug }),
       ...(categoryIds !== undefined && { categoryIds: JSON.stringify(categoryIds) }),
       ...(regionKey !== undefined && { region: { connect: { key: regionKey } } }),
@@ -942,6 +977,99 @@ router.delete('/coupons/:id', async (req: AuthRequest, res: Response) => {
   }
   await prisma.coupon.delete({ where: { id } });
   await audit(req, 'COUPON_DELETED', 'Coupon', id, { code: existing.code });
+  res.status(204).end();
+});
+
+router.get('/commissions', async (req: AuthRequest, res: Response) => {
+  const query = z.object({
+    vendorId: z.string().optional(),
+    categoryId: z.string().optional(),
+    regionKey: z.string().optional(),
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+  }).parse(req.query);
+
+  const where = {
+    ...(query.vendorId && { vendorId: query.vendorId }),
+    ...(query.categoryId && { categoryId: query.categoryId }),
+    ...(query.regionKey && { regionKey: query.regionKey }),
+  };
+
+  const [rules, total] = await Promise.all([
+    prisma.commissionRule.findMany({
+      where,
+      orderBy: [{ vendorId: 'asc' }, { priority: 'desc' }, { createdAt: 'desc' }],
+      skip: (query.page - 1) * query.limit,
+      take: query.limit,
+      include: {
+        vendor: { select: { id: true, storeName: true } },
+        category: { select: { id: true, name: true } },
+        region: { select: { key: true, name: true } },
+      },
+    }),
+    prisma.commissionRule.count({ where }),
+  ]);
+
+  res.json({
+    rules: rules.map(r => ({ ...r, minAmountMinorUnits: r.minAmountMinorUnits != null ? Number(r.minAmountMinorUnits) : null, maxAmountMinorUnits: r.maxAmountMinorUnits != null ? Number(r.maxAmountMinorUnits) : null })),
+    total,
+    page: query.page,
+    limit: query.limit,
+  });
+});
+
+router.post('/commissions', async (req: AuthRequest, res: Response) => {
+  const body = adminCommissionCreate.parse(req.body);
+  const { minAmountMinorUnits, maxAmountMinorUnits, vendorId, categoryId, regionKey, ...rest } = body;
+
+  const rule = await prisma.commissionRule.create({
+    data: {
+      ...rest,
+      minAmountMinorUnits: minAmountMinorUnits != null ? BigInt(minAmountMinorUnits) : null,
+      maxAmountMinorUnits: maxAmountMinorUnits != null ? BigInt(maxAmountMinorUnits) : null,
+      ...(vendorId && { vendor: { connect: { id: vendorId } } }),
+      ...(categoryId && { category: { connect: { id: categoryId } } }),
+      ...(regionKey && { region: { connect: { key: regionKey } } }),
+    },
+  });
+  await audit(req, 'COMMISSION_CREATED', 'CommissionRule', rule.id, { name: rule.name, basis: rule.basis, rateBps: rule.rateBps });
+  res.status(201).json({ rule: { ...rule, minAmountMinorUnits: rule.minAmountMinorUnits != null ? Number(rule.minAmountMinorUnits) : null, maxAmountMinorUnits: rule.maxAmountMinorUnits != null ? Number(rule.maxAmountMinorUnits) : null } });
+});
+
+router.put('/commissions/:id', async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const body = adminCommissionUpdate.parse(req.body);
+
+  const existing = await prisma.commissionRule.findUnique({ where: { id } });
+  if (!existing) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Commission rule not found' } });
+  }
+
+  const { minAmountMinorUnits, maxAmountMinorUnits, vendorId, categoryId, regionKey, ...rest } = body;
+
+  const rule = await prisma.commissionRule.update({
+    where: { id },
+    data: {
+      ...rest,
+      ...(minAmountMinorUnits !== undefined && { minAmountMinorUnits: minAmountMinorUnits != null ? BigInt(minAmountMinorUnits) : null }),
+      ...(maxAmountMinorUnits !== undefined && { maxAmountMinorUnits: maxAmountMinorUnits != null ? BigInt(maxAmountMinorUnits) : null }),
+      ...(vendorId !== undefined && (vendorId ? { vendor: { connect: { id: vendorId } } } : { vendor: { disconnect: true } })),
+      ...(categoryId !== undefined && (categoryId ? { category: { connect: { id: categoryId } } } : { category: { disconnect: true } })),
+      ...(regionKey !== undefined && (regionKey ? { region: { connect: { key: regionKey } } } : { region: { disconnect: true } })),
+    },
+  });
+  await audit(req, 'COMMISSION_UPDATED', 'CommissionRule', id, { name: rule.name, rateBps: rule.rateBps, active: rule.active });
+  res.json({ rule: { ...rule, minAmountMinorUnits: rule.minAmountMinorUnits != null ? Number(rule.minAmountMinorUnits) : null, maxAmountMinorUnits: rule.maxAmountMinorUnits != null ? Number(rule.maxAmountMinorUnits) : null } });
+});
+
+router.delete('/commissions/:id', async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const existing = await prisma.commissionRule.findUnique({ where: { id } });
+  if (!existing) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Commission rule not found' } });
+  }
+  await prisma.commissionRule.delete({ where: { id } });
+  await audit(req, 'COMMISSION_DELETED', 'CommissionRule', id, { name: existing.name });
   res.status(204).end();
 });
 

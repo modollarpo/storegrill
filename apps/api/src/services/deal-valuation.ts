@@ -50,7 +50,7 @@ export function evaluateDealEconomics(input: DealEvaluationInput) {
     paymentFeeMinorUnits: paymentFee,
   };
 
-  const sharedRules: CommissionRule[] = (input.commissionRules ?? []).map(r => ({ ...r }));
+  const sharedRules: CommissionRule[] = (input.commissionRules ?? []).map((r: CommissionRule) => ({ ...r }));
   const matchedRule = selectCommissionRule(sharedRules, commissionInput);
   const commissionSnapshot = matchedRule
     ? computeCommission(matchedRule, commissionInput).snapshot

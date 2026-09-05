@@ -221,8 +221,7 @@ tests, observability hooks, and docs updated.
    async job queue framing `services/job-queue.ts` (`executeJob` pure runner /
    lifecycle, `queueImportJob` swallows surprises into a FAILED status) used by
    the import routes.
-4. **P4 Shipping/fulfilment/carriers** — carrier adapter interface, canonical
-   status enum + mapper, webhook + polling ingestion, tracking UX.
+4. **P4 Shipping/fulfilment/carriers** — ✅ DONE: canonical carrier domain engine (`packages/shared/src/domain/carrier.ts` with providers, code translation tables, canonical status reducer, order delivery/shipment status aggregators) + unit tests (12 tests); `Shipment.vendorId` foreign key added to isolate multi-vendor parcels; robust carrier webhook ingestion service (`services/carriers.ts`) with idempotent deduplication (`ShipmentEvent`), status advancement, automated customer notifications, and audit logging; webhook endpoint (`POST /api/v1/tracking/webhook/:provider`) secured with secret headers; tracking lookup API (`GET /api/v1/tracking/by-order/:orderNumber`) and public web tracking interface (`apps/web/src/app/track/TrackForm.tsx`) with real-time status and timeline rendering; scheduled tracking poller in `services/scheduler.ts`.
 5. **P5 Deals/profitability** — deal lifecycle, deal cargo, profitability
    engine surfaced in vendor deal creation UX, deal score v1.
 6. **P6 Commission/ledger/settlement** — commission + marketing fee snapshots

@@ -2,6 +2,7 @@ import { isCronDue } from '@Storegrill/shared';
 import type { PrismaClient } from '@prisma/client';
 import { prisma as db } from '../db/prisma.js';
 import { startImportJob } from './import-engine.js';
+import { pollTrackedShipments } from './carriers.js';
 
 const TICK_MS = 60_000;
 
@@ -47,5 +48,14 @@ async function tick(prisma: PrismaClient): Promise<void> {
     });
     console.log(`[import-scheduler] triggered job ${job.id} for schedule "${schedule.name}"`);
     await startImportJob(job.id);
+  }
+
+  try {
+    const result = await pollTrackedShipments();
+    if (result.updated > 0) {
+      console.log(`[tracking-scheduler] polled ${result.polled} shipments, updated ${result.updated}`);
+    }
+  } catch (error) {
+    console.error('[tracking-scheduler] poll failed:', error instanceof Error ? error.message : error);
   }
 }

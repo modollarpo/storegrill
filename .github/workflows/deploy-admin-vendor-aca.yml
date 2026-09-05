@@ -1,0 +1,149 @@
+name: Deploy Admin + Vendor (ACA)
+
+on:
+  workflow_dispatch:
+    inputs:
+      admin_version:
+        description: 'Admin image tag'
+        required: true
+        default: v1
+      vendor_version:
+        description: 'Vendor image tag'
+        required: true
+        default: v1
+      branch:
+        description: 'Branch/ref to build images from'
+        required: false
+        default: master
+      deploy_regions:
+        description: 'Comma-separated regions to deploy (UK,US,EU,AE,NG)'
+        required: false
+        default: 'UK,US,EU,AE,NG'
+
+env:
+  ACR: storegrillcr.azurecr.io
+
+jobs:
+  build:
+    name: Build images
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        region: [UK, US, EU, AE, NG]
+        include:
+          - region: UK
+            region_lc: uk
+            api_url: https://uk-api.storegrill.net
+          - region: US
+            region_lc: us
+            api_url: https://us-api.storegrill.net
+          - region: EU
+            region_lc: eu
+            api_url: https://eu-api.storegrill.net
+          - region: AE
+            region_lc: ae
+            api_url: https://ae-api.storegrill.net
+          - region: NG
+            region_lc: ng
+            api_url: https://ng-api.storegrill.net
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Docker login to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ACR }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build & push Admin image
+        run: |
+          docker build \
+            --build-arg CACHEBUST=${{ github.run_id }} \
+            --build-arg NEXT_PUBLIC_API_URL=${{ matrix.api_url }} \
+            -t ${{ env.ACR }}/admin-${{ matrix.region_lc }}:${{ github.event.inputs.admin_version }} \
+            -f apps/admin/Dockerfile .
+          docker push ${{ env.ACR }}/admin-${{ matrix.region_lc }}:${{ github.event.inputs.admin_version }}
+
+      - name: Build & push Vendor image
+        run: |
+          docker build \
+            --build-arg CACHEBUST=${{ github.run_id }} \
+            --build-arg NEXT_PUBLIC_API_URL=${{ matrix.api_url }} \
+            -t ${{ env.ACR }}/vendor-${{ matrix.region_lc }}:${{ github.event.inputs.vendor_version }} \
+            -f apps/vendor-portal/Dockerfile .
+          docker push ${{ env.ACR }}/vendor-${{ matrix.region_lc }}:${{ github.event.inputs.vendor_version }}
+
+  deploy:
+    name: Deploy ${{ matrix.region }}
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - region: UK
+            region_lc: uk
+            rg: rg-storegrill-prod-uk
+            admin_app: app-storegrill-admin-prod-uk
+            vendor_app: app-storegrill-vendor-prod-uk
+            api_url: https://uk-api.storegrill.net
+          - region: US
+            region_lc: us
+            rg: rg-storegrill-prod-us
+            admin_app: app-storegrill-admin-prod-us
+            vendor_app: app-storegrill-vendor-prod-us
+            api_url: https://us-api.storegrill.net
+          - region: EU
+            region_lc: eu
+            rg: rg-storegrill-prod-eu
+            admin_app: app-storegrill-admin-prod-eu
+            vendor_app: app-storegrill-vendor-prod-eu
+            api_url: https://eu-api.storegrill.net
+          - region: AE
+            region_lc: ae
+            rg: rg-storegrill-prod-ae
+            admin_app: app-storegrill-admin-prod-ae
+            vendor_app: app-storegrill-vendor-prod-ae
+            api_url: https://ae-api.storegrill.net
+          - region: NG
+            region_lc: ng
+            rg: rg-storegrill-prod-ng
+            admin_app: app-storegrill-admin-prod-ng
+            vendor_app: app-storegrill-vendor-prod-ng
+            api_url: https://ng-api.storegrill.net
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy Admin to Container App
+        if: contains(inputs.deploy_regions, matrix.region)
+        run: |
+          az account set -s "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          az containerapp update \
+            --resource-group ${{ matrix.rg }} \
+            --name ${{ matrix.admin_app }} \
+            --image ${{ env.ACR }}/admin-${{ matrix.region_lc }}:${{ github.event.inputs.admin_version }} \
+            --set-env-vars NEXT_PUBLIC_API_URL=${{ matrix.api_url }} \
+            --output none
+
+      - name: Deploy Vendor to Container App
+        if: contains(inputs.deploy_regions, matrix.region)
+        run: |
+          az account set -s "${{ secrets.ARM_SUBSCRIPTION_ID }}"
+          az containerapp update \
+            --resource-group ${{ matrix.rg }} \
+            --name ${{ matrix.vendor_app }} \
+            --image ${{ env.ACR }}/vendor-${{ matrix.region_lc }}:${{ github.event.inputs.vendor_version }} \
+            --set-env-vars NEXT_PUBLIC_API_URL=${{ matrix.api_url }} \
+            --output none

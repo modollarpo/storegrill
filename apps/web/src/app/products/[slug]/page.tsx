@@ -8,6 +8,7 @@ import { DEFAULT_REGIONS } from '@Storegrill/shared';
 import { Breadcrumb } from '@/components/navigation/Breadcrumb';
 import { ProductDetailClient } from '@/components/commerce/ProductDetailClient';
 import { Tabs } from '@/components/navigation/Tabs';
+import { Accordion } from '@/components/ui/Accordion';
 import { ReviewsTab } from '@/components/feedback/ReviewsTab';
 import { ProductCard, type ProductCardData } from '@/components/commerce/ProductCard';
 import { FrequentlyBoughtTogether } from '@/components/commerce/FrequentlyBoughtTogether';
@@ -223,14 +224,20 @@ export default async function ProductPage({ params }: PdpProps) {
         locale={language}
         tabs={{
           description: (
-            <Tabs
-              initial="description"
+            <Accordion
+              variant="card"
+              allowMultiple={false}
               items={[
                 {
                   id: 'description',
-                  label: translatedTabs[0],
-                  icon: <DescriptionIcon />,
-                  content: (
+                  title: (
+                    <span className="flex items-center gap-2 text-base font-extrabold text-text-primary">
+                      <DescriptionIcon />
+                      {translatedTabs[0]}
+                    </span>
+                  ),
+                  defaultOpen: true,
+                  children: (
                     <div id="reviews-tab-anchor">
                       {product.shortDescription && (
                         <p className="text-base font-semibold text-text-primary leading-relaxed">{product.shortDescription}</p>
@@ -277,15 +284,23 @@ export default async function ProductPage({ params }: PdpProps) {
                 },
                 {
                   id: 'specs',
-                  label: translatedTabs[1],
-                  icon: <SpecsIcon />,
-                  content: <SpecsSections product={product as unknown as Record<string, unknown>} />,
+                  title: (
+                    <span className="flex items-center gap-2 text-base font-extrabold text-text-primary">
+                      <SpecsIcon />
+                      {translatedTabs[1]}
+                    </span>
+                  ),
+                  children: <SpecsSections product={product as unknown as Record<string, unknown>} />,
                 },
                 {
                   id: 'shipping',
-                  label: translatedTabs[2],
-                  icon: <ShippingIcon />,
-                  content: (
+                  title: (
+                    <span className="flex items-center gap-2 text-base font-extrabold text-text-primary">
+                      <ShippingIcon />
+                      {translatedTabs[2]}
+                    </span>
+                  ),
+                  children: (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="shipping-tab">
                       <ShippingCard
                         icon={<TruckIcon />}
@@ -327,10 +342,14 @@ export default async function ProductPage({ params }: PdpProps) {
                 },
                 {
                   id: 'reviews',
-                  label: translatedTabs[3],
-                  icon: <ReviewsIcon />,
+                  title: (
+                    <span className="flex items-center gap-2 text-base font-extrabold text-text-primary">
+                      <ReviewsIcon />
+                      {translatedTabs[3]}
+                    </span>
+                  ),
                   badge: product.reviewCount,
-                  content: (
+                  children: (
                     <div id="reviews-tab" aria-label="Customer reviews">
                       <ReviewsTab
                         productId={product.id}

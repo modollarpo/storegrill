@@ -163,18 +163,18 @@ function Header({ categories }: HeaderProps) {
                 <a href="/track" className="text-[13px] font-medium hover:opacity-80 transition-opacity">
                   Track Order
                 </a>
-                {REGION_META.find(r => r.key === regionKey)?.languages.length ?? 0 > 1 ? (
-                  <select
-                    aria-label="Switch language"
-                    value={language}
-                    onChange={e => setLanguage(e.target.value)}
-                    className="bg-transparent border-none text-[13px] font-medium text-white cursor-pointer outline-none [&>option]:text-text-primary"
-                  >
-                    {(REGION_META.find(r => r.key === regionKey)?.languages || []).map(l => (
-                      <option key={l.code} value={l.code}>{l.nativeName}</option>
-                    ))}
-                  </select>
-                ) : null}
+{REGION_META.find(r => r.key === regionKey)?.languages?.length ? (
+  <select
+    aria-label="Switch language"
+    value={language}
+    onChange={e => setLanguage(e.target.value)}
+    className="bg-transparent border-none text-[13px] font-medium text-white cursor-pointer outline-none [&>option]:text-text-primary"
+  >
+    {(REGION_META.find(r => r.key === regionKey)?.languages || []).map(l => (
+      <option key={l.code} value={l.code}>{l.nativeName}</option>
+    ))}
+  </select>
+) : null}
               </nav>
             </div>
           </div>

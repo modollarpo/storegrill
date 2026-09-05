@@ -33,6 +33,7 @@ import { marketingRouter } from './routes/marketing.js';
 import { marketingCampaignsRouter } from './routes/marketing-campaigns.js';
 import { returnsRouter } from './routes/returns.js';
 import { disputesRouter } from './routes/disputes.js';
+import { openApiRouter } from './routes/openapi.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 export { prisma } from './db/prisma.js';
@@ -108,6 +109,7 @@ app.use('/api/v1/vendor/marketing', marketingRouter);
 app.use('/api/v1/marketing/campaigns', marketingCampaignsRouter);
 app.use('/api/v1/returns', returnsRouter);
 app.use('/api/v1/disputes', disputesRouter);
+app.use('/api/v1/docs', openApiRouter);
 
 app.use(errorHandler);
 

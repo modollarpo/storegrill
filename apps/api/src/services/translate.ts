@@ -7,7 +7,11 @@ const BATCH_SIZE = 40;
 const MAX_TEXT_LENGTH = 5000;
 const REQUEST_TIMEOUT_MS = 15000;
 
-export const SUPPORTED_LANGUAGES = new Set(['en', 'de', 'fr', 'es', 'it', 'ar', 'hi', 'pt']);
+export const SUPPORTED_LANGUAGES = new Set([
+  'en', 'de', 'fr', 'es', 'it', 'pt', 'ar', 'hi',
+  'nl', 'sv', 'no', 'da', 'pl', 'cs', 'bg', 'hr', 'ro',
+  'ru', 'zh', 'ja', 'ko',
+]);
 
 function hashText(text: string, source: string, target: string): string {
   return createHash('sha256').update(`${source}:${target}:${text}`).digest('hex');

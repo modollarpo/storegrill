@@ -20,6 +20,7 @@ export interface AuthUser {
 
 export interface AuthRequest extends Request {
   user?: AuthUser;
+  merchant?: { vendorId: string; role: string };
 }
 
 export function generateTokens(user: AuthUser, tokenVersion = 0) {

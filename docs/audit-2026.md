@@ -206,8 +206,21 @@ tests, observability hooks, and docs updated.
    Refund row, webhook refund rows via `recordRefund`, warehouse regionKey,
    admin analytics region currencies, import-engine Postgres skip-guard).
    BigInt columns are `Number()`-converted at JSON boundaries.
-3. **P3 Merchant/catalog/ingestion** — merchant lifecycle enforcement,
-   `MerchantMember` RBAC, `ImportMappingTemplate`, async job queue framing.
+3. **P3 Merchant/catalog/ingestion** — ✅ DONE: `services/merchant-lifecycle.ts`
+   (legacy → canonical status adapter delegating to the pure engine; approve =
+   composite pass through the VERIFIED/KYC gate; KYC decision guard; fixed the
+   engine's overly strict KYC gate on entering `UNDER_REVIEW` and added the
+   `UNDER_REVIEW → REJECTED` review-veto edge), enforced in admin
+   `PUT /vendors/:id/status`, `POST /vendors/:id/approve|reject`;
+   `services/merchant-rbac.ts` (`resolveMerchantContext` = ACTIVE
+   `MerchantMember` → else vendor owner; `requireMerchantPermission` middleware
+   with role + explicit permission overrides) wired into `routes/marketing.ts`,
+   merchant member CRUD in `routes/admin.ts` (`/api/v1/admin/members`);
+   `ImportMappingTemplate` CRUD in `routes/imports.ts`
+   (`/api/v1/vendor/imports/templates`, vendor-scoped + global defaults);
+   async job queue framing `services/job-queue.ts` (`executeJob` pure runner /
+   lifecycle, `queueImportJob` swallows surprises into a FAILED status) used by
+   the import routes.
 4. **P4 Shipping/fulfilment/carriers** — carrier adapter interface, canonical
    status enum + mapper, webhook + polling ingestion, tracking UX.
 5. **P5 Deals/profitability** — deal lifecycle, deal cargo, profitability

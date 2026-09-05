@@ -4,6 +4,8 @@ import { prisma } from '../index.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import { slugify } from '../utils/slugify.js';
 import { generatePayouts } from '../services/payouts.js';
+import { assertMerchantApproval, assertMerchantTransition } from '../services/merchant-lifecycle.js';
+import { MerchantPermission } from '@Storegrill/shared';
 
 const router = Router();
 
@@ -150,18 +152,32 @@ router.put('/vendors/:id/status', async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const body = z.object({ status: z.enum(['ACTIVE', 'SUSPENDED', 'BANNED']) }).parse(req.body);
 
+  const existing = await prisma.vendorProfile.findUnique({ where: { id }, select: { id: true, status: true, kycStatus: true, userId: true } });
+  if (!existing) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Vendor not found' } });
+  }
+
+  const decision = assertMerchantTransition({
+    from: existing.status,
+    to: body.status,
+    kycVerified: existing.kycStatus === 'APPROVED',
+  });
+  if (!decision.ok) {
+    return res.status(409).json({ error: { code: 'INVALID_STATE', message: decision.reason } });
+  }
+
   const vendor = await prisma.vendorProfile.update({
     where: { id },
     data: { status: body.status },
   });
 
-  await audit(req, 'VENDOR_STATUS_CHANGED', 'VendorProfile', id, { status: body.status });
+  await audit(req, 'VENDOR_STATUS_CHANGED', 'VendorProfile', id, { status: body.status, from: existing.status });
 
   if (body.status !== 'ACTIVE') {
     await prisma.storefront.updateMany({ where: { vendorId: id }, data: { enabled: false } });
   } else {
     await prisma.storefront.updateMany({ where: { vendorId: id }, data: { enabled: true } });
-    await prisma.user.update({ where: { id: vendor.userId }, data: { role: 'VENDOR' } });
+    await prisma.user.update({ where: { id: existing.userId }, data: { role: 'VENDOR' } });
   }
 
   res.json({ vendor: { ...vendor, rating: Number(vendor.rating) } });
@@ -189,8 +205,10 @@ router.post('/vendors/:id/approve', async (req: AuthRequest, res: Response) => {
   if (!vendor) {
     return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Vendor not found' } });
   }
-  if (!['UNDER_REVIEW', 'PENDING'].includes(vendor.status)) {
-    return res.status(409).json({ error: { code: 'INVALID_STATE', message: `Cannot approve a ${vendor.status} application` } });
+
+  const decision = assertMerchantApproval(vendor.status, true);
+  if (!decision.ok) {
+    return res.status(409).json({ error: { code: 'INVALID_STATE', message: decision.reason } });
   }
 
   const pct = await getCommissionPct();
@@ -230,7 +248,9 @@ router.post('/vendors/:id/reject', async (req: AuthRequest, res: Response) => {
   if (!vendor) {
     return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Vendor not found' } });
   }
-  if (['ACTIVE', 'SUSPENDED', 'BANNED'].includes(vendor.status)) {
+
+  const decision = assertMerchantTransition({ from: vendor.status, to: 'REJECTED', kycVerified: true });
+  if (!decision.ok) {
     return res.status(409).json({ error: { code: 'INVALID_STATE', message: `Use suspend/ban for an active store` } });
   }
 
@@ -1236,6 +1256,135 @@ router.put('/settings', async (req: AuthRequest, res: Response) => {
   res.json({
     settings: results.map(r => ({ ...r, value: safeJsonParse(r.value) })),
   });
+});
+
+router.get('/members', async (req: AuthRequest, res: Response) => {
+  const query = z.object({
+    vendorId: z.string().optional(),
+    status: z.string().optional(),
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+  }).parse(req.query);
+
+  const where: any = {
+    ...(query.vendorId && { vendorId: query.vendorId }),
+    ...(query.status && { status: query.status }),
+  };
+
+  const [members, total] = await Promise.all([
+    prisma.merchantMember.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (query.page - 1) * query.limit,
+      take: query.limit,
+      include: { user: { select: { email: true, name: true } } },
+    }),
+    prisma.merchantMember.count({ where }),
+  ]);
+
+  res.json({
+    members: members.map((m: any) => ({
+      id: m.id,
+      vendorId: m.vendorId,
+      userId: m.userId,
+      email: m.user.email,
+      name: m.user.name,
+      role: m.role,
+      status: m.status,
+      permissions: safeJsonParse(m.permissions),
+      invitedAt: m.invitedAt,
+      joinedAt: m.joinedAt,
+    })),
+    pagination: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) },
+  });
+});
+
+const ASSIGNABLE_MEMBER_ROLES = ['MERCHANT_OWNER', 'MERCHANT_MANAGER', 'MERCHANT_FULFILMENT'] as const;
+const MEMBER_PERMISSION_VALUES = Object.values(MerchantPermission);
+
+const adminMemberCreate = z.object({
+  vendorId: z.string().min(1),
+  email: z.string().email(),
+  role: z.enum(ASSIGNABLE_MEMBER_ROLES),
+  permissions: z.array(z.enum(MEMBER_PERMISSION_VALUES as any)).optional(),
+});
+
+const adminMemberUpdate = z.object({
+  role: z.enum(ASSIGNABLE_MEMBER_ROLES).optional(),
+  permissions: z.array(z.enum(MEMBER_PERMISSION_VALUES as any)).optional(),
+  status: z.enum(['ACTIVE', 'INVITED', 'REMOVED']).optional(),
+});
+
+router.post('/members', async (req: AuthRequest, res: Response) => {
+  const body = adminMemberCreate.parse(req.body);
+
+  const user = await prisma.user.findUnique({ where: { email: body.email } });
+  if (!user) {
+    return res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: `No account matches ${body.email}` } });
+  }
+
+  const vendor = await prisma.vendorProfile.findUnique({ where: { id: body.vendorId } });
+  if (!vendor) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Vendor not found' } });
+  }
+
+  const member = await prisma.merchantMember.upsert({
+    where: { vendorId_userId: { vendorId: body.vendorId, userId: user.id } },
+    create: {
+      vendorId: body.vendorId,
+      userId: user.id,
+      role: body.role,
+      permissions: JSON.stringify(body.permissions ?? []),
+      invitedAt: new Date(),
+    },
+    update: { role: body.role, status: 'ACTIVE', permissions: JSON.stringify(body.permissions ?? []) },
+  });
+
+  await audit(req, 'MERCHANT_MEMBER_ADDED', 'MerchantMember', member.id, {
+    vendorId: body.vendorId,
+    email: body.email,
+    role: body.role,
+  });
+
+  res.status(201).json({ member: { ...member, permissions: safeJsonParse(member.permissions) } });
+});
+
+router.patch('/members/:id', async (req: AuthRequest, res: Response) => {
+  const body = adminMemberUpdate.parse(req.body);
+
+  const existing = await prisma.merchantMember.findUnique({ where: { id: req.params.id } });
+  if (!existing) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Merchant member not found' } });
+  }
+
+  const member = await prisma.merchantMember.update({
+    where: { id: existing.id },
+    data: {
+      ...(body.role && { role: body.role }),
+      ...(body.status && { status: body.status }),
+      permissions:
+        body.permissions === undefined
+          ? undefined
+          : JSON.stringify(body.permissions),
+    },
+  });
+
+  await audit(req, 'MERCHANT_MEMBER_UPDATED', 'MerchantMember', member.id, {
+    vendorId: member.vendorId,
+    changes: { ...(body.role && { role: body.role }), ...(body.status && { status: body.status }) },
+  });
+
+  res.json({ member: { ...member, permissions: safeJsonParse(member.permissions) } });
+});
+
+router.delete('/members/:id', async (req: AuthRequest, res: Response) => {
+  const member = await prisma.merchantMember.findUnique({ where: { id: req.params.id } });
+  if (!member) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Merchant member not found' } });
+  }
+  await prisma.merchantMember.delete({ where: { id: member.id } });
+  await audit(req, 'MERCHANT_MEMBER_REMOVED', 'MerchantMember', member.id, { vendorId: member.vendorId });
+  res.status(204).end();
 });
 
 function safeJsonParse(raw: string) {

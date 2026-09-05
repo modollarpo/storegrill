@@ -54,7 +54,7 @@ export class WooCommerceConnector implements Connector {
         images?: Array<{ src?: string }>;
       }>;
 
-      return data.map(item => ({
+      return data.map((item: { sku?: string; name: string; regular_price?: string; stock_quantity?: number; images?: Array<{ src?: string }> }) => ({
         sku: item.sku || `wc-${Math.random().toString(36).substring(2, 9)}`,
         name: item.name,
         priceMinorUnits: Math.round(parseFloat(item.regular_price || '0') * 100),

@@ -27,4 +27,5 @@ export * from './domain/settlement';
 export * from './domain/trust';
 export * from './domain/deal-score';
 export * from './domain/carrier';
+export * from './domain/recommendations';
 export * from './payout-engine';

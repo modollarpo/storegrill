@@ -228,7 +228,7 @@ tests, observability hooks, and docs updated.
 8. **P8 AI merchandising** — ✅ DONE: grounded AI merchandising service (`apps/api/src/services/ai-merchandising.ts`) with feature flagging (`AI_MERCHANDISING_ENABLED`) and strict source fact-checking validation; unit tested (`ai-merchandising.test.ts`).
 9. **P9 Marketing/campaigns/attribution** — ✅ DONE: campaign marketplace & tracking routes (`/api/v1/marketing/campaigns` & `/events`) supporting campaign creation, budgeting, channel attribution events, and email notification hooks.
 10. **P10 Connectors** — ✅ DONE: `Connector` capability interface and WooCommerce connector implementation (`apps/api/src/services/woocommerce-connector.ts`) supporting product catalog import, connection testing, and order status sync; unit tested (`woocommerce-connector.test.ts`).
-11. **P11 Recommendations + merchant intelligence.**
+11. **P11 Recommendations + merchant intelligence** — ✅ DONE: recommendation engine and merchant intelligence analysis (`packages/shared/src/domain/recommendations.ts`) covering category-affinity product recommendations, health scoring, sales velocity classification, and actionrable vendor insights; unit tested (`recommendations.test.ts`).
 12. **P12 Hardening** — i18n JSON, OpenAPI, observability, security pass,
     performance, final E2E.
 

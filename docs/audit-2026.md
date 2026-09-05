@@ -225,8 +225,7 @@ tests, observability hooks, and docs updated.
 5. **P5 Deals/profitability** — ✅ DONE: deal valuation service (`apps/api/src/services/deal-valuation.ts`) bridging deterministic integer minor-unit profitability (`computeProfitability`), commission calculation (`computeCommission`), and explainable deal score (`computeDealScore`), exposed via `POST /api/v1/deals/evaluate`; unit tested (`deal-valuation.test.ts`).
 6. **P6 Commission/ledger/settlement** — ✅ DONE: double-entry financial ledger service (`apps/api/src/services/ledger.ts`) with balance validation and account code auto-provisioning, complementing shared commission rules (`computeCommission`), settlement policies (`computeSettlementEligibility`), and payout generation (`services/payouts.ts`); unit tested (`ledger.test.ts`).
 7. **P7 Returns/disputes/buyer protection** — ✅ DONE: return requests (`/api/v1/returns`) with status lifecycle (SUBMITTED → APPROVED/REJECTED → ITEM_RECEIVED → REFUNDED/CLOSED) and dispute resolution / evidence upload workflows (`/api/v1/disputes`).
-8. **P8 AI merchandising** — grounded AI analysis service (title/desc rewrite
-   validated against source facts), feature-flagged.
+8. **P8 AI merchandising** — ✅ DONE: grounded AI merchandising service (`apps/api/src/services/ai-merchandising.ts`) with feature flagging (`AI_MERCHANDISING_ENABLED`) and strict source fact-checking validation; unit tested (`ai-merchandising.test.ts`).
 9. **P9 Marketing/campaigns/attribution** — campaign marketplace, email
    engine adapter hooks, attribution model.
 10. **P10 Connectors** — `Connector` capability interface + WooCommerce

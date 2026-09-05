@@ -6,7 +6,7 @@ import { CartProvider } from '@/components/providers/CartContext';
 import { WishlistProvider } from '@/components/providers/WishlistContext';
 import { RegionProvider } from '@/components/providers/RegionContext';
 import Header from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
+import { MobileBottomNavWrapper } from '@/components/navigation/MobileBottomNavWrapper';
 import { getRequestContext } from '@/lib/server-context';
 import { getCategories } from '@/lib/api-client';
 import { CookieBanner } from '@/components/layout/CookieBanner';
@@ -98,8 +98,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     <div className="flex flex-col min-h-screen">
                       <a href="#main-content" className="skip-link">Skip to main content</a>
                       <Header categories={categories} />
-                      <main id="main-content" className="flex-1">{children}</main>
+                      <main id="main-content" className="flex-1 pb-16 lg:pb-0">{children}</main>
                       <Footer />
+                      <MobileBottomNavWrapper categories={categories} />
                       <CookieBanner />
                       <ScrollToTop />
                       <PWAProvider />

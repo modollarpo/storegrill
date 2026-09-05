@@ -1,27 +1,8 @@
 import { z } from 'zod';
-import { PAYMENT_METHODS } from '../models/region';
+import { CheckoutSchema } from '../models/order';
 
-export const CheckoutSchema = z.object({
-  shippingAddress: z.object({
-    street: z.string().min(1).max(200),
-    city: z.string().min(1).max(100),
-    state: z.string().min(1).max(100),
-    zip: z.string().min(1).max(20),
-    country: z.string().length(2),
-  }),
-  billingAddress: z.object({
-    street: z.string().min(1).max(200),
-    city: z.string().min(1).max(100),
-    state: z.string().min(1).max(100),
-    zip: z.string().min(1).max(20),
-    country: z.string().length(2),
-  }).optional(),
-  paymentMethod: z.enum(PAYMENT_METHODS),
-  regionKey: z.string().min(2).max(10).default('US'),
-  shippingOptionId: z.string().optional(),
-  couponCode: z.string().max(50).optional(),
-  notes: z.string().max(500).optional(),
-});
+export { CheckoutSchema };
+export type CheckoutInput = z.infer<typeof CheckoutSchema>;
 
 export const OrderFilterSchema = z.object({
   status: z.enum([
@@ -55,7 +36,6 @@ export const ShipmentUpdateSchema = z.object({
   actualDelivery: z.coerce.date().optional(),
 });
 
-export type CheckoutInput = z.infer<typeof CheckoutSchema>;
 export type OrderFilterInput = z.infer<typeof OrderFilterSchema>;
 export type RefundRequestInput = z.infer<typeof RefundRequestSchema>;
 export type ShipmentCreateInput = z.infer<typeof ShipmentCreateSchema>;

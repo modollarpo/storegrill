@@ -1,7 +1,7 @@
 ﻿import { Router, Response } from 'express';
 import { prisma } from '../index.js';
 import { optionalAuth, AuthRequest } from '../middleware/auth.js';
-import { DEFAULT_REGIONS } from '@Storegrill/shared';
+import { DEFAULT_REGIONS, parseStringList } from '@Storegrill/shared';
 
 const router = Router();
 
@@ -49,8 +49,8 @@ router.get('/currencies', async (_req: AuthRequest, res: Response) => {
   });
 
   const currencies = [...new Set(regions.flatMap((r: any) => {
-    const parsed = typeof r.currencies === 'string' ? JSON.parse(r.currencies) : r.currencies;
-    return Array.isArray(parsed) ? parsed : [parsed];
+    const parsed = parseStringList(r.currencies);
+    return parsed.length > 0 ? parsed : [r.defaultCurrency].filter(Boolean);
   }))];
   res.json({ currencies });
 });
@@ -62,8 +62,8 @@ router.get('/languages', async (_req: AuthRequest, res: Response) => {
   });
 
   const languages = [...new Set(regions.flatMap((r: any) => {
-    const parsed = typeof r.languages === 'string' ? JSON.parse(r.languages) : r.languages;
-    return Array.isArray(parsed) ? parsed : [parsed];
+    const parsed = parseStringList(r.languages);
+    return parsed.length > 0 ? parsed : [r.defaultLanguage].filter(Boolean);
   }))];
   res.json({ languages });
 });

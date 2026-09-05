@@ -461,10 +461,32 @@ router.post('/:id/cancel', async (req: AuthRequest, res: Response) => {
     });
   }
 
-  await prisma.order.update({
-    where: { id },
-    data: { status: 'CANCELLED', paymentStatus: 'REFUNDED' },
-  });
+  await prisma.$transaction([
+    prisma.order.update({
+      where: { id },
+      data: { status: 'CANCELLED', paymentStatus: 'REFUNDED' },
+    }),
+    // A cancellation that refunds payment must leave an immutable financial record.
+    prisma.refund.create({
+      data: {
+        orderId: id,
+        amountMinorUnits: order.totalMinorUnits,
+        currencyCode: order.currencyCode,
+        reason: 'Order cancelled by customer',
+        status: 'PROCESSED',
+        processedAt: new Date(),
+      },
+    }),
+    prisma.auditLog.create({
+      data: {
+        userId: req.user!.id,
+        action: 'ORDER_CANCELLED',
+        entity: 'Order',
+        entityId: id,
+        after: JSON.stringify({ status: 'CANCELLED', paymentStatus: 'REFUNDED' }),
+      },
+    }),
+  ]);
 
   for (const item of order.items) {
     if (item.variantId) {

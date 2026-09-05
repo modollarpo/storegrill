@@ -428,10 +428,10 @@ router.put('/me/products/:id/stock', authenticate, authorize('VENDOR'), async (r
     });
   }
 
-  const warehouse = await prisma.warehouse.findFirst({ where: { regionKey: 'UK', active: true } });
+  const warehouse = await prisma.warehouse.findFirst({ where: { regionKey: vendor.warehouseRegionKey ?? 'UK', active: true } });
   if (!warehouse) {
     const created = await prisma.warehouse.create({
-      data: { name: 'Primary Warehouse', regionKey: 'UK' },
+      data: { name: 'Primary Warehouse', regionKey: vendor.warehouseRegionKey ?? 'UK' },
     });
     await prisma.inventoryLedger.create({
       data: {

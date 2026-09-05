@@ -135,6 +135,12 @@ async function ensureHouseVendor() {
   });
 }
 
+const hasPostgresTestDb =
+  (() => {
+    const url = process.env.TEST_DATABASE_URL;
+    return Boolean(url && /^postgres(ql)?:\/\//i.test(url));
+  })();
+
 beforeAll(async () => {
   const testDatabaseUrl = process.env.TEST_DATABASE_URL;
   if (!testDatabaseUrl) {
@@ -149,7 +155,7 @@ beforeAll(async () => {
   houseVendor = await ensureHouseVendor();
 });
 
-describe('import engine (integration)', () => {
+describe.skipIf(!hasPostgresTestDb)('import engine (integration)', () => {
   it('runs the full lifecycle: create, unchanged re-run, dry-run diff', async () => {
     await cleanTestArtifacts();
     try {

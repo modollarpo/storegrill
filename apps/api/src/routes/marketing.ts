@@ -2,8 +2,10 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
+import { requireMerchantPermission } from '../services/merchant-rbac.js';
 import {
   MARKETING_CHANNEL_VALUES,
+  MerchantPermission,
   computeMarketingFee,
   MarketingFeeModel,
   type MarketingChannelValue,
@@ -18,7 +20,7 @@ import {
 
 const router = Router();
 
-router.use(authenticate, authorize('VENDOR'));
+router.use(authenticate);
 
 const CHANNEL_ENUM = z.enum(MARKETING_CHANNEL_VALUES as unknown as [MarketingChannelValue, ...MarketingChannelValue[]]);
 
@@ -34,7 +36,11 @@ const PARTICIPATION_SCHEMA = z.object({
 });
 
 async function requireVendor(req: AuthRequest, res: Response) {
-  const vendor = await prisma.vendorProfile.findUnique({ where: { userId: req.user!.id } });
+  if (!req.merchant) {
+    res.status(403).json({ error: { code: 'MERCHANT_CONTEXT_REQUIRED', message: 'No active merchant context for this user' } });
+    return null;
+  }
+  const vendor = await prisma.vendorProfile.findUnique({ where: { id: req.merchant.vendorId } });
   if (!vendor) {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Vendor profile not found' } });
     return null;
@@ -42,7 +48,7 @@ async function requireVendor(req: AuthRequest, res: Response) {
   return vendor;
 }
 
-router.get('/participation', async (req: AuthRequest, res: Response) => {
+router.get('/participation', requireMerchantPermission(MerchantPermission.MARKETING_OPT_IN), async (req: AuthRequest, res: Response) => {
   const vendor = await requireVendor(req, res);
   if (!vendor) return;
 
@@ -50,7 +56,7 @@ router.get('/participation', async (req: AuthRequest, res: Response) => {
   res.json({ channels: rows.map(r => ({ ...r, fixedFeeMinorUnits: r.fixedFeeMinorUnits != null ? Number(r.fixedFeeMinorUnits) : null, budgetMinorUnits: r.budgetMinorUnits != null ? Number(r.budgetMinorUnits) : null })) });
 });
 
-router.put('/participation', async (req: AuthRequest, res: Response) => {
+router.put('/participation', requireMerchantPermission(MerchantPermission.MARKETING_OPT_IN), async (req: AuthRequest, res: Response) => {
   const vendor = await requireVendor(req, res);
   if (!vendor) return;
 
@@ -85,7 +91,7 @@ const PREVIEW_SCHEMA = z.object({
   channel: CHANNEL_ENUM,
 });
 
-router.post('/marketing-fee/preview', async (req: AuthRequest, res: Response) => {
+router.post('/marketing-fee/preview', requireMerchantPermission(MerchantPermission.MARKETING_OPT_IN), async (req: AuthRequest, res: Response) => {
   const vendor = await requireVendor(req, res);
   if (!vendor) return;
 
@@ -125,7 +131,7 @@ const COMMISSION_PREVIEW_SCHEMA = z.object({
   regionKey: z.string().optional(),
 });
 
-router.post('/commission/preview', async (req: AuthRequest, res: Response) => {
+router.post('/commission/preview', requireMerchantPermission(MerchantPermission.FINANCE_READ), async (req: AuthRequest, res: Response) => {
   const vendor = await requireVendor(req, res);
   if (!vendor) return;
 
@@ -194,7 +200,7 @@ router.post('/commission/preview', async (req: AuthRequest, res: Response) => {
   });
 });
 
-router.get('/channels', async (_req: AuthRequest, res: Response) => {
+router.get('/channels', authorize('VENDOR'), async (_req: AuthRequest, res: Response) => {
   const channels = await prisma.marketingChannel.findMany({
     orderBy: { channel: 'asc' },
     select: { channel: true, name: true, enabled: true, defaultFeeModel: true },

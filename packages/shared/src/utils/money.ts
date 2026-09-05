@@ -93,6 +93,51 @@ export function roundUpTo99(money: Money): Money {
   };
 }
 
+export interface MoneyLike {
+  amountMinorUnits: bigint;
+  currencyCode: string;
+}
+
+export function asMoney(value: Money | MoneyLike): Money {
+  return { amountMinorUnits: value.amountMinorUnits, currencyCode: value.currencyCode };
+}
+
+/**
+ * Percentage of an integer minor-unit amount as whole minor units.
+ * `basisPoints` is 10000 = 100%. Rounding is half-up on the integer result.
+ */
+export function percentOf(amountMinorUnits: bigint, basisPoints: number | bigint): bigint {
+  const bps = typeof basisPoints === 'bigint' ? basisPoints : BigInt(Math.round(basisPoints));
+  const numerator = amountMinorUnits * bps;
+  const divisor = 10000n;
+  const remainder = numerator % divisor;
+  const half = divisor / 2n;
+  const rounded = numerator / divisor + (remainder >= half ? 1n : 0n);
+  return rounded;
+}
+
+/** Converts a percentage (e.g. 12.5 for 12.5%) to basis points. */
+export function toBasisPoints(pct: number): number {
+  return Math.round(pct * 100);
+}
+
+/** Converts basis points (10000 = 100%) to a percentage. */
+export function basisPointsToPercent(bps: number | bigint): number {
+  const n = typeof bps === 'bigint' ? bps : BigInt(Math.round(bps));
+  return Number(n) / 100;
+}
+
+export function clampMoney(money: Money, minMinorUnits: bigint, maxMinorUnits: bigint): Money {
+  return {
+    amountMinorUnits: money.amountMinorUnits < minMinorUnits
+      ? minMinorUnits
+      : money.amountMinorUnits > maxMinorUnits
+        ? maxMinorUnits
+        : money.amountMinorUnits,
+    currencyCode: money.currencyCode,
+  };
+}
+
 export function formatMoney(money: Money): string {
   const decimals = getCurrencyDecimals(money.currencyCode);
   const amount = moneyToDecimal(money, decimals);

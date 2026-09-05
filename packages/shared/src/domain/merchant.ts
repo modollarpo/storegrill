@@ -40,7 +40,7 @@ export const MERCHANT_STATUS_VALUES: readonly MerchantStatusValue[] = [
 const MERCHANT_TRANSITIONS: Record<MerchantStatusValue, readonly MerchantStatusValue[]> = {
   [MerchantStatus.DRAFT]: [MerchantStatus.APPLICATION],
   [MerchantStatus.APPLICATION]: [MerchantStatus.UNDER_REVIEW, MerchantStatus.REJECTED],
-  [MerchantStatus.UNDER_REVIEW]: [MerchantStatus.VERIFIED, MerchantStatus.SUSPENDED, MerchantStatus.RESTRICTED],
+  [MerchantStatus.UNDER_REVIEW]: [MerchantStatus.VERIFIED, MerchantStatus.SUSPENDED, MerchantStatus.RESTRICTED, MerchantStatus.REJECTED],
   [MerchantStatus.VERIFIED]: [MerchantStatus.ACTIVE, MerchantStatus.SUSPENDED],
   [MerchantStatus.ACTIVE]: [MerchantStatus.SUSPENDED, MerchantStatus.RESTRICTED, MerchantStatus.TERMINATED],
   [MerchantStatus.SUSPENDED]: [MerchantStatus.ACTIVE, MerchantStatus.RESTRICTED, MerchantStatus.TERMINATED],
@@ -58,7 +58,7 @@ export function canTransitionMerchantStatus(from: MerchantStatusValue, to: Merch
 export const REQUIRED_KYC_FOR_PROGRESS: Record<MerchantStatusValue, boolean> = {
   [MerchantStatus.DRAFT]: false,
   [MerchantStatus.APPLICATION]: false,
-  [MerchantStatus.UNDER_REVIEW]: true,
+  [MerchantStatus.UNDER_REVIEW]: false,
   [MerchantStatus.VERIFIED]: true,
   [MerchantStatus.ACTIVE]: true,
   [MerchantStatus.SUSPENDED]: false,

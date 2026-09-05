@@ -202,7 +202,7 @@ export async function applyTrackingEvents(
   const hasShipped = rows.some(row => SHIPPED_TIERS.has(row.status));
 
   const orderStatusBefore = order.status;
-  const orderStatusAfter = order.status;
+  let orderStatusAfter = order.status;
   if (orderDelivered && order.status !== 'DELIVERED') {
     orderStatusAfter = 'DELIVERED';
   } else if (!orderDelivered && hasShipped && order.status === 'CONFIRMED') {

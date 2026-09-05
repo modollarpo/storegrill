@@ -6,6 +6,7 @@ import { CreateDealSchema, CreateCouponSchema, ApplyCouponSchema, DEFAULT_REGION
 import { slugify } from '../utils/slugify.js';
 import { validateCoupon } from '../services/coupons.js';
 import { loadActiveDeals } from '../services/deal-eval.js';
+import { evaluateDealEconomics } from '../services/deal-valuation.js';
 
 const router = Router();
 
@@ -148,6 +149,54 @@ router.post('/apply-coupon', optionalAuth, async (req: AuthRequest, res: Respons
       discountMinorUnits: result.coupon.discountMinorUnits,
     },
   });
+});
+
+const EVALUATE_DEAL_SCHEMA = z.object({
+  rrpMinorUnits: z.number().int().nonnegative(),
+  dealPriceMinorUnits: z.number().int().nonnegative(),
+  shippingRevenueMinorUnits: z.number().int().nonnegative().optional(),
+  taxMinorUnits: z.number().int().nonnegative().optional(),
+  paymentFeeMinorUnits: z.number().int().nonnegative().optional(),
+  estimatedFulfilmentCostMinorUnits: z.number().int().nonnegative().optional(),
+  refundReserveMinorUnits: z.number().int().nonnegative().optional(),
+  regionKey: z.string().optional(),
+  categoryId: z.string().optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  imageCount: z.number().int().nonnegative().optional(),
+  merchantRating: z.number().min(0).max(5).optional(),
+  availability: z.enum(['UNLIMITED', 'PLENTY', 'LOW', 'SOLD_OUT']).optional(),
+  stockRemaining: z.number().int().nonnegative().optional(),
+  purchaseCap: z.number().int().nonnegative().optional(),
+});
+
+router.post('/evaluate', optionalAuth, async (req: AuthRequest, res: Response) => {
+  const body = EVALUATE_DEAL_SCHEMA.parse(req.body);
+  const rules = await prisma.commissionRule.findMany({
+    where: { active: true },
+    select: {
+      id: true,
+      name: true,
+      basis: true,
+      rateBps: true,
+      minAmountMinorUnits: true,
+      maxAmountMinorUnits: true,
+      maxRateBps: true,
+      vendorId: true,
+      categoryId: true,
+      regionKey: true,
+      priority: true,
+      startsAt: true,
+      endsAt: true,
+    },
+  });
+
+  const evaluation = evaluateDealEconomics({
+    ...body,
+    commissionRules: rules as any,
+  });
+
+  res.json({ evaluation });
 });
 
 export { router as dealsRouter };

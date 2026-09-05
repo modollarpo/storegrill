@@ -92,7 +92,7 @@ Sales by region/vendor/category, top products, conversion funnel, import success
 
 ## 5. Data Model (SQL-first)
 
-Entities: `Region, Locale, CurrencyRate, User, CustomerProfile, VendorProfile, VendorPayoutAccount, Storefront, Product, ProductVariant, VariantImage, Category, Brand, Warehouse, InventoryLedger, Price, ProductRegionAvailability, ImportJob, ImportJobResult, ImportMappingTemplate, Deal, DealVariant, Coupon, Cart, CartItem, Order, OrderItem, Shipment, ShipmentEvent, Payment, Refund, Review, ReviewModeration, Payout, PayoutLine, Notification, AuditLog, SearchSynonym`.
+Entities: `Region, Locale, CurrencyRate, User, CustomerProfile, VendorProfile, VendorPayoutAccount, Storefront, Product, ProductVariant, VariantImage, Category, Brand, Warehouse, InventoryLedger, Price, ProductRegionAvailability, ImportJob, ImportJobResult, ImportMappingTemplate, Deal, DealVariant, Coupon, Cart, CartItem, Order, OrderItem, Shipment, ShipmentEvent, Payment, Refund, Review, ReviewModeration, Payout, PayoutLine, Notification, AuditLog, SearchSynonym, ContentPage, SiteSetting, BlogCategory, BlogTag, BlogPost, BlogPostTag`.
 
 ERD in `docs/data-model.md`.
 

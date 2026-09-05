@@ -134,6 +134,9 @@ jobs:
             --resource-group ${{ matrix.rg }} \
             --name ${{ matrix.admin_app }} \
             --image ${{ env.ACR }}/admin-${{ matrix.region_lc }}:${{ github.event.inputs.admin_version }} \
+            --registry-server ${{ env.ACR }} \
+            --registry-username ${{ secrets.ACR_USERNAME }} \
+            --registry-password ${{ secrets.ACR_PASSWORD }} \
             --set-env-vars NEXT_PUBLIC_API_URL=${{ matrix.api_url }} \
             --output none
 
@@ -145,5 +148,8 @@ jobs:
             --resource-group ${{ matrix.rg }} \
             --name ${{ matrix.vendor_app }} \
             --image ${{ env.ACR }}/vendor-${{ matrix.region_lc }}:${{ github.event.inputs.vendor_version }} \
+            --registry-server ${{ env.ACR }} \
+            --registry-username ${{ secrets.ACR_USERNAME }} \
+            --registry-password ${{ secrets.ACR_PASSWORD }} \
             --set-env-vars NEXT_PUBLIC_API_URL=${{ matrix.api_url }} \
             --output none

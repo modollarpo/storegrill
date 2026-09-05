@@ -6,6 +6,7 @@ import { CartProvider } from '@/components/providers/CartContext';
 import { WishlistProvider } from '@/components/providers/WishlistContext';
 import { RegionProvider } from '@/components/providers/RegionContext';
 import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import { MobileBottomNavWrapper } from '@/components/navigation/MobileBottomNavWrapper';
 import { getRequestContext } from '@/lib/server-context';
 import { getCategories } from '@/lib/api-client';

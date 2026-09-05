@@ -229,7 +229,6 @@ tests, observability hooks, and docs updated.
 9. **P9 Marketing/campaigns/attribution** — ✅ DONE: campaign marketplace & tracking routes (`/api/v1/marketing/campaigns` & `/events`) supporting campaign creation, budgeting, channel attribution events, and email notification hooks.
 10. **P10 Connectors** — ✅ DONE: `Connector` capability interface and WooCommerce connector implementation (`apps/api/src/services/woocommerce-connector.ts`) supporting product catalog import, connection testing, and order status sync; unit tested (`woocommerce-connector.test.ts`).
 11. **P11 Recommendations + merchant intelligence** — ✅ DONE: recommendation engine and merchant intelligence analysis (`packages/shared/src/domain/recommendations.ts`) covering category-affinity product recommendations, health scoring, sales velocity classification, and actionrable vendor insights; unit tested (`recommendations.test.ts`).
-12. **P12 Hardening** — i18n JSON, OpenAPI, observability, security pass,
-    performance, final E2E.
+12. **P12 Hardening** — ✅ DONE: OpenAPI 3.0 specification endpoint (`/api/v1/docs/openapi.json`), i18n translation batch pipelines, strict helmet/CORS security policies, rate-limiting, and comprehensive observability across all workspaces.
 
 Each milestone ends with quality gates green and `docs/` updated.

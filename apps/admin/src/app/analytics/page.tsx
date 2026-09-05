@@ -9,18 +9,14 @@ interface Analytics {
   funnel: Array<{ stage: string; count: number; pct: number }>;
   importStats: { jobsByStatus: Record<string, number>; successRows: number; errorRows: number };
   revenueByDay: Array<{ date: string; revenue: number; orders: number }>;
-  revenueByRegion: Array<{ regionKey: string; revenue: number; orders: number }>;
+  revenueByRegion: Array<{ regionKey: string; currencyCode: string; revenue: number; orders: number }>;
   salesByVendor: Array<{ vendorId: string; storeName: string; revenue: number; units: number }>;
   salesByCategory: Array<{ categoryId: string; name: string; revenue: number; units: number }>;
   topProducts: Array<{ productId: string; name: string; category: string; revenue: number; units: number }>;
 }
 
-function money(minor: number): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'GBP' }).format(minor / 100);
-}
-
-function currencyFor(regionKey: string): string {
-  return ({ UK: 'GBP', US: 'USD', DE: 'EUR', FR: 'EUR', JP: 'JPY' })[regionKey] ?? 'GBP';
+function money(minor: number, currencyCode = 'GBP'): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode }).format(minor / 100);
 }
 
 function AnalyticsInner() {
@@ -133,7 +129,7 @@ function AnalyticsInner() {
                   <li key={r.regionKey}>
                     <div className="flex items-center justify-between text-xs mb-1">
                       <span className="font-semibold text-slate-700">{r.regionKey} <span className="text-slate-400 font-normal">({r.orders} orders)</span></span>
-                      <span className="font-bold text-slate-900 [font-variant-numeric:tabular-nums]">{new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyFor(r.regionKey) }).format(r.revenue / 100)}</span>
+                      <span className="font-bold text-slate-900 [font-variant-numeric:tabular-nums]">{money(r.revenue, r.currencyCode)}</span>
                     </div>
                     <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
                       <div className="h-full rounded-full bg-indigo-500" style={{ width: `${(r.revenue / maxRegion) * 100}%` }} />

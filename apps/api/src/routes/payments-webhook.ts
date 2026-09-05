@@ -7,7 +7,7 @@ import {
   capturePaypalOrder,
   type PaypalWebhookHeaders,
 } from '../payments/providers.js';
-import { markCaptured } from '../payments/settlement.js';
+import { markCaptured, recordRefund } from '../payments/settlement.js';
 
 const router = Router();
 
@@ -72,9 +72,14 @@ router.post('/webhook/stripe', async (req: Request, res: Response) => {
         if (!chargeId) break;
         const payment = await prisma.payment.findFirst({ where: { providerPaymentId: chargeId } });
         if (payment) {
-          await prisma.payment.update({
-            where: { id: payment.id },
-            data: { status: 'REFUNDED' },
+          const order = await prisma.order.findUniqueOrThrow({ where: { id: payment.orderId } });
+          await recordRefund({
+            provider: 'stripe',
+            providerPaymentId: chargeId,
+            orderId: order.id,
+            amountMinorUnits: obj?.refund?.amount ?? order.totalMinorUnits,
+            currencyCode: obj?.refund?.currency ?? order.currencyCode,
+            reason: 'Refunded by payment provider',
           });
         }
         break;
@@ -193,10 +198,20 @@ router.post('/webhook/paypal', async (req: Request, res: Response) => {
         const paypalOrderId =
           resource?.supplementary_data?.related_ids?.order_id || resource?.id;
         if (!paypalOrderId) break;
-        await prisma.payment.updateMany({
+        const payment = await prisma.payment.findFirst({
           where: { providerPaymentId: paypalOrderId },
-          data: { status: 'REFUNDED' },
         });
+        if (payment) {
+          const order = await prisma.order.findUniqueOrThrow({ where: { id: payment.orderId } });
+          await recordRefund({
+            provider: 'paypal',
+            providerPaymentId: paypalOrderId,
+            orderId: order.id,
+            amountMinorUnits: order.totalMinorUnits,
+            currencyCode: order.currencyCode,
+            reason: 'Refunded by payment provider',
+          });
+        }
         break;
       }
 

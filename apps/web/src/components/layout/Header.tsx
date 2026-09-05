@@ -186,13 +186,14 @@ function Header({ categories }: HeaderProps) {
           className="bg-ember text-white border-t border-white/20 shadow-sm"
         >
           <div className="container-fluid">
-            <div className="flex items-center h-[74px] gap-2 lg:gap-6">
+            {/* Desktop Header */}
+            <div className="hidden lg:flex items-center h-[74px] gap-6">
               {/* Mobile hamburger */}
               <button
                 type="button"
                 onClick={() => setMobileOpen(true)}
                 aria-label="Open menu"
-                className="lg:hidden p-2 -ml-2 hover:opacity-80 transition-opacity text-white"
+                className="p-2 -ml-2 hover:opacity-80 transition-opacity text-white"
               >
                 <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path strokeLinecap="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -206,11 +207,11 @@ function Header({ categories }: HeaderProps) {
                 className="shrink-0 flex items-center transition-transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo-white.svg" alt="Storegrill" className="h-6 sm:h-8 lg:h-[48px] w-auto max-w-[9.5rem] max-[400px]:max-w-[7rem]" />
+                <img src="/logo-white.svg" alt="Storegrill" className="h-[48px] w-auto max-w-[9.5rem]" />
               </Link>
 
-              {/* Desktop: Categories dropdown + Search */}
-              <div className="hidden lg:flex items-center flex-1 gap-3">
+              {/* Categories dropdown + Search */}
+              <div className="flex items-center flex-1 gap-3">
                 <CategoryMegaMenu categories={megaMenuCategories} language={language} />
 
                 <div className="flex-1">
@@ -218,49 +219,116 @@ function Header({ categories }: HeaderProps) {
                 </div>
               </div>
 
-              {/* Mobile search — visible below lg */}
-              <div className="flex-1 lg:hidden px-2">
-                <SearchBar regionKey={regionKey} />
+              {/* Icons row */}
+              <div className="flex items-center gap-3 shrink-0 text-white">
+                <button
+                  type="button"
+                  onClick={() => setRegionOpen(true)}
+                  className="flex flex-col items-center gap-0.5 p-2 min-w-[44px] min-h-[44px] justify-center hover:opacity-80 transition-opacity"
+                  aria-label="Select region"
+                >
+                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                  </svg>
+                  <span className="text-[10px] font-medium leading-none">Region</span>
+                </button>
+
+                <Link
+                  href="/account/wishlist"
+                  className="relative flex flex-col items-center gap-0.5 p-2 min-w-[44px] min-h-[44px] justify-center hover:opacity-80 transition-opacity"
+                  aria-label={`Wishlist, ${wishlist.items.length} items`}
+                >
+                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                  </svg>
+                  {wishlist.items.length > 0 && (
+                    <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-secondary text-text-primary text-[10px] font-bold rounded-full px-1">
+                      {wishlist.items.length}
+                    </span>
+                  )}
+                  <span className="text-[10px] font-medium leading-none">Wishlist</span>
+                </Link>
+
+                <Link
+                  href="/auth/signin"
+                  className="flex flex-col items-center gap-0.5 p-2 min-w-[44px] min-h-[44px] justify-center hover:opacity-80 transition-opacity"
+                  aria-label="Account"
+                >
+                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                  </svg>
+                  <span className="text-[10px] font-medium leading-none">Account</span>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => setCartOpen(true)}
+                  className="relative flex flex-col items-center gap-0.5 p-2 min-w-[44px] min-h-[44px] justify-center hover:opacity-80 transition-opacity text-white"
+                  aria-label={`Open cart, ${cart.count} items`}
+                  data-testid="cart-button"
+                >
+                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                  </svg>
+                  {cart.count > 0 && (
+                    <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-surface-raised text-ember text-[10px] font-bold rounded-full px-1">
+                      {cart.count}
+                    </span>
+                  )}
+                  <span className="text-[10px] font-medium leading-none">Basket</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile Header: Hamburger (left) | Logo (center) | Cart (right) + Search bar below */}
+            <div className="flex flex-col lg:hidden py-3 gap-2.5">
+              <div className="flex items-center justify-between">
+                {/* Left: Mobile hamburger */}
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen(true)}
+                  aria-label="Open menu"
+                  className="p-2 -ml-2 text-white hover:opacity-80 transition-opacity"
+                >
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                  </svg>
+                </button>
+
+                {/* Center: Logo */}
+                <Link
+                  href="/"
+                  aria-label="Storegrill home"
+                  className="flex items-center justify-center transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/logo-white.svg" alt="Storegrill" className="h-7 w-auto max-w-[8.5rem]" />
+                </Link>
+
+                {/* Right: Cart icon */}
+                <button
+                  type="button"
+                  onClick={() => setCartOpen(true)}
+                  className="relative p-2 -mr-2 text-white hover:opacity-80 transition-opacity"
+                  aria-label={`Open cart, ${cart.count} items`}
+                  data-testid="mobile-cart-button"
+                >
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                  </svg>
+                  {cart.count > 0 && (
+                    <span className="absolute top-1 right-0 min-w-[16px] h-[16px] flex items-center justify-center bg-secondary text-text-primary text-[9px] font-bold rounded-full px-0.5">
+                      {cart.count}
+                    </span>
+                  )}
+                </button>
               </div>
 
-              {/* Icons row */}
-              <div className="flex items-center gap-1 lg:gap-3 shrink-0">
-                {/* Mobile: Region + Wishlist + Account */}
-                <div className="flex items-center gap-1 lg:hidden text-white">
-                  <button
-                    type="button"
-                    onClick={() => setRegionOpen(true)}
-                    className="flex flex-col items-center gap-0.5 p-2 min-w-[44px] min-h-[44px] justify-center hover:opacity-80 transition-opacity"
-                    aria-label="Select region"
-                  >
-                    <svg className="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-                    </svg>
-                    <span className="text-[10px] font-medium leading-none">Region</span>
-                  </button>
-
-                  <Link
-                    href="/account/wishlist"
-                    className="flex flex-col items-center gap-0.5 p-2 min-w-[44px] min-h-[44px] justify-center hover:opacity-80 transition-opacity"
-                    aria-label={`Wishlist, ${wishlist.items.length} items`}
-                  >
-                    <svg className="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-                    </svg>
-                    <span className="text-[10px] font-medium leading-none">Wishlist</span>
-                  </Link>
-
-                  <Link
-                    href="/auth/signin"
-                    className="flex flex-col items-center gap-0.5 p-2 min-w-[44px] min-h-[44px] justify-center hover:opacity-80 transition-opacity"
-                    aria-label="Account"
-                  >
-                    <svg className="w-[26px] h-[26px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                    </svg>
-                    <span className="text-[10px] font-medium leading-none">Account</span>
-                  </Link>
-                </div>
+              {/* Mobile Search Bar below header */}
+              <div className="w-full">
+                <SearchBar regionKey={regionKey} />
+              </div>
+            </div>
 
                 {/* Desktop: Wishlist + Account + Cart */}
                 <div className="hidden lg:flex items-center gap-3 text-white">

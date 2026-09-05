@@ -30,6 +30,8 @@ import { taxRouter } from './routes/tax.js';
 import { blogRouter } from './routes/blog.js';
 import { newsletterRouter } from './routes/newsletter.js';
 import { marketingRouter } from './routes/marketing.js';
+import { returnsRouter } from './routes/returns.js';
+import { disputesRouter } from './routes/disputes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 export { prisma } from './db/prisma.js';
@@ -102,6 +104,8 @@ app.use('/api/v1/tax', taxRouter);
 app.use('/api/v1/blog', blogRouter);
 app.use('/api/v1/newsletter', newsletterRouter);
 app.use('/api/v1/vendor/marketing', marketingRouter);
+app.use('/api/v1/returns', returnsRouter);
+app.use('/api/v1/disputes', disputesRouter);
 
 app.use(errorHandler);
 

@@ -24,8 +24,13 @@ const GROUPS: Array<{ label: string; test: (key: string) => boolean; color: stri
   },
   {
     label: 'Europe',
-    test: key => ['UK', 'IE', 'DE', 'FR', 'IT', 'ES', 'PT', 'NL', 'BE', 'LU', 'AT', 'CH', 'SE', 'NO', 'DK', 'FI', 'EE', 'LV', 'LT', 'PL', 'CZ', 'SK', 'HU', 'RO', 'BG', 'HR', 'SI', 'GR', 'CY', 'MT'].includes(key),
+    test: key => ['IE', 'DE', 'FR', 'IT', 'ES', 'PT', 'NL', 'BE', 'LU', 'AT', 'CH', 'SE', 'NO', 'DK', 'FI', 'EE', 'LV', 'LT', 'PL', 'CZ', 'SK', 'HU', 'RO', 'BG', 'HR', 'SI', 'GR', 'CY', 'MT', 'UK'].includes(key),
     color: 'from-ember/10 to-ember-light/5',
+  },
+  {
+    label: 'UK',
+    test: key => key === 'UK',
+    color: 'from-emerald-900/10 to-emerald-light/5',
   },
   {
     label: 'Middle East',

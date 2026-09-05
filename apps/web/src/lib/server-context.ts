@@ -14,14 +14,14 @@ function isValidRegion(key: string): boolean {
 // Mapping of country-style subdomains to region keys (mirrors the middleware logic)
 const SUBDOMAIN_TO_REGION: Record<string, string> = {
   uk: 'uk', gb: 'uk',
-  us: 'us', ca: 'us',
-  ie: 'eu', de: 'eu', fr: 'eu', it: 'eu', es: 'eu', pt: 'eu', nl: 'eu',
-  be: 'eu', lu: 'eu', at: 'eu', ch: 'eu', se: 'eu', no: 'eu', dk: 'eu',
-  fi: 'eu', ee: 'eu', lv: 'eu', lt: 'eu', pl: 'eu', cz: 'eu', sk: 'eu',
-  hu: 'eu', ro: 'eu', bg: 'eu', hr: 'eu', si: 'eu', gr: 'eu', cy: 'eu', mt: 'eu',
-  ae: 'ae', sa: 'ae', qa: 'ae', kw: 'ae', bh: 'ae', om: 'ae', in: 'ae', au: 'ae', jp: 'ae',
-  ng: 'ng', ke: 'ng', ug: 'ng', tz: 'ng',
-  gh: 'gh', za: 'gh', eg: 'gh', ma: 'gh',
+  us: 'us', ca: 'ca',
+  ie: 'ie', de: 'de', fr: 'fr', it: 'it', es: 'es', pt: 'pt', nl: 'nl',
+  be: 'be', lu: 'lu', at: 'at', ch: 'ch', se: 'se', no: 'no', dk: 'dk',
+  fi: 'fi', ee: 'ee', lv: 'lv', lt: 'lt', pl: 'pl', cz: 'cz', sk: 'sk',
+  hu: 'hu', ro: 'ro', bg: 'bg', hr: 'hr', si: 'si', gr: 'gr', cy: 'cy', mt: 'mt',
+  ae: 'ae', in: 'in', au: 'au', jp: 'jp',
+  ng: 'ng', ke: 'ke', ug: 'ug', tz: 'tz',
+  gh: 'gh', za: 'za', eg: 'eg', ma: 'ma',
 };
 
 export async function getRequestContext(): Promise<RequestContext> {

@@ -62,6 +62,11 @@ describe('merchant lifecycle', () => {
     expect(canTransitionMerchantStatus(MerchantStatus.TERMINATED as any, MerchantStatus.ACTIVE as any)).toBe(false);
   });
 
+  it('allows an admin rejection decision from UNDER_REVIEW (review veto)', () => {
+    expect(canTransitionMerchantStatus(MerchantStatus.UNDER_REVIEW as any, MerchantStatus.REJECTED as any)).toBe(true);
+    expect(canTransitionMerchantStatus(MerchantStatus.REJECTED as any, MerchantStatus.UNDER_REVIEW as any)).toBe(false);
+  });
+
   it('requires KYC before progressing toward VERIFIED/ACTIVE', () => {
     expect(validateMerchantTransition(MerchantStatus.UNDER_REVIEW as any, MerchantStatus.VERIFIED as any, false)).toContain('KYC');
     expect(validateMerchantTransition(MerchantStatus.UNDER_REVIEW as any, MerchantStatus.VERIFIED as any, true)).toBeNull();

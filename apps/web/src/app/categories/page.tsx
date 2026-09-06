@@ -2,14 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getRequestContext } from '@/lib/server-context';
 import { buildMetadata } from '@/lib/seo';
+import { regionByKey } from '@/lib/regions';
 import { Breadcrumb } from '@/components/navigation/Breadcrumb';
 import { getCategories } from '@/lib/api-client';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
+  const region = regionByKey(regionKey);
   return buildMetadata({
     title: 'Shop by Category',
-    description: 'Browse Storegrill by category — electronics, computers, home, fashion, beauty, sports and more from verified regional sellers.',
+    description: `Browse Storegrill by category — electronics, computers, home, fashion, beauty, sports and more from verified sellers in ${region.name}.`,
+    keywords: ['shop by category', 'online store categories', `${region.name.toLowerCase()} shopping`, 'electronics', 'fashion', 'home & kitchen'],
     path: '/categories',
     regionKey,
   });

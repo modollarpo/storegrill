@@ -1,10 +1,36 @@
 import type { Metadata } from 'next';
-import { regionUrl, regionByKey, APEX_DOMAIN, REGION_META } from './regions';
+import { regionUrl, regionByKey, REGION_META, DEFAULT_REGION_KEY } from './regions';
 
 const SITE_NAME = 'Storegrill';
 
+// Titles passed in must never carry the brand: the root layout applies a
+// "%s | Storegrill" template, so a bare page title renders "… | Storegrill"
+// exactly once. This also strips any legacy in-title brand fragments.
+function cleanTitleBase(raw: string): string {
+  return raw.trim().replace(/\s*[|–—-]\s*Storegrill$/, '').trim();
+}
+
+function brandTitle(base: string): string {
+  return `${cleanTitleBase(base)} | ${SITE_NAME}`;
+}
+
+// Short country token used in titles ("UK", "USA", "UAE") — matches how
+// shoppers type local-intent queries and keeps titles concise.
+export function seoCountryToken(key: string): string {
+  const special: Record<string, string> = { AE: 'UAE', US: 'USA' };
+  return special[key] || key;
+}
+
+function truncate(value: string, max: number): string {
+  return value.length > max ? `${value.slice(0, max).trim()}…` : value;
+}
+
+function uniqueKeywords(values: string[]): string[] {
+  return [...new Set(values.map(v => v.trim().toLowerCase()).filter(Boolean))];
+}
+
 export function absoluteUrl(path: string): string {
-  return `https://${APEX_DOMAIN}${path.startsWith('/') ? path : `/${path}`}`;
+  return `https://${process.env.NEXT_PUBLIC_APEX_DOMAIN || 'Storegrill.net'}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
 interface PageSeoOptions {
@@ -27,6 +53,8 @@ export function buildMetadata({
   keywords,
 }: PageSeoOptions): Metadata {
   const region = regionByKey(regionKey);
+  const baseTitle = cleanTitleBase(title);
+  const fullTitle = brandTitle(baseTitle);
   const canonicalPath = path === '/' ? '/' : path.replace(/\/$/, '');
   const url = regionUrl(regionKey, canonicalPath);
 
@@ -39,9 +67,9 @@ export function buildMetadata({
   }
 
   return {
-    title,
+    title: baseTitle,
     description,
-    ...(keywords ? { keywords } : {}),
+    ...(keywords && keywords.length ? { keywords } : {}),
     alternates: {
       canonical: url,
       languages,
@@ -52,48 +80,139 @@ export function buildMetadata({
     openGraph: {
       type: 'website',
       siteName: SITE_NAME,
-      title: `${title} | ${SITE_NAME} ${region.name}`,
+      title: fullTitle,
       description,
       url,
       locale: region.languages[0]?.code ?? 'en',
-      images: [{ url: ogImage || '/banners/bannerOne.jpg', width: 1600, height: 900, alt: title }],
+      images: [{ url: ogImage || '/banners/bannerOne.jpg', width: 1600, height: 900, alt: baseTitle }],
     },
     twitter: {
       card: 'summary_large_image',
       site: '@Storegrill',
-      title: `${title} | ${SITE_NAME}`,
+      title: fullTitle,
       description,
       images: [ogImage || '/banners/bannerOne.jpg'],
     },
   };
 }
 
+function currencySymbol(currencyCode: string): string {
+  return (
+    new Intl.NumberFormat('en', { style: 'currency', currency: currencyCode, currencyDisplay: 'narrowSymbol' })
+      .formatToParts(0)
+      .find(part => part.type === 'currency')?.value || currencyCode
+  );
+}
+
 export const SEO_DEFAULTS = {
-  home: (regionName: string) => ({
-    title: `Online Shopping for Electronics, Home, Fashion & More`,
-    description: `Shop millions of products from verified vendors on Storegrill ${regionName}. Fast delivery, secure payments, easy returns. Free shipping on eligible orders.`,
+  home: (regionKey: string) => {
+    const region = regionByKey(regionKey);
+    const short = seoCountryToken(region.key);
+    const area = region.name.toLowerCase();
+    return {
+      title: `Online Shopping in ${short}`,
+      description: `${region.name} online shopping for electronics, home, fashion, beauty and more. Compare prices from verified sellers on Storegrill and enjoy fast regional delivery, secure payments and easy returns.`,
+      keywords: uniqueKeywords([
+        `online shopping in ${area}`,
+        `buy online in ${area}`,
+        `online store ${short.toLowerCase()}`,
+        `${area} marketplace`,
+        'electronics', 'fashion', 'home & kitchen', 'beauty', 'deals', SITE_NAME,
+      ]),
+    };
+  },
+  search: (query?: string) => ({
+    title: query ? `${query} — Search Results` : 'Search all products',
+    description: `Browse search results${query ? ` for "${query}"` : ''} on Storegrill. Compare prices from multiple vendors, read reviews and buy with confidence.`,
   }),
-  search: (query: string) => ({
-    title: query ? `"${query}" — Search Results` : 'Search all products',
-    description: `Browse search results${query ? ` for "${query}"` : ''} on Storegrill. Compare prices from multiple vendors, read reviews, and buy with confidence.`,
-  }),
-  product: (name: string, price?: string, currency?: string, rating?: number, reviewCount?: number) => ({
-    title: name,
-    description: price
-      ? `Buy ${name} — ${currency ? currency + ' ' + price : ''}${rating !== undefined && reviewCount !== undefined ? ` — ${rating.toFixed(1)}★ from ${reviewCount} reviews` : ''}`
-      : `Buy ${name} on Storegrill. Check price, availability, reviews and delivery options from verified sellers.`,
-  }),
-  deals: () => ({
-    title: "Today's Deals",
-    description: 'Limited-time offers, flash sales and daily discounts across every category on Storegrill.',
-  }),
-  vendors: () => ({
-    title: 'Our Vendors & Sellers',
-    description: 'Discover verified Storegrill vendors, their storefronts, ratings and policies.',
-  }),
+  category: (slug: string, name: string, regionKey: string, categoryDescription?: string) => {
+    const region = regionByKey(regionKey);
+    const short = seoCountryToken(region.key);
+    const nameLower = name.toLowerCase();
+    const description =
+      categoryDescription && categoryDescription.trim().length > 20
+        ? `${categoryDescription.trim().replace(/\.$/, '')}. Shop ${name} in ${region.name}.`
+        : `Buy ${name} online in ${region.name} at the best prices. Compare ${nameLower} from verified sellers, read real customer reviews and enjoy fast delivery with secure checkout on Storegrill.`;
+    return {
+      title: `Shop ${name} in ${short}`,
+      description,
+      keywords: uniqueKeywords([
+        `${nameLower} ${short.toLowerCase()}`,
+        `buy ${nameLower} ${short.toLowerCase()}`,
+        `${nameLower} online`,
+        `${nameLower} deals ${short.toLowerCase()}`,
+        `cheap ${nameLower} ${short.toLowerCase()}`,
+        `best ${nameLower} prices`,
+      ]),
+    };
+  },
+  allProducts: (regionKey: string) => {
+    const region = regionByKey(regionKey);
+    const short = seoCountryToken(region.key);
+    return {
+      title: 'All Products',
+      description: `Shop all products online in ${region.name.toLowerCase()} on Storegrill — electronics, fashion, home, beauty and more with filters for price, rating, brand and seller.`,
+      keywords: uniqueKeywords(['all products', `shop ${short.toLowerCase()} products online`, `${region.name.toLowerCase()} products`]),
+    };
+  },
+  product: (name: string, price?: string, currency?: string, rating?: number, reviewCount?: number, regionKey = DEFAULT_REGION_KEY) => {
+    const region = regionByKey(regionKey);
+    const short = seoCountryToken(region.key);
+    const area = region.name.toLowerCase();
+    const nameLower = name.toLowerCase();
+    const pricePart = price && currency ? `${currencySymbol(currency)}${price}` : null;
+    const ratingPart =
+      rating !== undefined && reviewCount !== undefined && reviewCount > 0
+        ? ` Rated ${rating.toFixed(1)}/5 from ${reviewCount} reviews.`
+        : '';
+    const description = [
+      pricePart ? `${pricePart} — ` : '',
+      `Buy ${name} online in ${region.name}.`,
+      ` Compare prices across verified sellers on Storegrill and get fast delivery, secure checkout and easy returns.${ratingPart}`,
+    ].join('');
+    return {
+      title: `Buy ${truncate(name, 46)}`,
+      description,
+      keywords: uniqueKeywords([
+        name,
+        `buy ${nameLower} ${short.toLowerCase()}`,
+        `buy ${nameLower} online`,
+        `${nameLower} price in ${area}`,
+        `cheap ${nameLower} ${short.toLowerCase()}`,
+        `${nameLower} deals`,
+      ]),
+    };
+  },
+  deals: (regionKey?: string) => {
+    const region = regionKey ? regionByKey(regionKey) : undefined;
+    const short = region ? seoCountryToken(region.key) : '';
+    return {
+      title: `Today's Deals in ${short}`,
+      description: `Limited-time offers, flash sales and daily discounts across every category on Storegrill${region ? ` in ${region.name}` : ''}.`,
+      keywords: uniqueKeywords([
+        'deals', 'flash sales', 'discounts', 'offers',
+        ...(region ? [`deals ${short.toLowerCase()}`, `sales ${region.name.toLowerCase()}`] : []),
+      ]),
+    };
+  },
+  vendors: (regionKey?: string) => {
+    const region = regionKey ? regionByKey(regionKey) : undefined;
+    const short = region ? seoCountryToken(region.key) : '';
+    return {
+      title: `Verified Sellers & Vendors in ${short}`,
+      description:
+        'Discover verified Storegrill vendors, their storefronts, ratings and policies. Shop confidently from vetted sellers in your region.',
+      keywords: uniqueKeywords([
+        'verified sellers', 'vendor marketplace', 'online stores',
+        ...(region ? [`sellers in ${region.name.toLowerCase()}`, `verified vendors ${short.toLowerCase()}`] : []),
+      ]),
+    };
+  },
   regions: () => ({
     title: 'Choose Your Country or Region',
-    description: 'Shop Storegrill in your country with local currency, language, payment methods and delivery. Available across North America, Europe, Asia-Pacific and the Middle East.',
+    description:
+      'Shop Storegrill in your country with local currency, language, payment methods and delivery. Available across North America, Europe, the Middle East, Africa and Asia-Pacific.',
+    keywords: uniqueKeywords(['Storegrill regions', 'choose your country', 'local currency shopping', 'Storegrill worldwide']),
   }),
   cart: () => ({
     title: 'Your Shopping Cart',
@@ -118,8 +237,8 @@ export function organizationJsonLd(): object {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: SITE_NAME,
-    url: `https://${APEX_DOMAIN}`,
-    logo: `https://${APEX_DOMAIN}/icons/icon-512.png`,
+    url: `https://${process.env.NEXT_PUBLIC_APEX_DOMAIN || 'Storegrill.net'}`,
+    logo: `https://${process.env.NEXT_PUBLIC_APEX_DOMAIN || 'Storegrill.net'}/icons/icon-512.png`,
     sameAs: [
       'https://twitter.com/Storegrill',
       'https://www.facebook.com/Storegrill',
@@ -130,16 +249,17 @@ export function organizationJsonLd(): object {
 }
 
 export function webSiteJsonLd(): object {
+  const apex = process.env.NEXT_PUBLIC_APEX_DOMAIN || 'Storegrill.net';
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: SITE_NAME,
-    url: `https://${APEX_DOMAIN}`,
+    url: `https://${apex}`,
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `https://${APEX_DOMAIN}/search?q={search_term_string}`,
+        urlTemplate: `https://${apex}/search?q={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },
@@ -156,6 +276,7 @@ interface ArticleJsonLdInput {
 }
 
 export function articleJsonLd(input: ArticleJsonLdInput): object {
+  const apex = process.env.NEXT_PUBLIC_APEX_DOMAIN || 'Storegrill.net';
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -171,7 +292,7 @@ export function articleJsonLd(input: ArticleJsonLdInput): object {
       name: SITE_NAME,
       logo: {
         '@type': 'ImageObject',
-        url: `https://${APEX_DOMAIN}/icons/icon-512.png`,
+        url: `https://${apex}/icons/icon-512.png`,
       },
     },
     datePublished: input.publishedAt,

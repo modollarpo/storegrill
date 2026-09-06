@@ -3,7 +3,7 @@ import { getRequestContext } from '@/lib/server-context';
 import { localizeProducts } from '@/lib/server-translate';
 import { API_BASE } from '@/lib/api';
 import { getCategories } from '@/lib/api-client';
-import { buildMetadata, organizationJsonLd, webSiteJsonLd } from '@/lib/seo';
+import { buildMetadata, organizationJsonLd, webSiteJsonLd, SEO_DEFAULTS } from '@/lib/seo';
 import { regionPromoContent, regionConfig, categoryBannerFor } from '@/lib/region-content';
 
 import { ProductCard, type ProductCardData } from '@/components/commerce/ProductCard';
@@ -32,10 +32,11 @@ interface PageProps {
 
 export async function generateMetadata(_props: PageProps): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
+  const seo = SEO_DEFAULTS.home(regionKey);
   const meta = buildMetadata({
-    title: 'Online Shopping for Electronics, Home, Fashion & More | Storegrill',
-    description:
-      'Shop millions of products from verified vendors on Storegrill. Local currency, fast regional delivery, secure Stripe & PayPal checkout and easy returns.',
+    title: seo.title,
+    description: seo.description,
+    keywords: seo.keywords,
     path: '/',
     regionKey,
     ogImage: '/banners/bannerOne.jpg',

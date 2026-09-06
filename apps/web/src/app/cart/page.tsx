@@ -130,7 +130,63 @@ export default function CartPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-[30px] items-start">
           {/* Cart items */}
           <section aria-label="Cart items" className="space-y-4">
-            <div className="bg-surface-raised border border-border rounded-lg shadow-sm overflow-hidden">
+            {/* Mobile item cards */}
+            <div className="lg:hidden space-y-3" data-testid="mobile-cart-items">
+              {cart.items.map(line => (
+                <div key={`${line.productId}-${line.variantId ?? ''}`} className="flex gap-3 bg-surface-raised border border-border rounded-lg p-4 shadow-sm">
+                  <Link href={`/products/${line.slug || line.productId}`} className="relative w-20 h-20 shrink-0 rounded-xs overflow-hidden border border-border bg-surface-raised">
+                    {line.image && <Image src={storefrontImage(line.image) || '/product-placeholder.svg'} alt="" fill sizes="80px" className="object-contain p-1.5 mix-blend-multiply" />}
+                  </Link>
+                  <div className="flex-1 min-w-0">
+                    <Link href={`/products/${line.slug || line.productId}`} className="block font-medium text-text-primary hover:text-ember hover:underline underline-offset-2 leading-snug line-clamp-2">
+                      {line.name}
+                    </Link>
+                    <p className="mt-1 text-sm text-text-secondary">
+                      <PriceDisplay amountMinorUnits={line.unitPriceMinorUnits} currencyCode={currency} size="sm" />
+                    </p>
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <div className="inline-flex items-center rounded-xs border border-border bg-surface-sunken overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => cart.setQuantity(line.productId, line.variantId, line.quantity - 1)}
+                          aria-label="Decrease quantity"
+                          className="w-8 h-8 grid place-items-center font-bold hover:bg-surface-raised hover:text-ember transition-colors"
+                        >
+                          −
+                        </button>
+                        <span className="w-8 text-center font-extrabold" aria-live="polite">{line.quantity}</span>
+                        <button
+                          type="button"
+                          onClick={() => cart.setQuantity(line.productId, line.variantId, Math.min(line.quantity + 1, line.stock ?? 99))}
+                          aria-label="Increase quantity"
+                          className="w-8 h-8 grid place-items-center font-bold hover:bg-surface-raised hover:text-ember transition-colors"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <div className="text-right min-w-0">
+                        <PriceDisplay
+                          amountMinorUnits={line.unitPriceMinorUnits * line.quantity}
+                          listMinorUnits={line.listPriceMinorUnits ? line.listPriceMinorUnits * line.quantity : undefined}
+                          currencyCode={currency}
+                          size="md"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => cart.removeItem(line.productId, line.variantId)}
+                          className="block text-xs font-bold text-text-tertiary hover:text-red-600 hover:underline underline-offset-2 mt-1 ml-auto transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden lg:block bg-surface-raised border border-border rounded-lg shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-surface-sunken text-text-secondary font-bold border-b border-border">
@@ -202,7 +258,7 @@ export default function CartPage() {
                 </table>
               </div>
             </div>
-            <div className="bg-surface-raised border border-border rounded-lg p-5 text-right shadow-sm">
+            <div className="hidden lg:block bg-surface-raised border border-border rounded-lg p-5 text-right shadow-sm">
               <p className="text-sm text-text-secondary">
                 Subtotal ({cart.count} item{cart.count === 1 ? '' : 's'}):{' '}
                 <strong className="text-xl text-text-primary ml-2">

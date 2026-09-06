@@ -94,6 +94,9 @@ export const fetchToken = async (
   if (method === 'POST') {
     headers['Content-Type'] = 'application/x-www-form-urlencoded'
   }
+  if (provider === 'linkedin') {
+    headers['Authorization'] = `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`
+  }
 
   const body = method === 'POST' ? new URLSearchParams(fields).toString() : undefined
 
@@ -155,18 +158,18 @@ const normalizeProfile = (
       }
     }
     case 'linkedin': {
-      const { sub, localizedFirstName, localizedLastName, email, picture } = body
+      const { sub, name, given_name, family_name, givenName, familyName, localizedFirstName, localizedLastName, email, picture } =
+        body
+      const firstName = given_name ?? givenName ?? localizedFirstName
+      const lastName = family_name ?? familyName ?? localizedLastName
+      const avatarUrl =
+        (typeof picture === 'object' && picture !== null && picture?.identifier?.imageUri?.url) ||
+        (typeof picture === 'string' ? picture : undefined)
       return {
         providerId: sub ?? undefined,
         email: email ?? undefined,
-        name: [
-          localizedFirstName ?? undefined,
-          localizedLastName ?? undefined,
-        ]
-          .filter(Boolean)
-          .join(' ') ?? undefined,
-        avatar:
-          picture?.identifier?.imageUri?.url ?? undefined,
+        name: name ?? [firstName, lastName].filter(Boolean).join(' ') ?? email?.split('@')[0],
+        avatar: avatarUrl,
       }
     }
     default:

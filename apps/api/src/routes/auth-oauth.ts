@@ -144,7 +144,7 @@ router.get('/:provider/callback', async (req: Request, res: Response) => {
     return res.redirect(302, `${WEB_BASE_URL}${req.cookies?.['sg_oauth_next'] || '/'}`);
   } catch (err) {
     console.error(`OAuth callback failed for ${provider}:`, err);
-    return res.redirect(302, `${WEB_BASE_URL}/auth/signin?error=oauth_failed`);
+    return res.redirect(302, `${WEB_BASE_URL}/auth/signin?error=oauth_failed&provider=${provider}`);
   }
 });
 

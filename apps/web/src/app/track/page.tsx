@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
   const cfg = regionConfig(regionKey);
   return buildMetadata({
-    title: `Track Your Order — Storegrill ${cfg.name}`,
+    title: `Track Your Order — ${cfg.name}`,
     description: `Track a Storegrill ${cfg.name} order with your SG- order number.`,
     path: '/track',
     regionKey,

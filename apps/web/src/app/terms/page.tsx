@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
   const cfg = regionConfig(regionKey);
   return buildMetadata({
-    title: `Terms & Conditions — Storegrill ${cfg.name}`,
+    title: `Terms & Conditions — ${cfg.name}`,
     description: `The terms on which Storegrill ${cfg.name} sells to consumers, including pricing in ${cfg.defaultCurrency}, delivery and returns.`,
     path: '/terms',
     regionKey,

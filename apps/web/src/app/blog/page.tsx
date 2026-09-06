@@ -10,7 +10,7 @@ import { buildMetadata } from "@/lib/seo";
 export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
   return buildMetadata({
-    title: "Storegrill Journal — E-commerce News & Insights",
+    title: "E-commerce News & Insights",
     description: "Discover the latest e-commerce trends, seller success stories, tech updates, and community news from the Storegrill global marketplace.",
     path: "/blog",
     regionKey,

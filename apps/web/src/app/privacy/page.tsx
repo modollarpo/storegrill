@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
   const cfg = regionConfig(regionKey);
   return buildMetadata({
-    title: `Privacy & Cookies Policy — Storegrill ${cfg.name}`,
+    title: `Privacy & Cookies Policy — ${cfg.name}`,
     description: `How Storegrill ${cfg.name} collects, uses and protects your personal data under the ${lawFor(regionKey).act}.`,
     path: '/privacy',
     regionKey,

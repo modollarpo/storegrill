@@ -49,14 +49,31 @@ $secret = az keyvault secret show --vault-name kv-storegrill-<flat> --name postg
 
 ## 2. Deploy applications
 
-Use the **Deploy app** GitHub workflow (`.github/workflows/deploy-app.yml`, `workflow_dispatch`):
+### Automatic deploys
 
-Inputs: `region_key` (UK), `app` (api/web/admin/vendor-portal/all),
-`run_migrations`, `bootstrap_admin`.
+`.github/workflows/deploy-api-web-aca.yml` deploys the storefront (web) and API to
+all 5 prod regions (UK, US, EU, AE, NG) automatically. It is triggered by
+`workflow_run` on the **CI Quality Gates** workflow completing successfully for a
+`master` push, so a green `master` CI run now rolls the code out to every pod.
+Images are tagged `api:build-<run_id>` / `web-<region>:build-<run_id>` so each
+push deploys a fresh image (no stale tags).
 
-Required repo secrets:
+Required repo secrets (already present for manual deploys):
 - `AZURE_CREDENTIALS` — service principal JSON for `azure/login`.
-- `BOOTSTRAP_ADMIN_EMAIL` / `BOOTSTRAP_ADMIN_PASSWORD` (≥12 chars) — only for the bootstrap input.
+- `ACR_USERNAME` / `ACR_PASSWORD` — ACR registry login.
+- `ARM_SUBSCRIPTION_ID` — subscription for `az account set`.
+
+### Manual deploys
+
+Use **Deploy API + Web (ACA)** (`.github/workflows/deploy-api-web-aca.yml`,
+`workflow_dispatch`) to deploy a specific image tag or branch, e.g. roll back to a
+known-good version or build from a feature branch.
+
+Inputs: `api_version`, `web_version` (image tags), `branch`
+(default `master`), `deploy_regions` (default `UK,US,EU,AE,NG`).
+
+**Deploy Admin + Vendor (ACA)** (`.github/workflows/deploy-admin-vendor-aca.yml`,
+`workflow_dispatch`) stays manual — admin/vendor are not auto-deployed.
 
 Packaging (all validated locally):
 - API: esbuild bundle (`--external:@prisma/client`) + shipped `.prisma`/`@prisma/client`

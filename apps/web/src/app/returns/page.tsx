@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
   const cfg = regionConfig(regionKey);
   return buildMetadata({
-    title: `Returns & Refunds — Storegrill ${cfg.name}`,
+    title: `Returns & Refunds — ${cfg.name}`,
     description: `Return most items bought on Storegrill ${cfg.name} within 30 days. Free returns for faulty goods.`,
     path: '/returns',
     regionKey,

@@ -24,10 +24,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!deal) return buildMetadata({ title: 'Deal Not Found', description: 'This deal is unavailable.', path: `/deals/${slug}`, regionKey, noIndex: true });
 
   return buildMetadata({
-    title: `${deal.name} | Storegrill Deals`,
+    title: `${deal.name} Deals & Offers`,
     description: deal.description?.slice(0, 160) || `${deal.name} — Shop this deal at Storegrill.`,
     path: `/deals/${slug}`,
     regionKey,
+    keywords: [`${String(deal.name).toLowerCase()} deal`, 'limited time offer', 'discount', 'flash sale'],
   });
 }
 

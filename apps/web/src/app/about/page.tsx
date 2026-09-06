@@ -7,7 +7,7 @@ import { regionConfig } from '@/lib/region-content';
 export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
   return buildMetadata({
-    title: 'About Storegrill',
+    title: 'About Us',
     description: 'Storegrill is a multi-country marketplace connecting verified local vendors with shoppers in 44 regions.',
     path: '/about',
     regionKey,

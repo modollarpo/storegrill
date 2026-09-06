@@ -8,7 +8,7 @@ import { supportEmailFor } from '@/lib/region-content';
 export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
   return buildMetadata({
-    title: 'Product Recalls — Storegrill',
+    title: 'Product Recalls',
     description: 'Current product recalls and safety notices for items sold on Storegrill.',
     path: '/recalls',
     regionKey,

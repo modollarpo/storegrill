@@ -29,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
   const cfg = regionConfig(regionKey);
   return buildMetadata({
-    title: `Ways to Pay — Storegrill ${cfg.name}`,
+    title: `Ways to Pay — ${cfg.name}`,
     description: `Payment methods accepted on Storegrill ${cfg.name}: ${cfg.paymentMethods.map(m => paymentMethodLabel(m as never)).join(', ')}.`,
     path: '/payments',
     regionKey,

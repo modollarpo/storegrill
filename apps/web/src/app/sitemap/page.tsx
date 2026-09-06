@@ -51,7 +51,7 @@ const SECTIONS: Array<{ title: string; links: Array<[string, string]> }> = [
 export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
   return buildMetadata({
-    title: 'Sitemap — Storegrill',
+    title: 'Sitemap',
     description: 'Every page on Storegrill, organised.',
     path: '/sitemap',
     regionKey,

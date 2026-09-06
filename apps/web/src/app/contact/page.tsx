@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
   const cfg = regionConfig(regionKey);
   return buildMetadata({
-    title: `Contact Us — Storegrill ${cfg.name}`,
+    title: `Contact Us — ${cfg.name}`,
     description: `Get in touch with Storegrill ${cfg.name} support by email or contact form. Replies within one working day.`,
     path: '/contact',
     regionKey,

@@ -248,15 +248,6 @@ export default async function HomePage() {
       <TabbedProductCarousel
         tabs={[
           {
-            label: 'What\'s Trending Right Now',
-            products: [...localized]
-              .sort((a, b) => (b.rating ?? 0) * (b.reviewCount ?? 0) - (a.rating ?? 0) * (a.reviewCount ?? 0))
-              .slice(0, 8)
-              .map(product => (
-                <ProductCard key={`trending-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'trending' }} />
-              )),
-          },
-          {
             label: 'New Arrivals',
             products: localizedNewArrivals.map(product => (
               <ProductCard key={`new-${product.id}`} product={{ ...product, listPrice: product.listPriceMinorUnits, vendor: product.vendor ?? undefined, badge: 'new' }} />

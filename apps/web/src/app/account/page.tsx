@@ -3,7 +3,7 @@ import { AccountShell } from '@/components/account/AccountShell';
 import { getRequestContext } from '@/lib/server-context';
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: 'Your Account', robots: { index: false, follow: false } };
+  return { title: 'Your Account | Storegrill', robots: { index: false, follow: false } };
 }
 
 const SHORTCUTS = [

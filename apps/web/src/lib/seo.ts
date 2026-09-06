@@ -3,9 +3,10 @@ import { regionUrl, regionByKey, REGION_META, DEFAULT_REGION_KEY } from './regio
 
 const SITE_NAME = 'Storegrill';
 
-// Titles passed in must never carry the brand: the root layout applies a
-// "%s | Storegrill" template, so a bare page title renders "… | Storegrill"
-// exactly once. This also strips any legacy in-title brand fragments.
+// Title metadata is fully self-contained here: buildMetadata returns the
+// complete "… | Storegrill" title so pages render identically with or
+// without a layout template. cleanTitleBase strips any stray brand fragment
+// a caller might still embed so it never renders twice.
 function cleanTitleBase(raw: string): string {
   return raw.trim().replace(/\s*[|–—-]\s*Storegrill$/, '').trim();
 }
@@ -67,7 +68,7 @@ export function buildMetadata({
   }
 
   return {
-    title: baseTitle,
+    title: brandTitle(baseTitle),
     description,
     ...(keywords && keywords.length ? { keywords } : {}),
     alternates: {

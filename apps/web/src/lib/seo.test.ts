@@ -47,16 +47,19 @@ describe('SEO_DEFAULTS', () => {
 });
 
 describe('buildMetadata', () => {
-  it('returns a brand-free page title and single-brand social titles', () => {
+  it('returns fully-branded titles exactly once, including on the homepage', () => {
     const meta = buildMetadata({ title: 'Shop Electronics in UK', description: 'Buy electronics online.', path: '/categories/electronics', regionKey: 'UK' });
-    expect(meta.title).toBe('Shop Electronics in UK');
+    expect(meta.title).toBe('Shop Electronics in UK | Storegrill');
     expect(meta.openGraph?.title).toBe('Shop Electronics in UK | Storegrill');
     expect(meta.twitter?.title).toBe('Shop Electronics in UK | Storegrill');
+
+    const home = buildMetadata({ title: 'Online Shopping in USA', description: 'Shop online.', path: '/', regionKey: 'US' });
+    expect(home.title).toBe('Online Shopping in USA | Storegrill');
   });
 
-  it('strips a legacy brand suffix so the layout template never doubles it', () => {
+  it('strips a legacy brand suffix so the brand never doubles', () => {
     const meta = buildMetadata({ title: 'Shop Electronics — Storegrill', description: 'Buy electronics online.', path: '/categories/electronics', regionKey: 'UK' });
-    expect(meta.title).toBe('Shop Electronics');
+    expect(meta.title).toBe('Shop Electronics | Storegrill');
     expect(meta.openGraph?.title).toBe('Shop Electronics | Storegrill');
   });
 

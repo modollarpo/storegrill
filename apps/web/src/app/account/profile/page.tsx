@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { AccountShell } from '@/components/account/AccountShell';
 
-export const metadata: Metadata = { title: 'Profile', robots: { index: false } };
+export const metadata: Metadata = { title: 'Profile | Storegrill', robots: { index: false } };
 
 export default function ProfilePage() {
   return (

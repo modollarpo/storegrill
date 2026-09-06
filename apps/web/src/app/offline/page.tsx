@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { OfflineActions } from './OfflineActions';
 
 export const metadata: Metadata = {
-  title: "You're offline",
+  title: "You're offline | Storegrill",
   robots: { index: false, follow: false },
 };
 

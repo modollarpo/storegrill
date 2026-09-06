@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { AccountShell } from '@/components/account/AccountShell';
 
-export const metadata: Metadata = { title: 'Wishlist', robots: { index: false } };
+export const metadata: Metadata = { title: 'Wishlist | Storegrill', robots: { index: false } };
 
 export default function WishlistPage() {
   return (

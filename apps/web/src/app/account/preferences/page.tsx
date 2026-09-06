@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { AccountShell } from '@/components/account/AccountShell';
 import { RegionPreferenceForm } from '@/components/account/RegionPreferenceForm';
 
-export const metadata: Metadata = { title: 'Preferences', robots: { index: false } };
+export const metadata: Metadata = { title: 'Preferences | Storegrill', robots: { index: false } };
 
 export default function PreferencesPage() {
   return (

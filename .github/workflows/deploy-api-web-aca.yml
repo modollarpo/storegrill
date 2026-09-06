@@ -19,13 +19,24 @@ on:
         description: 'Comma-separated regions to deploy (UK,US,EU,AE,NG)'
         required: false
         default: 'UK,US,EU,AE,NG'
+  workflow_run:
+    workflows: ['CI Quality Gates']
+    types:
+      - completed
+    branches:
+      - master
 
 env:
   ACR: storegrillcr.azurecr.io
+  API_TAG: ${{ github.event.inputs.api_version || format('build-{0}', github.run_id) }}
+  WEB_TAG: ${{ github.event.inputs.web_version || format('build-{0}', github.run_id) }}
+  DEPLOY_REGIONS: ${{ github.event.inputs.deploy_regions || 'UK,US,EU,AE,NG' }}
+  BRANCH: ${{ github.event.inputs.branch || 'master' }}
 
 jobs:
   build:
     name: Build images
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -51,7 +62,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch }}
+          ref: ${{ env.BRANCH }}
 
       - name: Docker login to ACR
         uses: docker/login-action@v3
@@ -64,18 +75,18 @@ jobs:
         run: |
           docker build \
             --build-arg CACHEBUST=${{ github.run_id }} \
-            -t ${{ env.ACR }}/api:${{ github.event.inputs.api_version }} \
+            -t ${{ env.ACR }}/api:${{ env.API_TAG }} \
             -f apps/api/Dockerfile .
-          docker push ${{ env.ACR }}/api:${{ github.event.inputs.api_version }}
+          docker push ${{ env.ACR }}/api:${{ env.API_TAG }}
 
       - name: Build & push Web image
         run: |
           docker build \
             --build-arg CACHEBUST=${{ github.run_id }} \
             --build-arg NEXT_PUBLIC_API_URL=${{ matrix.api_url }} \
-            -t ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ github.event.inputs.web_version }} \
+            -t ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.WEB_TAG }} \
             -f apps/web/Dockerfile .
-          docker push ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ github.event.inputs.web_version }}
+          docker push ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.WEB_TAG }}
 
   deploy:
     name: Deploy ${{ matrix.region }}
@@ -119,29 +130,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch }}
+          ref: ${{ env.BRANCH }}
 
       - uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy API to Container App
-        if: contains(inputs.deploy_regions, matrix.region)
+        if: contains(env.DEPLOY_REGIONS, matrix.region)
         run: |
           az account set -s "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           az containerapp update \
             --resource-group ${{ matrix.rg }} \
             --name ${{ matrix.api_app }} \
-            --image ${{ env.ACR }}/api:${{ github.event.inputs.api_version }} \
+            --image ${{ env.ACR }}/api:${{ env.API_TAG }} \
             --output none
 
       - name: Deploy Web to Container App
-        if: contains(inputs.deploy_regions, matrix.region)
+        if: contains(env.DEPLOY_REGIONS, matrix.region)
         run: |
           az account set -s "${{ secrets.ARM_SUBSCRIPTION_ID }}"
           az containerapp update \
             --resource-group ${{ matrix.rg }} \
             --name ${{ matrix.web_app }} \
-            --image ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ github.event.inputs.web_version }} \
+            --image ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.WEB_TAG }} \
             --set-env-vars NEXT_PUBLIC_API_URL=${{ matrix.api_url }} \
             --output none

@@ -27,8 +27,10 @@ implementation; it is expected to be superseded as phases land.
   the DB-backed import-engine test needs a Postgres `TEST_DATABASE_URL`, but
   the checked-in `.env` points at sqlite `file:./test.db` with a postgres
   provider schema).
-- **CI/CD**: 5 GitHub Actions workflows (ci static gates + Terraform
-  validate; infra plan/apply; ACA deploys for web / api+web / admin+vendor).
+- **CI/CD**: GitHub Actions — `ci.yml` runs static gates on every `master`
+  push/PR; `deploy-api-web-aca.yml` auto-deploys web + API to all 5 prod regions
+  when CI passes on `master`; `deploy-admin-vendor-aca.yml` and
+  `infra.yml` are manual (`workflow_dispatch` / on-demand plan-apply).
 
 The platform is a working single-region marketplace scaffold, not a toy: full
 customer purchase flow, vendor onboarding wizard, CSV/URL import pipeline with

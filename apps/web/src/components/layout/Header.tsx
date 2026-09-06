@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useRegion } from '../providers/RegionContext';
 import { useCart } from '../providers/CartContext';
@@ -41,6 +42,12 @@ function useOutsideClick<T extends HTMLElement>(
   return ref;
 }
 
+function selectCountry(key: string) {
+  // Saved across all *.storegrill.net pods first so the chosen country
+  // survives the country-subdomain → pod redirect.
+  document.cookie = `sg_country=${key}; domain=.storegrill.net; path=/; max-age=31536000; samesite=lax`;
+}
+
 function RegionPicker({
   currentKey,
   open,
@@ -73,6 +80,7 @@ function RegionPicker({
             <li key={r.key}>
               <a
                 href={regionUrl(r.key)}
+                onClick={() => selectCountry(r.key)}
                 className={cn(
                   'flex items-center gap-1.5 px-2 py-1.5 rounded text-xs hover:bg-surface-sunken transition-colors',
                   r.key === currentKey && 'font-bold bg-blue-50'
@@ -87,6 +95,7 @@ function RegionPicker({
         </ul>
         <a
           href={regionUrl(currentKey, '/regions')}
+          onClick={() => selectCountry(currentKey)}
           className="btn btn-outline btn-sm mt-3 w-full"
         >
           View all regions →
@@ -106,16 +115,32 @@ function isHiddenCategory(category: { name: string; slug: string }): boolean {
 }
 
 function Header({ categories }: HeaderProps) {
-  const { regionKey, language, setLanguage } = useRegion();
+  const { regionKey, countryKey, language, setLanguage } = useRegion();
   const cart = useCart();
   const wishlist = useWishlist();
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
   const [openDept, setOpenDept] = useState<string | null>(null);
 
+  // Transactional pages get no sticky masthead — they surface their own sticky
+  // action (add-to-cart / checkout), so the header scrolls away to give those
+  // pages more room. Browsing pages keep a sticky header for navigation.
+  const TRANSACTIONAL = /^\/(?:products\/[^/]+|cart|checkout|account|auth)(?:\/|$)/;
+  const stickyHeader = !TRANSACTIONAL.test(pathname ?? '/');
+
+  // The mobile bottom bar's "Categories" tab opens this same hamburger menu so
+  // navigation stays discoverable without needing a second drawer.
+  useEffect(() => {
+    const openMenu = () => setMobileOpen(true);
+    window.addEventListener('storegrill:open-menu', openMenu);
+    return () => window.removeEventListener('storegrill:open-menu', openMenu);
+  }, []);
+
   const filteredCategories = categories.filter(c => !isHiddenCategory(c));
-  const currentRegion = REGION_META.find(r => r.key === regionKey) || REGION_META[0];
+  const displayKey = countryKey && REGION_META.some(r => r.key === countryKey) ? countryKey : regionKey;
+  const currentRegion = REGION_META.find(r => r.key === displayKey) || REGION_META[0];
 
   const megaMenuCategories: MegaMenuCategory[] = filteredCategories.map(c => ({
     name: c.name,
@@ -132,7 +157,10 @@ function Header({ categories }: HeaderProps) {
     <>
       <header
         id="masthead"
-        className="site-header sticky top-0 z-[var(--z-header)]"
+        className={cn(
+          'site-header z-[var(--z-header)]',
+          stickyHeader ? 'sticky top-0' : 'relative'
+        )}
         dir={language === 'ar' ? 'rtl' : 'ltr'}
       >
         {/* ——— ROW 1: TOPBAR ——— */}
@@ -164,14 +192,14 @@ function Header({ categories }: HeaderProps) {
                 <a href="/track" className="text-[13px] font-medium hover:opacity-80 transition-opacity">
                   Track Order
                 </a>
-{REGION_META.find(r => r.key === regionKey)?.languages?.length ? (
+{REGION_META.find(r => r.key === displayKey)?.languages?.length ? (
   <select
     aria-label="Switch language"
     value={language}
     onChange={e => setLanguage(e.target.value)}
     className="bg-transparent border-none text-[13px] font-medium text-white cursor-pointer outline-none [&>option]:text-text-primary"
   >
-    {(REGION_META.find(r => r.key === regionKey)?.languages || []).map(l => (
+    {(REGION_META.find(r => r.key === displayKey)?.languages || []).map(l => (
       <option key={l.code} value={l.code}>{l.nativeName}</option>
     ))}
   </select>
@@ -283,7 +311,7 @@ function Header({ categories }: HeaderProps) {
 
             {/* Mobile Header: Hamburger (left) | Logo (center) | Cart (right) + Search bar below */}
             <div className="flex flex-col lg:hidden py-3 gap-2.5">
-              <div className="flex items-center justify-between">
+              <div className="relative flex items-center justify-between">
                 {/* Left: Mobile hamburger */}
                 <button
                   type="button"
@@ -291,19 +319,19 @@ function Header({ categories }: HeaderProps) {
                   aria-label="Open menu"
                   className="p-2 -ml-2 text-white hover:opacity-80 transition-opacity"
                 >
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                   </svg>
                 </button>
 
-                {/* Center: Logo */}
+                {/* Center: Logo pinned to the true centre regardless of side buttons */}
                 <Link
                   href="/"
                   aria-label="Storegrill home"
-                  className="flex items-center justify-center transition-transform hover:scale-[1.02] active:scale-[0.98]"
+                  className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center transition-transform hover:scale-[1.02] active:scale-[0.98]"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/logo-white.svg" alt="Storegrill" className="h-7 w-auto max-w-[8.5rem]" />
+                  <img src="/logo-white.svg" alt="Storegrill" className="h-8 w-auto max-w-[8.5rem]" />
                 </Link>
 
                 {/* Right: Cart icon */}
@@ -314,11 +342,11 @@ function Header({ categories }: HeaderProps) {
                   aria-label={`Open cart, ${cart.count} items`}
                   data-testid="mobile-cart-button"
                 >
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                   </svg>
                   {cart.count > 0 && (
-                    <span className="absolute top-1 right-0 min-w-[16px] h-[16px] flex items-center justify-center bg-white text-ember-deep text-[9px] font-bold rounded-full px-0.5">
+                    <span className="absolute -top-0.5 right-0 min-w-[17px] h-[17px] flex items-center justify-center bg-white text-ember-deep text-[9px] font-bold rounded-full px-1">
                       {cart.count}
                     </span>
                   )}
@@ -372,7 +400,7 @@ function Header({ categories }: HeaderProps) {
       </header>
 
       <RegionPicker
-        currentKey={regionKey}
+        currentKey={displayKey}
         open={regionOpen}
         onClose={() => setRegionOpen(false)}
       />
@@ -385,7 +413,7 @@ function Header({ categories }: HeaderProps) {
         onClose={() => setMobileOpen(false)}
         side="left"
         title="Browse Storegrill"
-        className="!max-w-full sm:!max-w-full w-full"
+        className="w-[86vw] max-w-[400px]"
       >
         <div className="flex-1 overflow-y-auto pb-8">
           <div className="p-4 bg-surface-raised text-text-primary flex items-center justify-between sticky top-0 z-10 border-b border-border">

@@ -26,20 +26,23 @@ export function MobileBottomNav({ onOpenSearch, onOpenCategories }: { onOpenSear
           <span className="text-[10px] uppercase tracking-wider mt-0.5">Home</span>
         </Link>
 
-        <button type="button" onClick={onOpenSearch} className="flex flex-col items-center justify-center flex-1 h-full py-1 text-smoke-600 hover:text-ember">
+<button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event('storegrill:open-filters'))}
+          className="flex flex-col items-center justify-center flex-1 h-full py-1 text-smoke-600 hover:text-ember"
+        >
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09 9.324.545 9.324 1.08v10.484c0 .535-.791.99-1.324 1.08A37.156 37.156 0 0112 17.25c-5.33 0-10.584.232-15.759.678-.533.09-1.324-.545-1.324-1.08V4.758c0-.535.791-.99 1.324-1.08C6.545 3.232 9.245 3 12 3z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 10.5h.008v.008H21v-.008zm-4.5 0h.008v.008H16.5v-.008z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09 1.586.316 1.586 1.08v6.144c0 .35-.145.665-.405.904-.31.285-.726.494-1.181.702-.743.338-1.526.615-2.493.84v3.677c.001.56-.348 1.052-.895 1.22-.559.172-1.141.283-1.708.369-.49.074-.998.099-1.505.114-.833.024-1.649-.032-2.427-.173-.558-.102-1.094-.257-1.575-.52a1.206 1.206 0 01-.591-1.055v-3.532c-.992-.24-1.718-.507-2.456-.833-.614-.271-1.101-.536-1.445-.867-.318-.306-.5-.694-.5-1.115V3.848c0-.327.166-.6.436-.8.297-.22.744-.288.999-.288H12.036zM13 3a8 8 0 00-4.26 1.886M12 3v2.5M15.75 3.75H20.25M19.5 5.25v.008h.008V5.25H19.5zm-9 0v.008h.008V5.25h-.008zm0 3h.008v.008h-.008V8.25zM8.25 9.75h.008v.008H8.25V9.75zm6.75 0h.008v.008h-.008V9.75z" />
           </svg>
           <span className="text-[10px] uppercase tracking-wider mt-0.5">Filter</span>
         </button>
 
-        <Link href="/search" className={`flex flex-col items-center justify-center flex-1 h-full py-1 ${pathname?.includes('/search') ? 'text-ember font-bold' : 'text-smoke-600'}`}>
+        <button type="button" onClick={onOpenSearch} className="flex flex-col items-center justify-center flex-1 h-full py-1 text-smoke-600 hover:text-ember">
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
           </svg>
           <span className="text-[10px] uppercase tracking-wider mt-0.5">Search</span>
-        </Link>
+        </button>
 
         <Link href="/account/wishlist" className={`flex flex-col items-center justify-center flex-1 h-full relative py-1 ${pathname?.includes('/wishlist') ? 'text-ember font-bold' : 'text-smoke-600'}`}>
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -67,17 +70,17 @@ export function MobileBottomNav({ onOpenSearch, onOpenCategories }: { onOpenSear
     <nav aria-label="Mobile Bottom Navigation" className="lg:hidden fixed bottom-0 inset-x-0 z-[var(--z-header)] bg-white border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.06)] h-[60px] px-2 flex items-center justify-around">
       <Link href="/products" className={`flex flex-col items-center justify-center flex-1 h-full py-1 ${pathname?.startsWith('/products') ? 'text-ember font-bold' : 'text-smoke-600'}`}>
         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.365m11.135 0H18.75a.75.75 0 00.75-.75V15.75M3.375 19.5h17.25M3.375 19.5v-9.75a1.125 1.125 0 01.492-.924l8.25-5.658a1.125 1.125 0 011.256 0l8.25 5.658c.32.22.492.597.492.924v9.75" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
         </svg>
         <span className="text-[10px] uppercase tracking-wider mt-0.5">Store</span>
       </Link>
 
-      <Link href="/search" className={`flex flex-col items-center justify-center flex-1 h-full py-1 ${pathname?.includes('/search') ? 'text-ember font-bold' : 'text-smoke-600'}`}>
+      <button type="button" onClick={onOpenSearch} className="flex flex-col items-center justify-center flex-1 h-full py-1 text-smoke-600 hover:text-ember">
         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
         </svg>
         <span className="text-[10px] uppercase tracking-wider mt-0.5">Search</span>
-      </Link>
+      </button>
 
       <Link href="/account/wishlist" className={`flex flex-col items-center justify-center flex-1 h-full relative py-1 ${pathname?.includes('/wishlist') ? 'text-ember font-bold' : 'text-smoke-600'}`}>
         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">

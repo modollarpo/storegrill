@@ -95,7 +95,16 @@ export const middleware = (request: NextRequest): NextResponse => {
         const url = request.nextUrl.clone();
         url.port = '';
         url.host = `${apexPod}.storegrill.net`;
-        return NextResponse.redirect(url, 307);
+        const redirect = NextResponse.redirect(url, 307);
+        if (country && !request.cookies.has('sg_country')) {
+          redirect.cookies.set('sg_country', country.toUpperCase(), {
+            domain: '.storegrill.net',
+            path: '/',
+            maxAge: 31536000,
+            sameSite: 'lax',
+          });
+        }
+        return redirect;
       }
 
       const detected = detectRegionAndLanguage(request.headers.get('accept-language'), country);
@@ -105,6 +114,17 @@ export const middleware = (request: NextRequest): NextResponse => {
         maxAge: 31536000,
         sameSite: 'lax',
       });
+
+      // Remember the shopper's country across all pods so the storefront can
+      // always show where they belong, even after a country→pod redirect.
+      if (country && !request.cookies.has('sg_country')) {
+        response.cookies.set('sg_country', detected.regionKey, {
+          domain: '.storegrill.net',
+          path: '/',
+          maxAge: 31536000,
+          sameSite: 'lax',
+        });
+      }
     }
   }
 

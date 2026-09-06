@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getRequestContext } from '@/lib/server-context';
 import { buildMetadata, SEO_DEFAULTS } from '@/lib/seo';
 import { REGION_META, regionUrl, regionByKey } from '@/lib/regions';
+import { RegionLink } from '@/components/regions/RegionLink';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
@@ -45,8 +46,9 @@ const GROUPS: Array<{ label: string; test: (key: string) => boolean; color: stri
 ];
 
 export default async function RegionsPage() {
-  const { regionKey } = await getRequestContext();
-  const current = regionByKey(regionKey);
+  const { regionKey, countryKey } = await getRequestContext();
+  const displayKey = countryKey ?? regionKey;
+  const current = regionByKey(displayKey);
 
   return (
     <div className="min-h-screen pb-20 relative overflow-hidden">
@@ -87,13 +89,14 @@ export default async function RegionsPage() {
                 
                 <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5" role="list">
                   {regions.map(region => {
-                    const isCurrent = region.key === regionKey;
+                    const isCurrent = region.key === displayKey;
                     return (
                       <li key={region.key} className="flex">
-                        <a
+                        <RegionLink
+                          regionKey={region.key}
                           href={regionUrl(region.key)}
                           hrefLang={region.languages[0]?.code ?? 'en'}
-                          aria-current={isCurrent ? 'page' : undefined}
+                          ariaCurrent={isCurrent ? 'page' : undefined}
                           className={`w-full relative flex flex-col p-6 rounded-2xl border transition-all duration-normal group overflow-hidden ${
                             isCurrent
                               ? 'bg-surface-raised border-ember shadow-md ring-2 ring-ember/20'
@@ -125,7 +128,7 @@ export default async function RegionsPage() {
                                </div>
                             </div>
                           )}
-                        </a>
+                        </RegionLink>
                       </li>
                     );
                   })}

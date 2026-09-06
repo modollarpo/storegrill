@@ -103,7 +103,7 @@ export default function CartPage() {
 
   return (
     <div className="bg-surface-sunken min-h-screen py-10">
-      <div className="container-site py-6 md:py-10">
+      <div className="container-site py-6 md:py-10 pb-32 lg:pb-10">
         <h1 className="text-2xl font-extrabold text-text-primary mb-8">
           Basket
           <span className="ml-2 text-base font-medium text-text-secondary">({cart.count} item{cart.count === 1 ? '' : 's'})</span>
@@ -358,6 +358,25 @@ export default function CartPage() {
               </div>
             </div>
           </aside>
+        </div>
+
+        {/* Mobile sticky checkout bar — keeps the total + CTA one tap away above the bottom nav */}
+        <div className="lg:hidden fixed inset-x-0 bottom-[60px] z-[var(--z-header)] bg-surface-raised border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5 max-w-2xl mx-auto">
+            <div className="min-w-0">
+              <PriceDisplay amountMinorUnits={total} currencyCode={currency} size="md" />
+              <span className="block text-[10px] uppercase tracking-wide text-text-tertiary font-bold mt-0.5">
+                {cart.count} item{cart.count === 1 ? '' : 's'} · Delivery &amp; taxes at checkout
+              </span>
+            </div>
+            <Link
+              href="/checkout"
+              className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-full bg-ember text-white font-extrabold text-sm shadow-lg shadow-ember/30 hover:bg-deal active:scale-95 transition-all shrink-0"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              Checkout
+            </Link>
+          </div>
         </div>
       </div>
     </div>

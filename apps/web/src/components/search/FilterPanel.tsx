@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Select } from '../ui/Select';
 import { Drawer } from '../ui/Drawer';
@@ -28,6 +28,12 @@ export interface FilterPanelProps {
 
 export function MobileFilterButton({ facets }: { facets: FacetData }) {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const openFilters = () => setOpen(true);
+    window.addEventListener('storegrill:open-filters', openFilters);
+    return () => window.removeEventListener('storegrill:open-filters', openFilters);
+  }, []);
 
   return (
     <>

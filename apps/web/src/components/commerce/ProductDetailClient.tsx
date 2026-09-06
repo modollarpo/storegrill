@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { storefrontImage } from '@/lib/images';
@@ -11,6 +11,8 @@ import { PdpImageGallery } from './pdp/PdpImageGallery';
 import { PdpPricing } from './pdp/PdpPricing';
 import { PdpVariantSelector } from './pdp/PdpVariantSelector';
 import { PdpBuyBox } from './pdp/PdpBuyBox';
+import { AddToCartButton } from './AddToCartButton';
+import { PriceDisplay } from './PriceDisplay';
 
 export interface PdpVariant {
   id: string;
@@ -65,6 +67,19 @@ export function ProductDetailClient({ product, shipping: _shipping, locale = 'en
     return first.id;
   });
 
+  const [buyboxVisible, setBuyboxVisible] = useState(true);
+
+  useEffect(() => {
+    const el = document.getElementById('buybox');
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setBuyboxVisible(entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const variant = product.variants?.find(v => v.id === variantId);
   const activeUnitPrice = variant?.basePriceMinorUnits ?? product.price;
   const currency = variant?.currencyCode ?? product.currencyCode;
@@ -81,6 +96,8 @@ export function ProductDetailClient({ product, shipping: _shipping, locale = 'en
     listPrice && listPrice > activeUnitPrice
       ? Math.round(((listPrice - activeUnitPrice) / listPrice) * 100)
       : 0;
+
+  const showStickyBuyBar = !buyboxVisible && !!stock && stock > 0;
 
 
   const getAttr = (v: PdpVariant, name: string): string | undefined =>
@@ -109,12 +126,18 @@ export function ProductDetailClient({ product, shipping: _shipping, locale = 'en
 
         <h1 className="text-3xl md:text-4xl font-extrabold text-text-primary leading-snug mb-3">{product.name}</h1>
         
-        <a href="#reviews-tab" className="inline-flex items-center gap-2 mb-6 group">
+        <a href="#reviews-tab" className="inline-flex items-center gap-2 mb-3 group">
           <StarRating rating={product.rating} showCount={false} />
           <span className="text-sm font-bold text-action-primary hover:underline underline-offset-4">
             {product.reviewCount.toLocaleString()} ratings
           </span>
         </a>
+
+        {product.shortDescription && (
+          <p className="mb-6 text-sm text-text-secondary leading-relaxed border-l-2 border-action-primary/30 pl-3">
+            {product.shortDescription}
+          </p>
+        )}
 
         {/* Price block */}
         <PdpPricing 
@@ -158,18 +181,72 @@ export function ProductDetailClient({ product, shipping: _shipping, locale = 'en
              stock={stock}
           />
         </div>
-        
-        {product.shortDescription && (
-          <p className="mt-4 text-sm text-text-secondary leading-relaxed border-l-2 border-action-primary/30 pl-3">
-            {product.shortDescription}
-          </p>
-        )}
       </div>
       </div>
 
       {/* -- Details (full-width, aligned to container edges) -- */}
       <div id="product-details" className="min-w-0 bg-surface border border-border rounded-2xl p-6 md:p-8 shadow-sm">
         {tabs.description}
+      </div>
+
+      <PdpStickyBuyBar
+        show={showStickyBuyBar}
+        product={product}
+        variantId={variantId}
+        images={images}
+        activeUnitPrice={activeUnitPrice}
+        currency={currency}
+        stock={stock}
+        locale={locale}
+      />
+    </div>
+  );
+}
+
+interface PdpStickyBuyBarProps {
+  show: boolean;
+  product: PdpProduct;
+  variantId?: string;
+  images: string[];
+  activeUnitPrice: number;
+  currency: string;
+  stock?: number;
+  locale: string;
+}
+
+function PdpStickyBuyBar({ show, product, variantId, images, activeUnitPrice, currency, stock, locale }: PdpStickyBuyBarProps) {
+  return (
+    <div
+      className={cn(
+        'lg:hidden fixed inset-x-0 bottom-[60px] z-[var(--z-header)] bg-surface-raised border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)]',
+        'transition-transform duration-300',
+        show ? 'translate-y-0' : 'translate-y-full pointer-events-none'
+      )}
+      aria-hidden={!show}
+    >
+      <div className="flex items-center justify-between gap-3 px-4 py-2.5 max-w-3xl mx-auto">
+        <div className="min-w-0">
+          <PriceDisplay amountMinorUnits={activeUnitPrice} currencyCode={currency} size="md" locale={locale} />
+          <span className="block text-[10px] uppercase tracking-wide text-text-tertiary font-bold mt-0.5">
+            Add to basket
+          </span>
+        </div>
+        <AddToCartButton
+          productId={product.id}
+          variantId={variantId}
+          name={product.name}
+          slug={product.slug}
+          image={images[0]}
+          unitPriceMinorUnits={activeUnitPrice}
+          listPriceMinorUnits={product.listPriceMinorUnits}
+          currencyCode={currency}
+          quantity={1}
+          stock={stock}
+          vendorName={product.vendor?.storeName}
+          label="Add to basket"
+          size="md"
+          className="shrink-0"
+        />
       </div>
     </div>
   );

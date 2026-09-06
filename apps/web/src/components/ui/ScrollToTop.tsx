@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 interface ScrollToTopProps {
@@ -10,12 +11,22 @@ interface ScrollToTopProps {
 
 export function ScrollToTop({ threshold = 400, className }: ScrollToTopProps) {
   const [visible, setVisible] = useState(false);
+  const pathname = usePathname();
+
+  // Checkout is a focused conversion flow — a floating "back to top" there is
+  // noise, so keep it out of the way of the checkout actions.
+  const onCheckout = pathname?.startsWith('/checkout');
 
   useEffect(() => {
+    if (onCheckout) {
+      setVisible(false);
+      return;
+    }
     const onScroll = () => setVisible(window.scrollY > threshold);
+    onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, [threshold]);
+  }, [threshold, onCheckout]);
 
   function scrollUp() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -27,7 +38,9 @@ export function ScrollToTop({ threshold = 400, className }: ScrollToTopProps) {
       onClick={scrollUp}
       aria-label="Scroll to top"
       className={cn(
-        'fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-gray-900 text-white shadow-xl',
+        // bottom-24 on mobile clears the 60px bottom navigation bar; desktop has
+        // no bottom bar so the button sits at the classic bottom-right corner.
+        'fixed bottom-24 lg:bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-gray-900 text-white shadow-xl',
         'flex items-center justify-center transition-all duration-300',
         'hover:bg-action-primary hover:shadow-2xl hover:-translate-y-1 active:scale-95',
         visible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none',

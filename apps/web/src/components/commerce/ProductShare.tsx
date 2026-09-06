@@ -32,7 +32,7 @@ export function ProductShare({ name, slug, url, className }: ProductShareProps) 
   const urls = shareUrl ? buildShareUrls(name, shareUrl) : null;
 
   const iconButtonClass =
-    'w-9 h-9 sm:w-10 sm:h-10 grid place-items-center rounded-full transition-colors shadow-sm bg-surface border border-border text-text-secondary hover:bg-surface-sunken';
+    'w-8 h-8 sm:w-10 sm:h-10 grid place-items-center rounded-full transition-colors shadow-sm bg-surface border border-border text-text-secondary hover:bg-surface-sunken';
 
   async function copyLink() {
     try {
@@ -113,7 +113,7 @@ export function ProductShare({ name, slug, url, className }: ProductShareProps) 
           onClick={copyLink}
           aria-label={copied ? 'Link copied' : 'Copy link'}
           className={cn(
-            'w-9 h-9 sm:w-10 sm:h-10 grid place-items-center rounded-full transition-colors shadow-sm',
+            'w-8 h-8 sm:w-10 sm:h-10 grid place-items-center rounded-full transition-colors shadow-sm',
             copied
               ? 'bg-feedback-success text-white'
               : 'bg-surface border border-border text-text-secondary hover:bg-surface-sunken'

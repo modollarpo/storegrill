@@ -13,7 +13,7 @@ interface RegionLinkProps extends PropsWithChildren {
 const COUNTRY_COOKIE = 'sg_country';
 
 export function RegionLink({ regionKey, href, hrefLang, className, ariaCurrent, children }: RegionLinkProps) {
-  function selectCountry(e: MouseEvent<HTMLAnchorElement>) {
+  function selectCountry(_e: MouseEvent<HTMLAnchorElement>) {
     // Saved across all *.storegrill.net pods before the country subdomain
     // redirects to its super-pod, so the choice survives the 308 hop.
     document.cookie = `${COUNTRY_COOKIE}=${regionKey}; domain=.storegrill.net; path=/; max-age=31536000; samesite=lax`;

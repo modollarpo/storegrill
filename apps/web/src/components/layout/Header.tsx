@@ -236,7 +236,7 @@ function Header({ categories }: HeaderProps) {
                 className="shrink-0 flex items-center transition-transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/white.png" alt="Storegrill" className="h-[48px] w-auto max-w-[9.5rem]" />
+                <img src="/white.png" alt="Storegrill" className="h-10 w-auto" />
               </Link>
 
               {/* Categories dropdown + Search */}
@@ -331,7 +331,7 @@ function Header({ categories }: HeaderProps) {
                   className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center transition-transform hover:scale-[1.02] active:scale-[0.98]"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/white.png" alt="Storegrill" className="h-8 w-auto max-w-[8.5rem]" />
+                  <img src="/white.png" alt="Storegrill" className="h-8 w-auto" />
                 </Link>
 
                 {/* Right: Cart icon */}

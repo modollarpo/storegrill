@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { AccountShell } from '@/components/account/AccountShell';
 
-export const metadata: Metadata = { title: 'Your Addresses', robots: { index: false } };
+export const metadata: Metadata = { title: 'Your Addresses | Storegrill', robots: { index: false } };
 
 const ADDRESSES = [
   { id: '1', label: 'Home', street: '123 Main St', city: 'New York', state: 'NY', zip: '10001', country: 'US', isDefault: true },

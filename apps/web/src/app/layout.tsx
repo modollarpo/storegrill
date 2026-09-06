@@ -23,10 +23,7 @@ const APEX = process.env.NEXT_PUBLIC_APEX_DOMAIN || 'Storegrill.net';
 
 export const metadata: Metadata = {
   metadataBase: new URL(`https://${APEX}`),
-  title: {
-    default: 'Storegrill — Online Shopping Marketplace',
-    template: '%s | Storegrill',
-  },
+  title: 'Storegrill — Online Shopping Marketplace',
   description:
     'Storegrill is a global multi-region marketplace. Shop millions of products from verified vendors with local currency, payments and delivery across North America, Europe, Asia-Pacific and the Middle East.',
   applicationName: 'Storegrill',

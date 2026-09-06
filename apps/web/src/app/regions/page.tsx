@@ -1,18 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getRequestContext } from '@/lib/server-context';
-import { buildMetadata } from '@/lib/seo';
+import { buildMetadata, SEO_DEFAULTS } from '@/lib/seo';
 import { REGION_META, regionUrl, regionByKey } from '@/lib/regions';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
-  const meta = buildMetadata({
-    title: 'Choose Your Country or Region',
-    description:
-      'Shop Storegrill in your country with local currency, language, payment methods and delivery. Available across North America, Europe, the Middle East, Africa and Asia-Pacific.',
-    path: '/regions',
-    regionKey,
-  });
+  const seo = SEO_DEFAULTS.regions();
+  const meta = buildMetadata({ title: seo.title, description: seo.description, keywords: seo.keywords, path: '/regions', regionKey });
   return meta;
 }
 

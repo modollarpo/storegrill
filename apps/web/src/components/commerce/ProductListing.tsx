@@ -45,7 +45,7 @@ function prettify(slug: string): string {
 
 export async function buildListingMetadata(
   searchParams: ListingSearchParams['searchParams'],
-  opts: { forceCategory?: string } = {},
+  opts: { forceCategory?: string; categoryName?: string; categoryDescription?: string } = {},
 ): Promise<Metadata> {
   const sp = (await searchParams) || {};
   const { regionKey } = await getRequestContext();
@@ -54,23 +54,28 @@ export async function buildListingMetadata(
 
   let title: string;
   let description: string;
+  let keywords: string[] | undefined;
   let path: string;
   if (q) {
     title = `${q} — Search Results`;
     description = SEO_DEFAULTS.search(q).description;
     path = `/search?q=${encodeURIComponent(q)}`;
   } else if (category) {
-    const name = prettify(category);
-    title = `${name} — Shop ${name} on Storegrill`;
-    description = `Browse ${name} on Storegrill. Compare prices from verified sellers, read reviews and enjoy secure checkout with regional delivery.`;
+    const name = opts.categoryName ?? prettify(category);
+    const seo = SEO_DEFAULTS.category(category, name, regionKey, opts.categoryDescription);
+    title = seo.title;
+    description = seo.description;
+    keywords = seo.keywords;
     path = `/categories/${category}`;
   } else {
-    title = 'All Products';
-    description = 'Browse all products on Storegrill with filters for price, rating, brand and seller.';
+    const seo = SEO_DEFAULTS.allProducts(regionKey);
+    title = seo.title;
+    description = seo.description;
+    keywords = seo.keywords;
     path = '/products';
   }
 
-  return buildMetadata({ title, description, path, regionKey, noIndex: Boolean(q) });
+  return buildMetadata({ title, description, keywords, path, regionKey, noIndex: Boolean(q) });
 }
 
 async function fetchListing(

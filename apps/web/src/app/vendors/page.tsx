@@ -1,18 +1,14 @@
 import type { Metadata } from 'next';
 import { getRequestContext } from '@/lib/server-context';
-import { buildMetadata } from '@/lib/seo';
+import { buildMetadata, SEO_DEFAULTS } from '@/lib/seo';
 import { API_BASE } from '@/lib/api';
 import { VendorCard } from '@/components/vendor/VendorCard';
 import { Breadcrumb } from '@/components/navigation/Breadcrumb';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
-  return buildMetadata({
-    title: 'Our Vendors & Sellers',
-    description: 'Discover verified Storegrill vendors, their storefronts, ratings and policies. Shop confidently from vetted sellers worldwide.',
-    path: '/vendors',
-    regionKey,
-  });
+  const seo = SEO_DEFAULTS.vendors(regionKey);
+  return buildMetadata({ title: seo.title, description: seo.description, keywords: seo.keywords, path: '/vendors', regionKey });
 }
 
 async function fetchVendors() {

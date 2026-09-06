@@ -51,14 +51,14 @@ export async function generateMetadata({ params }: PdpProps): Promise<Metadata> 
   const price = (priceMinorUnits / decimals).toFixed(2);
   const rating = localizedProduct.rating ?? undefined;
   const reviewCount = localizedProduct.reviewCount ?? undefined;
-  const title = localizedProduct.name.slice(0, 60);
-  const defaultDesc = `Buy ${localizedProduct.name} on Storegrill. Check price, availability, reviews and delivery options from verified sellers.`;
+  const seo = SEO_DEFAULTS.product(localizedProduct.name, price, currencyCode, rating, reviewCount, regionKey);
   const desc = localizedProduct.shortDescription
-    ? `${localizedProduct.shortDescription.slice(0, 300)}. ${defaultDesc}`
-    : SEO_DEFAULTS.product(localizedProduct.name, price, currencyCode, rating, reviewCount).description;
+    ? `${localizedProduct.shortDescription.slice(0, 300).replace(/\.$/, '')}. ${seo.description}`
+    : seo.description;
   const meta = buildMetadata({
-    title,
-    description: desc,
+    title: seo.title,
+    description: desc.slice(0, 320),
+    keywords: seo.keywords,
     path: `/products/${slug}`,
     regionKey,
     ogImage: localizedProduct.thumbnail || undefined,

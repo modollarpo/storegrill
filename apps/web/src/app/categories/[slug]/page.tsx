@@ -27,7 +27,12 @@ export async function generateMetadata({
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  return buildListingMetadata(searchParams, { forceCategory: slug });
+  const data = await fetchCategory(slug);
+  return buildListingMetadata(searchParams, {
+    forceCategory: slug,
+    categoryName: data?.category?.name ?? undefined,
+    categoryDescription: data?.category?.description ?? undefined,
+  });
 }
 
 export default async function CategoryPage({

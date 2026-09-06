@@ -11,7 +11,8 @@ import { WaitingRoomClient } from './WaitingRoomClient';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
-  return buildMetadata({ ...SEO_DEFAULTS.deals(), path: '/deals', regionKey, ogImage: '/banners/bannerThree.jpg' });
+  const seo = SEO_DEFAULTS.deals(regionKey);
+  return buildMetadata({ title: seo.title, description: seo.description, keywords: seo.keywords, path: '/deals', regionKey, ogImage: '/banners/bannerThree.jpg' });
 }
 
 interface DealRow {

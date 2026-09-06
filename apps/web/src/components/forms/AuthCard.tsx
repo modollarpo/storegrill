@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api, ApiError, API_BASE } from '@/lib/api';
+import { useTranslations } from '@/components/providers/RegionContext';
 import { cn } from '@/lib/utils';
 import { useToast } from '../feedback/Toast';
 
@@ -21,6 +22,12 @@ const PROVIDER_STYLES: Record<string, string> = {
   google: 'bg-white border-smoke-200 text-charcoal hover:bg-smoke-50 hover:border-smoke-300',
   facebook: 'bg-[#1877F2] border-[#1877F2] text-white hover:bg-[#166FE5]',
   linkedin: 'bg-[#0A66C2] border-[#0A66C2] text-white hover:bg-[#0958A8]',
+};
+
+const PROVIDER_NAMES: Record<string, string> = {
+  google: 'Google',
+  facebook: 'Facebook',
+  linkedin: 'LinkedIn',
 };
 
 function ProviderIcon({ provider }: { provider: string }) {
@@ -52,6 +59,9 @@ export function AuthCard({ mode }: AuthCardProps) {
   const [providers, setProviders] = useState<string[]>([]);
   const searchParams = useSearchParams();
   const nextPath = searchParams.get('next') || '/account';
+  const t = useTranslations();
+  const oauthError = searchParams.get('error');
+  const oauthProvider = searchParams.get('provider');
 
   useEffect(() => {
     api<{ providers: string[] }>('/api/v1/auth/oauth/providers')
@@ -59,12 +69,33 @@ export function AuthCard({ mode }: AuthCardProps) {
       .catch(() => setProviders([]));
   }, []);
 
+  const errorMessage = oauthError
+    ? oauthError === 'oauth_failed'
+      ? t('oauthFailed', PROVIDER_NAMES[oauthProvider || ''] || oauthProvider || 'provider')
+      : oauthError === 'oauth_state_mismatch'
+        ? t('oauthStateMismatch')
+        : oauthError === 'oauth_profile_incomplete'
+          ? t('oauthProfileIncomplete', PROVIDER_NAMES[oauthProvider || ''] || oauthProvider || 'provider')
+          : oauthError === 'oauth_not_configured'
+            ? t('oauthNotConfigured', PROVIDER_NAMES[oauthProvider || ''] || oauthProvider || 'provider')
+            : null
+    : null;
+
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 py-12">
       <Link href="/" aria-label="Storegrill home" className="mb-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo.png" alt="Storegrill" className="h-9 w-auto" />
       </Link>
+      {errorMessage && (
+        <div
+          role="alert"
+          data-testid="oauth-error"
+          className="mb-4 w-full max-w-[460px] rounded-md border border-feedback-danger/30 bg-feedback-danger-bg px-4 py-3 text-sm text-feedback-danger"
+        >
+          {errorMessage}
+        </div>
+      )}
       {providers.length > 0 && (
         <>
           <div className="flex flex-col gap-3 mb-4 w-full max-w-[460px]" role="group" aria-label="Continue with">

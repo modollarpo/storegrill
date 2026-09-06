@@ -20,6 +20,10 @@ const en: Dict = {
   shopNow: 'Shop now', viewAll: 'View all', seeAllDeals: 'See all deals',
   recentlyViewed: 'Recently viewed', featuredVendors: 'Featured Vendors',
   becomeVendor: 'Become a Vendor',
+  oauthFailed: 'Sign-in with {0} failed. Please try again.',
+  oauthStateMismatch: 'The sign-in session expired. Please try again.',
+  oauthProfileIncomplete: 'Could not retrieve your profile from {0}. Please try again or use email sign-in.',
+  oauthNotConfigured: '{0} sign-in is not configured for this region yet.',
 };
 
 const de: Dict = {

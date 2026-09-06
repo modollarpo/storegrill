@@ -63,7 +63,7 @@ describe('buildMetadata', () => {
   it('exposes keywords and canonical/hreflang alternates', () => {
     const meta = buildMetadata({ title: 'Buy Smartwatch in UK', description: 'Buy a smartwatch.', path: '/products/smartwatch', regionKey: 'UK', keywords: ['smartwatch uk', 'buy smartwatch online'] });
     expect(meta.keywords).toEqual(['smartwatch uk', 'buy smartwatch online']);
-    expect(meta.alternates?.canonical?.toLowerCase()).toContain('uk.storegrill.net');
-    expect(meta.alternates?.languages?.['x-de']?.toLowerCase()).toContain('de.storegrill.net');
+    expect(String(meta.alternates?.canonical).toLowerCase()).toContain('uk.storegrill.net');
+    expect(String(meta.alternates?.languages?.['x-de']).toLowerCase()).toContain('de.storegrill.net');
   });
 });

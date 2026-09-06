@@ -51,7 +51,7 @@ function ProviderIcon({ provider }: { provider: string }) {
 export function AuthCard({ mode }: AuthCardProps) {
   const [providers, setProviders] = useState<string[]>([]);
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get('next') || '/';
+  const nextPath = searchParams.get('next') || '/account';
 
   useEffect(() => {
     api<{ providers: string[] }>('/api/v1/auth/oauth/providers')
@@ -106,7 +106,7 @@ export function AuthCard({ mode }: AuthCardProps) {
 function AuthForm({ mode }: { mode: AuthCardProps['mode'] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get('next') || '/';
+  const nextPath = searchParams.get('next') || '/account';
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

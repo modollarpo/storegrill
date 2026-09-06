@@ -24,7 +24,7 @@ export function WishlistShare({ product, className }: WishlistShareProps) {
   const saved = wishlist.has(product.id);
 
   return (
-    <div className={cn('flex items-center justify-between gap-3', className)}>
+    <div className={cn('flex flex-col gap-3', className)}>
       <button
         type="button"
         onClick={() => {
@@ -41,7 +41,7 @@ export function WishlistShare({ product, className }: WishlistShareProps) {
         }}
         aria-pressed={saved}
         className={cn(
-          'inline-flex items-center gap-2 h-10 px-4 rounded-full text-sm font-bold border border-border bg-surface transition-colors',
+          'inline-flex items-center justify-center gap-2 h-10 px-4 rounded-full text-sm font-bold border border-border bg-surface transition-colors w-full sm:w-auto',
           saved ? 'text-ember border-ember/40' : 'text-text-primary hover:border-ember hover:text-ember'
         )}
       >
@@ -51,7 +51,7 @@ export function WishlistShare({ product, className }: WishlistShareProps) {
         {saved ? 'In wishlist' : 'Add to wishlist'}
       </button>
 
-      <ProductShare name={product.name} slug={product.slug} className="flex-row items-center !gap-1" />
+      <ProductShare name={product.name} slug={product.slug} className="w-full min-w-0" />
     </div>
   );
 }

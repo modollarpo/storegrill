@@ -226,7 +226,7 @@ export function CampaignHero({ dealTicker = [], regionKey, deals = [] }: { dealT
             </span>
 
             {/* Headline */}
-            <h2 className="text-[2.5rem] sm:text-5xl lg:text-[3.5rem] xl:text-6xl font-extrabold text-text-primary tracking-[-0.03em] leading-[0.95] mb-4 md:mb-5 whitespace-pre-line">
+            <h2 className="text-[2.1rem] sm:text-5xl lg:text-[3.5rem] xl:text-6xl font-extrabold text-text-primary tracking-[-0.03em] leading-[0.95] mb-4 md:mb-5 whitespace-pre-line break-words">
               {current.headline}
             </h2>
 
@@ -724,10 +724,10 @@ export function TabbedProductCarousel({ tabs }: { tabs: TabbedProductTab[] }) {
             <h2 id="trending-heading" className="text-xl md:text-2xl font-extrabold text-text-primary tracking-tight">What&apos;s Trending Right Now</h2>
             <p className="text-xs font-medium text-text-tertiary mt-1">Updated daily from our top vendors</p>
           </div>
-          <div className="flex items-center gap-2 bg-surface rounded-xl border border-border p-1">
+          <div className="flex items-center gap-2 bg-surface rounded-xl border border-border p-1 max-w-full overflow-x-auto scrollbar-none">
             {tabs.map((tab, i) => (
               <button key={tab.label} type="button" onClick={() => setActive(i)}
-                className={cn('px-4 py-2 rounded-lg text-sm font-bold transition-all', i === active ? 'bg-ember text-white shadow-md' : 'text-text-secondary hover:text-text-primary hover:bg-surface-sunken')}>
+                className={cn('px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap shrink-0 transition-all', i === active ? 'bg-ember text-white shadow-md' : 'text-text-secondary hover:text-text-primary hover:bg-surface-sunken')}>
                 {tab.label}
               </button>
             ))}

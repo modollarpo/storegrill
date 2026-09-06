@@ -31,8 +31,8 @@ export function MobileBottomNav({ onOpenSearch, onOpenCategories }: { onOpenSear
           onClick={() => window.dispatchEvent(new Event('storegrill:open-filters'))}
           className="flex flex-col items-center justify-center flex-1 h-full py-1 text-smoke-600 hover:text-ember"
         >
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09 1.586.316 1.586 1.08v6.144c0 .35-.145.665-.405.904-.31.285-.726.494-1.181.702-.743.338-1.526.615-2.493.84v3.677c.001.56-.348 1.052-.895 1.22-.559.172-1.141.283-1.708.369-.49.074-.998.099-1.505.114-.833.024-1.649-.032-2.427-.173-.558-.102-1.094-.257-1.575-.52a1.206 1.206 0 01-.591-1.055v-3.532c-.992-.24-1.718-.507-2.456-.833-.614-.271-1.101-.536-1.445-.867-.318-.306-.5-.694-.5-1.115V3.848c0-.327.166-.6.436-.8.297-.22.744-.288.999-.288H12.036zM13 3a8 8 0 00-4.26 1.886M12 3v2.5M15.75 3.75H20.25M19.5 5.25v.008h.008V5.25H19.5zm-9 0v.008h.008V5.25h-.008zm0 3h.008v.008h-.008V8.25zM8.25 9.75h.008v.008H8.25V9.75zm6.75 0h.008v.008h-.008V9.75z" />
+          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3Z" />
           </svg>
           <span className="text-[10px] uppercase tracking-wider mt-0.5">Filter</span>
         </button>
@@ -69,8 +69,13 @@ export function MobileBottomNav({ onOpenSearch, onOpenCategories }: { onOpenSear
   return (
     <nav aria-label="Mobile Bottom Navigation" className="lg:hidden fixed bottom-0 inset-x-0 z-[var(--z-header)] bg-white border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.06)] h-[60px] px-2 flex items-center justify-around">
       <Link href="/products" className={`flex flex-col items-center justify-center flex-1 h-full py-1 ${pathname?.startsWith('/products') ? 'text-ember font-bold' : 'text-smoke-600'}`}>
-        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.015A3.001 3.001 0 0021 9.349m-18 0V6a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 6v3.349" />
+        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
+          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+          <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4" />
+          <path d="M2 7h20" />
+          <path d="M22 7v3a2 2 0 0 1-2 2a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7Z" />
+          <path d="M9 22v-4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4" />
         </svg>
         <span className="text-[10px] uppercase tracking-wider mt-0.5">Store</span>
       </Link>

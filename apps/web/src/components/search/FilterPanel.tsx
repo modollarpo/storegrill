@@ -97,7 +97,7 @@ export function FilterPanel({ facets, className }: FilterPanelProps) {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-extrabold uppercase tracking-wide text-text-primary flex items-center gap-2">
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09 1.586.316 1.586 1.08v6.144c0 .35-.145.665-.405.904-.31.285-.726.494-1.181.702-.743.338-1.526.615-2.493.84v3.677c.001.56-.348 1.052-.895 1.22-.559.172-1.141.283-1.708.369-.49.074-.998.099-1.505.114-.833.024-1.649-.032-2.427-.173-.558-.102-1.094-.257-1.575-.52a1.206 1.206 0 01-.591-1.055v-3.532c-.992-.24-1.718-.507-2.456-.833-.614-.271-1.101-.536-1.445-.867-.318-.306-.5-.694-.5-1.115V3.848c0-.327.166-.6.436-.8.297-.22.744-.288.999-.288H12.036z" />
+            <path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3Z" />
           </svg>
           Filters
         </h3>

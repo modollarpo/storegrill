@@ -34,19 +34,19 @@ export function MobileBottomNav({ onOpenSearch, onOpenCategories }: { onOpenSear
           <span className="text-[10px] uppercase tracking-wider mt-0.5">Filter</span>
         </button>
 
-        <button type="button" onClick={onOpenSearch} className="flex flex-col items-center justify-center flex-1 h-full py-1 text-smoke-600 hover:text-ember">
+        <Link href="/search" className={`flex flex-col items-center justify-center flex-1 h-full py-1 ${pathname?.includes('/search') ? 'text-ember font-bold' : 'text-smoke-600'}`}>
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
           </svg>
           <span className="text-[10px] uppercase tracking-wider mt-0.5">Search</span>
-        </button>
+        </Link>
 
         <Link href="/account/wishlist" className={`flex flex-col items-center justify-center flex-1 h-full relative py-1 ${pathname?.includes('/wishlist') ? 'text-ember font-bold' : 'text-smoke-600'}`}>
           <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
           </svg>
           {wishlist.items.length > 0 && (
-            <span className="absolute top-1 right-3 min-w-[15px] h-[15px] bg-secondary text-text-primary text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+            <span className="absolute top-1 right-3 min-w-[15px] h-[15px] bg-action-primary text-action-primary-fg text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
               {wishlist.items.length}
             </span>
           )}
@@ -65,29 +65,29 @@ export function MobileBottomNav({ onOpenSearch, onOpenCategories }: { onOpenSear
 
   return (
     <nav aria-label="Mobile Bottom Navigation" className="lg:hidden fixed bottom-0 inset-x-0 z-[var(--z-header)] bg-white border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.06)] h-[60px] px-2 flex items-center justify-around">
-      <Link href="/" className={`flex flex-col items-center justify-center flex-1 h-full py-1 ${pathname === '/' ? 'text-ember font-bold' : 'text-smoke-600'}`}>
+      <Link href="/products" className={`flex flex-col items-center justify-center flex-1 h-full py-1 ${pathname?.startsWith('/products') ? 'text-ember font-bold' : 'text-smoke-600'}`}>
         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.365m11.135 0H18.75a.75.75 0 00.75-.75V15.75M3.375 19.5h17.25M3.375 19.5v-9.75a1.125 1.125 0 01.492-.924l8.25-5.658a1.125 1.125 0 011.256 0l8.25 5.658c.32.22.492.597.492.924v9.75" />
         </svg>
         <span className="text-[10px] uppercase tracking-wider mt-0.5">Store</span>
       </Link>
 
-      <button type="button" onClick={onOpenSearch} className="flex flex-col items-center justify-center flex-1 h-full py-1 text-smoke-600 hover:text-ember">
+      <Link href="/search" className={`flex flex-col items-center justify-center flex-1 h-full py-1 ${pathname?.includes('/search') ? 'text-ember font-bold' : 'text-smoke-600'}`}>
         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
         </svg>
         <span className="text-[10px] uppercase tracking-wider mt-0.5">Search</span>
-      </button>
+      </Link>
 
       <Link href="/account/wishlist" className={`flex flex-col items-center justify-center flex-1 h-full relative py-1 ${pathname?.includes('/wishlist') ? 'text-ember font-bold' : 'text-smoke-600'}`}>
         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
         </svg>
-        {wishlist.items.length > 0 && (
-          <span className="absolute top-1 right-3 min-w-[15px] h-[15px] bg-secondary text-text-primary text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
-            {wishlist.items.length}
-          </span>
-        )}
+{wishlist.items.length > 0 && (
+            <span className="absolute top-1 right-3 min-w-[15px] h-[15px] bg-action-primary text-action-primary-fg text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+              {wishlist.items.length}
+            </span>
+          )}
         <span className="text-[10px] uppercase tracking-wider mt-0.5">Wishlist</span>
       </Link>
 

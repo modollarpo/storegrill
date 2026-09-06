@@ -13,16 +13,23 @@ function isValidRegion(key: string): boolean {
 
 // Mapping of country-style subdomains to region keys (mirrors the middleware logic)
 const SUBDOMAIN_TO_REGION: Record<string, string> = {
-  uk: 'uk', gb: 'uk',
-  us: 'us', ca: 'ca',
-  ie: 'ie', de: 'de', fr: 'fr', it: 'it', es: 'es', pt: 'pt', nl: 'nl',
-  be: 'be', lu: 'lu', at: 'at', ch: 'ch', se: 'se', no: 'no', dk: 'dk',
-  fi: 'fi', ee: 'ee', lv: 'lv', lt: 'lt', pl: 'pl', cz: 'cz', sk: 'sk',
-  hu: 'hu', ro: 'ro', bg: 'bg', hr: 'hr', si: 'si', gr: 'gr', cy: 'cy', mt: 'mt',
-  ae: 'ae', in: 'in', au: 'au', jp: 'jp',
-  ng: 'ng', ke: 'ke', ug: 'ug', tz: 'tz',
-  gh: 'gh', za: 'za', eg: 'eg', ma: 'ma',
+  uk: 'UK', gb: 'UK',
+  us: 'US', ca: 'CA',
+  ie: 'IE', de: 'DE', fr: 'FR', it: 'IT', es: 'ES', pt: 'PT', nl: 'NL',
+  be: 'BE', lu: 'LU', at: 'AT', ch: 'CH', se: 'SE', no: 'NO', dk: 'DK',
+  fi: 'FI', ee: 'EE', lv: 'LV', lt: 'LT', pl: 'PL', cz: 'CZ', sk: 'SK',
+  hu: 'HU', ro: 'RO', bg: 'BG', hr: 'HR', si: 'SI', gr: 'GR', cy: 'CY', mt: 'MT',
+  ae: 'AE', in: 'IN', au: 'AU', jp: 'JP',
+  ng: 'NG', ke: 'KE', ug: 'UG', tz: 'TZ',
+  gh: 'GH', za: 'ZA', eg: 'EG', ma: 'MA',
 };
+
+export function resolveRegionFromHost(hostHeader: string): string | null {
+  const subdomainMatch = hostHeader.match(/^([a-z0-9-]+)\.storegrill\.net$/i);
+  if (!subdomainMatch) return null;
+  const regionKey = SUBDOMAIN_TO_REGION[subdomainMatch[1].toLowerCase()];
+  return regionKey && isValidRegion(regionKey) ? regionKey : null;
+}
 
 export async function getRequestContext(): Promise<RequestContext> {
   const cookieStore = cookies();
@@ -53,15 +60,10 @@ export async function getRequestContext(): Promise<RequestContext> {
   const detected = detectRegionAndLanguage(headerStore.get('accept-language'), country);
 
   // If detection didn't yield a valid region, try the hostname subdomain
-  const hostHeader = headerStore.get('host') || '';
-  const subdomainMatch = hostHeader.match(/^([a-z0-9-]+)\.storegrill\.net$/i);
-  if (subdomainMatch) {
-    const subdomainKey = subdomainMatch[1].toUpperCase();
-    if (SUBDOMAIN_TO_REGION[subdomainKey]) {
-      const regionKey = SUBDOMAIN_TO_REGION[subdomainKey];
-      const region = regionByKey(regionKey);
-      return { regionKey, language: region.languages[0].code };
-    }
+  const resolvedRegionKey = resolveRegionFromHost(headerStore.get('host') || '');
+  if (resolvedRegionKey) {
+    const region = regionByKey(resolvedRegionKey);
+    return { regionKey: resolvedRegionKey, language: region.languages[0].code };
   }
 
   return {

@@ -5,6 +5,8 @@ import { DEFAULT_REGION_KEY, REGION_META, regionByKey } from './regions';
 export interface RequestContext {
   regionKey: string;
   language: string;
+  /** The country the shopper identifies with (explicit choice, host, or geo). */
+  countryKey?: string;
 }
 
 function isValidRegion(key: string): boolean {
@@ -34,23 +36,6 @@ export function resolveRegionFromHost(hostHeader: string): string | null {
 export async function getRequestContext(): Promise<RequestContext> {
   const cookieStore = cookies();
   const raw = cookieStore.get('sg_prefs')?.value;
-
-  if (raw) {
-    try {
-      const prefs = JSON.parse(raw) as { regionKey?: string; language?: string };
-      if (prefs.regionKey && isValidRegion(prefs.regionKey)) {
-        const region = regionByKey(prefs.regionKey);
-        const language =
-          prefs.language && region.languages.some(l => l.code === prefs.language)
-            ? prefs.language
-            : region.languages[0].code;
-        return { regionKey: prefs.regionKey, language };
-      }
-    } catch {
-      // fall through to detection
-    }
-  }
-
   const headerStore = headers();
   const country =
     headerStore.get('x-vercel-ip-country') ||
@@ -58,16 +43,49 @@ export async function getRequestContext(): Promise<RequestContext> {
     headerStore.get('x-azure-geo-country') ||
     undefined;
   const detected = detectRegionAndLanguage(headerStore.get('accept-language'), country);
+  const hostHeader = headerStore.get('host') || '';
 
-  // If detection didn't yield a valid region, try the hostname subdomain
-  const resolvedRegionKey = resolveRegionFromHost(headerStore.get('host') || '');
-  if (resolvedRegionKey) {
-    const region = regionByKey(resolvedRegionKey);
-    return { regionKey: resolvedRegionKey, language: region.languages[0].code };
+  let regionKey: string | undefined;
+  let language = '';
+
+  if (raw) {
+    try {
+      const prefs = JSON.parse(raw) as { regionKey?: string; language?: string };
+      if (prefs.regionKey && isValidRegion(prefs.regionKey)) {
+        const region = regionByKey(prefs.regionKey);
+        language =
+          prefs.language && region.languages.some(l => l.code === prefs.language)
+            ? prefs.language
+            : region.languages[0].code;
+        regionKey = prefs.regionKey;
+      }
+    } catch {
+      // fall through to detection
+    }
   }
 
-  return {
-    regionKey: isValidRegion(detected.regionKey) ? detected.regionKey : DEFAULT_REGION_KEY,
-    language: detected.language,
-  };
+  if (!regionKey) {
+    const resolvedRegionKey = resolveRegionFromHost(hostHeader);
+    if (resolvedRegionKey) {
+      const region = regionByKey(resolvedRegionKey);
+      regionKey = resolvedRegionKey;
+      language = region.languages[0].code;
+    } else {
+      regionKey = isValidRegion(detected.regionKey) ? detected.regionKey : DEFAULT_REGION_KEY;
+      language = detected.language;
+    }
+  }
+
+  // The country the shopper identifies with — distinct from the pricing region
+  // because pods (EU/AE/NG/GH) are not countries. Explicit selection wins so a
+  // shopper who picks "Ireland" still sees Ireland after the ie→eu redirect.
+  const selectedCountry = cookieStore.get('sg_country')?.value;
+  const hostCountry = resolveRegionFromHost(hostHeader);
+  const countryKey =
+    (selectedCountry && isValidRegion(selectedCountry) ? selectedCountry : undefined) ??
+    hostCountry ??
+    (isValidRegion(detected.regionKey) ? detected.regionKey : undefined) ??
+    (isValidRegion(regionKey) ? regionKey : undefined);
+
+  return { regionKey, language, countryKey };
 }

@@ -185,7 +185,7 @@ export default async function ProductPage({ params }: PdpProps) {
   const freeShipEligible = Number(product.price) >= shipping.freeThresholdMinorUnits;
 
   return (
-    <div className="container-site py-4">
+    <div className="container-site py-4 pb-28 lg:pb-12">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{

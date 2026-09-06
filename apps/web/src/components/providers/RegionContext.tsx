@@ -6,6 +6,7 @@ import { t } from '@/i18n';
 
 interface RegionContextValue {
   regionKey: string;
+  countryKey?: string;
   language: string;
   setRegion: (key: string) => void;
   setLanguage: (code: string) => void;
@@ -16,10 +17,12 @@ const RegionContext = createContext<RegionContextValue | null>(null);
 export function RegionProvider({
   children,
   initialRegionKey,
+  initialCountryKey,
   initialLanguage,
 }: {
   children: React.ReactNode;
   initialRegionKey: string;
+  initialCountryKey?: string;
   initialLanguage: string;
 }) {
   useEffect(() => {
@@ -35,6 +38,7 @@ export function RegionProvider({
   return (
     <RegionContext.Provider value={{
       regionKey: hydrated ? regionKey : initialRegionKey,
+      countryKey: initialCountryKey,
       language: hydrated ? language : initialLanguage,
       setRegion,
       setLanguage,

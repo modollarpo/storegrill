@@ -78,7 +78,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const { regionKey, language } = await getRequestContext();
+  const { regionKey, countryKey, language } = await getRequestContext();
   const categories = await getCategories(regionKey);
   const primaryLang = language.split('-')[0];
   const dir = ['ar', 'he', 'fa', 'ur'].includes(primaryLang) ? 'rtl' : 'ltr';
@@ -92,7 +92,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <ToastProvider>
               <CartProvider>
                 <WishlistProvider>
-                  <RegionProvider initialRegionKey={regionKey} initialLanguage={language}>
+                  <RegionProvider initialRegionKey={regionKey} initialCountryKey={countryKey} initialLanguage={language}>
                     <div className="flex flex-col min-h-screen">
                       <a href="#main-content" className="skip-link">Skip to main content</a>
                       <Header categories={categories} />

@@ -66,6 +66,13 @@ router.get('/:provider/callback', async (req: Request, res: Response) => {
   const expectedState = req.cookies?.oauth_state;
   res.clearCookie('oauth_state', { path: `/api/v1/auth/oauth/${provider}/callback` });
 
+  console.log(
+    `oauth callback: provider=${provider} codeLen=${code?.length ?? 0} ` +
+      `code=${code ? `${code.slice(0, 4)}…` : 'missing'} ` +
+      `state=${state ? (expectedState && state === expectedState ? 'match' : 'mismatch') : 'missing'} ` +
+      `host=${req.get('host')}`
+  );
+
   if (!code || !state || !expectedState || state !== expectedState) {
     return res.redirect(302, `${WEB_BASE_URL}/auth/signin?error=oauth_state_mismatch`);
   }

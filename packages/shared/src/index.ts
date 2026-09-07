@@ -5,6 +5,7 @@ export * from './models/user';
 export * from './models/order';
 export * from './models/vendor';
 export * from './models/deal';
+export * from './models/homepage';
 export * from './models/cart';
 export * from './models/review';
 export * from './models/import';

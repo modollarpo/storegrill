@@ -36,6 +36,9 @@ const config: Config = {
         footerdark: colors.footer,
         midnight: colors.brand.midnight,
         success: colors.brand.success,
+        canvas: 'var(--color-canvas)',
+        sale: 'var(--color-sale)',
+        bar: 'var(--color-bar)',
         surface: {
           DEFAULT: 'var(--color-surface)',
           raised: 'var(--color-surface-raised)',

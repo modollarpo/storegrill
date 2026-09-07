@@ -607,7 +607,7 @@ async function main() {
         maxDiscount: 5000,
         startsAt: new Date(),
         endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        regionKey: 'US',
+        status: 'LIVE',
         enabled: true,
         categoryIds: jsonArr([categoryMap.get('electronics'), categoryMap.get('audio')]),
       },
@@ -622,6 +622,7 @@ async function main() {
         minOrderAmount: 2500,
         startsAt: new Date(),
         endsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        status: 'LIVE',
         enabled: true,
         categoryIds: jsonArr([]),
       },
@@ -634,6 +635,14 @@ async function main() {
   await prisma.coupon.create({
     data: { dealId: deals[1].id, code: 'FREESHIP', maxUses: 500, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
   });
+
+  const techCategoryIds = [categoryMap.get('electronics'), categoryMap.get('audio')].filter(Boolean);
+  const techProducts = allProducts.filter(p => techCategoryIds.includes(p.categoryId)).slice(0, 6);
+  if (techProducts.length > 0) {
+    await prisma.dealVariant.createMany({
+      data: techProducts.map(p => ({ dealId: deals[0].id, productId: p.id })),
+    });
+  }
 
   for (const product of allProducts.slice(0, 8)) {
     await prisma.review.create({

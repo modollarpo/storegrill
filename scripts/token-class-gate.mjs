@@ -25,6 +25,9 @@ const FAMILIES = {
   action: ['primary', 'primary-hover', 'primary-active', 'primary-fg', 'secondary', 'secondary-hover', 'destructive', 'success'],
   feedback: ['success', 'success-bg', 'warning', 'warning-bg', 'danger', 'danger-bg', 'info', 'info-bg'],
   success: ['DEFAULT', 'bg'],
+  canvas: ['DEFAULT'],
+  sale: ['DEFAULT'],
+  bar: ['DEFAULT'],
 };
 
 const SHADOW_VALID = new Set(['xs', 'sm', 'md', 'lg', 'xl', '2xl', 'focus', 'card', 'card-hover', 'sticky', 'inner', 'none', '']);

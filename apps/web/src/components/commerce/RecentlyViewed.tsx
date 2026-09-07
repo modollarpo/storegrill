@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PriceDisplay } from '@/components/commerce/PriceDisplay';
+import { useTranslations } from '@/components/providers/RegionContext';
 
 const KEY = 'storegrill-recently-viewed';
 const MAX_ITEMS = 8;
@@ -39,6 +40,7 @@ export function TrackRecentlyViewed({ item }: { item: RecentItem }) {
 
 export function RecentlyViewed({ currentSlug }: { currentSlug?: string }) {
   const [items, setItems] = useState<RecentItem[] | null>(null);
+  const t = useTranslations();
 
   useEffect(() => {
     function load() {
@@ -58,7 +60,7 @@ export function RecentlyViewed({ currentSlug }: { currentSlug?: string }) {
 
   return (
     <section className="mt-10" aria-labelledby="recent-heading">
-      <h2 id="recent-heading" className="text-displaysm font-semibold text-charcoal mb-4">Recently viewed</h2>
+      <h2 id="recent-heading" className="text-displaysm font-semibold text-charcoal mb-4">{t('recentlyViewed')}</h2>
       <ul className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1" role="list">
         {visible.map(item => (
           <li key={item.slug} className="card p-3 shrink-0 w-40 hover:border-charcoal transition-colors">

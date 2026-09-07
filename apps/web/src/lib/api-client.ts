@@ -1,4 +1,5 @@
 import { API_BASE } from './api';
+import type { HomeFeed } from '@Storegrill/shared';
 
 export interface FeaturedProduct {
   id: string;
@@ -27,5 +28,22 @@ export async function getCategories(regionKey = 'UK'): Promise<CategoryNode[]> {
     return data.categories || [];
   } catch {
     return [];
+  }
+}
+
+export async function getHomeFeed(
+  regionKey: string,
+  page = 0,
+  opts: { signal?: AbortSignal } = {},
+): Promise<HomeFeed | null> {
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/v1/home?regionKey=${encodeURIComponent(regionKey)}&page=${page}`,
+      { signal: opts.signal },
+    );
+    if (!response.ok) return null;
+    return (await response.json()) as HomeFeed;
+  } catch {
+    return null;
   }
 }

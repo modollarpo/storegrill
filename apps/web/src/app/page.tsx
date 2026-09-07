@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getRequestContext } from '@/lib/server-context';
 import { buildMetadata, organizationJsonLd, webSiteJsonLd, SEO_DEFAULTS } from '@/lib/seo';
 import { AmazonHomeGrid } from '@/components/home/AmazonHomeGrid';
+import { loadHomeContent } from '@/lib/home-content';
 
 export const revalidate = 60;
 
@@ -24,7 +25,8 @@ export async function generateMetadata(_props: PageProps): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const { regionKey } = await getRequestContext();
+  const { regionKey, language } = await getRequestContext();
+  const { heroSlides, sections } = await loadHomeContent(regionKey, language);
 
   return (
     <>
@@ -33,7 +35,7 @@ export default async function HomePage() {
 
       <h1 className="sr-only">Storegrill — Shop millions of products from verified vendors</h1>
 
-      <AmazonHomeGrid />
+      <AmazonHomeGrid sections={sections} heroSlides={heroSlides} />
     </>
   );
 }

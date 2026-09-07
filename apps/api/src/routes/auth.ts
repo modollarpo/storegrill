@@ -7,6 +7,7 @@ import { prisma } from '../index.js';
 import { generateTokens, authenticate, AuthRequest } from '../middleware/auth.js';
 import { RegisterSchema, LoginSchema, ForgotPasswordSchema, ResetPasswordSchema } from '@Storegrill/shared';
 import { sendMail } from '../lib/mailer.js';
+import { setAuthCookies, setAccessCookie, clearAuthCookies } from '../lib/auth-cookies.js';
 
 const router = Router();
 
@@ -78,19 +79,7 @@ router.post('/register', async (req: Request, res: Response) => {
     role: user.role,
     }, user.tokenVersion);
 
-  res.cookie('accessToken', tokens.accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 15 * 60 * 1000,
-  });
-
-  res.cookie('refreshToken', tokens.refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
 
   res.status(201).json({ user, ...tokens });
 });
@@ -119,19 +108,7 @@ router.post('/login', async (req: Request, res: Response) => {
     role: user.role,
     }, user.tokenVersion);
 
-  res.cookie('accessToken', tokens.accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 15 * 60 * 1000,
-  });
-
-  res.cookie('refreshToken', tokens.refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
 
   res.json({
     user: {
@@ -182,12 +159,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       role: user.role,
     }, user.tokenVersion);
 
-    res.cookie('accessToken', tokens.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000,
-    });
+    setAccessCookie(res, tokens.accessToken);
 
     res.json(tokens);
   } catch {
@@ -202,8 +174,7 @@ router.post('/logout', authenticate, async (req: AuthRequest, res: Response) => 
     where: { id: req.user!.id },
     data: { tokenVersion: { increment: 1 } },
   });
-  res.clearCookie('accessToken');
-  res.clearCookie('refreshToken');
+  clearAuthCookies(res);
   res.json({ message: 'Logged out successfully' });
 });
 

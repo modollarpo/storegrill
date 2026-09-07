@@ -315,10 +315,15 @@ export function AmazonHomeGrid() {
   const slide = HERO_SLIDES[currentSlide];
 
   return (
-    <div className="bg-neutral-200 min-h-screen text-text-primary">
+    <div className="bg-surface-page min-h-screen text-text-primary relative overflow-hidden pb-16">
+      {/* Decorative Storegrill background glow blobs (inspired by /regions page) */}
+      <div className="absolute top-0 inset-x-0 h-[600px] bg-gradient-to-b from-ember-pale/50 to-transparent -z-10" />
+      <div className="absolute -top-[10%] -right-[10%] w-[60%] h-[60%] rounded-full bg-ember/5 blur-[120px] -z-10" />
+      <div className="absolute top-[15%] -left-[10%] w-[50%] h-[50%] rounded-full bg-tealink/5 blur-[120px] -z-10" />
+
       {/* Hero Banner Carousel */}
-      <div className="relative w-full bg-neutral-200 overflow-hidden">
-        <div className="relative w-full aspect-[21/9] sm:aspect-[3/1] max-h-[420px] bg-neutral-900">
+      <div className="relative w-full overflow-hidden">
+        <div className="relative w-full aspect-[21/9] sm:aspect-[3/1] max-h-[420px] bg-charcoal">
           <Image
             src={slide.image}
             alt={slide.title}
@@ -328,7 +333,7 @@ export function AmazonHomeGrid() {
             sizes="100vw"
           />
           {/* Gradient fade at bottom to blend into the card grid */}
-          <div className="absolute inset-0 bg-gradient-to-t from-neutral-200 via-transparent to-black/30 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-surface-page via-transparent to-black/30 pointer-events-none" />
 
           {/* Navigation Arrows */}
           <button
@@ -349,10 +354,10 @@ export function AmazonHomeGrid() {
           </button>
 
           {/* Slide info overlay bottom left */}
-          <div className="absolute bottom-6 left-6 md:left-12 z-10 bg-white/90 backdrop-blur-sm px-6 py-3 rounded-xs shadow-md">
+          <div className="absolute bottom-6 left-6 md:left-12 z-10 bg-surface-raised/95 border border-border backdrop-blur-sm px-6 py-4 rounded-xl shadow-card">
             <h2 className="text-lg md:text-xl font-bold text-text-primary">{slide.title}</h2>
-            <p className="text-xs md:text-sm text-neutral-600">{slide.subtitle}</p>
-            <Link href={slide.href} className="inline-block mt-2 text-xs font-bold text-sky-700 hover:underline">
+            <p className="text-xs md:text-sm text-text-tertiary">{slide.subtitle}</p>
+            <Link href={slide.href} className="inline-block mt-2 text-xs font-bold text-ember hover:text-ember-dark hover:underline">
               Shop now →
             </Link>
           </div>
@@ -362,29 +367,29 @@ export function AmazonHomeGrid() {
       {/* Overlapping / Stacked 4-Column Card Grid */}
       <div className="max-w-[1500px] mx-auto px-4 -mt-24 sm:-mt-36 md:-mt-48 relative z-20 pb-12">
         {HOME_SECTIONS.map((row, rowIndex) => (
-          <div key={rowIndex} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div key={rowIndex} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
             {row.map((item, itemIndex) => {
               if (item.type === 'promo') {
                 return (
                   <div
                     key={itemIndex}
                     className={cn(
-                      'bg-white rounded-xs shadow-md p-5 flex flex-col justify-between border border-neutral-200 transition-all hover:shadow-lg',
+                      'bg-surface-raised rounded-xl shadow-card p-5 flex flex-col justify-between border border-border transition-all hover:shadow-card-hover',
                       item.bgClass
                     )}
                   >
                     <div>
-                      <h3 className="text-lg md:text-xl font-bold tracking-tight mb-1">{item.title}</h3>
-                      {item.subtitle && <p className="text-xs opacity-80 mb-3">{item.subtitle}</p>}
+                      <h3 className="text-lg md:text-xl font-bold text-text-primary tracking-tight mb-1">{item.title}</h3>
+                      {item.subtitle && <p className="text-xs text-text-tertiary mb-3">{item.subtitle}</p>}
                     </div>
                     {item.image && (
-                      <div className="relative w-full h-48 my-3 rounded-xs overflow-hidden">
+                      <div className="relative w-full h-48 my-3 rounded-lg overflow-hidden bg-smoke-100">
                         <Image src={item.image} alt={item.title} fill className="object-cover" />
                       </div>
                     )}
                     <Link
                       href={item.href}
-                      className="inline-block mt-2 text-xs font-bold text-sky-700 hover:text-amber-700 hover:underline"
+                      className="inline-block mt-2 text-xs font-bold text-ember hover:text-ember-dark hover:underline"
                     >
                       {item.ctaText || 'Shop now'} &gt;
                     </Link>
@@ -396,7 +401,7 @@ export function AmazonHomeGrid() {
               return (
                 <div
                   key={itemIndex}
-                  className="bg-white rounded-xs shadow-md p-5 flex flex-col justify-between border border-neutral-200 transition-all hover:shadow-lg"
+                  className="bg-surface-raised rounded-xl shadow-card p-5 flex flex-col justify-between border border-border transition-all hover:shadow-card-hover"
                 >
                   <div>
                     <h3 className="text-lg md:text-xl font-bold text-text-primary tracking-tight mb-3">
@@ -405,7 +410,7 @@ export function AmazonHomeGrid() {
                     <div className="grid grid-cols-2 gap-3 mb-4">
                       {section.tiles.map((tile, tileIdx) => (
                         <Link key={tileIdx} href={tile.href} className="group block">
-                          <div className="relative aspect-square w-full rounded-xs overflow-hidden bg-neutral-100 mb-1">
+                          <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-smoke-100 mb-1.5 border border-smoke-200">
                             <Image
                               src={tile.image}
                               alt={tile.title}
@@ -414,7 +419,7 @@ export function AmazonHomeGrid() {
                               sizes="(max-width: 640px) 50vw, 25vw"
                             />
                           </div>
-                          <span className="block text-xs text-text-primary font-medium group-hover:text-amber-700 group-hover:underline line-clamp-1">
+                          <span className="block text-xs text-text-primary font-medium group-hover:text-ember group-hover:underline line-clamp-1">
                             {tile.title}
                           </span>
                         </Link>
@@ -423,7 +428,7 @@ export function AmazonHomeGrid() {
                   </div>
                   <Link
                     href="/products"
-                    className="text-xs font-bold text-sky-700 hover:text-amber-700 hover:underline mt-2 inline-block"
+                    className="text-xs font-bold text-ember hover:text-ember-dark hover:underline mt-2 inline-block"
                   >
                     See more &gt;
                   </Link>
@@ -434,7 +439,7 @@ export function AmazonHomeGrid() {
         ))}
 
         {/* Recently viewed by user */}
-        <div className="mt-8">
+        <div className="mt-8 bg-surface-raised rounded-xl p-6 border border-border shadow-card">
           <RecentlyViewed />
         </div>
       </div>

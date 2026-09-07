@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { RecentlyViewed } from '@/components/commerce/RecentlyViewed';
 
 interface CardTile {
   title: string;
@@ -432,34 +433,9 @@ export function AmazonHomeGrid() {
           </div>
         ))}
 
-        {/* Personalised Recommendations Section */}
-        <div className="bg-white border border-neutral-200 rounded-xs shadow-sm my-8 py-8 px-6 text-center">
-          <div className="max-w-md mx-auto">
-            <h3 className="text-base font-bold text-text-primary mb-2">See personalised recommendations</h3>
-            <Link
-              href="/auth/signin"
-              className="block w-full py-2 px-4 rounded-md bg-amber-300 hover:bg-amber-400 active:scale-[0.99] font-bold text-xs text-text-primary shadow-sm mb-2 transition-all"
-            >
-              Sign in
-            </Link>
-            <p className="text-2xs text-neutral-600">
-              New customer?{' '}
-              <Link href="/auth/signup" className="text-sky-700 hover:text-amber-700 hover:underline">
-                Start here.
-              </Link>
-            </p>
-          </div>
-        </div>
-
-        {/* Back to top button bar */}
+        {/* Recently viewed by user */}
         <div className="mt-8">
-          <button
-            type="button"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="w-full py-4 bg-neutral-700 hover:bg-neutral-600 text-white text-xs font-bold tracking-wide transition-colors text-center"
-          >
-            Back to top
-          </button>
+          <RecentlyViewed />
         </div>
       </div>
     </div>

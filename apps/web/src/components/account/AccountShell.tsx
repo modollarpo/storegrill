@@ -40,15 +40,40 @@ export function AccountShell({ children }: { children: React.ReactNode }) {
   const [regionOptions, setRegionOptions] = useState<RegionOption[]>([]);
 
   useEffect(() => {
+    let cancelled = false;
+
     api<{ regions: Array<{ key: string; name: string }> }>('/api/v1/regions')
-      .then(d => setRegionOptions(d.regions.map(r => ({ key: r.key, name: r.name, flag: flagForKey(r.key) }))))
-      .catch(() => undefined);
-    api<{ user?: { emailVerified?: boolean; customerProfile?: { preferredRegionKey?: string | null } } }>('/api/v1/auth/me')
-      .then(data => {
-        setEmailVerified(Boolean(data.user?.emailVerified));
-        setPreferredRegionKey(data.user?.customerProfile?.preferredRegionKey ?? null);
+      .then(d => {
+        if (cancelled) return;
+        setRegionOptions(d.regions.map(r => ({ key: r.key, name: r.name, flag: flagForKey(r.key) })));
       })
-      .catch(() => router.replace('/auth/signin?next=' + encodeURIComponent(pathname)));
+      .catch(() => undefined);
+
+    const applyUser = (data: { user?: { emailVerified?: boolean; customerProfile?: { preferredRegionKey?: string | null } } }) => {
+      setEmailVerified(Boolean(data.user?.emailVerified));
+      setPreferredRegionKey(data.user?.customerProfile?.preferredRegionKey ?? null);
+    };
+
+    const fetchMe = () =>
+      api<{ user?: { emailVerified?: boolean; customerProfile?: { preferredRegionKey?: string | null } } }>('/api/v1/auth/me')
+        .then(data => {
+          if (!cancelled) applyUser(data);
+        });
+
+    fetchMe()
+      .catch(() => {
+        if (cancelled) return;
+        window.setTimeout(() => {
+          if (cancelled) return;
+          fetchMe().catch(() => {
+            if (!cancelled) router.replace('/auth/signin?next=' + encodeURIComponent(pathname));
+          });
+        }, 750);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [pathname, router]);
 
   async function chooseRegion(key: string) {

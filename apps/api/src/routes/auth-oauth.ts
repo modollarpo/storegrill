@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { prisma } from '../index.js';
 import { generateTokens } from '../middleware/auth.js';
 import { PROVIDER_CONFIGS, buildAuthorizeUrl, fetchToken, fetchProfile } from '../auth/oauth/config.js';
+import { setAuthCookies, COOKIE_DOMAIN } from '../lib/auth-cookies.js';
 
 const router = Router();
 
@@ -37,6 +38,7 @@ router.get('/:provider/start', (req: Request, res: Response) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
+    domain: COOKIE_DOMAIN,
     maxAge: 10 * 60 * 1000,
     path: `/api/v1/auth/oauth/${provider}/callback`,
   });
@@ -47,6 +49,7 @@ router.get('/:provider/start', (req: Request, res: Response) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      domain: COOKIE_DOMAIN,
       maxAge: 10 * 60 * 1000,
       path: '/',
     });
@@ -64,7 +67,7 @@ router.get('/:provider/callback', async (req: Request, res: Response) => {
 
   const { code, state } = req.query as { code?: string; state?: string };
   const expectedState = req.cookies?.oauth_state;
-  res.clearCookie('oauth_state', { path: `/api/v1/auth/oauth/${provider}/callback` });
+  res.clearCookie('oauth_state', { domain: COOKIE_DOMAIN, path: `/api/v1/auth/oauth/${provider}/callback` });
 
   console.log(
     `oauth callback: provider=${provider} codeLen=${code?.length ?? 0} ` +
@@ -135,18 +138,7 @@ router.get('/:provider/callback', async (req: Request, res: Response) => {
       role: user.role,
     });
 
-    res.cookie('accessToken', tokens.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60 * 1000,
-    });
-    res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
 
     return res.redirect(302, `${WEB_BASE_URL}${req.cookies?.['sg_oauth_next'] || '/'}`);
   } catch (err) {

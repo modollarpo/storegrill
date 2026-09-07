@@ -70,6 +70,17 @@ function Hero({ slides, regionKey }: { slides: HomeHeroSlide[]; regionKey: strin
           </span>
         ) : null}
 
+        {slide.variant === 'deal' && slide.listPriceMinorUnits ? (
+          <span className="inline-flex w-fit items-baseline gap-2 rounded-lg bg-white/95 px-3 py-2 shadow-sm backdrop-blur-sm">
+            <span className="text-lg font-black leading-none tracking-tight text-sale md:text-2xl">
+              {formatPrice(slide.priceMinorUnits ?? 0, slide.currencyCode ?? 'GBP')}
+            </span>
+            <span className="text-xs font-semibold leading-none text-text-tertiary line-through md:text-sm">
+              {formatPrice(slide.listPriceMinorUnits, slide.currencyCode ?? 'GBP')}
+            </span>
+          </span>
+        ) : null}
+
         <h2
           className={cn(
             'text-balance text-2xl font-bold leading-tight drop-shadow-sm md:text-4xl',

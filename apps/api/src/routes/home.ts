@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../index.js';
 import { getCategoryTree } from '../services/categories.js';
+import { dealPriceFor, resolveListPrice } from '../services/deal-pricing.js';
 
 const router = Router();
 const DEFAULT_PAGE_SIZE = 3;
@@ -25,47 +26,31 @@ function firstImage(product: any): string | undefined {
   return typeof product.thumbnail === 'string' ? product.thumbnail : undefined;
 }
 
-function dealItemFor() {
-  return function build(deal: any): DealItem | null {
-    if (!DEAL_IMAGE_TYPES.has(deal.type)) return null;
-    for (const v of deal.variants ?? []) {
-      const product = v.product;
-      if (!product) continue;
-      const image = firstImage(product);
-      if (!image) continue;
-      const regional = Array.isArray(product.regionPrices) && product.regionPrices[0];
-      const list = regional ? Number(regional.priceMinorUnits) : Number(product.basePriceMinorUnits);
-      const currencyCode = regional?.currencyCode || product.currencyCode || 'GBP';
-      if (!Number.isFinite(list) || list <= 0) continue;
+function buildDealItem(deal: any, regionKey: string): DealItem | null {
+  if (!DEAL_IMAGE_TYPES.has(deal.type)) return null;
+  for (const v of deal.variants ?? []) {
+    const product = v.product;
+    if (!product) continue;
+    const image = firstImage(product);
+    if (!image) continue;
+    const { listPriceMinorUnits: list, currencyCode } = resolveListPrice(product, regionKey);
+    const pricing = dealPriceFor(deal.type, Number(deal.value), list);
+    if (!pricing) continue;
 
-      let priceMinorUnits = 0;
-      let discountPercent = 0;
-      if (deal.type === 'PERCENTAGE_OFF' || deal.type === 'FLASH_SALE') {
-        discountPercent = Math.round(Number(deal.value));
-        priceMinorUnits = Math.max(0, Math.round((list * (100 - discountPercent)) / 100));
-      } else if (deal.type === 'FIXED_AMOUNT') {
-        const off = Math.round(Number(deal.value) * 100);
-        priceMinorUnits = Math.max(0, list - off);
-        if (priceMinorUnits <= 0) continue;
-        discountPercent = Math.round(((list - priceMinorUnits) / list) * 100);
-      }
-      if (priceMinorUnits <= 0 || discountPercent < 1) continue;
-
-      return {
-        dealId: deal.id,
-        dealSlug: deal.slug,
-        name: product.name,
-        image,
-        priceMinorUnits,
-        listPriceMinorUnits: list,
-        discountPercent,
-        cap: typeof deal.maxDiscount === 'number' && deal.maxDiscount > 0,
-        endsAt: new Date(deal.endsAt).toISOString(),
-        currencyCode,
-      };
-    }
-    return null;
-  };
+    return {
+      dealId: deal.id,
+      dealSlug: deal.slug,
+      name: product.name,
+      image,
+      priceMinorUnits: pricing.priceMinorUnits,
+      listPriceMinorUnits: list,
+      discountPercent: pricing.discountPercent,
+      cap: typeof deal.maxDiscount === 'number' && deal.maxDiscount > 0,
+      endsAt: new Date(deal.endsAt).toISOString(),
+      currencyCode,
+    };
+  }
+  return null;
 }
 
 router.get('/', async (req: Request, res: Response) => {
@@ -138,11 +123,9 @@ router.get('/', async (req: Request, res: Response) => {
     },
   });
 
-  const build = dealItemFor();
   const dealItems: DealItem[] = [];
   for (const deal of deals) {
-    // cover legacy rows where thumbnail is stored in the images JSON array
-    const item = build({ ...deal, variants: deal.variants as any });
+    const item = buildDealItem(deal, regionKey);
     if (item) dealItems.push(item);
   }
 
@@ -184,21 +167,20 @@ router.get('/', async (req: Request, res: Response) => {
   // Hero: honest deal slides first (real product art + real % + end date),
   // then the always-safe brand slide as a graceful fallback.
   const heroSlides: Array<any> = [];
-  for (const deal of deals.slice(0, 3)) {
-    const product = deal.variants?.[0]?.product;
-    if (!product) continue;
-    const image = firstImage(product);
-    if (!DEAL_IMAGE_TYPES.has(deal.type)) continue;
+  for (const item of dealItems.slice(0, 3)) {
     heroSlides.push({
-      id: `deal-${deal.id}`,
+      id: `deal-${item.dealId}`,
       variant: 'deal',
-      title: deal.name,
+      title: item.name,
       titleIsKey: false,
-      discountPercent: Math.round(Number(deal.value)),
-      cap: typeof deal.maxDiscount === 'number' && deal.maxDiscount > 0,
-      endsAt: new Date(deal.endsAt).toISOString(),
-      image,
-      ctaHref: `/deals/${deal.slug}`,
+      discountPercent: item.discountPercent,
+      cap: item.cap,
+      endsAt: item.endsAt,
+      image: item.image,
+      priceMinorUnits: item.priceMinorUnits,
+      listPriceMinorUnits: item.listPriceMinorUnits,
+      currencyCode: item.currencyCode,
+      ctaHref: `/deals/${item.dealSlug}`,
       ctaKey: 'home.hero.shopNow',
     });
   }

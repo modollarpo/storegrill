@@ -5,6 +5,7 @@ import { getRequestContext } from '@/lib/server-context';
 import { translateBatch } from '@/lib/server-translate';
 import { buildMetadata, SEO_DEFAULTS } from '@/lib/seo';
 import { API_BASE } from '@/lib/api';
+import { formatPrice } from '@/lib/format';
 import { Breadcrumb } from '@/components/navigation/Breadcrumb';
 import { Badge } from '@/components/ui/Badge';
 import { WaitingRoomClient } from './WaitingRoomClient';
@@ -26,6 +27,11 @@ interface DealRow {
   currencyCode?: string;
   productIds?: string[];
   image?: string;
+  variants?: Array<{
+    listPriceMinorUnits?: number | null;
+    priceMinorUnits?: number | null;
+    currencyCode?: string;
+  }>;
 }
 
 async function fetchDeals(regionKey: string) {
@@ -39,14 +45,36 @@ async function fetchDeals(regionKey: string) {
 }
 
 function dealLabel(deal: DealRow): string {
-  if (deal.type === 'PERCENTAGE_OFF') return `${deal.value}% OFF`;
-  if (deal.type === 'FIXED_AMOUNT_OFF') return 'SAVE';
+  if (deal.type === 'PERCENTAGE_OFF' || deal.type === 'FLASH_SALE') return `${deal.value}% OFF`;
+  if (deal.type === 'FIXED_AMOUNT') return 'SAVE';
   return 'DEAL';
 }
 
 function dealValueDisplay(deal: DealRow): string {
-  if (deal.type === 'PERCENTAGE_OFF') return `${deal.value}% off`;
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode || 'USD', maximumFractionDigits: 0 }).format(deal.value / 100) + ' off';
+  if (deal.type === 'PERCENTAGE_OFF' || deal.type === 'FLASH_SALE') return `${deal.value}% off`;
+  if (deal.type === 'FIXED_AMOUNT') {
+    return `${formatPrice(Math.round(Number(deal.value) * 100), deal.currencyCode || 'USD')} off`;
+  }
+  return 'Limited-time offer';
+}
+
+function pricedVariant(deal: DealRow) {
+  return (deal.variants ?? []).find(
+    v => v.priceMinorUnits && v.listPriceMinorUnits && v.listPriceMinorUnits > v.priceMinorUnits,
+  );
+}
+
+function DealPricePair({ variant }: { variant: NonNullable<ReturnType<typeof pricedVariant>> }) {
+  return (
+    <p className="flex items-baseline gap-2">
+      <span className="text-2xl font-black text-sale">
+        {formatPrice(variant.priceMinorUnits!, variant.currencyCode || 'USD')}
+      </span>
+      <span className="text-base font-semibold text-text-tertiary line-through">
+        {formatPrice(variant.listPriceMinorUnits!, variant.currencyCode || 'USD')}
+      </span>
+    </p>
+  );
 }
 
 // Deterministic random generator for visual flair based on deal string
@@ -160,9 +188,13 @@ export default async function DealsPage() {
                             {spotlightDeal.description}
                           </p>
                         )}
-                        <p className="text-4xl font-black text-deal mb-8">
+                        <p className="text-4xl font-black text-deal mb-3">
                           {dealValueDisplay(spotlightDeal)}
                         </p>
+                        {(() => {
+                          const priced = pricedVariant(spotlightDeal);
+                          return priced ? <DealPricePair variant={priced} /> : null;
+                        })()}
                         
                         <div className="mt-auto">
                           <div className="flex justify-between text-xs font-bold text-smoke-500 mb-2">
@@ -219,9 +251,13 @@ export default async function DealsPage() {
                               <h3 className="text-base font-extrabold text-charcoal leading-snug mb-2 group-hover:text-ember transition-colors line-clamp-2">
                                 {deal.name}
                               </h3>
-                              <p className="text-2xl font-black text-deal mb-4">
+                              <p className="text-2xl font-black text-deal mb-2">
                                 {dealValueDisplay(deal)}
                               </p>
+                              {(() => {
+                                const priced = pricedVariant(deal);
+                                return priced ? <DealPricePair variant={priced} /> : null;
+                              })()}
                               
                               <div className="mt-auto">
                                 <div className="flex justify-between text-[10px] font-bold text-smoke-500 uppercase tracking-wider mb-1.5">

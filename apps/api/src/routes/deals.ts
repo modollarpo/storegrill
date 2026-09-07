@@ -7,8 +7,34 @@ import { slugify } from '../utils/slugify.js';
 import { validateCoupon } from '../services/coupons.js';
 import { loadActiveDeals } from '../services/deal-eval.js';
 import { evaluateDealEconomics } from '../services/deal-valuation.js';
+import { dealPriceFor, resolveListPrice } from '../services/deal-pricing.js';
 
 const router = Router();
+
+const PRODUCT_SELECT = {
+  id: true,
+  name: true,
+  slug: true,
+  thumbnail: true,
+  basePriceMinorUnits: true,
+  currencyCode: true,
+  rating: true,
+  regionPrices: { select: { priceMinorUnits: true, currencyCode: true } },
+} as const;
+
+function priceVariants(deal: any, regionKey: string): any[] {
+  return (deal.variants ?? []).map((v: any) => {
+    const { listPriceMinorUnits, currencyCode } = resolveListPrice(v.product, regionKey);
+    const pricing = dealPriceFor(deal.type, Number(deal.value), listPriceMinorUnits);
+    return {
+      ...v,
+      listPriceMinorUnits: pricing ? listPriceMinorUnits : null,
+      priceMinorUnits: pricing ? pricing.priceMinorUnits : null,
+      discountPercent: pricing ? pricing.discountPercent : 0,
+      currencyCode,
+    };
+  });
+}
 
 router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
   const regionKey = (req.query.regionKey as string) || 'UK';
@@ -28,12 +54,7 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
       vendor: { select: { id: true, storeName: true, slug: true } },
       variants: {
         include: {
-          product: {
-            select: {
-              id: true, name: true, slug: true, thumbnail: true,
-              basePriceMinorUnits: true, currencyCode: true, rating: true,
-            },
-          },
+          product: { select: PRODUCT_SELECT },
         },
       },
     },
@@ -43,14 +64,7 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
     deals: deals.map((d: any) => ({
       ...d,
       value: Number(d.value),
-      variants: d.variants.map((v: any) => ({
-        ...v,
-        product: {
-          ...v.product,
-          basePriceMinorUnits: Number(v.product.basePriceMinorUnits),
-          rating: Number(v.product.rating),
-        },
-      })),
+      variants: priceVariants(d, regionKey),
     })),
   });
 });
@@ -63,6 +77,7 @@ router.get('/active', optionalAuth, async (req: AuthRequest, res: Response) => {
 
 router.get('/:slug', optionalAuth, async (req: AuthRequest, res: Response) => {
   const { slug } = req.params;
+  const regionKey = (req.query.regionKey as string) || 'UK';
 
   const deal = await prisma.deal.findUnique({
     where: { slug },
@@ -71,11 +86,7 @@ router.get('/:slug', optionalAuth, async (req: AuthRequest, res: Response) => {
       variants: {
         include: {
           product: {
-            select: {
-              id: true, name: true, slug: true, thumbnail: true,
-              basePriceMinorUnits: true, currencyCode: true, rating: true,
-              reviewCount: true,
-            },
+            select: { ...PRODUCT_SELECT, reviewCount: true },
           },
         },
       },
@@ -93,14 +104,7 @@ router.get('/:slug', optionalAuth, async (req: AuthRequest, res: Response) => {
     deal: {
       ...deal,
       value: Number(deal.value),
-      variants: deal.variants.map((v: any) => ({
-        ...v,
-        product: {
-          ...v.product,
-          basePriceMinorUnits: Number(v.product.basePriceMinorUnits),
-          rating: Number(v.product.rating),
-        },
-      })),
+      variants: priceVariants(deal, regionKey),
     },
   });
 });

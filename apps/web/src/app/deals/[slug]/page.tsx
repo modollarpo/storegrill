@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { getRequestContext } from '@/lib/server-context';
 import { buildMetadata } from '@/lib/seo';
 import { API_BASE } from '@/lib/api';
+import { formatPrice } from '@/lib/format';
 import { Badge } from '@/components/ui/Badge';
 import { Breadcrumb } from '@/components/navigation/Breadcrumb';
 
@@ -41,10 +42,10 @@ export default async function DealDetailPage({ params }: { params: Promise<{ slu
   if (!deal) notFound();
 
   const isExpired = deal.endsAt && new Date(deal.endsAt) < new Date();
-  const isPercentage = deal.type === 'PERCENTAGE_OFF';
+  const isPercentage = deal.type === 'PERCENTAGE_OFF' || deal.type === 'FLASH_SALE';
   const valueDisplay = isPercentage
     ? `${deal.value}% OFF`
-    : new Intl.NumberFormat('en-US', { style: 'currency', currency: deal.currencyCode || 'USD' }).format(deal.value / 100) + ' OFF';
+    : `${formatPrice(Math.round(Number(deal.value) * 100), deal.currencyCode || 'USD')} OFF`;
 
   return (
     <div className="container-site py-6">
@@ -153,6 +154,16 @@ export default async function DealDetailPage({ params }: { params: Promise<{ slu
                       <p className="text-sm font-bold text-text-primary line-clamp-2 leading-snug group-hover:text-action-primary transition-colors">
                         {variant.product?.name}
                       </p>
+                      {variant.priceMinorUnits && variant.listPriceMinorUnits && variant.listPriceMinorUnits > variant.priceMinorUnits && (
+                        <p className="mt-1.5 flex items-baseline gap-1.5">
+                          <span className="text-base font-extrabold leading-none text-sale">
+                            {formatPrice(variant.priceMinorUnits, variant.currencyCode || 'USD')}
+                          </span>
+                          <span className="text-xs font-semibold text-text-tertiary line-through">
+                            {formatPrice(variant.listPriceMinorUnits, variant.currencyCode || 'USD')}
+                          </span>
+                        </p>
+                      )}
                     </Link>
                   ))}
                 </div>

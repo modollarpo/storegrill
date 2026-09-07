@@ -71,6 +71,9 @@ export const HomeHeroSlideSchema = z.object({
   cap: z.boolean().optional(),
   endsAt: z.string().optional(),
   image: z.string().optional(),
+  priceMinorUnits: z.number().int().nonnegative().optional(),
+  listPriceMinorUnits: z.number().int().nonnegative().optional(),
+  currencyCode: z.string().optional(),
   ctaHref: z.string(),
   ctaKey: z.string(),
 });

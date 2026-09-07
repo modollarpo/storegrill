@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { PriceDisplay } from '@/components/commerce/PriceDisplay';
 import { useTranslations } from '@/components/providers/RegionContext';
 
@@ -65,10 +66,9 @@ export function RecentlyViewed({ currentSlug }: { currentSlug?: string }) {
         {visible.map(item => (
           <li key={item.slug} className="card p-3 shrink-0 w-40 hover:border-charcoal transition-colors">
             <Link href={`/products/${item.slug}`} className="block">
-              <span className="block w-full aspect-square rounded-sm bg-smoke-100 overflow-hidden mb-2">
+              <span className="block w-full aspect-square rounded-sm bg-smoke-100 overflow-hidden mb-2 relative">
                 {item.thumbnail ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={item.thumbnail} alt="" loading="lazy" className="w-full h-full object-cover" />
+                  <Image src={item.thumbnail} alt={item.name || ''} fill sizes="160px" className="object-cover" />
                 ) : null}
               </span>
               <span className="block text-xs font-semibold text-charcoal line-clamp-2 leading-snug">{item.name}</span>

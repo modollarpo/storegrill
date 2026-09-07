@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 export interface VendorCardProps {
@@ -27,10 +28,9 @@ export function VendorCard({ vendor, className }: VendorCardProps) {
   return (
     <article className={cn('card p-5 flex flex-col hover:shadow-card-hover transition-shadow', className)} data-testid="vendor-card">
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-ember to-ember-deep text-white grid place-items-center font-bold text-sm overflow-hidden shrink-0">
+        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-ember to-ember-deep text-white grid place-items-center font-bold text-sm overflow-hidden shrink-0 relative">
           {vendor.logo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={vendor.logo} alt="" className="w-full h-full object-cover" />
+            <Image src={vendor.logo} alt={vendor.storeName} fill sizes="48px" className="object-cover" />
           ) : (
             <span aria-hidden="true">{initials}</span>
           )}
@@ -95,17 +95,15 @@ export function StorefrontHero({ vendor }: StorefrontHeroProps) {
     <section className="relative overflow-hidden rounded-xl border border-smoke-150 bg-surface-raised">
       <div className={cn('h-40 md:h-52 relative', !vendor.banner && 'bg-gradient-to-r from-charcoal via-charcoal-light to-charcoal-mid')}>
         {vendor.banner && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={vendor.banner} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <Image src={vendor.banner} alt={vendor.storeName} fill sizes="100vw" className="absolute inset-0 w-full h-full object-cover" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       </div>
       <div className="px-5 md:px-8 pb-5 -mt-10 relative">
         <div className="flex flex-wrap items-end gap-4">
-          <div className="w-20 h-20 rounded-xl bg-surface-raised border border-smoke-150 shadow-md grid place-items-center overflow-hidden shrink-0">
+          <div className="w-20 h-20 rounded-xl bg-surface-raised border border-smoke-150 shadow-md grid place-items-center overflow-hidden shrink-0 relative">
             {vendor.logo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={vendor.logo} alt="" className="w-full h-full object-cover" />
+              <Image src={vendor.logo} alt={vendor.storeName} fill sizes="80px" className="object-cover" />
             ) : (
               <span className="text-xl font-bold text-ember">{vendor.storeName.slice(0, 1)}</span>
             )}

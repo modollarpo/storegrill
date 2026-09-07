@@ -52,10 +52,19 @@ export default async function CategoryPage({
   const description = category.description;
   const sub = category.children || [];
 
+  const GRADIENTS = [
+    'from-ember/10 via-ember-pale/30 to-transparent',
+    'from-emerald-500/10 via-emerald-500/5 to-transparent',
+    'from-blue-500/10 via-blue-500/5 to-transparent',
+    'from-amber-500/10 via-amber-500/5 to-transparent',
+    'from-rose-500/10 via-rose-500/5 to-transparent',
+  ];
+  const hash = slug.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const gradientClass = GRADIENTS[hash % GRADIENTS.length];
+
   const hero = (
-    <div className="relative mb-8 rounded-3xl overflow-hidden bg-white border border-border shadow-sm">
-      <div className="absolute inset-0 bg-gradient-to-r from-ember/5 to-transparent pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-ember/10 to-transparent pointer-events-none" />
+    <div className={`relative mb-8 rounded-3xl overflow-hidden bg-gradient-to-r ${gradientClass} bg-surface-raised border border-border shadow-card`}>
+      <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-white/40 to-transparent pointer-events-none" />
       <div className="relative px-8 py-10 md:px-12 md:py-14 flex flex-col md:flex-row md:items-center justify-between gap-8">
         <div className="max-w-2xl">
           <p className="text-ember text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">

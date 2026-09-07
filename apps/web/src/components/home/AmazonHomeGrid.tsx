@@ -5,369 +5,80 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { RecentlyViewed } from '@/components/commerce/RecentlyViewed';
+import type { HomeHeroSlide, HomeSectionItem } from '@/lib/home-content-build';
 
-interface CardTile {
-  title: string;
-  image: string;
-  href: string;
-  bgOverride?: string;
+interface AmazonHomeGridProps {
+  sections: HomeSectionItem[][];
+  heroSlides: HomeHeroSlide[];
 }
 
-interface GridCardSection {
-  type?: 'grid';
-  title: string;
-  tiles: CardTile[];
-  linkText?: string;
-  linkHref?: string;
-  cardBg?: string;
-}
-
-interface PromoCardSection {
-  type: 'promo';
-  title: string;
-  subtitle?: string;
-  image?: string;
-  bgClass?: string;
-  textColor?: string;
-  ctaText?: string;
-  href: string;
-}
-
-type SectionItem = GridCardSection | PromoCardSection;
-
-const HOME_SECTIONS: SectionItem[][] = [
-  // Row 1
-  [
-    {
-      title: 'Level up your game',
-      tiles: [
-        { title: 'PlayStation', image: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=300&auto=format&fit=crop&q=80', href: '/products?q=playstation' },
-        { title: 'Xbox Series', image: 'https://images.unsplash.com/photo-1621259182978-fbf93132d53d?w=300&auto=format&fit=crop&q=80', href: '/products?q=xbox' },
-        { title: 'Nintendo', image: 'https://images.unsplash.com/photo-1578303512597-81e6cc155b12?w=300&auto=format&fit=crop&q=80', href: '/products?q=nintendo' },
-        { title: 'Virtual Reality', image: 'https://images.unsplash.com/photo-1593508512255-86ab42a8e620?w=300&auto=format&fit=crop&q=80', href: '/products?q=vr' },
-      ],
-    },
-    {
-      title: 'Most-loved finds',
-      tiles: [
-        { title: 'Fashion', image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=300&auto=format&fit=crop&q=80', href: '/products?category=fashion' },
-        { title: 'Tech', image: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=300&auto=format&fit=crop&q=80', href: '/products?category=tech' },
-        { title: 'Kitchen', image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=300&auto=format&fit=crop&q=80', href: '/products?category=kitchen' },
-        { title: 'Home', image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=300&auto=format&fit=crop&q=80', href: '/products?category=home' },
-      ],
-    },
-    {
-      title: 'Go-to gifts for everyone',
-      tiles: [
-        { title: 'Gifts for him', image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=300&auto=format&fit=crop&q=80', href: '/products?q=gifts+for+him' },
-        { title: 'Gifts for her', image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=300&auto=format&fit=crop&q=80', href: '/products?q=gifts+for+her' },
-        { title: 'Gifts for teens', image: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=300&auto=format&fit=crop&q=80', href: '/products?q=gifts+for+teens' },
-        { title: 'Gifts for kids', image: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=300&auto=format&fit=crop&q=80', href: '/products?q=toys' },
-      ],
-    },
-    {
-      title: 'Seriously good brands',
-      tiles: [
-        { title: 'Fashion', image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=300&auto=format&fit=crop&q=80', href: '/products?category=fashion' },
-        { title: 'Electronics', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&auto=format&fit=crop&q=80', href: '/products?category=electronics' },
-        { title: 'Kitchen', image: 'https://images.unsplash.com/photo-1589365252845-d85c37341999?w=300&auto=format&fit=crop&q=80', href: '/products?category=kitchen' },
-        { title: 'Beauty', image: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=300&auto=format&fit=crop&q=80', href: '/products?category=beauty' },
-      ],
-    },
-  ],
-  // Row 2
-  [
-    {
-      title: 'Autumn favourites',
-      tiles: [
-        { title: 'Autumn fashion', image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=300&auto=format&fit=crop&q=80', href: '/products?q=autumn+fashion' },
-        { title: 'Beauty picks', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=300&auto=format&fit=crop&q=80', href: '/products?category=beauty' },
-        { title: 'Rainy day staples', image: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=300&auto=format&fit=crop&q=80', href: '/products?q=umbrella' },
-        { title: 'Cosy essentials', image: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=300&auto=format&fit=crop&q=80', href: '/products?q=candle' },
-      ],
-    },
-    {
-      title: 'Resale: more savings, less waste',
-      tiles: [
-        { title: 'PC & Laptops', image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300&auto=format&fit=crop&q=80', href: '/products?category=pc-laptops' },
-        { title: 'Home & Kitchen', image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=300&auto=format&fit=crop&q=80', href: '/products?category=home-kitchen' },
-        { title: 'Electronics', image: 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=300&auto=format&fit=crop&q=80', href: '/products?category=electronics' },
-        { title: 'Home Improvement', image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=300&auto=format&fit=crop&q=80', href: '/products?category=home-improvement' },
-      ],
-    },
-    {
-      title: 'Echo, Fire TV, and more',
-      tiles: [
-        { title: 'Echo Studio', image: 'https://images.unsplash.com/photo-1543512214-318c7553f230?w=300&auto=format&fit=crop&q=80', href: '/products?q=echo' },
-        { title: 'Fire TV Cube', image: 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=300&auto=format&fit=crop&q=80', href: '/products?q=fire+tv' },
-        { title: 'Kindle Scribe', image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80', href: '/products?q=kindle' },
-        { title: 'Ring Video Doorbell', image: 'https://images.unsplash.com/photo-1558002038-1055907df827?w=300&auto=format&fit=crop&q=80', href: '/products?q=ring' },
-      ],
-    },
-    {
-      title: "Levi's original style. Always iconic.",
-      tiles: [
-        { title: 'Men', image: 'https://images.unsplash.com/photo-1516257984-b1b4d707412e?w=300&auto=format&fit=crop&q=80', href: '/products?brand=Levis' },
-        { title: 'Women', image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80', href: '/products?brand=Levis' },
-        { title: 'Exclusive tops', image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=300&auto=format&fit=crop&q=80', href: '/products?brand=Levis' },
-        { title: 'Trending now', image: 'https://images.unsplash.com/photo-1495105787522-5334e3ffa0ef?w=300&auto=format&fit=crop&q=80', href: '/products?brand=Levis' },
-      ],
-    },
-  ],
-  // Row 3
-  [
-    {
-      title: 'Second Chance Deal Days: deals are live',
-      tiles: [
-        { title: 'Smartphones', image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&auto=format&fit=crop&q=80', href: '/products?category=smartphones' },
-        { title: 'Home & Kitchen', image: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=300&auto=format&fit=crop&q=80', href: '/products?category=home-kitchen' },
-        { title: 'Home Improvement', image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300&auto=format&fit=crop&q=80', href: '/products?category=home-improvement' },
-        { title: 'PC & Accessories', image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=300&auto=format&fit=crop&q=80', href: '/products?category=pc-accessories' },
-      ],
-    },
-    {
-      title: 'Gifts by interest',
-      tiles: [
-        { title: 'Fave show merch', image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=300&auto=format&fit=crop&q=80', href: '/products?q=merch' },
-        { title: 'Travel-ready finds', image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=300&auto=format&fit=crop&q=80', href: '/products?q=travel' },
-        { title: 'Gaming gear', image: 'https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?w=300&auto=format&fit=crop&q=80', href: '/products?q=gaming' },
-        { title: 'Fitness finds', image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=300&auto=format&fit=crop&q=80', href: '/products?q=fitness' },
-      ],
-    },
-    {
-      title: 'Hello Autumn: Season must-haves under £20',
-      tiles: [
-        { title: "Men's fashion", image: 'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?w=300&auto=format&fit=crop&q=80', href: '/products?category=mens-fashion' },
-        { title: "Women's fashion", image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=300&auto=format&fit=crop&q=80', href: '/products?category=womens-fashion' },
-        { title: 'Decor', image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=300&auto=format&fit=crop&q=80', href: '/products?category=decor' },
-        { title: 'Essentials', image: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=300&auto=format&fit=crop&q=80', href: '/products?q=essentials' },
-      ],
-    },
-    {
-      title: 'Electronics store',
-      tiles: [
-        { title: 'DAB radios', image: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?w=300&auto=format&fit=crop&q=80', href: '/products?q=radio' },
-        { title: 'Headphones', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&auto=format&fit=crop&q=80', href: '/products?category=headphones' },
-        { title: 'USB cables', image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=300&auto=format&fit=crop&q=80', href: '/products?q=cable' },
-        { title: 'Extension cords', image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80', href: '/products?q=extension' },
-      ],
-    },
-  ],
-  // Row 4
-  [
-    {
-      title: 'Games and toys',
-      tiles: [
-        { title: 'Boards', image: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=300&auto=format&fit=crop&q=80', href: '/products?q=board+game' },
-        { title: 'Playing cards', image: 'https://images.unsplash.com/photo-1511193311914-0346f16efe90?w=300&auto=format&fit=crop&q=80', href: '/products?q=cards' },
-        { title: 'Playhouses', image: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=300&auto=format&fit=crop&q=80', href: '/products?q=toys' },
-        { title: 'Dolls', image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=300&auto=format&fit=crop&q=80', href: '/products?q=dolls' },
-      ],
-    },
-    {
-      type: 'promo',
-      title: "Smile. You're on camera.",
-      subtitle: 'It sees what you miss',
-      bgClass: 'bg-neutral-900 text-white',
-      image: 'https://images.unsplash.com/photo-1558089687-f282ffcbc126?w=400&auto=format&fit=crop&q=80',
-      ctaText: 'Explore Dyson cameras',
-      href: '/products?q=camera',
-    },
-    {
-      title: 'Workout essentials under £20',
-      cardBg: 'bg-amber-300',
-      tiles: [
-        { title: 'Fitness under £5', image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=300&auto=format&fit=crop&q=80', href: '/products?q=fitness', bgOverride: 'bg-amber-100' },
-        { title: 'Crazy low prices', image: 'https://images.unsplash.com/photo-1607083206869-4c7672e72a8a?w=300&auto=format&fit=crop&q=80', href: '/deals', bgOverride: 'bg-amber-100' },
-        { title: 'Summer sports', image: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=300&auto=format&fit=crop&q=80', href: '/products?q=sports', bgOverride: 'bg-amber-100' },
-        { title: 'Activewear', image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=300&auto=format&fit=crop&q=80', href: '/products?category=activewear', bgOverride: 'bg-amber-100' },
-      ],
-    },
-    {
-      title: 'Decor & home must-haves under £20',
-      cardBg: 'bg-purple-600 text-white',
-      tiles: [
-        { title: 'Home', image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=300&auto=format&fit=crop&q=80', href: '/products?category=home', bgOverride: 'bg-purple-200' },
-        { title: 'Decor', image: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=300&auto=format&fit=crop&q=80', href: '/products?category=decor', bgOverride: 'bg-purple-200' },
-        { title: 'Organisation', image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=300&auto=format&fit=crop&q=80', href: '/products?q=organizer', bgOverride: 'bg-purple-200' },
-        { title: 'Kitchen', image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=300&auto=format&fit=crop&q=80', href: '/products?category=kitchen', bgOverride: 'bg-purple-200' },
-      ],
-    },
-  ],
-  // Row 5
-  [
-    {
-      title: 'Media',
-      tiles: [
-        { title: 'DVD', image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&auto=format&fit=crop&q=80', href: '/products?q=dvd' },
-        { title: 'Blu-ray', image: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=300&auto=format&fit=crop&q=80', href: '/products?q=blu-ray' },
-        { title: 'TV series', image: 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=300&auto=format&fit=crop&q=80', href: '/products?q=tv+series' },
-        { title: 'Box sets', image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=300&auto=format&fit=crop&q=80', href: '/products?q=box+set' },
-      ],
-    },
-    {
-      title: 'Artist merch',
-      tiles: [
-        { title: 'Eagles', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=80', href: '/products?q=music', bgOverride: 'bg-yellow-300' },
-        { title: 'Ellie Goulding', image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80', href: '/products?q=music', bgOverride: 'bg-pink-400' },
-        { title: 'James Blunt', image: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=300&auto=format&fit=crop&q=80', href: '/products?q=music', bgOverride: 'bg-purple-400' },
-        { title: 'Hilary Duff', image: 'https://images.unsplash.com/photo-1526478806334-5fd488fcaabc?w=300&auto=format&fit=crop&q=80', href: '/products?q=music', bgOverride: 'bg-lime-300' },
-      ],
-    },
-    {
-      title: 'Video games & accessories',
-      tiles: [
-        { title: 'Xbox controllers', image: 'https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?w=300&auto=format&fit=crop&q=80', href: '/products?q=controller' },
-        { title: 'Nintendo', image: 'https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?w=300&auto=format&fit=crop&q=80', href: '/products?q=nintendo' },
-        { title: 'VR headsets', image: 'https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?w=300&auto=format&fit=crop&q=80', href: '/products?q=vr' },
-        { title: 'PS5 accessories', image: 'https://images.unsplash.com/photo-1607853202273-797f1c22a38e?w=300&auto=format&fit=crop&q=80', href: '/products?q=ps5' },
-      ],
-    },
-    {
-      title: 'Podcasts on Amazon Music',
-      tiles: [
-        { title: 'Live, Laugh, Luke', image: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=300&auto=format&fit=crop&q=80', href: '/products?q=podcast', bgOverride: 'bg-emerald-400' },
-        { title: 'Intrigue', image: 'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=300&auto=format&fit=crop&q=80', href: '/products?q=podcast', bgOverride: 'bg-cyan-500' },
-        { title: 'Get A Grip', image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=300&auto=format&fit=crop&q=80', href: '/products?q=podcast', bgOverride: 'bg-rose-500' },
-        { title: 'British Scandal', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=80', href: '/products?q=podcast', bgOverride: 'bg-sky-400' },
-      ],
-    },
-  ],
-  // Row 6
-  [
-    {
-      title: 'Playlists on Amazon Music',
-      tiles: [
-        { title: 'Rediscover Sam Smith', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=80', href: '/products?q=music', bgOverride: 'bg-teal-400' },
-        { title: 'Rediscover Jorja Smith', image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=80', href: '/products?q=music', bgOverride: 'bg-amber-400' },
-        { title: 'Caribbean Music', image: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=300&auto=format&fit=crop&q=80', href: '/products?q=music', bgOverride: 'bg-orange-400' },
-        { title: 'Feeling Happy', image: 'https://images.unsplash.com/photo-1526478806334-5fd488fcaabc?w=300&auto=format&fit=crop&q=80', href: '/products?q=music', bgOverride: 'bg-yellow-300' },
-      ],
-    },
-    {
-      type: 'promo',
-      title: 'Save up to 15% on your essentials',
-      bgClass: 'bg-white text-neutral-900',
-      image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&auto=format&fit=crop&q=80',
-      ctaText: 'Shop essentials',
-      href: '/products?q=essentials',
-    },
-    {
-      title: 'Extra 10% off orders £30+',
-      cardBg: 'bg-indigo-900 text-white',
-      tiles: [
-        { title: 'Under £10', image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=300&auto=format&fit=crop&q=80', href: '/deals', bgOverride: 'bg-red-500' },
-        { title: 'Brand Faves', image: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=300&auto=format&fit=crop&q=80', href: '/vendors', bgOverride: 'bg-emerald-400' },
-        { title: 'Electronics', image: 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=300&auto=format&fit=crop&q=80', href: '/products?category=electronics', bgOverride: 'bg-purple-500' },
-        { title: 'Sports', image: 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=300&auto=format&fit=crop&q=80', href: '/products?q=sports', bgOverride: 'bg-blue-500' },
-      ],
-    },
-    {
-      title: 'Back to Hogwarts',
-      cardBg: 'bg-sky-950 text-white',
-      tiles: [
-        { title: 'Toys', image: 'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=300&auto=format&fit=crop&q=80', href: '/products?category=toys', bgOverride: 'bg-cyan-700' },
-        { title: 'Clothing', image: 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=300&auto=format&fit=crop&q=80', href: '/products?category=clothing', bgOverride: 'bg-blue-800' },
-        { title: 'School Supplies', image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=300&auto=format&fit=crop&q=80', href: '/products?q=school', bgOverride: 'bg-amber-600' },
-        { title: 'Collectibles', image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=300&auto=format&fit=crop&q=80', href: '/products?q=collectibles', bgOverride: 'bg-slate-700' },
-      ],
-    },
-  ],
-];
-
-const HERO_SLIDES = [
-  {
-    title: 'Summer sale: final days',
-    subtitle: 'Last chance to save',
-    image: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1200&auto=format&fit=crop&q=80',
-    href: '/deals',
-  },
-  {
-    title: 'Shop deals ending soon',
-    subtitle: 'Save big on top electronics and home goods',
-    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1200&auto=format&fit=crop&q=80',
-    href: '/deals',
-  },
-  {
-    title: 'Level up your tech',
-    subtitle: 'Essentials for the tech-savvy',
-    image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200&auto=format&fit=crop&q=80',
-    href: '/products?category=tech',
-  },
-  {
-    title: 'Sees. Thinks. Jets.',
-    subtitle: 'Not your average toothbrush — Dyson tech',
-    image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=1200&auto=format&fit=crop&q=80',
-    href: '/products?q=dyson',
-  },
-  {
-    title: 'Second Chance Deal Days',
-    subtitle: '1-10 Sept. Certified refurbished & open-box deals',
-    image: 'https://images.unsplash.com/photo-1526738549149-8e07eca6c147?w=1200&auto=format&fit=crop&q=80',
-    href: '/deals',
-  },
-];
-
-export function AmazonHomeGrid() {
+export function AmazonHomeGrid({ sections, heroSlides }: AmazonHomeGridProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const slideCount = heroSlides.length;
 
   useEffect(() => {
+    if (slideCount <= 1) {
+      setCurrentSlide(0);
+      return;
+    }
     const timer = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % HERO_SLIDES.length);
+      setCurrentSlide(prev => (prev + 1) % slideCount);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [slideCount]);
 
-  const slide = HERO_SLIDES[currentSlide];
+  const slide = heroSlides.length > 0 ? heroSlides[Math.min(currentSlide, heroSlides.length - 1)] : null;
 
   return (
     <div className="bg-neutral-200 min-h-screen text-text-primary relative overflow-hidden pb-16">
-      {/* Hero Banner Carousel */}
-      <div className="max-w-[1500px] mx-auto px-4 pt-4">
-        <div className="relative w-full aspect-[21/9] sm:aspect-[3/1] max-h-[420px] bg-neutral-900 rounded-xs overflow-hidden shadow-md">
-          <Image
-            src={slide.image}
-            alt={slide.title}
-            fill
-            priority
-            className="object-cover opacity-90 transition-opacity duration-500"
-            sizes="100vw"
-          />
-          {/* Gradient fade at bottom */}
-          <div className="absolute inset-0 bg-gradient-to-t from-neutral-200 via-transparent to-black/30 pointer-events-none" />
+      {/* Hero Banner Carousel — only when real active deals exist */}
+      {slide ? (
+        <div className="max-w-[1500px] mx-auto px-4 pt-4">
+          <div className="relative w-full aspect-[21/9] sm:aspect-[3/1] max-h-[420px] bg-neutral-900 rounded-xs overflow-hidden shadow-md">
+            <Image
+              src={slide.image}
+              alt={slide.title}
+              fill
+              priority
+              className="object-cover opacity-90 transition-opacity duration-500"
+              sizes="100vw"
+            />
+            {/* Gradient fade at bottom */}
+            <div className="absolute inset-0 bg-gradient-to-t from-neutral-200 via-transparent to-black/30 pointer-events-none" />
 
-          {/* Navigation Arrows */}
-          <button
-            type="button"
-            onClick={() => setCurrentSlide((currentSlide - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
-            aria-label="Previous slide"
-            className="absolute left-4 top-1/3 -translate-y-1/2 w-12 h-24 bg-transparent hover:bg-white/10 hover:border hover:border-white/40 flex items-center justify-center text-white text-3xl font-bold rounded-sm transition-all focus:outline-none"
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            onClick={() => setCurrentSlide((currentSlide + 1) % HERO_SLIDES.length)}
-            aria-label="Next slide"
-            className="absolute right-4 top-1/3 -translate-y-1/2 w-12 h-24 bg-transparent hover:bg-white/10 hover:border hover:border-white/40 flex items-center justify-center text-white text-3xl font-bold rounded-sm transition-all focus:outline-none"
-          >
-            ›
-          </button>
+            {/* Navigation Arrows */}
+            <button
+              type="button"
+              onClick={() => setCurrentSlide((currentSlide - 1 + slideCount) % slideCount)}
+              aria-label="Previous slide"
+              className="absolute left-4 top-1/3 -translate-y-1/2 w-12 h-24 bg-transparent hover:bg-white/10 hover:border hover:border-white/40 flex items-center justify-center text-white text-3xl font-bold rounded-sm transition-all focus:outline-none"
+            >
+              ‹
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentSlide((currentSlide + 1) % slideCount)}
+              aria-label="Next slide"
+              className="absolute right-4 top-1/3 -translate-y-1/2 w-12 h-24 bg-transparent hover:bg-white/10 hover:border hover:border-white/40 flex items-center justify-center text-white text-3xl font-bold rounded-sm transition-all focus:outline-none"
+            >
+              ›
+            </button>
 
-          {/* Slide info overlay bottom left */}
-          <div className="absolute bottom-6 left-6 md:left-12 z-10 bg-white/95 backdrop-blur-sm px-6 py-3 rounded-xs shadow-md">
-            <h2 className="text-lg md:text-xl font-bold text-text-primary">{slide.title}</h2>
-            <p className="text-xs md:text-sm text-neutral-600">{slide.subtitle}</p>
-            <Link href={slide.href} className="inline-block mt-2 text-xs font-bold text-sky-700 hover:underline">
-              Shop now →
-            </Link>
+            {/* Slide info overlay bottom left */}
+            <div className="absolute bottom-6 left-6 md:left-12 z-10 bg-white/95 backdrop-blur-sm px-6 py-3 rounded-xs shadow-md">
+              <h2 className="text-lg md:text-xl font-bold text-text-primary">{slide.title}</h2>
+              <p className="text-xs md:text-sm text-neutral-600">{slide.subtitle}</p>
+              <Link href={slide.href} className="inline-block mt-2 text-xs font-bold text-sky-700 hover:underline">
+                Shop now →
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Overlapping / Stacked 4-Column Card Grid */}
-      <div className="max-w-[1500px] mx-auto px-4 -mt-24 sm:-mt-36 md:-mt-48 relative z-20 pb-12">
-        {HOME_SECTIONS.map((row, rowIndex) => (
+      <div className={`max-w-[1500px] mx-auto px-4${slide ? ' -mt-24 sm:-mt-36 md:-mt-48' : ' pt-6'} relative z-20 pb-12`}>
+        {sections.map((row, rowIndex) => (
           <div key={rowIndex} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {row.map((item, itemIndex) => {
               if (item.type === 'promo') {
@@ -401,7 +112,7 @@ export function AmazonHomeGrid() {
                 );
               }
 
-              const section = item as GridCardSection;
+              const section = item;
               return (
                 <div
                   key={itemIndex}
@@ -434,10 +145,10 @@ export function AmazonHomeGrid() {
                     </div>
                   </div>
                   <Link
-                    href="/products"
+                    href={section.linkHref ?? '/products'}
                     className={cn("text-xs font-bold hover:underline mt-2 inline-block", section.cardBg?.includes('text-white') ? 'text-white underline' : 'text-sky-700 hover:text-amber-700')}
                   >
-                    See more &gt;
+                    {section.linkText ?? 'See more'} &gt;
                   </Link>
                 </div>
               );

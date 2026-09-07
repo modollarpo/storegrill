@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCart } from '@/components/providers/CartContext';
 import { PriceDisplay } from '@/components/commerce/PriceDisplay';
 import { useToast } from '@/components/feedback/Toast';
@@ -84,10 +85,9 @@ export function FrequentlyBoughtTogether({
                   className="mt-1 h-4 w-4 accent-[var(--color-action-primary)] shrink-0"
                 />
                 <span className="flex items-start gap-2 min-w-0">
-                  <span className="w-12 h-12 rounded-sm bg-smoke-100 grid place-items-center overflow-hidden shrink-0">
+                  <span className="w-12 h-12 rounded-sm bg-smoke-100 grid place-items-center overflow-hidden shrink-0 relative">
                     {storefrontImage(item.thumbnail ?? undefined) ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={storefrontImage(item.thumbnail ?? undefined)} alt="" className="w-full h-full object-cover" />
+                      <Image src={storefrontImage(item.thumbnail ?? undefined)!} alt={item.name || ''} fill sizes="48px" className="object-cover" />
                     ) : (
                       <span aria-hidden="true" className="text-2xs text-smoke-400">IMG</span>
                     )}

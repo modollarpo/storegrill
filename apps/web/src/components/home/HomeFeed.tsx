@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useTranslations } from '@/components/providers/RegionContext';
@@ -18,8 +19,7 @@ import type {
 
 function HeroImage({ src, alt }: { src?: string; alt: string }) {
   if (!src) return null;
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt={alt} className="h-full w-full object-cover" />;
+  return <Image src={src} alt={alt} fill className="object-cover" />;
 }
 
 function Hero({ slides, regionKey }: { slides: HomeHeroSlide[]; regionKey: string }) {
@@ -163,9 +163,8 @@ function CategoryCardView({ module }: { module: Extract<HomeModule, { kind: 'cat
               aria-label={tile.name}
               className="block overflow-hidden rounded-md bg-smoke-100 transition-transform duration-300 hover:-translate-y-0.5"
             >
-              <span className="block aspect-square w-full">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={tile.image} alt="" loading="lazy" className="h-full w-full object-cover" />
+              <span className="block aspect-square w-full relative">
+                {tile.image ? <Image src={tile.image} alt={tile.name || ''} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" /> : null}
               </span>
             </Link>
           </li>
@@ -195,9 +194,8 @@ function DealsRailView({ module }: { module: Extract<HomeModule, { kind: 'deals'
           <li key={item.dealId}>
             <Link href={`/deals/${item.dealSlug}`} className="block w-40">
               <span className="relative block aspect-square w-full overflow-hidden rounded-md bg-smoke-100">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.image} alt="" loading="lazy" className="h-full w-full object-cover" />
-                <span className="absolute bottom-1.5 left-1.5 rounded bg-white/95 px-1.5 py-0.5 text-xs font-bold leading-none text-sale shadow-sm">
+                {item.image ? <Image src={item.image} alt={item.name || ''} fill sizes="160px" className="object-cover" /> : null}
+                <span className="absolute bottom-1.5 left-1.5 z-10 rounded bg-white/95 px-1.5 py-0.5 text-xs font-bold leading-none text-sale shadow-sm">
                   {item.cap ? t('homePercentOffUpTo', item.discountPercent) : t('homePercentOff', item.discountPercent)}
                 </span>
               </span>

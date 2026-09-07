@@ -23,6 +23,11 @@ export const semantic = {
   surfaceSunken:  '#EDEDED',
   surfaceOverlay: 'rgba(28,28,28,0.55)',
 
+  // Homepage canvas + commerce accents (Amazon-style retail cues)
+  surfaceCanvas: '#eaedee',   // blue-grey storefront canvas
+  textSale:      '#b12704',   // discounted price / % off
+  navBar:        '#37475a',   // navy editorial bar (back-to-top family)
+
   // Borders
   border:         '#e0e0e0',
   borderStrong:   '#c9c9c9',

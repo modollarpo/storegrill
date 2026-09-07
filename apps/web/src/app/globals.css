@@ -32,6 +32,11 @@
   --color-surface-sunken: #ededed;
   --color-surface-overlay: rgba(28,28,28,0.55);
 
+  /* Homepage canvas + commerce accents */
+  --color-canvas: #eaedee;
+  --color-sale: #b12704;
+  --color-bar: #37475a;
+
   /* Borders */
   --color-border: #e0e0e0;
   --color-border-strong: #c9c9c9;
@@ -136,6 +141,11 @@
   --color-feedback-warning-bg: rgba(180,83,9,0.15);
   --color-feedback-danger-bg: rgba(196,25,25,0.15);
   --color-feedback-info-bg: rgba(25,84,184,0.15);
+
+  /* Homepage canvas + commerce accents (dark) */
+  --color-canvas: #0e1420;
+  --color-bar: #1e293b;
+  --color-sale: #f87171;
 }
 
 @layer base {

@@ -2,6 +2,8 @@ import type { MetadataRoute } from 'next';
 import { REGION_META, regionUrl } from '@/lib/regions';
 import { API_BASE } from '@/lib/api';
 
+export const dynamic = 'force-dynamic';
+
 const STATIC_ROUTES = ['', '/products', '/deals', '/vendors', '/regions', '/blog'];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

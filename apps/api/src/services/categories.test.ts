@@ -26,7 +26,14 @@ type ProductRow = {
   createdAt: Date;
 };
 
-function mockPrisma(categories: CategoryRow[], products: ProductRow[]) {
+type VendorRow = {
+  id: string;
+  storeName: string;
+  slug: string;
+  businessLegalName: string | null;
+};
+
+function mockPrisma(categories: CategoryRow[], products: ProductRow[], vendors: VendorRow[]) {
   const groupBy = async (opts: any) => {
     const { by, where } = opts;
     const rows = products.filter(
@@ -49,6 +56,9 @@ function mockPrisma(categories: CategoryRow[], products: ProductRow[]) {
   return {
     category: {
       findMany: async () => categories,
+    },
+    vendorProfile: {
+      findMany: async (opts: any) => vendors.filter(v => opts.where?.id?.in?.includes(v.id) ?? true),
     },
     product: {
       groupBy,
@@ -75,6 +85,7 @@ describe('getRecentCategoryPage', () => {
         { id: 'c1', name: 'Kitchen', slug: 'kitchen', parentId: null, createdAt: daysAgo(3) },
         { id: 'c2', name: 'Garden', slug: 'garden', parentId: null, createdAt: daysAgo(1) },
         { id: 'c3', name: 'BrandMart', slug: 'brandmart', parentId: null, createdAt: daysAgo(0) },
+        { id: 'c4', name: 'Outdoor', slug: 'outdoor', parentId: null, createdAt: daysAgo(0) },
         { id: 'c1a', name: 'Pans', slug: 'pans', parentId: 'c1', createdAt: daysAgo(2) },
       ],
       [
@@ -82,17 +93,25 @@ describe('getRecentCategoryPage', () => {
         { id: 'p2', categoryId: 'c1a', vendorId: 'v2', status: 'ACTIVE', name: 'Pan2', slug: 'pan2', images: '["b.jpg"]', basePriceMinorUnits: 200, currencyCode: 'GBP', createdAt: daysAgo(1) },
         { id: 'p3', categoryId: 'c2', vendorId: 'v1', status: 'ACTIVE', name: 'Chair', slug: 'chair', images: '["c.jpg"]', basePriceMinorUnits: 300, currencyCode: 'GBP', createdAt: daysAgo(4) },
         { id: 'p7', categoryId: 'c2', vendorId: 'v2', status: 'ACTIVE', name: 'Lounger', slug: 'lounger', images: '["g.jpg"]', basePriceMinorUnits: 350, currencyCode: 'GBP', createdAt: daysAgo(1) },
-        // BrandMart has two products from one vendor -> vendor-narrow, must be excluded
+        // BrandMart has two products from one vendor named BrandMart -> vendor-branded, must be excluded
         { id: 'p4', categoryId: 'c3', vendorId: 'b1', status: 'ACTIVE', name: 'Mart', slug: 'mart', images: '["d.jpg"]', basePriceMinorUnits: 400, currencyCode: 'GBP', createdAt: daysAgo(0) },
         { id: 'p5', categoryId: 'c3', vendorId: 'b1', status: 'ACTIVE', name: 'Mart2', slug: 'mart2', images: '["e.jpg"]', basePriceMinorUnits: 500, currencyCode: 'GBP', createdAt: daysAgo(0) },
+        // Outdoor has two products from a single vendor named Costway -> NOT vendor-branded, must be included
+        { id: 'p8', categoryId: 'c4', vendorId: 'v1', status: 'ACTIVE', name: 'Tarp', slug: 'tarp', images: '["h.jpg"]', basePriceMinorUnits: 900, currencyCode: 'GBP', createdAt: daysAgo(1) },
+        { id: 'p9', categoryId: 'c4', vendorId: 'v1', status: 'ACTIVE', name: 'Tent', slug: 'tent', images: '["i.jpg"]', basePriceMinorUnits: 1000, currencyCode: 'GBP', createdAt: daysAgo(0) },
         { id: 'p6', categoryId: 'f1', vendorId: 'v1', status: 'ACTIVE', name: 'F1', slug: 'f1', images: '["f.jpg"]', basePriceMinorUnits: 600, currencyCode: 'GBP', createdAt: daysAgo(1) },
+      ],
+      [
+        { id: 'v1', storeName: 'Costway', slug: 'costway', businessLegalName: null },
+        { id: 'v2', storeName: 'Aosom', slug: 'aosom', businessLegalName: null },
+        { id: 'b1', storeName: 'BrandMart', slug: 'brandmart', businessLegalName: 'BrandMart Ltd' },
       ],
     ) as any;
 
     const first = await getRecentCategoryPage(prisma, { regionKey: 'UK', offset: 0, limit: 4 });
     expect(first.hasMore).toBe(false);
-    expect(first.categories.map(c => c.slug)).toEqual(['garden', 'kitchen']);
-    expect(first.categories[0].featured?.[0].name).toBe('Lounger');
+    expect(first.categories.map(c => c.slug)).toEqual(['outdoor', 'garden', 'kitchen']);
+    expect(first.categories[0].featured?.[0].name).toBe('Tent');
   });
 
   it('paginates with hasMore and newest product per category', async () => {
@@ -106,6 +125,10 @@ describe('getRecentCategoryPage', () => {
         { id: 'p2', categoryId: 'c1', vendorId: 'v2', status: 'ACTIVE', name: 'A2', slug: 'a2', images: '[]', basePriceMinorUnits: 1, currencyCode: 'GBP', createdAt: daysAgo(0) },
         { id: 'p3', categoryId: 'c2', vendorId: 'v1', status: 'ACTIVE', name: 'B1', slug: 'b1', images: '[]', basePriceMinorUnits: 1, currencyCode: 'GBP', createdAt: daysAgo(0) },
         { id: 'p4', categoryId: 'c2', vendorId: 'v2', status: 'ACTIVE', name: 'B2', slug: 'b2', images: '[]', basePriceMinorUnits: 1, currencyCode: 'GBP', createdAt: daysAgo(0) },
+      ],
+      [
+        { id: 'v1', storeName: 'Costway', slug: 'costway', businessLegalName: null },
+        { id: 'v2', storeName: 'Aosom', slug: 'aosom', businessLegalName: null },
       ],
     ) as any;
 
@@ -129,6 +152,9 @@ describe('getCategoryTree', () => {
       [
         { id: 'p1', categoryId: 'f1', vendorId: 'v1', status: 'ACTIVE', name: 'Old', slug: 'old', images: '[]', basePriceMinorUnits: 1, currencyCode: 'GBP', createdAt: daysAgo(10) },
         { id: 'p2', categoryId: 'f1', vendorId: 'v1', status: 'ACTIVE', name: 'New', slug: 'new', images: '[]', basePriceMinorUnits: 2, currencyCode: 'GBP', createdAt: daysAgo(1) },
+      ],
+      [
+        { id: 'v1', storeName: 'Costway', slug: 'costway', businessLegalName: null },
       ],
     ) as any;
 

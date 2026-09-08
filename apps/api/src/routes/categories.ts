@@ -19,10 +19,10 @@ router.get('/', async (req: Request, res: Response) => {
     regionKey,
     includeProducts,
     orderBy: 'name',
+    featuredOnly,
   });
 
-  const categories = featuredOnly ? roots.slice(0, 12) : roots;
-  res.json({ categories });
+  res.json({ categories: roots });
 });
 
 router.get('/:slug', async (req: Request, res: Response) => {

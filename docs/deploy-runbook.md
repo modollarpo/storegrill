@@ -100,6 +100,23 @@ npx tsx scripts/bootstrap-prod.ts
 
 Idempotent: upserts the six regions (UK/US/EU/IN/NG/GH) and promotes the admin user.
 
+### 3.1 Category curation (homepage departments)
+
+The homepage `featured` categories are curated per pod, not auto-derived. After any
+feed/importer lands (which can introduce vendor-named roots like `Costway`, duplicate
+or narrow top-level categories), re-run the reconciliation script per pod:
+
+```powershell
+$env:DATABASE_URL = <KV secret postgres-connection-string>
+npx tsx apps/api/scripts/curate-categories.ts          # dry run: review the PLAN, no writes
+npx tsx apps/api/scripts/curate-categories.ts --apply  # apply (idempotent)
+npx tsx apps/api/scripts/verify-categories.ts          # assert curated invariants
+```
+
+The schema columns behind curation (`isFeatured`, `displayOrder`, `tagline`) are additive;
+pods are synced via `prisma db push` (see `docs/audit-2026.md`), and the migration in
+`apps/api/prisma/migrations/` is the CI-from-zero baseline.
+
 ## 4. DNS (global)
 
 1. Seed `infra/terraform/live/global/terraform.tfvars` with each region's four hostnames

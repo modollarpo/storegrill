@@ -59,17 +59,30 @@ export async function loadHomeContent(regionKey: string, language: string): Prom
 
   const cards = buildCategoryCards(roots, language);
   if (language && language !== 'en' && cards.length > 0) {
-    const texts = cards.flatMap(card => [card.title, ...card.tiles.map(tile => tile.title)]);
-    const translated = await translateTitles(texts, language);
-    let k = 0;
-    for (const card of cards) {
-      card.title = translated[k++] ?? card.title;
-      for (const tile of card.tiles) {
-        tile.title = translated[k++] ?? tile.title;
+    const positions: Array<{ card: number; field: 'title' | 'subtitle' | 'tile'; tile?: number }> = [];
+    const texts: string[] = [];
+    cards.forEach((card, i) => {
+      positions.push({ card: i, field: 'title' });
+      texts.push(card.title);
+      if (card.subtitle) {
+        positions.push({ card: i, field: 'subtitle' });
+        texts.push(card.subtitle);
       }
-    }
+      card.tiles.forEach((tile, j) => {
+        positions.push({ card: i, field: 'tile', tile: j });
+        texts.push(tile.title);
+      });
+    });
+    const translated = await translateTitles(texts, language);
+    positions.forEach((pos, idx) => {
+      const value = translated[idx];
+      if (!value) return;
+      if (pos.field === 'title') cards[pos.card].title = value;
+      else if (pos.field === 'subtitle') cards[pos.card].subtitle = value;
+      else cards[pos.card].tiles[pos.tile!].title = value;
+    });
   }
 
-  const sections = buildRows(cards, buildPromos(language));
+  const sections = buildRows(cards, buildPromos(language), language);
   return { heroSlides: slides, sections };
 }

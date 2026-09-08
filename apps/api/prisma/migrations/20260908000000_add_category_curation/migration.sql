@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Category" ADD COLUMN "isFeatured" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Category" ADD COLUMN "displayOrder" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Category" ADD COLUMN "tagline" TEXT;

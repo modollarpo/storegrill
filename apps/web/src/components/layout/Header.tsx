@@ -422,12 +422,12 @@ function Header({ categories }: HeaderProps) {
                 </button>
 
                 {dealsDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-0 w-screen -ml-[calc((100vw-100%)/2)] bg-surface-raised border-b border-border shadow-2xl z-[999] animate-in fade-in slide-in-from-top-2 duration-200 text-text-primary">
-                    <div className="max-w-[1500px] mx-auto px-6 py-5">
+                  <div className="absolute top-full right-0 mt-0 w-[min(960px,calc(100vw-2rem))] bg-surface-raised border border-border rounded-b-md shadow-2xl z-[999] animate-in fade-in slide-in-from-top-2 duration-200 text-text-primary">
+                    <div className="p-5">
                       <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-bold text-text-primary uppercase tracking-wider">Today&apos;s Featured Deals</span>
-                          <span className="bg-ember text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">Full Width Slider</span>
+                          <span className="bg-ember text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">Deal Slider</span>
                         </div>
                         <a href="/deals" className="text-xs font-bold text-ember hover:underline">View all deals →</a>
                       </div>

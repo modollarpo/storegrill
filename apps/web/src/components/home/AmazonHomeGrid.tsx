@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { RecentlyViewed } from '@/components/commerce/RecentlyViewed';
+import { PriceDisplay } from '@/components/commerce/PriceDisplay';
 import type { HomeHeroSlide, HomeSectionItem } from '@/lib/home-content-build';
 
 interface AmazonHomeGridProps {
@@ -82,6 +83,44 @@ export function AmazonHomeGrid({ sections, heroSlides }: AmazonHomeGridProps) {
           <div key={rowIndex} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {row.map((item, itemIndex) => {
               if (item.type === 'promo') {
+                if (item.wide) {
+                  return (
+                    <div
+                      key={itemIndex}
+                      className={cn(
+                        'rounded-xs shadow-md p-6 md:p-8 flex flex-col sm:flex-row sm:items-center gap-5 border border-neutral-200 transition-all hover:shadow-lg lg:col-span-4',
+                        item.bgClass || 'bg-gradient-to-br from-smoke-50 to-neutral-100'
+                      )}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-xl md:text-2xl font-bold tracking-tight mb-1">{item.title}</h3>
+                        {item.subtitle && <p className="text-xs md:text-sm opacity-90 mb-3">{item.subtitle}</p>}
+                        {item.priceMinorUnits != null && item.currencyCode && (
+                          <div className="mb-3">
+                            <PriceDisplay
+                              amountMinorUnits={item.priceMinorUnits}
+                              currencyCode={item.currencyCode}
+                              size="lg"
+                              listMinorUnits={item.listPriceMinorUnits}
+                            />
+                          </div>
+                        )}
+                        <Link
+                          href={item.href}
+                          className="inline-block text-xs font-bold text-sky-700 hover:text-amber-700 hover:underline"
+                        >
+                          {item.ctaText || 'Shop now'} &gt;
+                        </Link>
+                      </div>
+                      {item.image && (
+                        <div className="relative w-48 h-48 sm:w-60 sm:h-60 shrink-0 rounded-xs overflow-hidden bg-neutral-100">
+                          <Image src={item.image} alt={item.title} fill className="object-cover" sizes="(max-width: 640px) 192px, 240px" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
                 return (
                   <div
                     key={itemIndex}
@@ -122,10 +161,13 @@ export function AmazonHomeGrid({ sections, heroSlides }: AmazonHomeGridProps) {
                   )}
                 >
                   <div>
-                    <h3 className="text-lg md:text-xl font-bold tracking-tight mb-3">
+                    <h3 className="text-lg md:text-xl font-bold tracking-tight mb-1">
                       {section.title}
                     </h3>
-                    <div className="grid grid-cols-2 gap-3 mb-4">
+                    {section.subtitle && (
+                      <p className="text-xs text-neutral-500 mb-3 line-clamp-2">{section.subtitle}</p>
+                    )}
+                    <div className="grid grid-cols-2 gap-3 mb-2">
                       {section.tiles.map((tile, tileIdx) => (
                         <Link key={tileIdx} href={tile.href} className="group block">
                           <div className={cn("relative aspect-square w-full rounded-xs overflow-hidden mb-1 border border-neutral-200/60 shadow-xs", tile.bgOverride || 'bg-neutral-100')}>
@@ -140,6 +182,16 @@ export function AmazonHomeGrid({ sections, heroSlides }: AmazonHomeGridProps) {
                           <span className={cn("block text-xs font-medium group-hover:underline line-clamp-1", section.cardBg?.includes('text-white') ? 'text-white/90' : 'text-text-primary')}>
                             {tile.title}
                           </span>
+                          {tile.priceMinorUnits != null && tile.currencyCode && (
+                            <span className="block mt-0.5">
+                              <PriceDisplay
+                                amountMinorUnits={tile.priceMinorUnits}
+                                currencyCode={tile.currencyCode}
+                                size="sm"
+                                listMinorUnits={tile.listPriceMinorUnits}
+                              />
+                            </span>
+                          )}
                         </Link>
                       ))}
                     </div>

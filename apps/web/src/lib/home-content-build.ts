@@ -5,11 +5,15 @@ export interface HomeCardTile {
   image: string;
   href: string;
   bgOverride?: string;
+  priceMinorUnits?: number;
+  currencyCode?: string;
+  listPriceMinorUnits?: number;
 }
 
 export interface HomeGridSection {
   type?: 'grid';
   title: string;
+  subtitle?: string;
   tiles: HomeCardTile[];
   linkText?: string;
   linkHref?: string;
@@ -25,6 +29,10 @@ export interface HomePromoSection {
   textColor?: string;
   ctaText?: string;
   href: string;
+  wide?: boolean;
+  priceMinorUnits?: number;
+  currencyCode?: string;
+  listPriceMinorUnits?: number;
 }
 
 export type HomeSectionItem = HomeGridSection | HomePromoSection;
@@ -58,12 +66,16 @@ export interface FeaturedRow {
   name?: string;
   slug?: string;
   thumbnail?: string | null;
+  priceMinorUnits?: number;
+  currencyCode?: string;
+  listPriceMinorUnits?: number;
 }
 
 export interface CategoryRow {
   id?: string;
   name?: string;
   slug?: string;
+  tagline?: string | null;
   featured?: FeaturedRow[];
 }
 
@@ -115,10 +127,14 @@ export function buildCategoryCards(roots: CategoryRow[], language: string): Home
         title: p.name as string,
         image: p.thumbnail as string,
         href: `/products/${p.slug as string}`,
+        priceMinorUnits: p.priceMinorUnits,
+        currencyCode: p.currencyCode,
+        listPriceMinorUnits: p.listPriceMinorUnits,
       }));
     if (tiles.length === 0) continue;
     cards.push({
       title: root.name as string,
+      subtitle: root.tagline ?? undefined,
       tiles,
       linkText: t(language, 'homeSeeMore'),
       linkHref: `/categories/${root.slug as string}`,
@@ -148,14 +164,37 @@ export function buildPromos(language: string): HomePromoSection[] {
   ];
 }
 
-export function buildRows(cards: HomeGridSection[], promos: HomePromoSection[]): HomeSectionItem[][] {
+export function buildRowPromo(card: HomeGridSection, language: string): HomePromoSection {
+  const tile = card.tiles[0];
+  return {
+    type: 'promo',
+    title: card.title,
+    subtitle: card.subtitle ?? (tile?.title ? tile.title : undefined),
+    image: tile?.image,
+    ctaText: t(language, 'shopNow'),
+    href: tile?.href ?? card.linkHref ?? '/products',
+    wide: true,
+    priceMinorUnits: tile?.priceMinorUnits,
+    currencyCode: tile?.currencyCode,
+    listPriceMinorUnits: tile?.listPriceMinorUnits,
+  };
+}
+
+export function buildRows(cards: HomeGridSection[], promos: HomePromoSection[], language: string): HomeSectionItem[][] {
+  if (cards.length === 0) return promos.length > 0 ? [promos] : [];
+
   const promoSeats = Math.min(promos.length, cards.length);
   const promoRowCats = cards.slice(cards.length - promoSeats);
   const head = cards.slice(0, cards.length - promoSeats);
 
   const rows: HomeSectionItem[][] = [];
-  for (let i = 0; i < head.length; i += 4) {
-    rows.push(head.slice(i, i + 4));
+  const chunkCount = Math.ceil(head.length / 4);
+  for (let c = 0; c < chunkCount; c++) {
+    const chunk = head.slice(c * 4, c * 4 + 4);
+    if (c > 0 && (c + 1) % 3 === 0) {
+      rows.push([buildRowPromo(chunk[0], language)]);
+    }
+    rows.push(chunk);
   }
   const lastRow = [...promoRowCats, ...promos].slice(0, 4);
   if (lastRow.length > 0) rows.push(lastRow);

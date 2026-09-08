@@ -1,5 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 
+import { compareAtPriceOf } from '../utils/pricing.js';
+
 export interface CategoryFeatured {
   id: string;
   name: string;
@@ -7,6 +9,7 @@ export interface CategoryFeatured {
   thumbnail?: string;
   price: number;
   currencyCode: string;
+  listPriceMinorUnits?: number;
 }
 
 export interface CategoryNode {
@@ -15,6 +18,9 @@ export interface CategoryNode {
   slug: string;
   parentId: string | null;
   sortOrder: number;
+  isFeatured: boolean;
+  displayOrder: number;
+  tagline?: string | null;
   productCount: number;
   featured?: CategoryFeatured[];
   children: CategoryNode[];
@@ -26,6 +32,15 @@ interface RowLike {
   slug: string;
   parentId: string | null;
   sortOrder?: number | null;
+  isFeatured?: boolean | null;
+  displayOrder?: number | null;
+  tagline?: string | null;
+}
+
+const FEATURED_FALLBACK_LIMIT = 12;
+
+function sortCurated(a: CategoryNode, b: CategoryNode): number {
+  return a.displayOrder - b.displayOrder || a.name.localeCompare(b.name);
 }
 
 function buildTree(rows: RowLike[]): CategoryNode[] {
@@ -37,6 +52,9 @@ function buildTree(rows: RowLike[]): CategoryNode[] {
       slug: row.slug,
       parentId: row.parentId,
       sortOrder: row.sortOrder ?? 0,
+      isFeatured: row.isFeatured ?? false,
+      displayOrder: row.displayOrder ?? 0,
+      tagline: row.tagline ?? null,
       productCount: 0,
       children: [],
     });
@@ -87,7 +105,7 @@ function subtreeIds(node: CategoryNode, acc: string[] = []): string[] {
  */
 export async function getCategoryTree(
   prisma: PrismaClient,
-  opts: { regionKey: string; includeProducts?: boolean; featuredLimit?: number; orderBy?: 'name' | 'products' },
+  opts: { regionKey: string; includeProducts?: boolean; featuredLimit?: number; orderBy?: 'name' | 'products'; featuredOnly?: boolean },
 ): Promise<CategoryNode[]> {
   const rows = (await prisma.category.findMany({
     orderBy: { name: 'asc' },
@@ -104,7 +122,16 @@ export async function getCategoryTree(
   const roots = pruneEmpty(buildTree(rows), activeCountById);
   for (const root of roots) subtreeCount(root, activeCountById);
 
-  if (opts.orderBy === 'products') {
+  if (opts.featuredOnly) {
+    const curated = roots.filter(r => r.isFeatured).sort(sortCurated);
+    if (curated.length > 0) {
+      roots.length = 0;
+      roots.push(...curated);
+    } else {
+      roots.sort((a, b) => b.productCount - a.productCount);
+      roots.length = Math.min(roots.length, FEATURED_FALLBACK_LIMIT);
+    }
+  } else if (opts.orderBy === 'products') {
     roots.sort((a, b) => b.productCount - a.productCount);
   }
 
@@ -120,13 +147,17 @@ export async function getCategoryTree(
       });
       root.featured = products.map((p: any) => {
         const images = typeof p.images === 'string' ? JSON.parse(p.images) : p.images;
+        const price = p.regionPrices[0] ? Number(p.regionPrices[0].priceMinorUnits) : Number(p.basePriceMinorUnits);
+        const currencyCode = p.regionPrices[0]?.currencyCode || p.currencyCode;
+        const compareAt = compareAtPriceOf(p);
         return {
           id: p.id,
           name: p.name,
           slug: p.slug,
           thumbnail: Array.isArray(images) ? images[0] : undefined,
-          price: p.regionPrices[0] ? Number(p.regionPrices[0].priceMinorUnits) : Number(p.basePriceMinorUnits),
-          currencyCode: p.regionPrices[0]?.currencyCode || p.currencyCode,
+          price,
+          currencyCode,
+          listPriceMinorUnits: compareAt !== undefined && compareAt > price ? compareAt : undefined,
         };
       });
     }

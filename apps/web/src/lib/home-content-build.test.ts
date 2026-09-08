@@ -8,6 +8,7 @@ import {
   type CategoryRow,
   type DealRow,
   type HomeGridSection,
+  type HomePromoSection,
 } from './home-content-build';
 
 const CATEGORY: CategoryRow = {
@@ -42,6 +43,34 @@ describe('buildCategoryCards', () => {
   it('omits categories with missing name or slug', () => {
     const cards = buildCategoryCards([{ id: 'y', featured: [{ name: 'P', slug: 'p', thumbnail: 'https://cdn.storegrill.net/p.jpg' }] }], 'en');
     expect(cards).toHaveLength(0);
+  });
+
+  it('carries a real tagline as the section subtitle when present', () => {
+    const cards = buildCategoryCards([{ ...CATEGORY, tagline: 'Everything for the kitchen that works.' }], 'en');
+    expect(cards[0].subtitle).toBe('Everything for the kitchen that works.');
+  });
+
+  it('renders no subtitle when the category has no tagline', () => {
+    const cards = buildCategoryCards([CATEGORY], 'en');
+    expect(cards[0].subtitle).toBeUndefined();
+  });
+
+  it('carries real region-priced tiles with compare-at discount', () => {
+    const cards = buildCategoryCards(
+      [{
+        ...CATEGORY,
+        featured: [
+          { id: 'p1', name: 'Kettle', slug: 'kettle', thumbnail: 'https://cdn.storegrill.net/kettle.jpg', priceMinorUnits: 1999, currencyCode: 'GBP', listPriceMinorUnits: 2999 },
+        ],
+      }],
+      'en',
+    );
+    expect(cards[0].tiles[0]).toMatchObject({
+      title: 'Kettle',
+      priceMinorUnits: 1999,
+      currencyCode: 'GBP',
+      listPriceMinorUnits: 2999,
+    });
   });
 });
 
@@ -95,21 +124,63 @@ describe('buildRows', () => {
   const card = (n: string): HomeGridSection => ({ title: n, tiles: [] });
 
   it('places promos in the final row alongside real category cards', () => {
-    const rows = buildRows([card('A'), card('B'), card('C'), card('D')], buildPromos('en'));
+    const rows = buildRows([card('A'), card('B'), card('C'), card('D')], buildPromos('en'), 'en');
     expect(rows).toHaveLength(2);
     expect(rows[0].map(s => s.title)).toEqual(['A', 'B']);
     expect(rows[1].map(s => s.title)).toEqual(['C', 'D', 'Sell on Storegrill', 'Multi-Currency Global Checkout']);
   });
 
   it('returns only promos when there are no real categories', () => {
-    const rows = buildRows([], buildPromos('en'));
+    const rows = buildRows([], buildPromos('en'), 'en');
     expect(rows).toHaveLength(1);
     expect(rows[0]).toHaveLength(2);
   });
 
   it('never exceeds four items in a row', () => {
-    const rows = buildRows([1, 2, 3, 4, 5, 6].map(i => card(`C${i}`)), buildPromos('en'));
+    const rows = buildRows([1, 2, 3, 4, 5, 6].map(i => card(`C${i}`)), buildPromos('en'), 'en');
     for (const row of rows) expect(row.length).toBeLessThanOrEqual(4);
+  });
+
+  it('inserts a full-width real content promo every third card row', () => {
+    const cards = [
+      card('C1'), card('C2'), card('C3'), card('C4'),
+      card('C5'), card('C6'), card('C7'), card('C8'),
+      card('C9'), card('C10'), card('C11'), card('C12'),
+      card('C13'),
+    ];
+    const rows = buildRows(cards, buildPromos('en'), 'en');
+    const wide = rows.find(row => row[0]?.type === 'promo' && row[0].wide === true);
+    expect(wide).toBeDefined();
+    expect(wide).toHaveLength(1);
+    expect(rows.some(row => row.length > 1)).toBe(true);
+  });
+
+  it('builds the wide promo from the row category real data with a real price', () => {
+    const priced: HomeGridSection = {
+      title: 'Outdoor',
+      subtitle: 'Grills and patio gear for the outdoors.',
+      tiles: [{
+        title: 'Gas Grill',
+        image: 'https://cdn.storegrill.net/grill.jpg',
+        href: '/products/gas-grill',
+        priceMinorUnits: 15999,
+        currencyCode: 'GBP',
+        listPriceMinorUnits: 19999,
+      }],
+    };
+    const cards = [...Array(13)].map((_, i) => card(`C${i + 1}`));
+    cards[8] = priced;
+    const rows = buildRows(cards, buildPromos('en'), 'en');
+    const promoRow = rows.find(row => row[0]?.type === 'promo' && row[0].wide === true);
+    const promo = promoRow?.[0] as HomePromoSection;
+    expect(promo).toBeDefined();
+    expect(promo.type).toBe('promo');
+    expect(promo.wide).toBe(true);
+    expect(promo.title).toBe('Outdoor');
+    expect(promo.image).toBe('https://cdn.storegrill.net/grill.jpg');
+    expect(promo.priceMinorUnits).toBe(15999);
+    expect(promo.listPriceMinorUnits).toBe(19999);
+    expect(promo.href).toBe('/products/gas-grill');
   });
 });
 

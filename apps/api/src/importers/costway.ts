@@ -1,4 +1,5 @@
 import { createMoney, roundUpTo99 } from '@Storegrill/shared';
+import { canonicalizePath } from './category-taxonomy.js';
 
 export const COSTWAY_FEED_URL =
   'https://www.costway.co.uk/media/feed/costway_uk_dropship_products.csv';
@@ -238,7 +239,7 @@ function standaloneProduct(row: CostwayFeedRow): NormalizedProduct | null {
     baseName: row['Item Name'].trim(),
     description: (row.Description ?? '').trim(),
     specification: (row.Specification ?? '').trim(),
-    categoryPath: parseCategoryPath(row.Category ?? ''),
+    categoryPath: canonicalizePath(parseCategoryPath(row.Category ?? '')),
     tags: flags.tags,
     attributes: flags.attributes,
     sourceUrl: cleanSourceUrl(row['Item Link']),

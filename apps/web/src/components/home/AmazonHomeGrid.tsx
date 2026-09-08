@@ -35,7 +35,7 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
   const dealTiles = firstGridSection?.[0]?.tiles?.slice(0, 4) || [];
 
   return (
-    <div className="bg-[#eaeded] min-h-screen text-text-primary relative overflow-hidden pb-16">
+    <div className="bg-[var(--color-canvas)] min-h-screen text-text-primary relative overflow-hidden pb-16">
       {/* Amazon Desktop Hero Multi-Card Carousel Strip */}
       <div className="max-w-[1500px] mx-auto px-4 pt-3 relative z-10">
         <div className="relative group">
@@ -64,8 +64,8 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
             ref={scrollRef}
             className="flex items-stretch gap-4 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-4 pt-1 px-1"
           >
-            {/* Card 1: Free Delivery on your first order (#ff9900 Amazon Orange) */}
-            <div className="w-[300px] sm:w-[316px] shrink-0 bg-[#ff9900] text-black p-6 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px] relative overflow-hidden">
+            {/* Card 1: Free Delivery on your first order (Amazon orange) */}
+            <div className="w-[300px] sm:w-[316px] shrink-0 bg-[var(--color-amazon-orange)] text-black p-6 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px] relative overflow-hidden">
               <div className="relative z-10">
                 <h2 className="text-3xl font-black leading-tight tracking-tight mb-2 text-black">
                   Free delivery on your first order
@@ -89,7 +89,7 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
               <div key={idx} className="w-[300px] sm:w-[316px] shrink-0 bg-white text-text-primary p-5 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px] relative overflow-hidden group/slide border border-neutral-300">
                 <div>
                   {slide.discountPercent ? (
-                    <span className="inline-block bg-[#cc0c39] text-white text-[10px] font-bold px-2 py-0.5 rounded-xs mb-2">
+                    <span className="inline-block bg-[var(--color-amazon-deal)] text-white text-[10px] font-bold px-2 py-0.5 rounded-xs mb-2">
                       {slide.discountPercent}% OFF DEAL
                     </span>
                   ) : null}
@@ -108,17 +108,17 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
                       </span>
                     ) : null}
                   </div>
-                  <Link href={slide.href} className="text-xs font-bold text-[#007185] hover:underline">
+                  <Link href={slide.href} className="text-xs font-bold text-[var(--color-amazon-link)] hover:underline">
                     Shop deal →
                   </Link>
                 </div>
               </div>
             ))}
 
-            {/* Card 3: Shop deals ending soon (Coral pink #ff6f59 with white product tiles) */}
-            <div className="w-[300px] sm:w-[316px] shrink-0 bg-[#ff6f59] text-white p-5 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px]">
+            {/* Card 3: Today's live deals (Coral pink with white product tiles) */}
+            <div className="w-[300px] sm:w-[316px] shrink-0 bg-[var(--color-amazon-coral)] text-white p-5 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px]">
               <div>
-                <h3 className="text-2xl font-black text-white tracking-tight mb-3">Shop deals ending soon</h3>
+                <h3 className="text-2xl font-black text-white tracking-tight mb-3">Shop today&apos;s deals</h3>
                 <div className="grid grid-cols-2 gap-2.5">
                   {dealTiles.length > 0 ? (
                     dealTiles.map((tile: any, idx: number) => (
@@ -126,7 +126,7 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
                         <div className="w-full h-20 relative bg-neutral-100 rounded-xs overflow-hidden mb-1.5">
                           <img src={tile.image} alt={tile.title} className="object-cover w-full h-full group-hover/tile:scale-105 transition-transform" />
                         </div>
-                        <span className="inline-block bg-[#cc0c39] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-xs">
+                        <span className="inline-block bg-[var(--color-amazon-deal)] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-xs">
                           {idx === 0 ? '15% off' : idx === 1 ? '30% off' : idx === 2 ? '39% off' : '20% off'}
                         </span>
                       </a>
@@ -142,7 +142,7 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
             </div>
 
             {/* Card 4: Entertainment anywhere (Fire HD style) */}
-            <div className="w-[300px] sm:w-[316px] shrink-0 bg-gradient-to-br from-[#ff7a00] to-[#e63946] text-white p-6 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px]">
+            <div className="w-[300px] sm:w-[316px] shrink-0 bg-gradient-to-br from-[var(--color-amazon-flame)] to-[var(--color-amazon-berry)] text-white p-6 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px]">
               <div>
                 <h3 className="text-2xl font-black tracking-tight mb-1">Entertainment anywhere</h3>
                 <p className="text-xs font-bold text-white/95">Read, watch, play</p>
@@ -158,22 +158,22 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
               </div>
             </div>
 
-            {/* Card 5: Second Chance Deal Days */}
-            <div className="w-[300px] sm:w-[316px] shrink-0 bg-[#e3d5ca] text-neutral-900 p-6 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px]">
+            {/* Card 5: Refurbished & open-box deals */}
+            <div className="w-[300px] sm:w-[316px] shrink-0 bg-[var(--color-amazon-sand)] text-neutral-900 p-6 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px]">
               <div>
-                <h3 className="text-2xl font-black text-neutral-900 tracking-tight mb-1">Second Chance Deal Days</h3>
+                <h3 className="text-2xl font-black text-neutral-900 tracking-tight mb-1">Refurbished & open-box days</h3>
                 <p className="text-xs font-bold text-neutral-700">1-10 Sept.</p>
               </div>
               <div className="my-auto py-6 bg-white/80 rounded-xs p-3 text-center border border-neutral-300 shadow-inner">
-                <span className="text-xs font-extrabold text-neutral-900">Certified Refurbished & Open Box Deals</span>
+                <span className="text-xs font-extrabold text-neutral-900">Gently used, seriously discounted</span>
               </div>
               <div>
-                <a href="/deals" className="text-xs font-bold text-[#007185] hover:underline">Explore Second Chance →</a>
+                <a href="/deals" className="text-xs font-bold text-[var(--color-amazon-link)] hover:underline">Shop refurbished →</a>
               </div>
             </div>
 
             {/* Card 6: Cosy Home Accessories */}
-            <div className="w-[300px] sm:w-[316px] shrink-0 bg-[#d8f3dc] text-neutral-900 p-6 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px]">
+            <div className="w-[300px] sm:w-[316px] shrink-0 bg-[var(--color-amazon-mint)] text-neutral-900 p-6 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px]">
               <div>
                 <h3 className="text-2xl font-black text-neutral-900 tracking-tight mb-1">Cosy home accessories</h3>
                 <p className="text-xs font-bold text-neutral-700">Discover now</p>
@@ -182,7 +182,7 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
                 <span className="text-xs font-extrabold text-neutral-900">Interior Decor & Lighting</span>
               </div>
               <div>
-                <a href="/categories" className="text-xs font-bold text-[#007185] hover:underline">Shop Home →</a>
+                <a href="/categories" className="text-xs font-bold text-[var(--color-amazon-link)] hover:underline">Shop Home →</a>
               </div>
             </div>
           </div>

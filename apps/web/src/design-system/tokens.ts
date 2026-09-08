@@ -150,6 +150,18 @@ export const promoPalette = {
   dealRed: '#E53E3E',
 } as const;
 
+// Amazon-style editorial hero carousel card palette (decorative promo surfaces).
+export const heroPalette = {
+  orange: '#ff9900',
+  deal: '#cc0c39',
+  link: '#007185',
+  coral: '#ff6f59',
+  flame: '#ff7a00',
+  berry: '#e63946',
+  sand: '#e3d5ca',
+  mint: '#d8f3dc',
+} as const;
+
 export const zIndexLayers = {
   header: 40,
   tooltip: 50,

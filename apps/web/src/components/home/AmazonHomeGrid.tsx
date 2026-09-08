@@ -36,7 +36,12 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
 
   return (
     <div className="bg-neutral-200 min-h-screen text-text-primary relative overflow-hidden pb-16">
-      {/* Hero Banner Carousel — only when real active deals exist */}
+      {/* Decorative background representing regions/storefront feel (matching /regions style) */}
+      <div className="absolute top-0 inset-x-0 h-[600px] bg-gradient-to-b from-ember-pale to-transparent -z-10" />
+      <div className="absolute -top-[10%] -right-[10%] w-[60%] h-[60%] rounded-full bg-ember/5 blur-[120px] -z-10" />
+      <div className="absolute top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-tealink/5 blur-[120px] -z-10" />
+
+      {/* Hero Banner Carousel — showcase active deal products */}
       {slide ? (
         <div className="max-w-[1500px] mx-auto px-4 pt-4">
           <div className="relative w-full aspect-[21/9] sm:aspect-[3/1] max-h-[420px] bg-neutral-900 rounded-xs overflow-hidden shadow-md">
@@ -69,12 +74,31 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
               ›
             </button>
 
-            {/* Slide info overlay bottom left */}
-            <div className="absolute bottom-6 left-6 md:left-12 z-10 bg-white/95 backdrop-blur-sm px-6 py-3 rounded-xs shadow-md">
-              <h2 className="text-lg md:text-xl font-bold text-text-primary">{slide.title}</h2>
-              <p className="text-xs md:text-sm text-neutral-600">{slide.subtitle}</p>
+            {/* Slide info overlay bottom left with live deal pricing & discount */}
+            <div className="absolute bottom-6 left-6 md:left-12 z-10 bg-white/95 backdrop-blur-sm px-6 py-4 rounded-xs shadow-md max-w-lg">
+              {slide.discountPercent ? (
+                <div className="inline-block bg-ember text-white text-xs font-bold px-2 py-0.5 rounded-xs mb-1">
+                  {slide.discountPercent}% OFF DEAL
+                </div>
+              ) : null}
+              <h2 className="text-base md:text-xl font-bold text-text-primary line-clamp-1">{slide.title}</h2>
+              <div className="flex items-baseline gap-2 mt-1">
+                {slide.priceMinorUnits !== undefined ? (
+                  <span className="text-lg font-bold text-ember">
+                    {slide.currencyCode === 'GBP' ? '£' : slide.currencyCode === 'EUR' ? '€' : '$'}
+                    {(slide.priceMinorUnits / 100).toFixed(2)}
+                  </span>
+                ) : null}
+                {slide.listPriceMinorUnits && slide.listPriceMinorUnits > (slide.priceMinorUnits ?? 0) ? (
+                  <span className="text-xs text-neutral-500 line-through">
+                    {slide.currencyCode === 'GBP' ? '£' : slide.currencyCode === 'EUR' ? '€' : '$'}
+                    {(slide.listPriceMinorUnits / 100).toFixed(2)}
+                  </span>
+                ) : null}
+                <span className="text-xs text-neutral-600">{slide.subtitle}</span>
+              </div>
               <Link href={slide.href} className="inline-block mt-2 text-xs font-bold text-ember hover:text-ember-dark hover:underline">
-                Shop now →
+                Shop deal →
               </Link>
             </div>
           </div>

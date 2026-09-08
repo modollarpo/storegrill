@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 
-import { compareAtPriceOf } from '../utils/pricing.js';
+import { compareAtPriceOf, resolveProductPricing } from '../utils/pricing.js';
+import { loadActiveDeals } from './deal-eval.js';
 
 export interface CategoryFeatured {
   id: string;
@@ -147,15 +148,28 @@ function featuredProduct(p: any, regionKey: string): CategoryFeatured {
  * refreshed as new products are imported, by construction.
  */
 async function attachNewestProducts(prisma: PrismaClient, roots: CategoryNode[], regionKey: string, take = 4): Promise<void> {
+  const activeDeals = await loadActiveDeals(prisma);
   for (const root of roots) {
     const ids = subtreeIds(root);
     const products = await prisma.product.findMany({
       where: { categoryId: { in: ids }, status: 'ACTIVE' },
       orderBy: { createdAt: 'desc' },
       take,
-      include: { regionPrices: { where: { regionKey }, take: 1 } },
+      include: { regionPrices: { where: { regionKey }, take: 1 }, variants: true },
     });
-    root.featured = products.map(p => featuredProduct(p, regionKey));
+    root.featured = products.map(p => {
+      const images = typeof p.images === 'string' ? JSON.parse(p.images) : p.images;
+      const pricing = resolveProductPricing(p, regionKey, activeDeals);
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        thumbnail: Array.isArray(images) ? images[0] : undefined,
+        price: pricing.price,
+        currencyCode: pricing.currencyCode,
+        listPriceMinorUnits: pricing.listPriceMinorUnits,
+      };
+    });
     root.newestAt = products[0]?.createdAt ?? null;
   }
 }
@@ -176,13 +190,24 @@ function vendorMatchesRoot(vendor: { storeName?: string | null; slug?: string; b
   return false;
 }
 
+function flattenTree(nodes: CategoryNode[]): CategoryNode[] {
+  const flat: CategoryNode[] = [];
+  for (const node of nodes) {
+    flat.push(node);
+    if (node.children && node.children.length > 0) {
+      flat.push(...flattenTree(node.children));
+    }
+  }
+  return flat;
+}
+
 /**
- * Roots eligible for the auto "recently added" feed: exclude only roots whose
- * name collides with their sole vendor (vendor-narrow aisles like a literal
- * "Costway" root). Everything else — including single-vendor real shopping
- * categories — is a legitimate homepage candidate. Derived purely from data.
+ * Nodes (roots and subcategories) eligible for the auto "recently added" feed:
+ * exclude only featured roots and nodes whose name collides with their sole vendor.
+ * Everything else — including single-vendor real subcategories — is a legitimate
+ * homepage candidate, derived purely from data.
  */
-async function recentEligibleRoots(prisma: PrismaClient, roots: CategoryNode[]): Promise<CategoryNode[]> {
+async function recentEligibleNodes(prisma: PrismaClient, nodes: CategoryNode[]): Promise<CategoryNode[]> {
   const rows = await prisma.product.groupBy({
     by: ['categoryId', 'vendorId'],
     where: { status: 'ACTIVE' },
@@ -209,32 +234,32 @@ async function recentEligibleRoots(prisma: PrismaClient, roots: CategoryNode[]):
   );
 
   const eligible: CategoryNode[] = [];
-  for (const root of roots) {
-    if (root.isFeatured) continue;
-    const rootVendors = new Set<string>();
-    for (const id of subtreeIds(root)) {
-      for (const vendorId of vendorsByCategory.get(id) ?? []) rootVendors.add(vendorId);
+  for (const node of nodes) {
+    if (node.isFeatured) continue;
+    const nodeVendors = new Set<string>();
+    for (const id of subtreeIds(node)) {
+      for (const vendorId of vendorsByCategory.get(id) ?? []) nodeVendors.add(vendorId);
     }
-    if (rootVendors.size >= 2) {
-      eligible.push(root);
+    if (nodeVendors.size >= 2) {
+      eligible.push(node);
       continue;
     }
-    const onlyVendorId = [...rootVendors][0];
-    if (onlyVendorId == null || rootVendors.size === 0) {
-      eligible.push(root);
+    const onlyVendorId = [...nodeVendors][0];
+    if (onlyVendorId == null || nodeVendors.size === 0) {
+      eligible.push(node);
       continue;
     }
     const vendor = vendorById.get(onlyVendorId);
-    if (!vendor || !vendorMatchesRoot(vendor, root)) eligible.push(root);
+    if (!vendor || !vendorMatchesRoot(vendor, node)) eligible.push(node);
   }
   return eligible;
 }
 
 /**
- * Auto "recently added" feed: non-featured categories ranked by newest product
- * activity (the newest ACTIVE product under each root), so the feed re-orders
- * itself automatically as imports land and brand-new categories surface once
- * their first products exist. Paginated with offset/limit and a hasMore flag so
+ * Auto "recently added" feed: non-featured categories (roots and subcategories)
+ * ranked by newest product activity, so the feed re-orders itself automatically
+ * as imports land and brand-new categories/subcategories surface once their
+ * first products exist. Paginated with offset/limit and a hasMore flag so
  * the storefront can infinitely scroll new categories.
  */
 export async function getRecentCategoryPage(
@@ -242,10 +267,11 @@ export async function getRecentCategoryPage(
   opts: { regionKey: string; offset?: number; limit?: number },
 ): Promise<{ categories: CategoryNode[]; hasMore: boolean }> {
   const roots = await buildRegionTree(prisma, opts.regionKey);
+  const allNodes = flattenTree(roots);
   const offset = Math.max(0, opts.offset ?? 0);
   const limit = Math.max(1, Math.min(opts.limit ?? RECENT_PAGE_LIMIT, RECENT_PAGE_MAX));
 
-  const candidates = await recentEligibleRoots(prisma, roots);
+  const candidates = await recentEligibleNodes(prisma, allNodes);
   await attachNewestProducts(prisma, candidates, opts.regionKey);
   const ranked = candidates
     .filter(c => (c.featured?.length ?? 0) > 0)

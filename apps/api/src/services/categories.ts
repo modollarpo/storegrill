@@ -160,32 +160,74 @@ async function attachNewestProducts(prisma: PrismaClient, roots: CategoryNode[],
   }
 }
 
+function normalizeLabel(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '').trim();
+}
+
+function vendorMatchesRoot(vendor: { storeName?: string | null; slug?: string; businessLegalName?: string | null }, root: CategoryNode): boolean {
+  const rootLabels = [root.name, root.slug].map(normalizeLabel).filter(Boolean);
+  if (rootLabels.length === 0) return false;
+  const vendorLabels = [vendor.storeName, vendor.slug, vendor.businessLegalName].map(v => (v ? normalizeLabel(v) : '')).filter(Boolean);
+  for (const rl of rootLabels) {
+    for (const vl of vendorLabels) {
+      if (rl === vl || rl.includes(vl) || vl.includes(rl)) return true;
+    }
+  }
+  return false;
+}
+
 /**
- * Category ids that have ACTIVE products sold by at least two vendors. A root
- * is only shown in the auto "recently added" feed when at least one category in
- * its subtree is multi-vendor — that distinguishes real shopping categories
- * from vendor-narrow aisles, purely from data, without hardcoded brand names.
+ * Roots eligible for the auto "recently added" feed: exclude only roots whose
+ * name collides with their sole vendor (vendor-narrow aisles like a literal
+ * "Costway" root). Everything else — including single-vendor real shopping
+ * categories — is a legitimate homepage candidate. Derived purely from data.
  */
-async function multiVendorCategoryIds(prisma: PrismaClient): Promise<Set<string>> {
+async function recentEligibleRoots(prisma: PrismaClient, roots: CategoryNode[]): Promise<CategoryNode[]> {
   const rows = await prisma.product.groupBy({
     by: ['categoryId', 'vendorId'],
     where: { status: 'ACTIVE' },
     _count: true,
   });
   const vendorsByCategory = new Map<string, Set<string>>();
+  const allVendorIds = new Set<string>();
   for (const row of rows) {
     let vendors = vendorsByCategory.get(row.categoryId);
     if (!vendors) {
       vendors = new Set();
       vendorsByCategory.set(row.categoryId, vendors);
     }
-    vendors.add(row.vendorId as string);
+    vendors.add(row.vendorId);
+    allVendorIds.add(row.vendorId);
   }
-  const multi = new Set<string>();
-  for (const [categoryId, vendors] of vendorsByCategory) {
-    if (vendors.size >= 2) multi.add(categoryId);
+
+  const vendors = await prisma.vendorProfile.findMany({
+    where: { id: { in: [...allVendorIds] } },
+    select: { id: true, storeName: true, slug: true, businessLegalName: true },
+  });
+  const vendorById = new Map(
+    vendors.map((v: { id: string; storeName: string; slug: string; businessLegalName: string | null }) => [v.id, v]),
+  );
+
+  const eligible: CategoryNode[] = [];
+  for (const root of roots) {
+    if (root.isFeatured) continue;
+    const rootVendors = new Set<string>();
+    for (const id of subtreeIds(root)) {
+      for (const vendorId of vendorsByCategory.get(id) ?? []) rootVendors.add(vendorId);
+    }
+    if (rootVendors.size >= 2) {
+      eligible.push(root);
+      continue;
+    }
+    const onlyVendorId = [...rootVendors][0];
+    if (onlyVendorId == null || rootVendors.size === 0) {
+      eligible.push(root);
+      continue;
+    }
+    const vendor = vendorById.get(onlyVendorId);
+    if (!vendor || !vendorMatchesRoot(vendor, root)) eligible.push(root);
   }
-  return multi;
+  return eligible;
 }
 
 /**
@@ -201,12 +243,10 @@ export async function getRecentCategoryPage(
   const roots = await buildRegionTree(prisma, opts.regionKey);
   const offset = Math.max(0, opts.offset ?? 0);
   const limit = Math.max(1, Math.min(opts.limit ?? RECENT_PAGE_LIMIT, RECENT_PAGE_MAX));
-  const multi = await multiVendorCategoryIds(prisma);
 
-  const candidates = roots
-    .filter(root => !root.isFeatured)
-    .filter(root => subtreeIds(root).some(id => multi.has(id)))
-    .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
+  const candidates = (await recentEligibleRoots(prisma, roots)).sort(
+    (a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0),
+  );
 
   const hasMore = offset + limit < candidates.length;
   const page = candidates.slice(offset, offset + limit);

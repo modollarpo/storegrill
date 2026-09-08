@@ -118,11 +118,10 @@ describe('stripUkBrand', () => {
 });
 
 describe('deduceAosomUkCategory', () => {
-  it('maps a known Aosom path onto the Costway garden taxonomy', () => {
+  it('maps a known Aosom path onto the shared canonical taxonomy', () => {
     expect(deduceAosomUkCategory('Garden & Outdoor', 'Garden Furniture', 'Rattan Furniture', '')).toEqual([
       'Outdoor',
       'Outdoor & Patio Furniture',
-      'Rattan Furniture',
     ]);
   });
   it('falls back through keywords then Uncategorised', () => {

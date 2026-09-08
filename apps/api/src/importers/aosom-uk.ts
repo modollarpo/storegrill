@@ -6,6 +6,7 @@ import type {
   NormalizedVariant,
 } from './costway.js';
 import { OUT_OF_STOCK_THRESHOLD } from './costway.js';
+import { resolveAosomCategory } from './category-taxonomy.js';
 
 const LOCAL_STOCK_THRESHOLD = OUT_OF_STOCK_THRESHOLD === undefined ? 20 : OUT_OF_STOCK_THRESHOLD;
 
@@ -213,183 +214,12 @@ function familyKey(title: string, colour: string): string {
 }
 
 /**
- * Maps an Aosom "Category | Category One | Category Two" path onto the canonical
- * Storegrill/Costway category path (the taxonomy Costway dropship feeds already populate).
- * Unmapped combos fall through to the keyword matcher, then to a Storegrill-native path.
+ * Aosom category resolution delegates to the shared taxonomy module so every
+ * feed maps onto the same canonical tree (see category-taxonomy.ts).
  */
-const CATEGORY_MAP: Array<{ one: string; two: string; path: string }> = [
-  { one: 'Home Furniture', two: 'Sofas', path: 'Furniture > Living Room > Sofas' },
-  { one: 'Home Furniture', two: 'Armchairs & Massage Chairs', path: 'Furniture > Living Room > Armchairs' },
-  { one: 'Home Furniture', two: 'Ottomans & Footstools', path: 'Furniture > Living Room > Ottomans' },
-  { one: 'Home Furniture', two: 'TV Units & Stands', path: 'Furniture > Living Room > TV Stands' },
-  { one: 'Home Furniture', two: 'Coffee Tables', path: 'Furniture > Living Room > Coffee Tables' },
-  { one: 'Home Furniture', two: 'Side Tables', path: 'Furniture > Living Room > Side Tables' },
-  { one: 'Home Furniture', two: 'Bookcases & Shelves', path: 'Furniture > Home Office > Bookcases' },
-  { one: 'Home Furniture', two: 'Chest of Drawers', path: 'Furniture > Bedroom > Chest of Drawers' },
-  { one: 'Office Furniture', two: 'Office Chairs', path: 'Furniture > Home Office > Office Chairs' },
-  { one: 'Office Furniture', two: 'Office Desks', path: 'Furniture > Home Office > Office Desks' },
-  { one: 'Office Furniture', two: 'Office Storage', path: 'Furniture > Home Office > Bookcases' },
-  { one: 'Kitchen & Dining', two: 'Dining Furniture & Bar Stools', path: 'Kitchen > Kitchen Furniture > Dining Chairs' },
-  { one: 'Kitchen & Dining', two: 'Kitchen Furniture', path: 'Kitchen > Kitchen Furniture' },
-  { one: 'Kitchen & Dining', two: 'Cleaning', path: 'Kitchen > Cleaning' },
-  { one: 'Kitchen & Dining', two: 'Small Kitchen Appliances', path: 'Appliances > Kitchen Appliances' },
-  { one: 'Kitchen & Dining', two: 'Wine Racks & Cabinets', path: 'Kitchen > Kitchen Organization > Wine Racks' },
-  { one: 'Bedroom Furniture', two: 'Beds', path: 'Furniture > Bedroom > Beds' },
-  { one: 'Bedroom Furniture', two: 'Wardrobes', path: 'Furniture > Bedroom > Wardrobes' },
-  { one: 'Bedroom Furniture', two: 'Dressing Tables', path: 'Furniture > Bedroom > Dressing Tables' },
-  { one: 'Bedroom Furniture', two: 'Bedside Cabinets & Tables', path: 'Furniture > Bedroom > Nightstands' },
-  { one: 'Bathroom Furniture', two: 'Bathroom Cabinets', path: 'Bath > Bathroom Cabinets' },
-  { one: 'Bathroom Furniture', two: 'Bathroom Mirrors', path: 'Bath > Bathroom Mirrors' },
-  { one: 'Bathroom Furniture', two: 'Laundry', path: 'Bath > Laundry' },
-  { one: 'Bathroom Furniture', two: 'Bathroom Accessories', path: 'Bath > Bathroom Accessories' },
-  { one: 'Storage Solutions', two: 'Storage Cabinets', path: 'Furniture > Living Room > Storage' },
-  { one: 'Storage Solutions', two: 'Chest of Drawers', path: 'Furniture > Bedroom > Chest of Drawers' },
-  { one: 'Hallway Furniture', two: 'Shoe Storages', path: 'Furniture > Entryway > Shoe Racks & Storage Benches' },
-  { one: 'Hallway Furniture', two: 'Coat Racks & Stands', path: 'Furniture > Entryway > Coat Racks & Hall Trees' },
-  { one: 'Hallway Furniture', two: 'Console Tables', path: 'Furniture > Entryway > Console Tables' },
-  { one: 'Kids Furniture', two: 'Kids Sofas', path: 'Toys & Hobbies > Kids Furniture > Sofas' },
-  { one: 'Kids Furniture', two: 'Kids Desks', path: 'Toys & Hobbies > Kids Furniture > Desks' },
-  { one: 'Kids Furniture', two: 'Kids Beds', path: 'Toys & Hobbies > Kids Furniture > Beds' },
-  { one: 'Kids Furniture', two: 'Kids Storages', path: 'Furniture > Kids > Storage' },
-  { one: 'Kids Furniture', two: 'Kids Step Stools', path: 'Furniture > Kids > Step Stools' },
-  { one: 'Lighting', two: 'Floor & Table Lamps', path: 'Decor > Lighting > Lamps' },
-  { one: 'Lighting', two: 'Ceiling Lights', path: 'Decor > Lighting > Ceiling Lights' },
-  { one: 'Lighting', two: 'Wall Lamps', path: 'Decor > Lighting > Wall Sconces' },
-  { one: 'Heating & Cooling', two: 'Heating', path: 'Appliances > Heating' },
-  { one: 'Heating & Cooling', two: 'Fans', path: 'Appliances > Cooling > Fans' },
-  { one: 'Heating & Cooling', two: 'Air conditioning', path: 'Appliances > Cooling > Air Conditioners' },
-  { one: 'Heating & Cooling', two: 'Dehumidifiers & Air Purifiers', path: 'Appliances > Vacuums & Cleaners > Air Purifiers' },
-  { one: 'Home Accessories', two: 'Artificial Plants', path: 'Decor > Decorative Accessories > Artificial Plants' },
-  { one: 'Home Accessories', two: 'Rugs', path: 'Decor > Rugs' },
-  { one: 'Mirrors', two: 'Wall Mirrors', path: 'Decor > Mirrors' },
-  { one: 'Mirrors', two: 'Full Length Mirrors', path: 'Decor > Mirrors' },
-  { one: 'Mirrors', two: 'Dressing Table Mirrors', path: 'Decor > Mirrors' },
-  { one: 'Garden Furniture', two: 'Rattan Furniture', path: 'Outdoor > Outdoor & Patio Furniture > Rattan Furniture' },
-  { one: 'Garden Furniture', two: 'Sun Loungers', path: 'Outdoor > Outdoor & Patio Furniture > Sun Loungers' },
-  { one: 'Garden Furniture', two: 'Garden Chairs & Seating', path: 'Outdoor > Outdoor & Patio Furniture > Chairs' },
-  { one: 'Garden Furniture', two: 'Garden Tables', path: 'Outdoor > Outdoor & Patio Furniture > Tables' },
-  { one: 'Garden Furniture', two: 'Garden Dining Sets', path: 'Outdoor > Outdoor & Patio Furniture > Dining Sets' },
-  { one: 'Garden Furniture', two: 'Bistro Sets', path: 'Outdoor > Outdoor & Patio Furniture > Bistro Sets' },
-  { one: 'Garden Furniture', two: 'Garden Furniture Sets', path: 'Outdoor > Outdoor & Patio Furniture > Sets' },
-  { one: 'Garden Furniture', two: 'Swing Chairs', path: 'Outdoor > Outdoor & Patio Furniture > Swing Chairs' },
-  { one: 'Garden Furniture', two: 'Cushions & Protective Covers', path: 'Outdoor > Outdoor & Patio Furniture > Cushions' },
-  { one: 'Garden Shades', two: 'Gazebo & Marquees', path: 'Outdoor > Outdoor Shades > Gazebos' },
-  { one: 'Garden Shades', two: 'Parasol Umbrellas & Accessories', path: 'Outdoor > Outdoor Shades > Umbrellas' },
-  { one: 'Garden Shades', two: 'Awnings', path: 'Outdoor > Outdoor Shades > Awnings' },
-  { one: 'Garden Buildings', two: 'Greenhouse', path: 'Outdoor > Garden > Greenhouses' },
-  { one: 'Garden Buildings', two: 'Garden Sheds', path: 'Outdoor > Garden > Sheds' },
-  { one: 'Garden Buildings', two: 'Garden Storage', path: 'Outdoor > Garden > Garden Storage' },
-  { one: 'Garden Planters & Stands', two: 'Pots & Planters', path: 'Outdoor > Garden > Garden Planters' },
-  { one: 'Garden Planters & Stands', two: 'Plant Stands', path: 'Outdoor > Garden > Garden Planters' },
-  { one: 'Garden Décor', two: 'Garden Fountains', path: 'Outdoor > Garden > Fountains' },
-  { one: 'Garden Décor', two: 'Garden Lighting', path: 'Outdoor > Garden > Lighting' },
-  { one: 'Garden Tools', two: 'Garden Trolleys', path: 'Outdoor > Garden > Garden Tools > Carts' },
-  { one: 'Garden Tools', two: 'Water Hoses', path: 'Outdoor > Garden > Garden Tools > Hoses' },
-  { one: 'Garden Tools', two: 'Lawn Rollers', path: 'Outdoor > Garden > Garden Tools > Lawn Care Tools' },
-  { one: 'Garden Tools', two: 'Electric Chainsaws', path: 'Outdoor > Garden > Garden Tools' },
-  { one: 'Barbecues', two: 'Charcoal Grills', path: 'Outdoor > Outdoor Grills > Charcoal' },
-  { one: 'Barbecues', two: 'Gas BBQs', path: 'Outdoor > Outdoor Grills > Gas' },
-  { one: 'Barbecues', two: 'Barbecue Carts', path: 'Outdoor > Outdoor Grills > Carts' },
-  { one: 'Fire Pits & Patio Heaters', two: 'Fire Pits', path: 'Outdoor > Outdoor Heating > Fire Pits' },
-  { one: 'Fire Pits & Patio Heaters', two: 'Patio Heaters', path: 'Outdoor > Outdoor Heating' },
-  { one: 'Fire Pits & Patio Heaters', two: 'Log Holders', path: 'Outdoor > Outdoor Heating > Log Holders' },
-  { one: 'Hot Tubs & Pools', two: 'Swimming Pools', path: 'Outdoor > Pools & Water Fun > Swimming Pools' },
-  { one: 'Camping & Hiking', two: 'Camping Tents', path: 'Outdoor > Camping > Tents' },
-  { one: 'Camping & Hiking', two: 'Camping Chairs', path: 'Outdoor > Camping > Chairs' },
-  { one: 'Camping & Hiking', two: 'Camping Beds', path: 'Outdoor > Camping > Sleeping Bags' },
-  { one: 'Camping & Hiking', two: 'Camping Furniture', path: 'Outdoor > Camping' },
-  { one: 'Camping & Hiking', two: 'Camping Toilets', path: 'Outdoor > Camping' },
-  { one: 'Fitness & Cardio', two: 'Exercise Bikes & Trainers', path: 'Sports > Fitness > Exercise Bikes' },
-  { one: 'Fitness & Cardio', two: 'Treadmills', path: 'Sports > Fitness > Treadmills' },
-  { one: 'Fitness & Cardio', two: 'Rowing Machines', path: 'Sports > Fitness > Rowing Machines' },
-  { one: 'Fitness & Cardio', two: 'Cross Trainers', path: 'Sports > Fitness > Ellipticals' },
-  { one: 'Fitness & Cardio', two: 'Mini steppers', path: 'Sports > Fitness > Steppers' },
-  { one: 'Fitness & Cardio', two: 'Boxing', path: 'Sports > Fitness > Boxing' },
-  { one: 'Strength Training', two: 'Dumbbells', path: 'Sports > Fitness > Dumbbells' },
-  { one: 'Strength Training', two: 'Kettlebells', path: 'Sports > Fitness > Kettlebells' },
-  { one: 'Strength Training', two: 'Barbells & Weight Plates', path: 'Sports > Fitness > Barbells' },
-  { one: 'Strength Training', two: 'Bench', path: 'Sports > Fitness > Benches' },
-  { one: 'Strength Training', two: 'Weight Vests', path: 'Sports > Fitness > Weights' },
-  { one: 'Strength Training', two: 'Power Towers & Pull Up Bars', path: 'Sports > Fitness > Pull Up Bars' },
-  { one: 'Strength Training', two: 'Home Gym Systems', path: 'Sports > Fitness > Home Gyms' },
-  { one: 'Active Fun', two: 'Trampolines & Accessories', path: 'Sports > Trampolines' },
-  { one: 'Active Fun', two: 'Football', path: 'Sports > Ball Sports > Football' },
-  { one: 'Active Fun', two: 'Basketball', path: 'Sports > Ball Sports > Basketball' },
-  { one: 'Active Fun', two: 'Racquet Sports', path: 'Sports > Racquet Sports' },
-  { one: 'Outdoor Gear', two: 'Scooters', path: 'Sports > Scooters' },
-  { one: 'Outdoor Gear', two: 'Trailers', path: 'Sports > Trailers' },
-  { one: 'Outdoor Gear', two: 'Inflatable Kayaks', path: 'Sports > Water Sports > Kayaks' },
-  { one: 'Outdoor Gear', two: 'Paddle Boards', path: 'Sports > Water Sports > Paddle Boards' },
-  { one: 'Outdoor Gear', two: 'Picnic', path: 'Outdoor > Outdoor & Patio Furniture > Picnic' },
-  { one: 'Wheeled Toys', two: 'Ride-On Cars', path: 'Toys & Hobbies > Ride On Toys > Push & Pedal Ride On Toys' },
-  { one: 'Wheeled Toys', two: 'Kids Scooters', path: 'Toys & Hobbies > Ride On Toys > Scooters' },
-  { one: 'Outdoor Toys', two: 'Slide', path: 'Toys & Hobbies > Outdoor Play > Slides' },
-  { one: 'Outdoor Toys', two: 'Bouncy Castles', path: 'Toys & Hobbies > Outdoor Play > Bouncy Castles' },
-  { one: 'Outdoor Toys', two: 'Swing Sets', path: 'Toys & Hobbies > Outdoor Play > Swings' },
-  { one: 'Outdoor Toys', two: 'Sandboxes', path: 'Toys & Hobbies > Outdoor Play > Sandboxes' },
-  { one: 'Toys for Kids', two: 'Rocking Horses & Animals', path: 'Toys & Hobbies > Pretend Toys' },
-  { one: 'Toys for Kids', two: 'Role Play Toys', path: 'Toys & Hobbies > Pretend Toys > Role Play' },
-  { one: 'Toys for Kids', two: 'Musical Toys & Instruments', path: 'Toys & Hobbies > Toys > Musical' },
-  { one: 'Toys for Kids', two: 'Soft Play Set', path: 'Toys & Hobbies > Kids Gym & Play Mats' },
-  { one: 'Toys for Kids', two: 'Playhouses', path: 'Toys & Hobbies > Outdoor Play > Playhouses' },
-  { one: 'Baby Products', two: 'Baby Nursery Furniture', path: 'Toys & Hobbies > Baby > Nursery' },
-  { one: 'Baby Products', two: 'Baby Toys', path: 'Toys & Hobbies > Baby > Toys' },
-  { one: 'Massage & Relaxation', two: 'Stylist Stools', path: 'Health & Beauty > Massage & Relaxation > Spa & Salon' },
-  { one: 'Massage & Relaxation', two: 'Massage Table', path: 'Health & Beauty > Massage & Relaxation' },
-  { one: 'Massage & Relaxation', two: 'Body massagers', path: 'Health & Beauty > Massage & Relaxation > Massagers' },
-  { one: 'Mobility Aids & Equipment', two: 'Shower Seats', path: 'Health & Beauty > Health Care > Shower Seats' },
-  { one: 'Mobility Aids & Equipment', two: 'Rollators', path: 'Health & Beauty > Health Care > Walkers & Rollators' },
-  { one: 'Mobility Aids & Equipment', two: 'Wheelchair Ramps', path: 'Health & Beauty > Health Care > Mobility' },
-  { one: 'Pet Supplies', two: 'Cat Supplies', path: 'Pet Supplies > Cats' },
-  { one: 'Pet Supplies', two: 'Dog Supplies', path: 'Pet Supplies > Dogs' },
-  { one: 'Pet Supplies', two: 'Bird Pet Supplies', path: 'Pet Supplies > Birds' },
-  { one: 'Pet Supplies', two: 'Small Animal Cages & Habitats', path: 'Pet Supplies > Small Animals' },
-  { one: 'Pet Supplies', two: 'Reptiles & Amphibians Products', path: 'Pet Supplies > Reptiles' },
-  { one: 'Pet Supplies', two: 'Rabbit Hutch', path: 'Pet Supplies > Small Animals > Rabbit' },
-  { one: 'Pet Supplies', two: 'Chicken Coop', path: 'Pet Supplies > Poultry' },
-  { one: 'Pet Supplies', two: 'Fish Tanks', path: 'Pet Supplies > Fish' },
-  { one: 'Christmas Trees', two: 'Artificial Christmas Trees', path: 'Decor > Holiday Decor > Christmas > Christmas Tree' },
-  { one: 'Christmas Trees', two: 'White Christmas Trees', path: 'Decor > Holiday Decor > Christmas > Christmas Tree' },
-  { one: 'Christmas Trees', two: 'Pre Lit Christmas Trees', path: 'Decor > Holiday Decor > Christmas > Christmas Tree' },
-  { one: 'Christmas Trees', two: 'Pencil Christmas Trees', path: 'Decor > Holiday Decor > Christmas > Christmas Tree' },
-  { one: 'Christmas Trees', two: 'Tabletop Christmas Trees', path: 'Decor > Holiday Decor > Christmas > Christmas Tree' },
-  { one: 'Christmas Decorations', two: 'Christmas Inflatables', path: 'Decor > Holiday Decor > Christmas > Christmas Inflatables' },
-  { one: 'Christmas Decorations', two: 'LED Christmas Lights', path: 'Decor > Holiday Decor > Christmas > Lights' },
-  { one: 'Halloween Decorations', two: 'Halloween Inflatables', path: 'Decor > Holiday Decor > Halloween' },
-  { one: 'Halloween Decorations', two: 'Halloween Witches', path: 'Decor > Holiday Decor > Halloween' },
-  { one: 'Halloween Decorations', two: 'Scary Clowns', path: 'Decor > Holiday Decor > Halloween' },
-  { one: 'Halloween Decorations', two: 'Halloween Skeletons', path: 'Decor > Holiday Decor > Halloween' },
-  { one: 'Tool Storage', two: 'Tool Cabinets', path: 'DIY Tools > Tool Storage > Cabinets' },
-  { one: 'Tool Storage', two: 'Tool Boxes', path: 'DIY Tools > Tool Storage > Tool Boxes' },
-  { one: 'Tool Storage', two: 'Tool Organisation', path: 'DIY Tools > Tool Storage' },
-  { one: 'Workshop Equipment', two: 'Trestles & Work Benches', path: 'DIY Tools > Workshop > Work Benches' },
-  { one: 'Workshop Equipment', two: 'Carts & Trolleys', path: 'DIY Tools > Workshop > Carts' },
-  { one: 'Workshop Equipment', two: 'Ladders', path: 'DIY Tools > Workshop > Ladders' },
-  { one: 'Car Tools', two: 'Stands & Jacks', path: 'DIY Tools > Car > Jacks & Stands' },
-  { one: 'Car Tools', two: 'Car Ramps', path: 'DIY Tools > Car' },
-  { one: 'Home Maintenance', two: 'Pressure Washers', path: 'Outdoor > Garden > Garden Tools > Pressure Washers' },
-  { one: 'Home Maintenance', two: 'Sliding Door Kits', path: 'DIY Tools > Home Maintenance' },
-];
-
-const CATEGORY_KEYWORD_FALLBACK: Array<{ keys: string[]; path: string }> = [
-  { keys: ['furniture', 'sofa', 'armchair', 'wardrobe', 'bed', 'table', 'chair', 'shelf', 'cabinet', 'dresser', 'chest'], path: 'Furniture' },
-  { keys: ['kitchen', 'dining', 'cookware', 'cleaning', 'appliance', 'toaster', 'kettle', 'blender'], path: 'Kitchen' },
-  { keys: ['garden', 'outdoor', 'barbecue', 'greenhouse', 'shed', 'planter', 'gazebo', 'parasol', 'fire pit'], path: 'Outdoor > Garden' },
-  { keys: ['christmas', 'halloween', 'holiday'], path: 'Decor > Holiday Decor' },
-  { keys: ['toy', 'kids', 'children', 'scooter', 'ride on'], path: 'Toys & Hobbies' },
-  { keys: ['fitness', 'gym', 'sport', 'trampoline', 'bike', 'treadmill', 'dumbbell', 'kettlebell', 'camp'], path: 'Sports' },
-  { keys: ['beauty', 'massage', 'salon', 'health'], path: 'Health & Beauty' },
-  { keys: ['pet', 'dog', 'cat', 'bird', 'reptile', 'rabbit', 'chicken', 'fish'], path: 'Pet Supplies' },
-  { keys: ['office', 'desk', 'stationery'], path: 'Furniture > Home Office' },
-  { keys: ['tool', 'workbench', 'ladder', 'drill', 'workshop'], path: 'DIY Tools' },
-];
 
 export function mapAosomCategory(category: string, one: string, two: string): string[] {
-  const c1 = String(one ?? '').trim();
-  const c2 = String(two ?? '').trim();
-  const direct = CATEGORY_MAP.find(m => m.one === c1 && m.two === c2);
-  if (direct) return direct.path.split('>').map(s => s.trim()).filter(Boolean);
-  return [];
+  return resolveAosomCategory(one, two, '', '');
 }
 
 export function deduceAosomUkCategory(category: string, one: string, two: string, title: string, description = ''): string[] {
@@ -399,13 +229,7 @@ export function deduceAosomUkCategory(category: string, one: string, two: string
 }
 
 export function deduceAosomCostwayCategory(title: string, description = '', one = '', two = ''): string[] {
-  const haystack = `${String(title ?? '')} ${String(description ?? '')} ${String(one ?? '')} ${String(two ?? '')}`.toLowerCase();
-  for (const rule of CATEGORY_KEYWORD_FALLBACK) {
-    if (rule.keys.some(k => haystack.includes(k))) {
-      return rule.path.split('>').map(s => s.trim()).filter(Boolean);
-    }
-  }
-  return ['Uncategorised'];
+  return resolveAosomCategory(one, two, title, description);
 }
 
 export function mergeAosomUkFeeds(

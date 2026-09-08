@@ -26,7 +26,7 @@ export async function generateMetadata(_props: PageProps): Promise<Metadata> {
 
 export default async function HomePage() {
   const { regionKey, language } = await getRequestContext();
-  const { heroSlides, sections } = await loadHomeContent(regionKey, language);
+  const { heroSlides, sections, recent } = await loadHomeContent(regionKey, language);
 
   return (
     <>
@@ -35,7 +35,13 @@ export default async function HomePage() {
 
       <h1 className="sr-only">Storegrill — Shop millions of products from verified vendors</h1>
 
-      <AmazonHomeGrid sections={sections} heroSlides={heroSlides} />
+      <AmazonHomeGrid
+        sections={sections}
+        heroSlides={heroSlides}
+        recent={recent}
+        regionKey={regionKey}
+        language={language}
+      />
     </>
   );
 }

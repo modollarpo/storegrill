@@ -151,4 +151,13 @@ describe('adaptAosomRows', () => {
     expect(tree!.variants[0].stock).toBe(0);
     expect(result.products.find(p => p.baseName.toLowerCase().includes('christmas tree'))).toBeUndefined();
   });
+
+  it('attributes Outsunny titles to Outsunny instead of HOMCOM', () => {
+    const text = [
+      'SKU\tTitle\tShort Description\tBase image\tImage\tColour\tPrice\tSpecial Price\tStock',
+      'OX1\tOutsunny Poly-Rattan Sofa Set|Aosom Ireland\tGarden sofa\tb\timg\tBlack\t99.99 EUR\t79.99 EUR\tIn Stock',
+    ].join('\n');
+    const adapted = adaptAosomRows(parseAosomTsv(text));
+    expect(adapted.products[0].brandName).toBe('Outsunny');
+  });
 });

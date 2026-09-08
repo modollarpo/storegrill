@@ -7,6 +7,7 @@ import {
   parseGbpPrice,
   stripUkBrand,
   deduceAosomUkCategory,
+  deduceAosomBrand,
   isAosomUkSource,
   AOSOM_UK_SOURCE,
   type AosomUkProductRow,
@@ -129,6 +130,25 @@ describe('deduceAosomUkCategory', () => {
   });
 });
 
+describe('deduceAosomBrand', () => {
+  it('detects Aosom house brands from the title prefix case-insensitively', () => {
+    expect(deduceAosomBrand('Outsunny 2 Pieces Outdoor Sun Lounger Set')).toBe('Outsunny');
+    expect(deduceAosomBrand('pawhut Elevated Dog Bed')).toBe('PawHut');
+    expect(deduceAosomBrand('AIYAPLAY Kids Playhouse')).toBe('AivyAplay');
+    expect(deduceAosomBrand('Vinsetto Ergonomic Office Chair')).toBe('Vinsetto');
+    expect(deduceAosomBrand('SPORTNOW Exercise Bike')).toBe('Sportnow');
+    expect(deduceAosomBrand('Kleankin Bathroom Cabinet')).toBe('Kleankin');
+    expect(deduceAosomBrand('Durhand Tool Box')).toBe('Durhand');
+    expect(deduceAosomBrand('Zonekiz Ride On Car')).toBe('Zonekiz');
+  });
+  it('maps the HOMCM typo to HOMCOM and defaults unknown titles to HOMCOM', () => {
+    expect(deduceAosomBrand('HOMCM Cleaning Cart')).toBe('HOMCOM');
+    expect(deduceAosomBrand('HOMCOM Rattan Sofa')).toBe('HOMCOM');
+    expect(deduceAosomBrand('Sun Shade Sail Rectangle 4x6m')).toBe('HOMCOM');
+    expect(deduceAosomBrand('')).toBe('HOMCOM');
+  });
+});
+
 describe('adaptAosomUkRows', () => {
   it('sets base price = wholesale and compare-at = wholesale x 1.20, both charmed to .99', () => {
     const products = [productRow('AAA')];
@@ -147,6 +167,15 @@ describe('adaptAosomUkRows', () => {
     const p = result.products[0];
     expect(p.baseName).not.toContain('HOMCOM');
     expect(p.tags).toContain('uk');
+  });
+
+  it('attributes Outsunny titles to Outsunny instead of HOMCOM', () => {
+    const merged = mergeAosomUkFeeds(
+      [productRow('OA1', { Title: 'Outsunny 2 Pieces Outdoor Sun Lounger Set' })],
+      [stockRow('OA1')],
+    );
+    const result = adaptAosomUkRows(merged);
+    expect(result.products[0].brandName).toBe('Outsunny');
   });
 
   it('routes products with stock below 20 to outOfStock', () => {

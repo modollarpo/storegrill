@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRef } from 'react';
 import { RecentlyViewed } from '@/components/commerce/RecentlyViewed';
 import { CategoryRowGrid } from '@/components/commerce/grid';
@@ -15,7 +16,7 @@ interface AmazonHomeGridProps {
   language?: string;
 }
 
-export function AmazonHomeGrid({ sections, heroSlides: _heroSlides, recent, regionKey, language }: AmazonHomeGridProps) {
+export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, language }: AmazonHomeGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scrollLeft = () => {
@@ -83,27 +84,36 @@ export function AmazonHomeGrid({ sections, heroSlides: _heroSlides, recent, regi
               </div>
             </div>
 
-            {/* Card 2: Live / Video Creative Card (Porto v Man City style) */}
-            <div className="w-[300px] sm:w-[316px] shrink-0 bg-[#131a22] text-white rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px] relative overflow-hidden group/card">
-              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/90 z-10" />
-              <div className="absolute inset-0 opacity-90 group-hover/card:scale-105 transition-transform duration-700 bg-neutral-900">
-                <div className="w-full h-full flex items-center justify-center text-white/30 font-bold text-base">
-                  ⚽ Live Match Stream
+            {/* Dynamic Live Deal Slides from heroSlides */}
+            {heroSlides.map((slide, idx) => (
+              <div key={idx} className="w-[300px] sm:w-[316px] shrink-0 bg-white text-text-primary p-5 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px] relative overflow-hidden group/slide border border-neutral-300">
+                <div>
+                  {slide.discountPercent ? (
+                    <span className="inline-block bg-[#cc0c39] text-white text-[10px] font-bold px-2 py-0.5 rounded-xs mb-2">
+                      {slide.discountPercent}% OFF DEAL
+                    </span>
+                  ) : null}
+                  <h3 className="text-lg font-black text-text-primary line-clamp-2 mb-1">{slide.title}</h3>
+                  <p className="text-xs text-neutral-600">{slide.subtitle}</p>
+                </div>
+                <div className="w-full h-40 relative bg-neutral-100 rounded-xs overflow-hidden my-auto border border-neutral-200">
+                  <Image src={slide.image} alt={slide.title} fill className="object-cover group-hover/slide:scale-105 transition-transform" />
+                </div>
+                <div className="pt-3 border-t border-neutral-200 flex items-center justify-between">
+                  <div>
+                    {slide.priceMinorUnits !== undefined ? (
+                      <span className="text-lg font-black text-ember">
+                        {slide.currencyCode === 'GBP' ? '£' : slide.currencyCode === 'EUR' ? '€' : '$'}
+                        {(slide.priceMinorUnits / 100).toFixed(2)}
+                      </span>
+                    ) : null}
+                  </div>
+                  <Link href={slide.href} className="text-xs font-bold text-[#007185] hover:underline">
+                    Shop deal →
+                  </Link>
                 </div>
               </div>
-              <div className="relative z-20 p-5">
-                <span className="bg-[#00a8e8] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-xs uppercase tracking-wider">prime video</span>
-                <h3 className="text-2xl font-black mt-2 text-white">Porto v Man City</h3>
-                <p className="text-xs font-semibold text-neutral-300 mt-0.5">From 18:30 PM</p>
-              </div>
-              <div className="relative z-20 p-4 flex items-center justify-between border-t border-white/10 bg-black/60">
-                <span className="text-xs font-bold text-neutral-200">Watch Live in HD</span>
-                <div className="flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs">↺</span>
-                  <span className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs">🔇</span>
-                </div>
-              </div>
-            </div>
+            ))}
 
             {/* Card 3: Shop deals ending soon (Coral pink #ff6f59 with white product tiles) */}
             <div className="w-[300px] sm:w-[316px] shrink-0 bg-[#ff6f59] text-white p-5 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px]">

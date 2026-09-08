@@ -37,6 +37,16 @@
   --color-sale: #b12704;
   --color-bar: #37475a;
 
+  /* Amazon-style hero carousel promo palette (matching the editorial cards) */
+  --color-amazon-orange: #ff9900;
+  --color-amazon-deal: #cc0c39;
+  --color-amazon-link: #007185;
+  --color-amazon-coral: #ff6f59;
+  --color-amazon-flame: #ff7a00;
+  --color-amazon-berry: #e63946;
+  --color-amazon-sand: #e3d5ca;
+  --color-amazon-mint: #d8f3dc;
+
   /* Borders */
   --color-border: #e0e0e0;
   --color-border-strong: #c9c9c9;

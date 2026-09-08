@@ -1,4 +1,5 @@
 import { API_BASE } from './api';
+import type { CategoryRow } from '@/lib/home-content-build';
 import type { HomeFeed } from '@Storegrill/shared';
 
 export interface FeaturedProduct {
@@ -45,5 +46,28 @@ export async function getHomeFeed(
     return (await response.json()) as HomeFeed;
   } catch {
     return null;
+  }
+}
+
+export interface RecentCategoriesPage {
+  categories: CategoryRow[];
+  hasMore: boolean;
+}
+
+export async function getRecentCategories(
+  regionKey: string,
+  offset = 0,
+  opts: { signal?: AbortSignal } = {},
+): Promise<RecentCategoriesPage> {
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/v1/categories?sort=recent&includeProducts=true&offset=${offset}&limit=4&regionKey=${encodeURIComponent(regionKey)}`,
+      { signal: opts.signal },
+    );
+    if (!response.ok) return { categories: [], hasMore: false };
+    const data = (await response.json()) as RecentCategoriesPage;
+    return { categories: data.categories ?? [], hasMore: Boolean(data.hasMore) };
+  } catch {
+    return { categories: [], hasMore: false };
   }
 }

@@ -117,6 +117,19 @@ The schema columns behind curation (`isFeatured`, `displayOrder`, `tagline`) are
 pods are synced via `prisma db push` (see `docs/audit-2026.md`), and the migration in
 `apps/api/prisma/migrations/` is the CI-from-zero baseline.
 
+**Auto-updating tiers (no manual work needed after curation clean):**
+
+- Department cards (`GET /api/v1/categories?featured=true&includeProducts=true`) show the
+  **newest** ACTIVE products in each curated subtree, so tiles change automatically as feeds land.
+- A second tier, `?sort=recent&offset&limit`, returns the newest multi-vendor roots (single-vendor /
+  vendor-narrow and already-featured roots are excluded, derived from data, not hardcoded brands) —
+  this is the "Recently added" feed on the homepage. It is paginated (`hasMore`) and infinite-scrolled
+  client-side with the Storegrill spinner. New categories appear here automatically once they hold
+  products from more than one vendor.
+- Translation caveat: the server-rendered initial feed is translated for non-EN locales; rows fetched
+  by infinite scroll render merchant titles untranslated until a real translator service is wired
+  (Azure OpenAI/translator pod — `deploy_translator=false` today).
+
 ## 4. DNS (global)
 
 1. Seed `infra/terraform/live/global/terraform.tfvars` with each region's four hostnames

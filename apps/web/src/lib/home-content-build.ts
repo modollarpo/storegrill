@@ -79,9 +79,16 @@ export interface CategoryRow {
   featured?: FeaturedRow[];
 }
 
+export interface HomeRecentFeed {
+  rows: HomeSectionItem[][];
+  hasMore: boolean;
+  nextOffset: number;
+}
+
 export interface HomeContent {
   heroSlides: HomeHeroSlide[];
   sections: HomeSectionItem[][];
+  recent?: HomeRecentFeed;
 }
 
 export function endLabel(endsAt: string | undefined, language: string): string {
@@ -178,6 +185,12 @@ export function buildRowPromo(card: HomeGridSection, language: string): HomeProm
     currencyCode: tile?.currencyCode,
     listPriceMinorUnits: tile?.listPriceMinorUnits,
   };
+}
+
+export function rowsFromCards(cards: HomeGridSection[]): HomeSectionItem[][] {
+  const rows: HomeSectionItem[][] = [];
+  for (let i = 0; i < cards.length; i += 4) rows.push(cards.slice(i, i + 4));
+  return rows;
 }
 
 export function buildRows(cards: HomeGridSection[], promos: HomePromoSection[], language: string): HomeSectionItem[][] {

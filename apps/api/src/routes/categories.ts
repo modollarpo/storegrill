@@ -1,6 +1,6 @@
 import { Router, Response, Request } from 'express';
 import { prisma } from '../index.js';
-import { getCategoryTree, buildTree, CategoryNode } from '../services/categories.js';
+import { getCategoryTree, getRecentCategoryPage, buildTree, CategoryNode } from '../services/categories.js';
 
 const router = Router();
 
@@ -12,6 +12,14 @@ router.get('/', async (req: Request, res: Response) => {
   if (req.query.all === 'true') {
     const rows = await prisma.category.findMany({ orderBy: { name: 'asc' } });
     res.json({ categories: buildTree(rows as any) });
+    return;
+  }
+
+  if (req.query.sort === 'recent') {
+    const offset = Number(req.query.offset) || 0;
+    const limit = Number(req.query.limit) || 4;
+    const { categories, hasMore } = await getRecentCategoryPage(prisma, { regionKey, offset, limit });
+    res.json({ categories, hasMore });
     return;
   }
 

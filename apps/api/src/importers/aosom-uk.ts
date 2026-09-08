@@ -23,6 +23,30 @@ export function isAosomUkSource(source: string): boolean {
 
 export const HOUSE_BRAND = 'HOMCOM';
 
+const AOSOM_HOUSE_BRANDS: Array<{ match: RegExp; brand: string }> = [
+  { match: /^HOMCM(?![a-z])/i, brand: 'HOMCOM' },
+  { match: /^Aosom(?![a-z])/i, brand: 'Aosom' },
+  { match: /^HOMCOM(?![a-z])/i, brand: 'HOMCOM' },
+  { match: /^Outsunny(?![a-z])/i, brand: 'Outsunny' },
+  { match: /^PawHut(?![a-z])/i, brand: 'PawHut' },
+  { match: /^AIYAPLAY(?![a-z])/i, brand: 'AivyAplay' },
+  { match: /^Vinsetto(?![a-z])/i, brand: 'Vinsetto' },
+  { match: /^Sportnow(?![a-z])/i, brand: 'Sportnow' },
+  { match: /^Kleankin(?![a-z])/i, brand: 'Kleankin' },
+  { match: /^Durhand(?![a-z])/i, brand: 'Durhand' },
+  { match: /^Zonekiz(?![a-z])/i, brand: 'Zonekiz' },
+  { match: /^Soozier(?![a-z])/i, brand: 'Soozier' },
+  { match: /^Qaba(?![a-z])/i, brand: 'Qaba' },
+];
+
+export function deduceAosomBrand(title: string | null | undefined): string {
+  const clean = String(title ?? '').trim();
+  for (const { match, brand } of AOSOM_HOUSE_BRANDS) {
+    if (match.test(clean)) return brand;
+  }
+  return HOUSE_BRAND;
+}
+
 export interface AosomUkProductRow {
   SKU: string;
   Title: string;
@@ -488,7 +512,7 @@ export function adaptAosomUkRows(merged: AosomUkMergedRow[]): AdaptResult {
       tags: ['aosom', 'uk'],
       attributes: {},
       sourceUrl: sourceUrl(first.sku),
-      brandName: HOUSE_BRAND,
+      brandName: deduceAosomBrand(first.title),
       variants,
     });
   }

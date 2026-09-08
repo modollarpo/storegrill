@@ -6,7 +6,7 @@ import type {
   NormalizedVariant,
 } from './costway.js';
 import { OUT_OF_STOCK_THRESHOLD } from './costway.js';
-import { deduceAosomCostwayCategory } from './aosom-uk.js';
+import { deduceAosomCostwayCategory, deduceAosomBrand } from './aosom-uk.js';
 
 const LOCAL_STOCK_THRESHOLD = OUT_OF_STOCK_THRESHOLD === undefined ? 20 : OUT_OF_STOCK_THRESHOLD;
 
@@ -122,9 +122,7 @@ function stripSiteSuffix(title: string): string {
 
 export function stripHouseBrand(title: string): string {
   const clean = stripSiteSuffix(title);
-  const brandIdx = clean.toUpperCase().indexOf('HOMCOM');
-  if (brandIdx === -1) return clean.trim();
-  return clean.slice(0, brandIdx).concat(clean.slice(brandIdx + 'HOMCOM'.length)).replace(/\s{2,}/g, ' ').trim();
+  return clean.replace(/\bHOMCOM\b/gi, ' ').replace(/\s{2,}/g, ' ').trim();
 }
 
 function cleanTitle(title: string): string {
@@ -250,7 +248,7 @@ export function adaptAosomRows(rows: AosomFeedRow[]): AdaptResult {
       tags: ['aosom', 'house'],
       attributes: {},
       sourceUrl: sourceUrl(first.SKU),
-      brandName: HOUSE_BRAND,
+      brandName: deduceAosomBrand(first.Title),
       variants,
     });
   }

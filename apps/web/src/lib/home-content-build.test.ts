@@ -60,7 +60,7 @@ describe('buildCategoryCards', () => {
       [{
         ...CATEGORY,
         featured: [
-          { id: 'p1', name: 'Kettle', slug: 'kettle', thumbnail: 'https://cdn.storegrill.net/kettle.jpg', priceMinorUnits: 1999, currencyCode: 'GBP', listPriceMinorUnits: 2999 },
+          { id: 'p1', name: 'Kettle', slug: 'kettle', thumbnail: 'https://cdn.storegrill.net/kettle.jpg', price: 1999, currencyCode: 'GBP', listPriceMinorUnits: 2999 },
         ],
       }],
       'en',

@@ -66,7 +66,7 @@ export interface FeaturedRow {
   name?: string;
   slug?: string;
   thumbnail?: string | null;
-  priceMinorUnits?: number;
+  price?: number;
   currencyCode?: string;
   listPriceMinorUnits?: number;
 }
@@ -127,7 +127,7 @@ export function buildCategoryCards(roots: CategoryRow[], language: string): Home
         title: p.name as string,
         image: p.thumbnail as string,
         href: `/products/${p.slug as string}`,
-        priceMinorUnits: p.priceMinorUnits,
+        priceMinorUnits: p.price,
         currencyCode: p.currencyCode,
         listPriceMinorUnits: p.listPriceMinorUnits,
       }));

@@ -122,7 +122,7 @@ function stripSiteSuffix(title: string): string {
 
 export function stripHouseBrand(title: string): string {
   const clean = stripSiteSuffix(title);
-  return clean.replace(/\bHOMCOM\b/gi, ' ').replace(/\s{2,}/g, ' ').trim();
+  return clean.replace(/\bHOMCOM\b/gi, ' ').replace(/\s{2,}/g, ' ').replace(/\s*\|\s*$/, '').trim();
 }
 
 function cleanTitle(title: string): string {

@@ -81,6 +81,11 @@ describe('stripHouseBrand', () => {
   it('strips the site suffix without a HOMCOM prefix', () => {
     expect(stripHouseBrand('Random Product Title|Aosom Ireland')).toBe('Random Product Title');
   });
+
+  it('strips a space-separated site suffix and the trailing colour pipe', () => {
+    expect(stripHouseBrand('Adjustable Bistro Table, White | Aosom Ireland')).toBe('Adjustable Bistro Table, White');
+    expect(stripHouseBrand('DURHAND Tool Chest, Dark Green | ')).toBe('DURHAND Tool Chest, Dark Green');
+  });
 });
 
 describe('deduceCategoryPath', () => {

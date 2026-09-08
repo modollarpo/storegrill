@@ -60,6 +60,9 @@ function mockPrisma(categories: CategoryRow[], products: ProductRow[], vendors: 
     vendorProfile: {
       findMany: async (opts: any) => vendors.filter(v => opts.where?.id?.in?.includes(v.id) ?? true),
     },
+    deal: {
+      findMany: async () => [],
+    },
     product: {
       groupBy,
       findMany: async (opts: any) => {
@@ -111,7 +114,7 @@ describe('getRecentCategoryPage', () => {
 
     const first = await getRecentCategoryPage(prisma, { regionKey: 'UK', offset: 0, limit: 4 });
     expect(first.hasMore).toBe(false);
-    expect(first.categories.map(c => c.slug)).toEqual(['outdoor', 'garden', 'kitchen']);
+    expect(first.categories.map(c => c.slug)).toEqual(['outdoor', 'garden', 'kitchen', 'pans']);
     expect(first.categories[0].featured?.[0].name).toBe('Tent');
   });
 

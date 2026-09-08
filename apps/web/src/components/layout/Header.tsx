@@ -123,6 +123,25 @@ function Header({ categories }: HeaderProps) {
   const [cartOpen, setCartOpen] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
   const [openDept, setOpenDept] = useState<string | null>(null);
+  const [dealsDropdownOpen, setDealsDropdownOpen] = useState(false);
+  const [todaysDeals, setTodaysDeals] = useState<any[]>([]);
+  const [dealsLoading, setDealsLoading] = useState(false);
+  const dealsDropdownRef = useOutsideClick<HTMLDivElement>(() => setDealsDropdownOpen(false), dealsDropdownOpen);
+
+  useEffect(() => {
+    if (dealsDropdownOpen && todaysDeals.length === 0) {
+      setDealsLoading(true);
+      fetch(`/api/v1/deals?regionKey=${regionKey}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && Array.isArray(data.deals)) {
+            setTodaysDeals(data.deals);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setDealsLoading(false));
+    }
+  }, [dealsDropdownOpen, regionKey, todaysDeals.length]);
 
   // Transactional pages get no sticky masthead — they surface their own sticky
   // action (add-to-cart / checkout), so the header scrolls away to give those
@@ -178,9 +197,73 @@ function Header({ categories }: HeaderProps) {
                 >
                   {t(language, 'hello')}, {t(language, 'signIn').toLowerCase()}
                 </a>
-                <a href="/deals" className="text-[13px] font-medium hover:opacity-80 transition-opacity">
-                  Today&apos;s Deals
-                </a>
+                <div className="relative" ref={dealsDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setDealsDropdownOpen(prev => !prev)}
+                    className="inline-flex items-center gap-1 text-[13px] font-medium hover:opacity-80 transition-opacity outline-none cursor-pointer"
+                    aria-expanded={dealsDropdownOpen}
+                  >
+                    <span>Today&apos;s Deals</span>
+                    <svg
+                      className={cn('w-3 h-3 transition-transform duration-200', dealsDropdownOpen && 'rotate-180')}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {dealsDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-2 w-80 bg-surface-raised border border-border rounded-md shadow-xl z-[999] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 text-text-primary">
+                      <div className="p-3 bg-surface-sunken border-b border-border flex items-center justify-between">
+                        <span className="text-xs font-bold text-text-primary uppercase tracking-wider">Today&apos;s Featured Deals</span>
+                        <a href="/deals" className="text-xs font-bold text-ember hover:underline">View all →</a>
+                      </div>
+                      <div className="max-h-96 overflow-y-auto divide-y divide-border">
+                        {dealsLoading ? (
+                          <div className="p-6 text-center text-xs text-text-secondary">Loading deals...</div>
+                        ) : todaysDeals.length === 0 ? (
+                          <div className="p-6 text-center text-xs text-text-secondary">No active deals right now. Check back soon!</div>
+                        ) : (
+                          todaysDeals.slice(0, 8).map((deal: any) => {
+                            const variant = deal.variants?.[0];
+                            const product = variant?.product;
+                            const thumb = product?.thumbnail || product?.images?.[0];
+                            const name = deal.name || product?.name || 'Special Deal';
+                            const discount = Math.round(variant?.discountPercent || 0);
+                            return (
+                              <a
+                                key={deal.id}
+                                href={`/deals/${deal.slug}`}
+                                onClick={() => setDealsDropdownOpen(false)}
+                                className="flex items-center gap-3 p-3 hover:bg-surface-sunken transition-colors group"
+                              >
+                                {thumb ? (
+                                  <div className="w-12 h-12 relative rounded overflow-hidden bg-white shrink-0 border border-border">
+                                    <img src={thumb} alt={name} className="object-cover w-full h-full group-hover:scale-105 transition-transform" />
+                                  </div>
+                                ) : null}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-semibold text-text-primary truncate group-hover:text-ember transition-colors">
+                                    {name}
+                                  </p>
+                                  {discount > 0 ? (
+                                    <span className="inline-block mt-0.5 bg-ember/10 text-ember text-[10px] font-bold px-1.5 py-0.5 rounded">
+                                      {discount}% OFF
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </a>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <a href="/vendor/apply" className="text-[13px] font-medium hover:opacity-80 transition-opacity">
                   Sell on Storegrill
                 </a>
@@ -236,7 +319,7 @@ function Header({ categories }: HeaderProps) {
                 className="shrink-0 flex items-center transition-transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/white.png" alt="Storegrill" className="h-10 w-auto" />
+                <img src="/white.png" alt="Storegrill" className="h-8 w-auto" />
               </Link>
 
               {/* Categories dropdown + Search */}

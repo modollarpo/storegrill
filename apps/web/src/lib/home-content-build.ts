@@ -42,6 +42,10 @@ export interface HomeHeroSlide {
   subtitle: string;
   image: string;
   href: string;
+  priceMinorUnits?: number;
+  currencyCode?: string;
+  listPriceMinorUnits?: number;
+  discountPercent?: number;
 }
 
 export interface DealVariantRow {
@@ -118,6 +122,10 @@ export function buildHeroSlides(deals: DealRow[], language: string): HomeHeroSli
       subtitle: ends ? `${pctLabel} · ${t(language, 'homeEndsOn', ends)}` : pctLabel,
       image: variant.product.thumbnail as string,
       href: `/deals/${deal.slug ?? deal.id ?? 'deals'}`,
+      priceMinorUnits: variant.priceMinorUnits ?? undefined,
+      currencyCode: 'GBP',
+      listPriceMinorUnits: variant.listPriceMinorUnits ?? undefined,
+      discountPercent: percent,
     });
   }
   return slides;

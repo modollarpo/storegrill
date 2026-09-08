@@ -422,49 +422,63 @@ function Header({ categories }: HeaderProps) {
                 </button>
 
                 {dealsDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-80 bg-surface-raised border border-border rounded-md shadow-xl z-[999] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 text-text-primary">
-                    <div className="p-3 bg-surface-sunken border-b border-border flex items-center justify-between">
-                      <span className="text-xs font-bold text-text-primary uppercase tracking-wider">Today&apos;s Featured Deals</span>
-                      <a href="/deals" className="text-xs font-bold text-ember hover:underline">View all →</a>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto divide-y divide-border">
-                      {dealsLoading ? (
-                        <div className="p-6 text-center text-xs text-text-secondary">Loading deals...</div>
-                      ) : todaysDeals.length === 0 ? (
-                        <div className="p-6 text-center text-xs text-text-secondary">No active deals right now. Check back soon!</div>
-                      ) : (
-                        todaysDeals.slice(0, 8).map((deal: any) => {
-                          const variant = deal.variants?.[0];
-                          const product = variant?.product;
-                          const thumb = product?.thumbnail || product?.images?.[0];
-                          const name = deal.name || product?.name || 'Special Deal';
-                          const discount = Math.round(variant?.discountPercent || 0);
-                          return (
-                            <a
-                              key={deal.id}
-                              href={`/deals/${deal.slug}`}
-                              onClick={() => setDealsDropdownOpen(false)}
-                              className="flex items-center gap-3 p-3 hover:bg-surface-sunken transition-colors group"
-                            >
-                              {thumb ? (
-                                <div className="w-12 h-12 relative rounded overflow-hidden bg-white shrink-0 border border-border">
-                                  <img src={thumb} alt={name} className="object-cover w-full h-full group-hover:scale-105 transition-transform" />
-                                </div>
-                              ) : null}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-text-primary truncate group-hover:text-ember transition-colors">
+                  <div className="absolute top-full left-0 right-0 mt-0 w-screen -ml-[calc((100vw-100%)/2)] bg-surface-raised border-b border-border shadow-2xl z-[999] animate-in fade-in slide-in-from-top-2 duration-200 text-text-primary">
+                    <div className="max-w-[1500px] mx-auto px-6 py-5">
+                      <div className="flex items-center justify-between pb-3 border-b border-border mb-4">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-bold text-text-primary uppercase tracking-wider">Today&apos;s Featured Deals</span>
+                          <span className="bg-ember text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">Full Width Slider</span>
+                        </div>
+                        <a href="/deals" className="text-xs font-bold text-ember hover:underline">View all deals →</a>
+                      </div>
+
+                      <div className="flex items-center gap-4 overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-neutral-300">
+                        {dealsLoading ? (
+                          <div className="w-full py-12 text-center text-sm text-text-secondary">Loading today&apos;s deals...</div>
+                        ) : todaysDeals.length === 0 ? (
+                          <div className="w-full py-12 text-center text-sm text-text-secondary">No active deals right now. Check back soon!</div>
+                        ) : (
+                          todaysDeals.map((deal: any) => {
+                            const variant = deal.variants?.[0];
+                            const product = variant?.product;
+                            const thumb = product?.thumbnail || product?.images?.[0];
+                            const name = deal.name || product?.name || 'Special Deal';
+                            const discount = Math.round(variant?.discountPercent || 0);
+                            const price = variant?.priceMinorUnits ? (variant.priceMinorUnits / 100).toFixed(2) : null;
+                            const listPrice = variant?.listPriceMinorUnits ? (variant.listPriceMinorUnits / 100).toFixed(2) : null;
+                            return (
+                              <a
+                                key={deal.id}
+                                href={`/deals/${deal.slug}`}
+                                onClick={() => setDealsDropdownOpen(false)}
+                                className="flex flex-col w-[240px] shrink-0 bg-surface-sunken border border-border rounded-sm p-3.5 hover:shadow-lg hover:border-ember transition-all group"
+                              >
+                                {thumb ? (
+                                  <div className="w-full h-36 relative rounded-sm overflow-hidden bg-white mb-2.5 border border-border">
+                                    <img src={thumb} alt={name} className="object-cover w-full h-full group-hover:scale-105 transition-transform" />
+                                    {discount > 0 ? (
+                                      <span className="absolute top-2 left-2 bg-ember text-white text-[10px] font-bold px-2 py-0.5 rounded-sm shadow-xs">
+                                        {discount}% OFF
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+                                <p className="text-xs font-semibold text-text-primary line-clamp-2 group-hover:text-ember transition-colors h-9">
                                   {name}
                                 </p>
-                                {discount > 0 ? (
-                                  <span className="inline-block mt-0.5 bg-ember/10 text-ember text-[10px] font-bold px-1.5 py-0.5 rounded">
-                                    {discount}% OFF
-                                  </span>
-                                ) : null}
-                              </div>
-                            </a>
-                          );
-                        })
-                      )}
+                                <div className="flex items-baseline gap-2 mt-2">
+                                  {price ? (
+                                    <span className="text-base font-bold text-ember">£{price}</span>
+                                  ) : null}
+                                  {listPrice && Number(listPrice) > Number(price) ? (
+                                    <span className="text-xs text-neutral-500 line-through">£{listPrice}</span>
+                                  ) : null}
+                                </div>
+                              </a>
+                            );
+                          })
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}

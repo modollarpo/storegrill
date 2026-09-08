@@ -41,13 +41,14 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
       <div className="absolute -top-[10%] -right-[10%] w-[60%] h-[60%] rounded-full bg-ember/5 blur-[120px] -z-10" />
       <div className="absolute top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-tealink/5 blur-[120px] -z-10" />
 
-      {/* Hero Banner Carousel — showcase active deal products */}
-      {slide ? (
-        <div className="max-w-[1500px] mx-auto px-4 pt-4">
-          <div className="relative w-full aspect-[21/9] sm:aspect-[3/1] max-h-[420px] bg-neutral-900 rounded-sm overflow-hidden shadow-md group">
+      {/* Hero Banner Carousel & Amazon Hero Cards Row */}
+      <div className="max-w-[1500px] mx-auto px-4 pt-3 relative z-10">
+        <div className="relative w-full bg-neutral-900 rounded-sm overflow-hidden shadow-md">
+          {/* Main Hero Banner / Carousel Area */}
+          <div className="relative w-full aspect-[21/9] sm:aspect-[3/1] max-h-[420px]">
             <Image
-              src={slide.image}
-              alt={slide.title}
+              src={slide?.image || '/banners/bannerOne.jpg'}
+              alt={slide?.title || 'Storegrill Deals'}
               fill
               priority
               className="object-cover opacity-90 transition-opacity duration-500"
@@ -61,7 +62,7 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
               type="button"
               onClick={() => setCurrentSlide((currentSlide - 1 + slideCount) % slideCount)}
               aria-label="Previous slide"
-              className="absolute left-0 top-1/2 -translate-y-1/2 w-14 h-28 bg-black/20 hover:bg-black/50 flex items-center justify-center text-white text-4xl font-light rounded-r-sm transition-all focus:outline-none border border-white/20"
+              className="absolute left-0 top-1/2 -translate-y-1/2 w-14 h-28 bg-black/30 hover:bg-black/60 flex items-center justify-center text-white text-4xl font-light rounded-r-sm transition-all focus:outline-none border border-white/20 z-20"
             >
               ‹
             </button>
@@ -69,42 +70,44 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
               type="button"
               onClick={() => setCurrentSlide((currentSlide + 1) % slideCount)}
               aria-label="Next slide"
-              className="absolute right-0 top-1/2 -translate-y-1/2 w-14 h-28 bg-black/20 hover:bg-black/50 flex items-center justify-center text-white text-4xl font-light rounded-l-sm transition-all focus:outline-none border border-white/20"
+              className="absolute right-0 top-1/2 -translate-y-1/2 w-14 h-28 bg-black/30 hover:bg-black/60 flex items-center justify-center text-white text-4xl font-light rounded-l-sm transition-all focus:outline-none border border-white/20 z-20"
             >
               ›
             </button>
 
             {/* Slide info overlay bottom left with live deal pricing & discount */}
-            <div className="absolute bottom-6 left-6 md:left-12 z-10 bg-white/95 backdrop-blur-sm px-6 py-4 rounded-sm shadow-lg max-w-lg border border-neutral-200">
-              {slide.discountPercent ? (
-                <div className="inline-block bg-ember text-white text-xs font-bold px-2 py-0.5 rounded-sm mb-1.5">
-                  {slide.discountPercent}% OFF DEAL
+            {slide ? (
+              <div className="absolute bottom-6 left-6 md:left-12 z-20 bg-white/95 backdrop-blur-sm px-6 py-4 rounded-sm shadow-lg max-w-lg border border-neutral-200">
+                {slide.discountPercent ? (
+                  <div className="inline-block bg-ember text-white text-xs font-bold px-2 py-0.5 rounded-sm mb-1.5">
+                    {slide.discountPercent}% OFF DEAL
+                  </div>
+                ) : null}
+                <h2 className="text-base md:text-xl font-bold text-text-primary line-clamp-1">{slide.title}</h2>
+                <div className="flex items-baseline gap-2 mt-1">
+                  {slide.priceMinorUnits !== undefined ? (
+                    <span className="text-lg font-bold text-ember">
+                      {slide.currencyCode === 'GBP' ? '£' : slide.currencyCode === 'EUR' ? '€' : '$'}
+                      {(slide.priceMinorUnits / 100).toFixed(2)}
+                    </span>
+                  ) : null}
+                  {slide.listPriceMinorUnits && slide.listPriceMinorUnits > (slide.priceMinorUnits ?? 0) ? (
+                    <span className="text-xs text-neutral-500 line-through">
+                      {slide.currencyCode === 'GBP' ? '£' : slide.currencyCode === 'EUR' ? '€' : '$'}
+                      {(slide.listPriceMinorUnits / 100).toFixed(2)}
+                    </span>
+                  ) : null}
+                  <span className="text-xs text-neutral-600">{slide.subtitle}</span>
                 </div>
-              ) : null}
-              <h2 className="text-base md:text-xl font-bold text-text-primary line-clamp-1">{slide.title}</h2>
-              <div className="flex items-baseline gap-2 mt-1">
-                {slide.priceMinorUnits !== undefined ? (
-                  <span className="text-lg font-bold text-ember">
-                    {slide.currencyCode === 'GBP' ? '£' : slide.currencyCode === 'EUR' ? '€' : '$'}
-                    {(slide.priceMinorUnits / 100).toFixed(2)}
-                  </span>
-                ) : null}
-                {slide.listPriceMinorUnits && slide.listPriceMinorUnits > (slide.priceMinorUnits ?? 0) ? (
-                  <span className="text-xs text-neutral-500 line-through">
-                    {slide.currencyCode === 'GBP' ? '£' : slide.currencyCode === 'EUR' ? '€' : '$'}
-                    {(slide.listPriceMinorUnits / 100).toFixed(2)}
-                  </span>
-                ) : null}
-                <span className="text-xs text-neutral-600">{slide.subtitle}</span>
+                <Link href={slide.href} className="inline-block mt-2.5 text-xs font-bold text-ember hover:text-ember-dark hover:underline">
+                  Shop deal →
+                </Link>
               </div>
-              <Link href={slide.href} className="inline-block mt-2.5 text-xs font-bold text-ember hover:text-ember-dark hover:underline">
-                Shop deal →
-              </Link>
-            </div>
+            ) : null}
 
             {/* Slide Indicator Dots */}
             {slideCount > 1 ? (
-              <div className="absolute bottom-4 right-6 z-10 flex items-center gap-1.5 bg-black/40 px-3 py-1 rounded-full backdrop-blur-xs">
+              <div className="absolute bottom-4 right-6 z-20 flex items-center gap-1.5 bg-black/40 px-3 py-1 rounded-full backdrop-blur-xs">
                 {heroSlides.map((_, idx) => (
                   <button
                     key={idx}
@@ -121,7 +124,7 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
             ) : null}
           </div>
         </div>
-      ) : null}
+      </div>
 
       {/* Overlapping / Stacked 4-Column Card Grid */}
       <div className={`max-w-[1500px] mx-auto px-4${slide ? ' -mt-24 sm:-mt-36 md:-mt-48' : ' pt-6'} relative z-20 pb-12`}>

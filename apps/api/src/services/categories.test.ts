@@ -76,6 +76,7 @@ function mockPrisma(categories: CategoryRow[], products: ProductRow[], vendors: 
 }
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000);
+const hoursAgo = (n: number) => new Date(Date.now() - n * 3_600_000);
 
 describe('getRecentCategoryPage', () => {
   it('returns newest multi-vendor roots first, skipping featured and vendor-narrow roots', async () => {
@@ -90,7 +91,7 @@ describe('getRecentCategoryPage', () => {
       ],
       [
         { id: 'p1', categoryId: 'c1a', vendorId: 'v1', status: 'ACTIVE', name: 'Pan', slug: 'pan', images: '["a.jpg"]', basePriceMinorUnits: 100, currencyCode: 'GBP', createdAt: daysAgo(2) },
-        { id: 'p2', categoryId: 'c1a', vendorId: 'v2', status: 'ACTIVE', name: 'Pan2', slug: 'pan2', images: '["b.jpg"]', basePriceMinorUnits: 200, currencyCode: 'GBP', createdAt: daysAgo(1) },
+        { id: 'p2', categoryId: 'c1a', vendorId: 'v2', status: 'ACTIVE', name: 'Pan2', slug: 'pan2', images: '["b.jpg"]', basePriceMinorUnits: 200, currencyCode: 'GBP', createdAt: daysAgo(2) },
         { id: 'p3', categoryId: 'c2', vendorId: 'v1', status: 'ACTIVE', name: 'Chair', slug: 'chair', images: '["c.jpg"]', basePriceMinorUnits: 300, currencyCode: 'GBP', createdAt: daysAgo(4) },
         { id: 'p7', categoryId: 'c2', vendorId: 'v2', status: 'ACTIVE', name: 'Lounger', slug: 'lounger', images: '["g.jpg"]', basePriceMinorUnits: 350, currencyCode: 'GBP', createdAt: daysAgo(1) },
         // BrandMart has two products from one vendor named BrandMart -> vendor-branded, must be excluded
@@ -121,10 +122,10 @@ describe('getRecentCategoryPage', () => {
         { id: 'c2', name: 'B', slug: 'b', parentId: null, createdAt: daysAgo(1) },
       ],
       [
-        { id: 'p1', categoryId: 'c1', vendorId: 'v1', status: 'ACTIVE', name: 'A1', slug: 'a1', images: '[]', basePriceMinorUnits: 1, currencyCode: 'GBP', createdAt: daysAgo(1) },
-        { id: 'p2', categoryId: 'c1', vendorId: 'v2', status: 'ACTIVE', name: 'A2', slug: 'a2', images: '[]', basePriceMinorUnits: 1, currencyCode: 'GBP', createdAt: daysAgo(0) },
-        { id: 'p3', categoryId: 'c2', vendorId: 'v1', status: 'ACTIVE', name: 'B1', slug: 'b1', images: '[]', basePriceMinorUnits: 1, currencyCode: 'GBP', createdAt: daysAgo(0) },
-        { id: 'p4', categoryId: 'c2', vendorId: 'v2', status: 'ACTIVE', name: 'B2', slug: 'b2', images: '[]', basePriceMinorUnits: 1, currencyCode: 'GBP', createdAt: daysAgo(0) },
+        { id: 'p1', categoryId: 'c1', vendorId: 'v1', status: 'ACTIVE', name: 'A1', slug: 'a1', images: '[]', basePriceMinorUnits: 1, currencyCode: 'GBP', createdAt: daysAgo(2) },
+        { id: 'p2', categoryId: 'c1', vendorId: 'v2', status: 'ACTIVE', name: 'A2', slug: 'a2', images: '[]', basePriceMinorUnits: 1, currencyCode: 'GBP', createdAt: daysAgo(1) },
+        { id: 'p3', categoryId: 'c2', vendorId: 'v1', status: 'ACTIVE', name: 'B1', slug: 'b1', images: '[]', basePriceMinorUnits: 1, currencyCode: 'GBP', createdAt: hoursAgo(6) },
+        { id: 'p4', categoryId: 'c2', vendorId: 'v2', status: 'ACTIVE', name: 'B2', slug: 'b2', images: '[]', basePriceMinorUnits: 1, currencyCode: 'GBP', createdAt: hoursAgo(2) },
       ],
       [
         { id: 'v1', storeName: 'Costway', slug: 'costway', businessLegalName: null },

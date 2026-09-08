@@ -121,11 +121,12 @@ pods are synced via `prisma db push` (see `docs/audit-2026.md`), and the migrati
 
 - Department cards (`GET /api/v1/categories?featured=true&includeProducts=true`) show the
   **newest** ACTIVE products in each curated subtree, so tiles change automatically as feeds land.
-- A second tier, `?sort=recent&offset&limit`, returns the newest multi-vendor roots (single-vendor /
-  vendor-narrow and already-featured roots are excluded, derived from data, not hardcoded brands) —
+- A second tier, `?sort=recent&offset&limit`, returns non-featured categories ranked by
+  **newest product activity** (newest ACTIVE product under each root), excluding vendor-branded
+  roots by name collision with their sole vendor, derived from data, not hardcoded brands —
   this is the "Recently added" feed on the homepage. It is paginated (`hasMore`) and infinite-scrolled
-  client-side with the Storegrill spinner. New categories appear here automatically once they hold
-  products from more than one vendor.
+  client-side with the Storegrill spinner. New categories surface automatically once their first
+  products land, and the feed re-orders itself as imports arrive.
 - Translation caveat: the server-rendered initial feed is translated for non-EN locales; rows fetched
   by infinite scroll render merchant titles untranslated until a real translator service is wired
   (Azure OpenAI/translator pod — `deploy_translator=false` today).

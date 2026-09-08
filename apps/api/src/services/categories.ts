@@ -21,7 +21,7 @@ export interface CategoryNode {
   isFeatured: boolean;
   displayOrder: number;
   tagline?: string | null;
-  createdAt?: Date | null;
+  newestAt?: Date | null;
   productCount: number;
   featured?: CategoryFeatured[];
   children: CategoryNode[];
@@ -36,7 +36,6 @@ interface RowLike {
   isFeatured?: boolean | null;
   displayOrder?: number | null;
   tagline?: string | null;
-  createdAt?: Date | null;
 }
 
 const FEATURED_FALLBACK_LIMIT = 12;
@@ -59,7 +58,7 @@ function buildTree(rows: RowLike[]): CategoryNode[] {
       isFeatured: row.isFeatured ?? false,
       displayOrder: row.displayOrder ?? 0,
       tagline: row.tagline ?? null,
-      createdAt: row.createdAt ?? null,
+      newestAt: null,
       productCount: 0,
       children: [],
     });
@@ -104,9 +103,9 @@ function subtreeIds(node: CategoryNode, acc: string[] = []): string[] {
 
 /**
  * Build the category tree for one region, pruned to branches that actually
- * have ACTIVE products. Branches that only contain products from a single
- * vendor are excluded from the auto "recently added" feed, so vendor-branded
- * aisles never surface as homepage categories.
+ * have ACTIVE products. The auto "recently added" feed excludes vendor-branded
+ * roots (name collides with their sole vendor) elsewhere, so vendor aisles never
+ * surface as homepage categories.
  */
 async function buildRegionTree(prisma: PrismaClient, regionKey: string): Promise<CategoryNode[]> {
   const rows = (await prisma.category.findMany({
@@ -157,6 +156,7 @@ async function attachNewestProducts(prisma: PrismaClient, roots: CategoryNode[],
       include: { regionPrices: { where: { regionKey }, take: 1 } },
     });
     root.featured = products.map(p => featuredProduct(p, regionKey));
+    root.newestAt = products[0]?.createdAt ?? null;
   }
 }
 
@@ -231,10 +231,11 @@ async function recentEligibleRoots(prisma: PrismaClient, roots: CategoryNode[]):
 }
 
 /**
- * Auto "recently added" feed: newest roots created after the curated featured
- * set, each carrying its newest product. Paginated with offset/limit and a
- * hasMore flag so the storefront can infinitely scroll new categories as
- * imports land.
+ * Auto "recently added" feed: non-featured categories ranked by newest product
+ * activity (the newest ACTIVE product under each root), so the feed re-orders
+ * itself automatically as imports land and brand-new categories surface once
+ * their first products exist. Paginated with offset/limit and a hasMore flag so
+ * the storefront can infinitely scroll new categories.
  */
 export async function getRecentCategoryPage(
   prisma: PrismaClient,
@@ -244,13 +245,14 @@ export async function getRecentCategoryPage(
   const offset = Math.max(0, opts.offset ?? 0);
   const limit = Math.max(1, Math.min(opts.limit ?? RECENT_PAGE_LIMIT, RECENT_PAGE_MAX));
 
-  const candidates = (await recentEligibleRoots(prisma, roots)).sort(
-    (a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0),
-  );
+  const candidates = await recentEligibleRoots(prisma, roots);
+  await attachNewestProducts(prisma, candidates, opts.regionKey);
+  const ranked = candidates
+    .filter(c => (c.featured?.length ?? 0) > 0)
+    .sort((a, b) => (b.newestAt?.getTime() ?? 0) - (a.newestAt?.getTime() ?? 0));
 
-  const hasMore = offset + limit < candidates.length;
-  const page = candidates.slice(offset, offset + limit);
-  await attachNewestProducts(prisma, page, opts.regionKey);
+  const hasMore = offset + limit < ranked.length;
+  const page = ranked.slice(offset, offset + limit);
   return { categories: page, hasMore };
 }
 

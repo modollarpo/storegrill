@@ -1,4 +1,5 @@
 import { prisma } from '../index.js';
+import { notifyOrderConfirmed } from '../lib/emails.js';
 
 export async function markCaptured(orderId: string): Promise<void> {
   await prisma.$transaction([
@@ -11,6 +12,8 @@ export async function markCaptured(orderId: string): Promise<void> {
       data: { paymentStatus: 'CAPTURED', status: 'CONFIRMED' },
     }),
   ]);
+
+  await notifyOrderConfirmed(orderId);
 }
 
 /**

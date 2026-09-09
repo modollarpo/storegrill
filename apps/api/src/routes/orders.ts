@@ -9,6 +9,7 @@ import { createMoney, convertMoney } from '@Storegrill/shared';
 import { v4 as uuid } from 'uuid';
 import { initiatePaypalPayment, initiateStripePayment, type PaymentOrderContext } from '../payments/providers.js';
 import { validateCoupon } from '../services/coupons.js';
+import { notifyOrderCancelled, notifyOrderConfirmed } from '../lib/emails.js';
 
 const router = Router();
 
@@ -419,6 +420,10 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
 
   await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
 
+  if (order.status === 'CONFIRMED') {
+    await notifyOrderConfirmed(order.id);
+  }
+
   res.status(201).json({
     order: {
       ...order,
@@ -500,6 +505,8 @@ router.post('/:id/cancel', async (req: AuthRequest, res: Response) => {
       data: { totalSales: { decrement: item.quantity } },
     });
   }
+
+  await notifyOrderCancelled(id);
 
   res.json({ message: 'Order cancelled' });
 });

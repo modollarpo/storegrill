@@ -378,6 +378,14 @@ resource "azurerm_container_app" "api" {
         secret_name = "acs-connection-string"
       }
       env {
+        name  = "MAIL_PROVIDER"
+        value = "acs"
+      }
+      env {
+        name  = "MAIL_FROM"
+        value = "no-reply@storegrill.net"
+      }
+      env {
         name  = "LIBRETRANSLATE_URL"
         value = var.deploy_translator ? "https://${azurerm_container_app.translator[0].latest_revision_fqdn}/translate" : ""
       }

@@ -104,6 +104,7 @@ export interface TrackingIngestResult {
   shipmentId: string;
   addedEvents: number;
   shipmentStatus: CarrierShipmentStatusValue;
+  shipmentStatusBefore: CarrierShipmentStatusValue;
   orderStatusBefore: string | null;
   orderStatusAfter: string | null;
   notificationsCreated: number;
@@ -214,6 +215,7 @@ export async function applyTrackingEvents(
       shipmentId,
       addedEvents: 0,
       shipmentStatus: derivedStatus,
+      shipmentStatusBefore: currentStatus,
       orderStatusBefore,
       orderStatusAfter,
       notificationsCreated: 0,
@@ -289,6 +291,7 @@ export async function applyTrackingEvents(
     shipmentId,
     addedEvents: newEvents.length,
     shipmentStatus: derivedStatus,
+    shipmentStatusBefore: currentStatus,
     orderStatusBefore,
     orderStatusAfter,
     notificationsCreated: notificationEvents.length,

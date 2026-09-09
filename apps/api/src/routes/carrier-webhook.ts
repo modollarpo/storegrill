@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../index.js';
 import { parseCarrierEvents, applyTrackingEvents } from '../services/carriers.js';
 import { normalizeCarrierProvider } from '@Storegrill/shared';
+import { sendShipmentStatusEmail } from '../lib/emails.js';
 import type { Request } from 'express';
 
 const router = Router();
@@ -72,6 +73,9 @@ router.post('/:provider', async (req: Request, res: Response) => {
 
   try {
     const result = await applyTrackingEvents(shipment.id, events, { agency: provider });
+    if (result.addedEvents > 0 && result.shipmentStatus !== result.shipmentStatusBefore) {
+      await sendShipmentStatusEmail(shipment.id, result.shipmentStatus);
+    }
     return res.json({ received: 'ok', result });
   } catch (error) {
     return res.status(500).json({

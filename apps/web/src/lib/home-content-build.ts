@@ -24,6 +24,7 @@ export interface HomePromoSection {
   type: 'promo';
   title: string;
   subtitle?: string;
+  eyebrow?: string;
   image?: string;
   bgClass?: string;
   textColor?: string;
@@ -165,6 +166,7 @@ export function buildPromos(language: string): HomePromoSection[] {
       type: 'promo',
       title: t(language, 'homeCreativeSellTitle'),
       subtitle: t(language, 'homeCreativeSellBody'),
+      eyebrow: t(language, 'homePromoSellEyebrow'),
       ctaText: t(language, 'homeCreativeSellCta'),
       href: '/sell',
       bgClass: 'bg-gradient-to-br from-ember-pale to-smoke-100',
@@ -173,6 +175,7 @@ export function buildPromos(language: string): HomePromoSection[] {
       type: 'promo',
       title: t(language, 'homeCreativeCurrencyTitle'),
       subtitle: t(language, 'homeCreativeCurrencyBody'),
+      eyebrow: t(language, 'homePromoRegionsEyebrow'),
       ctaText: t(language, 'homeCreativeCurrencyCta'),
       href: '/regions',
       bgClass: 'bg-neutral-900 text-white',
@@ -186,6 +189,7 @@ export function buildRowPromo(card: HomeGridSection, language: string): HomeProm
     type: 'promo',
     title: card.title,
     subtitle: card.subtitle ?? (tile?.title ? tile.title : undefined),
+    eyebrow: t(language, 'homePromoFeaturedEyebrow'),
     image: tile?.image,
     ctaText: t(language, 'shopNow'),
     href: tile?.href ?? card.linkHref ?? '/products',

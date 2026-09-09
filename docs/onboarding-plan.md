@@ -30,7 +30,7 @@ Status: PHASES A & B SHIPPED + B LEFTOVERS CLOSED · Grounded in `PROJECT.md` §
 Verified by `smoke-auth.ts` (18/18 — incl. refresh-token revocation after reset, preferences roundtrip), `smoke-vendor.ts` (36/36), root gates (`typecheck` ×5 workspaces, `lint` 0 errors, `vitest` 91/91), and browser E2E of the admin queue, account region card (persist across reload) and portal applicant gate.
 
 ## Remaining (Phase C)
-- OAuth providers, 2FA fields already in schema but unused (needs provider creds).
+- OAuth implemented (Google/LinkedIn/Facebook); outstanding = real provider client creds + redirect URIs registered per provider (Facebook has no creds yet). 2FA fields in schema but unused.
 - ACS Email live smoke test once real credentials exist.
 - Campaign hero imagery broken (deleted JPEGs referenced by `CampaignHero`).
 
@@ -41,7 +41,7 @@ Verified by `smoke-auth.ts` (18/18 — incl. refresh-token revocation after rese
 | Register/login | `POST /api/v1/auth/register`, `/login` — bcrypt(12), JWT access (15 min cookie) + refresh (7 d). ⚠️ Register currently trusts `body.role` — any caller can self-assign a role. |
 | Customer profile | Auto-created on register (`preferredRegionKey`, currency, language, addresses JSON). |
 | Email verification / reset / 2FA | **Not implemented** (required by F1). |
-| OAuth | `OAuthAccount` model + `src/auth/oauth` scaffold exist; providers unconfigured. |
+| OAuth | `OAuthAccount` model + `src/auth/oauth/config.ts` — **implemented** (Google/LinkedIn/Facebook authorize-code flow: `/api/v1/auth/oauth/{provider}/start`, `/callback`; state-cookie + CSRF guard, user linking, JWT + auth cookies). Needs real client creds + redirect URIs registered per provider. |
 | Vendor profile | `VendorProfile` model exists (`kycStatus`, `kycData` JSON, `payoutMethod`, `revenueSharePct`, `status=PENDING`) but **no write API** — nobody can become a vendor yet. |
 | Vendor portal | Next app with login/products/orders/payouts/imports/settings pages; gates unknown to API status. |
 | `/sell` page | Marketing copy promises "apply in minutes", "verification ~2 working days", 12% flat commission — **no application flow behind it yet**. |
@@ -62,7 +62,7 @@ Flow details:
 3. **Soft gate**: middleware flag on session (`emailVerified=false`) blocks checkout, reviews, wishlist sync; browsing/cart stay open.
 4. **Region preference**: after verify, one-tap "ship to" card using region config data (currency/language defaults come from the `Region` row — region is data, not code).
 5. **Password reset**: `POST /auth/forgot-password` (always 200 to avoid enumeration) → emailed reset link (1 h token) → `POST /auth/reset-password` revokes all refresh tokens.
-6. **OAuth (phase 2)**: Google/Microsoft via existing `oauthAccounts` table; same soft-gate rules.
+6. **OAuth**: Google/LinkedIn/Facebook implemented (`src/auth/oauth/config.ts`) with real provider endpoints, state-cookie CSRF guard, and user linking into `oauthAccounts`; consumers follow the same soft-gate rules. Providers show up only when both `<PROVIDER>_CLIENT_ID` and `<PROVIDER>_CLIENT_SECRET` are set, and each provider console must list the exact callback URL the API builds (`{API_BASE_URL}/api/v1/auth/oauth/{provider}/callback`).
 
 ## 2. Vendor onboarding (web → admin → vendor-portal)
 
@@ -200,7 +200,7 @@ Error envelope, zod validation, rate limits on all auth routes (reuse `authLimit
 1. **KYC depth**: **manual document review only** at launch (free-tier constraint; no paid identity provider). Provider integration (Stripe Identity/Sumsub) deferred until volume justifies cost.
 2. **Guest applications**: **not allowed** — applicants must sign up first. Simpler auth model, no claim-link flows, and the vendor profile needs an owning `User` from day one.
 3. **Auto-approval tier**: **none initially**. All applications go through human review; revisit if review queue exceeds ~20/week (then auto-approve low-risk regions with VAT + IBAN checksums passing).
-4. **OAuth providers**: **deferred** past Phase A/B. When picked up: Google first (broadest customer reach), Microsoft second (business users applying as vendors).
+4. **OAuth providers**: **implemented** for Google/LinkedIn/Facebook (authorization-code flow with `oauthAccounts`). Only the redirect-URI/credential wiring remains outstanding: each provider console must register the API's exact callback path (`/api/v1/auth/oauth/{provider}/callback`), and Facebook still needs real `FACEBOOK_CLIENT_ID`/`FACEBOOK_CLIENT_SECRET`.
 5. **Commission**: **seeded config row from day one** (`Settings` key `commission.defaultPct = 12` to match `/sell` copy), read server-side — never hardcoded — so per-vendor/per-category overrides land without schema churn later.
 
 These choices favor the Azure free-tier constraint and boring, reversible mechanics; every one is a small follow-up to change later.

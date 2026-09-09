@@ -3,11 +3,13 @@ import { translateBatch } from './server-translate';
 import { FALLBACK_HERO_DEALS } from './home-hero-fallback';
 import {
   buildCategoryCards,
+  buildCuratedCards,
   buildHeroSlides,
   buildPromos,
   buildRows,
   rowsFromCards,
   type CategoryRow,
+  type CuratedProductRow,
   type DealRow,
   type HomeContent,
   type HomeGridSection,
@@ -51,6 +53,32 @@ async function fetchLiveDeals(regionKey: string): Promise<DealRow[]> {
   return deals.filter(deal => deal?.enabled === true && deal?.status === 'LIVE');
 }
 
+async function fetchFlashProducts(regionKey: string): Promise<CuratedProductRow[]> {
+  const data = (await fetchJson(
+    `${API_BASE}/api/v1/deals/products?filter=flash&sort=savings&limit=4&regionKey=${encodeURIComponent(regionKey)}`,
+    60,
+  )) as { products?: CuratedProductRow[] } | null;
+  return Array.isArray(data?.products) ? data.products : [];
+}
+
+async function fetchProducts(regionKey: string, sort: 'popular' | 'newest'): Promise<CuratedProductRow[]> {
+  const data = (await fetchJson(
+    `${API_BASE}/api/v1/products?sort=${sort}&limit=4&inStock=true&regionKey=${encodeURIComponent(regionKey)}`,
+    60,
+  )) as { products?: Array<Record<string, unknown>> } | null;
+  return Array.isArray(data?.products)
+    ? data.products.map(p => ({
+        id: typeof p.id === 'string' ? p.id : undefined,
+        slug: typeof p.slug === 'string' ? p.slug : null,
+        name: typeof p.name === 'string' ? p.name : undefined,
+        thumbnail: typeof p.thumbnail === 'string' ? p.thumbnail : null,
+        priceMinorUnits: typeof p.price === 'number' ? p.price : null,
+        listPriceMinorUnits: typeof p.listPriceMinorUnits === 'number' ? p.listPriceMinorUnits : null,
+        currencyCode: typeof p.currencyCode === 'string' ? p.currencyCode : undefined,
+      }))
+    : [];
+}
+
 async function translateTitles(texts: string[], language: string): Promise<string[]> {
   if (!language || language === 'en' || texts.length === 0) return texts;
   const translated = await translateBatch(texts, language);
@@ -84,10 +112,13 @@ async function translateCards(cards: HomeGridSection[], language: string): Promi
 }
 
 export async function loadHomeContent(regionKey: string, language: string): Promise<HomeContent> {
-  const [roots, deals, recentPage] = await Promise.all([
+  const [roots, deals, recentPage, flash, bestSellers, newArrivals] = await Promise.all([
     fetchCategories(regionKey),
     fetchLiveDeals(regionKey),
     fetchRecentCategories(regionKey, 0),
+    fetchFlashProducts(regionKey),
+    fetchProducts(regionKey, 'popular'),
+    fetchProducts(regionKey, 'newest'),
   ]);
 
   let slides = buildHeroSlides(deals, language);
@@ -104,7 +135,9 @@ export async function loadHomeContent(regionKey: string, language: string): Prom
     });
   }
 
-  const cards = buildCategoryCards(roots, language);
+  const flashDeal = deals.find(d => d.type === 'FLASH_SALE');
+  const curated = buildCuratedCards(flash, bestSellers, newArrivals, language, flashDeal?.endsAt);
+  const cards = [...buildCategoryCards(roots, language), ...curated];
   await translateCards(cards, language);
   const sections = buildRows(cards, buildPromos(language), language);
 

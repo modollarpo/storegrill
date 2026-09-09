@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { calculatePayout } from './payout-engine.js';
+import { percentOf } from './utils/money.js';
 
 describe('calculatePayout', () => {
-  const terms = { revenueSharePct: 12, fixedFeeMinorUnits: 30, currencyCode: 'USD' };
+  const terms = { revenueShareBps: 1200, fixedFeeMinorUnits: 30, currencyCode: 'USD' };
 
-  it('deducts percentage commission and fixed fee per item', () => {
+  it('deducts basis-point commission and fixed fee per item', () => {
     const result = calculatePayout([{ id: 'i1', amountMinorUnits: 10000 }], terms);
     expect(result.lines[0]).toEqual({
       orderItemId: 'i1',
@@ -35,10 +36,28 @@ describe('calculatePayout', () => {
     expect(result.totalPayoutMinorUnits).toBe(0);
   });
 
-  it('rounds commission to the nearest minor unit', () => {
+  it('uses half-up integer percentOf rounding — never float arithmetic', () => {
     const result = calculatePayout([{ id: 'i1', amountMinorUnits: 3333 }], terms);
-    expect(result.lines[0].commission).toBe(Math.round(3333 * 0.12));
-    expect(result.totalPayoutMinorUnits).toBe(3333 - Math.round(3333 * 0.12) - 30);
+    const expectedCommission = Number(percentOf(3333n, 1200));
+    expect(result.lines[0].commission).toBe(expectedCommission);
+    expect(result.totalPayoutMinorUnits).toBe(3333 - expectedCommission - 30);
+  });
+
+  it('uses the order-time commission override when present (immutable snapshot)', () => {
+    const result = calculatePayout(
+      [{ id: 'i1', amountMinorUnits: 10000, commissionOverrideMinorUnits: 2500 }],
+      { revenueShareBps: 1200, fixedFeeMinorUnits: 30, currencyCode: 'USD' },
+    );
+    expect(result.lines[0].commission).toBe(2500);
+    expect(result.lines[0].payoutAmount).toBe(10000 - 2500 - 30);
+  });
+
+  it('ignores a null override and falls back to revenue share', () => {
+    const result = calculatePayout(
+      [{ id: 'i1', amountMinorUnits: 10000, commissionOverrideMinorUnits: undefined }],
+      terms,
+    );
+    expect(result.lines[0].commission).toBe(1200);
   });
 
   it('returns zero totals for no items', () => {

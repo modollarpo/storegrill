@@ -252,6 +252,42 @@ describe.skipIf(!hasPostgresTestDb)('import engine (integration)', () => {
     }
   }, 120_000);
 
+  it('archives only same-family products and never wipes a catalog on an empty feed', async () => {
+    await cleanTestArtifacts();
+    try {
+      const firstRun = await runJobAndWait(initialCsv, 'APPLY');
+      expect(JSON.parse(firstRun.errors)[0].creates).toBe(3);
+
+      const aosomCsv = makeCsv([
+        feedRow({ SKU: 'CW-TST-X', 'Item Name': 'Aosom Vase', 'Item Link': 'https://www.aosom.co.uk/p/vase.html' }),
+      ]);
+      const secondRun = await runJobAndWait(aosomCsv, 'APPLY');
+      const secondSummary = JSON.parse(secondRun.errors)[0];
+      expect(secondSummary.creates).toBe(1);
+      expect(secondSummary.archived).toBe(0);
+
+      let products = await houseProducts();
+      for (const sku of ['CW-TST-A', 'CW-TST-B1', 'CW-TST-C']) {
+        expect(products.get(sku)!.status).toBe('ACTIVE');
+      }
+      const aosomProduct = products.get('CW-TST-X')!;
+      expect(aosomProduct.status).toBe('ACTIVE');
+      expect(aosomProduct.sourceUrl).toContain('aosom.co.uk');
+
+      const emptyRun = await runJobAndWait(makeCsv([]), 'APPLY');
+      const emptySummary = JSON.parse(emptyRun.errors)[0];
+      expect(emptySummary.creates).toBe(0);
+      expect(emptySummary.archived).toBe(0);
+
+      products = await houseProducts();
+      for (const sku of ['CW-TST-A', 'CW-TST-B1', 'CW-TST-C', 'CW-TST-X']) {
+        expect(products.get(sku)!.status).toBe('ACTIVE');
+      }
+    } finally {
+      await cleanTestArtifacts();
+    }
+  }, 120_000);
+
   afterAll(() => {
     void prisma?.$disconnect();
   });

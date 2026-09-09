@@ -74,13 +74,14 @@ export interface FeedFetchResult {
 
 export async function fetchFeedToFile(
   rawUrl: string,
-  opts?: { etag?: string | null; jobId?: string },
+  opts?: { etag?: string | null; jobId?: string; label?: string },
 ): Promise<FeedFetchResult> {
   const url = await assertPublicHttpsUrl(rawUrl);
 
   const dir = join(tmpdir(), 'storegrill-imports');
   await mkdir(dir, { recursive: true });
-  const filePath = join(dir, `feed-${opts?.jobId ?? Date.now()}.csv`);
+  const name = opts?.jobId ? `feed-${opts.jobId}${opts.label ? `-${opts.label}` : ''}.csv` : `feed-${Date.now()}.csv`;
+  const filePath = join(dir, name);
 
   let lastError: unknown;
   for (let attempt = 1; attempt <= RETRIES; attempt++) {

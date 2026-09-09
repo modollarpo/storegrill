@@ -136,4 +136,26 @@ describe('evaluateDeals', () => {
     const { totalDiscountMinorUnits } = evaluateDeals({ items: [item({ unitMinorUnits: 1000 })], deals, orderCurrency: 'USD' });
     expect(totalDiscountMinorUnits).toBe(0);
   });
+
+  it('scopes category deals to the deal vendor', () => {
+    const deals: DealInput[] = [
+      { id: 'd1', name: 'costway 25%', type: 'PERCENTAGE_OFF', value: 25, categoryIds: ['electronics'], vendorId: 'costway' },
+    ];
+    const own: CartItem[] = [item({ vendorId: 'costway', unitMinorUnits: 10000 })];
+    expect(evaluateDeals({ items: own, deals, orderCurrency: 'USD' }).totalDiscountMinorUnits).toBe(2500);
+    const other: CartItem[] = [item({ vendorId: 'aosom', unitMinorUnits: 10000 })];
+    expect(evaluateDeals({ items: other, deals, orderCurrency: 'USD' }).totalDiscountMinorUnits).toBe(0);
+  });
+
+  it('applies unvendored deals across all vendors', () => {
+    const deals: DealInput[] = [
+      { id: 'd1', name: '10%', type: 'PERCENTAGE_OFF', value: 10, categoryIds: ['electronics'] },
+    ];
+    const { totalDiscountMinorUnits } = evaluateDeals({
+      items: [item({ vendorId: 'aosom', unitMinorUnits: 10000 })],
+      deals,
+      orderCurrency: 'USD',
+    });
+    expect(totalDiscountMinorUnits).toBe(1000);
+  });
 });

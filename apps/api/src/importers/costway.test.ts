@@ -159,6 +159,26 @@ expect(bySku.get('OK1')).toMatchObject({ stock: 21, supplierStock: 21 });
 expect(bySku.get('GARBAGE')).toMatchObject({ stock: 0, supplierStock: 0 });
 });
 
+it('records a compare-at list price for clearance and flash variants only', () => {
+  const feed = parsePriceToMinor(String(rows[0].Price))!;
+  const adapted = adaptCostwayRows([
+    { ...rows[0], SKU: 'CLR1', item_group_id: 'CLR1', 'Is it clearance': '1', 'Is it flash-sale': '0' },
+    { ...rows[0], SKU: 'FS1', item_group_id: 'FS1', 'Is it clearance': '0', 'Is it flash-sale': '1' },
+    { ...rows[0], SKU: 'REG1', item_group_id: 'REG1', 'Is it clearance': '0', 'Is it flash-sale': '0' },
+  ] as CostwayFeedRow[]);
+  const bySku = new Map(
+    adapted.products.flatMap(p => p.variants.map(v => [v.sku, v])),
+  );
+  const clr = bySku.get('CLR1')!;
+  expect(clr.priceMinorUnits).toBe(applyIngestPricing(feed, { clearance: true }));
+  expect(clr.listPriceMinorUnits).toBe(applyIngestPricing(feed));
+  expect(clr.listPriceMinorUnits!).toBeGreaterThan(clr.priceMinorUnits);
+  const fs = bySku.get('FS1')!;
+  expect(fs.listPriceMinorUnits).toBe(applyIngestPricing(feed));
+  const reg = bySku.get('REG1')!;
+  expect(reg.listPriceMinorUnits).toBeUndefined();
+});
+
   it('adapts every fixture row without errors', () => {
     expect(rows.length).toBeGreaterThan(10);
     expect(result.errors).toHaveLength(0);

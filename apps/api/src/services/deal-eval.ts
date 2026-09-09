@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { prisma as db } from '../db/prisma.js';
+import { cache, TTL } from '../lib/cache.js';
 import type { DealInput } from './deal-engine.js';
 
 interface RawDeal {
@@ -10,7 +11,9 @@ interface RawDeal {
   categoryIds: string;
   minOrderAmount: number | null;
   maxDiscount: number | null;
+  vendorId?: string | null;
   variants?: { productId: string }[];
+  endsAt?: Date | string | null;
 }
 
 function safeParseIds(raw: string): string[] {
@@ -31,6 +34,9 @@ export function dealToInput(deal: RawDeal): DealInput {
     categoryIds: safeParseIds(deal.categoryIds),
     minOrderAmount: deal.minOrderAmount,
     maxDiscount: deal.maxDiscount,
+    vendorId: deal.vendorId ?? null,
+    variants: deal.variants ?? [],
+    endsAt: deal.endsAt ? new Date(deal.endsAt).toISOString() : null,
     metadata:
       deal.type === 'FLASH_SALE' && deal.variants
         ? { flashProductIds: deal.variants.map(v => v.productId) }
@@ -42,6 +48,10 @@ export async function loadActiveDeals(
   prisma: PrismaClient = db,
   opts?: { vendorId?: string },
 ): Promise<DealInput[]> {
+  const cacheKey = opts?.vendorId ? `deals:${opts.vendorId}` : 'deals:all';
+  const cached = cache.get<DealInput[]>(cacheKey);
+  if (cached) return cached;
+
   const now = new Date();
   const deals = await prisma.deal.findMany({
     where: {
@@ -52,5 +62,7 @@ export async function loadActiveDeals(
     },
     include: { variants: { select: { productId: true } } },
   });
-  return deals.map(dealToInput);
+  const mapped = deals.map(dealToInput);
+  cache.set(cacheKey, mapped, TTL.deals);
+  return mapped;
 }

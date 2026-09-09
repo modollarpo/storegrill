@@ -1,5 +1,5 @@
 import { prisma } from '../index.js';
-import { calculatePayout } from '@Storegrill/shared';
+import { recordPayoutLedger } from './ledger-entries.js';
 
 export function periodOf(date: Date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -8,6 +8,7 @@ export function periodOf(date: Date = new Date()): string {
 interface GroupedItem {
   id: string;
   totalMinorUnits: number;
+  commissionMinorUnits: number;
 }
 
 interface PayoutGroup {
@@ -22,6 +23,11 @@ interface PayoutGroup {
  * any PayoutLine, grouped by (vendor, currency) for the given period. Idempotent:
  * items already attached to a payout line are skipped, so repeated runs never
  * double-pay. Returns the number of payouts created.
+ *
+ * Commission per item comes from the immutable order-time snapshot recorded on
+ * the OrderItem at checkout (commissionMinorUnits, resolved from the
+ * CommissionRule engine). Items without a snapshot (legacy orders) fall back to
+ * the vendor's flat revenueSharePct, keeping historical payout math stable.
  */
 export async function generatePayouts(period: string = periodOf()): Promise<number> {
   const existingLines = await prisma.payoutLine.findMany({ select: { orderItemId: true } });
@@ -32,6 +38,7 @@ export async function generatePayouts(period: string = periodOf()): Promise<numb
     select: {
       id: true,
       totalMinorUnits: true,
+      commissionMinorUnits: true,
       vendorId: true,
       order: { select: { currencyCode: true } },
       vendor: { select: { revenueSharePct: true, fixedFeeMinorUnits: true } },
@@ -58,34 +65,51 @@ export async function generatePayouts(period: string = periodOf()): Promise<numb
       revenueSharePct: vendor?.revenueSharePct ?? 12,
       fixedFeeMinorUnits: vendor?.fixedFeeMinorUnits ?? 30,
     };
-    group.itemIds.push(item);
+    group.itemIds.push({
+      id: item.id,
+      totalMinorUnits: item.totalMinorUnits,
+      commissionMinorUnits: item.commissionMinorUnits != null ? Number(item.commissionMinorUnits) : -1,
+    });
     groups.set(key, group);
   }
 
   let created = 0;
   for (const [key, group] of groups) {
     const [vendorId] = key.split(':');
-    const result = calculatePayout(
-      group.itemIds.map(item => ({ id: item.id, amountMinorUnits: item.totalMinorUnits })),
-      {
-        revenueSharePct: group.revenueSharePct,
-        fixedFeeMinorUnits: group.fixedFeeMinorUnits,
-        currencyCode: group.currencyCode,
-      },
-    );
 
+    const lines = group.itemIds.map(item => {
+      const commission =
+        item.commissionMinorUnits >= 0
+          ? item.commissionMinorUnits
+          : Math.round(item.totalMinorUnits * (group.revenueSharePct / 100));
+      const fixedFee = group.fixedFeeMinorUnits;
+      const payoutAmount = Math.max(0, item.totalMinorUnits - commission - fixedFee);
+      return {
+        orderItemId: item.id,
+        itemAmount: item.totalMinorUnits,
+        commission,
+        fixedFee,
+        payoutAmount,
+      };
+    });
+
+    const totalPayoutMinorUnits = lines.reduce((sum, l) => sum + l.payoutAmount, 0);
+    const totalCommissionMinorUnits = lines.reduce((sum, l) => sum + l.commission, 0);
+
+    let payoutId = '';
     await prisma.$transaction(async tx => {
       const payout = await tx.payout.create({
         data: {
           vendorId,
-          amountMinorUnits: result.totalPayoutMinorUnits,
+          amountMinorUnits: totalPayoutMinorUnits,
           currencyCode: group.currencyCode,
           status: 'PENDING',
           period,
         },
       });
+      payoutId = payout.id;
       await tx.payoutLine.createMany({
-        data: result.lines.map(line => ({
+        data: lines.map(line => ({
           payoutId: payout.id,
           orderItemId: line.orderItemId,
           amount: line.payoutAmount,
@@ -93,6 +117,12 @@ export async function generatePayouts(period: string = periodOf()): Promise<numb
           fixedFee: line.fixedFee,
         })),
       });
+    });
+    await recordPayoutLedger({
+      referenceId: payoutId,
+      currencyCode: group.currencyCode,
+      commissionMinorUnits: BigInt(totalCommissionMinorUnits),
+      payoutMinorUnits: BigInt(totalPayoutMinorUnits),
     });
     created += 1;
   }

@@ -1,5 +1,6 @@
 import { prisma } from '../index.js';
 import { notifyOrderConfirmed } from '../lib/emails.js';
+import { recordOrderSale } from '../services/ledger-entries.js';
 
 export async function markCaptured(orderId: string): Promise<void> {
   await prisma.$transaction([
@@ -12,6 +13,30 @@ export async function markCaptured(orderId: string): Promise<void> {
       data: { paymentStatus: 'CAPTURED', status: 'CONFIRMED' },
     }),
   ]);
+
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: {
+      orderNumber: true,
+      currencyCode: true,
+      subtotalMinorUnits: true,
+      taxMinorUnits: true,
+      shippingMinorUnits: true,
+      totalMinorUnits: true,
+    },
+  });
+
+  if (order) {
+    await recordOrderSale({
+      orderId,
+      orderNumber: order.orderNumber,
+      currencyCode: order.currencyCode,
+      subtotalMinorUnits: BigInt(order.subtotalMinorUnits),
+      taxMinorUnits: BigInt(order.taxMinorUnits),
+      shippingMinorUnits: BigInt(order.shippingMinorUnits),
+      totalMinorUnits: BigInt(order.totalMinorUnits),
+    });
+  }
 
   await notifyOrderConfirmed(orderId);
 }

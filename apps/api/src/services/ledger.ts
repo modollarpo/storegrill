@@ -10,6 +10,7 @@ export interface LedgerEntryInput {
 
 export interface RecordTransactionInput {
   description: string;
+  currencyCode: string;
   referenceType?: string;
   referenceId?: string;
   entries: LedgerEntryInput[];
@@ -19,6 +20,10 @@ export async function recordLedgerTransaction(
   input: RecordTransactionInput,
   prisma: PrismaClient = db,
 ): Promise<string> {
+  if (!input.currencyCode) {
+    throw new Error('Ledger transaction requires a currencyCode');
+  }
+
   let totalDebit = 0n;
   let totalCredit = 0n;
 
@@ -56,7 +61,7 @@ export async function recordLedgerTransaction(
           code,
           name: code,
           type,
-          currencyCode: 'USD',
+          currencyCode: input.currencyCode,
         },
       });
       accountMap.set(code, created.id);
@@ -79,7 +84,7 @@ export async function recordLedgerTransaction(
                 accountId: accountMap.get(entry.accountCode)!,
                 direction: 'DEBIT',
                 amountMinorUnits: d,
-                currencyCode: entry.currencyCode ?? 'USD',
+                currencyCode: entry.currencyCode ?? input.currencyCode,
               });
             }
             if (c > 0n) {
@@ -87,7 +92,7 @@ export async function recordLedgerTransaction(
                 accountId: accountMap.get(entry.accountCode)!,
                 direction: 'CREDIT',
                 amountMinorUnits: c,
-                currencyCode: entry.currencyCode ?? 'USD',
+                currencyCode: entry.currencyCode ?? input.currencyCode,
               });
             }
             return results;

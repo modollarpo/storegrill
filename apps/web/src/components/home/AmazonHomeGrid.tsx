@@ -61,26 +61,6 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
             ref={scrollRef}
             className="flex items-stretch gap-4 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-4 pt-1 px-1"
           >
-            {/* Card 1: Free Delivery on your first order (Amazon orange) */}
-            <div className="w-[300px] sm:w-[316px] shrink-0 bg-[var(--color-amazon-orange)] text-black p-6 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px] relative overflow-hidden">
-              <div className="relative z-10">
-                <h2 className="text-3xl font-black leading-tight tracking-tight mb-2 text-black">
-                  Free delivery on your first order
-                </h2>
-                <p className="text-sm font-bold text-black/90">Try us, no delivery fee.</p>
-              </div>
-              <div className="my-auto py-4 relative flex justify-center">
-                <div className="w-full h-36 bg-white/40 rounded-xs flex items-center justify-center border border-black/10 shadow-inner">
-                  <div className="text-center font-black text-xs uppercase tracking-wider text-black px-2">
-                    📦 Storegrill Prime Express Delivery
-                  </div>
-                </div>
-              </div>
-              <div className="relative z-10 pt-2 border-t border-black/20">
-                <span className="text-xs font-bold text-black">New customers only. T&Cs apply.</span>
-              </div>
-            </div>
-
             {/* Dynamic Live Deal Slides from heroSlides — full-height ad-banner cards */}
             {heroSlides.map((slide, idx) => (
               <div key={idx} className="w-[300px] sm:w-[316px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-xs shadow-sm group/slide">

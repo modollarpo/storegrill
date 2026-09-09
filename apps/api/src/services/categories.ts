@@ -256,11 +256,27 @@ async function recentEligibleNodes(prisma: PrismaClient, nodes: CategoryNode[]):
 }
 
 /**
- * Auto "recently added" feed: non-featured categories (roots and subcategories)
- * ranked by newest product activity, so the feed re-orders itself automatically
- * as imports land and brand-new categories/subcategories surface once their
- * first products exist. Paginated with offset/limit and a hasMore flag so
- * the storefront can infinitely scroll new categories.
+ * Newest ACTIVE product timestamp per leaf category, read once from the DB so
+ * feed ranking no longer hydrates products for every candidate category.
+ */
+async function loadNewestByCategory(prisma: PrismaClient): Promise<Map<string, Date>> {
+  const rows = await prisma.product.groupBy({
+    by: ['categoryId'],
+    where: { status: 'ACTIVE' },
+    _max: { createdAt: true },
+  });
+  const entries = rows.flatMap(r => (r._max.createdAt == null ? [] : [[r.categoryId, r._max.createdAt] as const]));
+  return new Map(entries);
+}
+
+/**
+ * Auto "recently added" feed: only LEAF categories (bottom of the tree, no
+ * children in the pruned, product-bearing tree) with ACTIVE products, ranked by
+ * newest product activity so the feed re-orders itself automatically as imports
+ * land. Restricting to leaves guarantees no category's products are shown twice
+ * via a parent's subtree overlap. Paginated with offset/limit and a hasMore flag
+ * so the storefront can infinitely scroll new categories. Ranking runs in SQL
+ * over an aggregate read only; newest products are hydrated just for the page rows.
  */
 export async function getRecentCategoryPage(
   prisma: PrismaClient,
@@ -271,14 +287,17 @@ export async function getRecentCategoryPage(
   const offset = Math.max(0, opts.offset ?? 0);
   const limit = Math.max(1, Math.min(opts.limit ?? RECENT_PAGE_LIMIT, RECENT_PAGE_MAX));
 
-  const candidates = await recentEligibleNodes(prisma, allNodes);
-  await attachNewestProducts(prisma, candidates, opts.regionKey);
-  const ranked = candidates
-    .filter(c => (c.featured?.length ?? 0) > 0)
-    .sort((a, b) => (b.newestAt?.getTime() ?? 0) - (a.newestAt?.getTime() ?? 0));
+  const candidates = (await recentEligibleNodes(prisma, allNodes)).filter(c => c.children.length === 0);
+  const newestByCategory = await loadNewestByCategory(prisma);
+  for (const node of candidates) {
+    node.newestAt = newestByCategory.get(node.id) ?? null;
+  }
+
+  const ranked = candidates.filter(c => c.newestAt != null).sort((a, b) => (b.newestAt!.getTime() ?? 0) - (a.newestAt!.getTime() ?? 0));
 
   const hasMore = offset + limit < ranked.length;
   const page = ranked.slice(offset, offset + limit);
+  await attachNewestProducts(prisma, page, opts.regionKey);
   return { categories: page, hasMore };
 }
 

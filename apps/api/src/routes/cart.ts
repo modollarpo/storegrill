@@ -67,6 +67,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   const cartItems: CartItem[] = items.map((item: any) => ({
     productId: item.productId,
     categoryId: item.product?.categoryId ?? null,
+    vendorId: item.product?.vendorId ?? null,
     quantity: item.quantity,
     unitMinorUnits: item.unitPriceMinorUnits,
     currencyCode: item.currencyCode,

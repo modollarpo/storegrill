@@ -207,8 +207,8 @@ async function runImport(jobId: string): Promise<void> {
     } else {
       const [productUrl, stockUrl] = job.source.split('|');
       const [productResult, stockResult] = await Promise.all([
-        fetchFeedToFile(productUrl, { etag: schedule?.etag ?? null, jobId }),
-        fetchFeedToFile(stockUrl, { jobId }),
+        fetchFeedToFile(productUrl, { etag: schedule?.etag ?? null, jobId, label: 'prod' }),
+        fetchFeedToFile(stockUrl, { jobId, label: 'stock' }),
       ]);
       if (productResult.unchanged) {
         await completeJob(jobId, { summary: { unchanged: true, message: 'Feed not modified since last run' } });
@@ -437,6 +437,15 @@ function attributesToMap(attributes: Array<{ name: string; value: string }>): Re
   );
 }
 
+function sourceDomainOf(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
+}
+
 async function executePlan(
   jobId: string,
   mode: string,
@@ -454,12 +463,28 @@ async function executePlan(
   for (const oos of outOfStockProducts) {
     for (const v of oos.variants) feedSkus.add(v.sku);
   }
-  const candidates = await prisma.product.findMany({
-    where: { vendorId, status: { in: DELISTABLE_STATUSES } },
-    include: { variants: true },
-  });
-  for (const candidate of candidates) {
-    if (candidate.variants.every((v: any) => !feedSkus.has(v.sku))) archiveIds.push(candidate.id);
+  const feedSourceDomains = new Set<string>();
+  for (const product of [...planned.map(p => p.product), ...outOfStockProducts]) {
+    const domain = sourceDomainOf(product.sourceUrl);
+    if (domain) feedSourceDomains.add(domain);
+  }
+  // Only reconcile deletions against products imported by the same feed family
+  // (identified by its source-url domain). A vendor can host several feeds, so a
+  // single feed must never archive another feed's catalog. When the feed produced
+  // no usable products, skip archiving so a transient empty feed cannot wipe a
+  // live catalog.
+  if (feedSkus.size > 0 && feedSourceDomains.size > 0) {
+    const candidates = await prisma.product.findMany({
+      where: {
+        vendorId,
+        status: { in: DELISTABLE_STATUSES },
+        OR: [...feedSourceDomains].map(domain => ({ sourceUrl: { contains: domain } })),
+      },
+      include: { variants: true },
+    });
+    for (const candidate of candidates) {
+      if (candidate.variants.every((v: any) => !feedSkus.has(v.sku))) archiveIds.push(candidate.id);
+    }
   }
   if (dryRun) counts.archived = archiveIds.length;
 

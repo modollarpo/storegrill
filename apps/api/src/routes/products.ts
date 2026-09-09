@@ -6,7 +6,8 @@ import { authenticate, optionalAuth, authorize, AuthRequest } from '../middlewar
 import { cache, TTL } from '../lib/cache.js';
 import { ProductFilterSchema } from '@Storegrill/shared';
 import { slugify } from '../utils/slugify.js';
-import { compareAtPriceOf } from '../utils/pricing.js';
+import { resolveProductPricing } from '../utils/pricing.js';
+import { loadActiveDeals } from '../services/deal-eval.js';
 import { getCompanions } from '../lib/companions.js';
 
 const router = Router();
@@ -99,20 +100,27 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
     prisma.product.count({ where }),
   ]);
 
-  const enriched = products.map((p: any) => ({
-    ...p,
-    images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
-    tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
-    basePriceMinorUnits: Number(p.basePriceMinorUnits),
-    price: p.regionPrices[0] ? Number(p.regionPrices[0].priceMinorUnits) : Number(p.basePriceMinorUnits),
-    listPriceMinorUnits: compareAtPriceOf(p) ?? Number(p.basePriceMinorUnits),
-    originalPriceMinorUnits: compareAtPriceOf(p) ?? Number(p.basePriceMinorUnits),
-    currencyCode: p.regionPrices[0]?.currencyCode || p.currencyCode,
-    inStock: p._count.variants > 0,
-    rating: Number(p.rating),
-    regionPrices: undefined,
-    _count: undefined,
-  }));
+  const activeDeals = await loadActiveDeals(prisma);
+
+  const enriched = products.map((p: any) => {
+    const pricing = resolveProductPricing(p, regionKey, activeDeals);
+    return {
+      ...p,
+      images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
+      tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
+      basePriceMinorUnits: Number(p.basePriceMinorUnits),
+      price: pricing.price,
+      listPriceMinorUnits: pricing.listPriceMinorUnits ?? pricing.price,
+      originalPriceMinorUnits: pricing.listPriceMinorUnits ?? pricing.price,
+      discountPercent: pricing.discountPercent,
+      dealId: pricing.dealId ?? undefined,
+      currencyCode: pricing.currencyCode,
+      inStock: p._count.variants > 0,
+      rating: Number(p.rating),
+      regionPrices: undefined,
+      _count: undefined,
+    };
+  });
 
   res.json({
     products: enriched,
@@ -140,20 +148,27 @@ router.get('/featured', optionalAuth, async (req: AuthRequest, res: Response) =>
     },
   });
 
+  const activeDeals = await loadActiveDeals(prisma);
+
   res.json({
-    products: products.map((p: any) => ({
-      ...p,
-      images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
-      tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
-      basePriceMinorUnits: Number(p.basePriceMinorUnits),
-      price: p.regionPrices[0] ? Number(p.regionPrices[0].priceMinorUnits) : Number(p.basePriceMinorUnits),
-      listPriceMinorUnits: compareAtPriceOf(p) ?? Number(p.basePriceMinorUnits),
-      originalPriceMinorUnits: compareAtPriceOf(p) ?? Number(p.basePriceMinorUnits),
-      currencyCode: p.regionPrices[0]?.currencyCode || p.currencyCode,
-      rating: Number(p.rating),
-      regionPrices: undefined,
-      variants: undefined,
-    })),
+    products: products.map((p: any) => {
+      const pricing = resolveProductPricing(p, regionKey, activeDeals);
+      return {
+        ...p,
+        images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
+        tags: typeof p.tags === 'string' ? JSON.parse(p.tags) : p.tags,
+        basePriceMinorUnits: Number(p.basePriceMinorUnits),
+        price: pricing.price,
+        listPriceMinorUnits: pricing.listPriceMinorUnits ?? pricing.price,
+        originalPriceMinorUnits: pricing.listPriceMinorUnits ?? pricing.price,
+        discountPercent: pricing.discountPercent,
+        dealId: pricing.dealId ?? undefined,
+        currencyCode: pricing.currencyCode,
+        rating: Number(p.rating),
+        regionPrices: undefined,
+        variants: undefined,
+      };
+    }),
   });
 });
 
@@ -191,6 +206,8 @@ router.get('/:identifier', optionalAuth, async (req: AuthRequest, res: Response)
     });
   }
 
+  const pricing = resolveProductPricing(product as any, regionKey, await loadActiveDeals(prisma));
+
   const payload = {
     product: {
       ...product,
@@ -198,12 +215,12 @@ router.get('/:identifier', optionalAuth, async (req: AuthRequest, res: Response)
       tags: typeof product.tags === 'string' ? JSON.parse(product.tags) : product.tags,
       attributes: typeof product.attributes === 'string' ? JSON.parse(product.attributes) : product.attributes,
       basePriceMinorUnits: Number(product.basePriceMinorUnits),
-      price: product.regionPrices[0]
-        ? Number(product.regionPrices[0].priceMinorUnits)
-        : Number(product.basePriceMinorUnits),
-      listPriceMinorUnits: compareAtPriceOf(product as any) ?? Number(product.basePriceMinorUnits),
-      originalPriceMinorUnits: compareAtPriceOf(product as any) ?? Number(product.basePriceMinorUnits),
-      currencyCode: product.regionPrices[0]?.currencyCode || product.currencyCode,
+      price: pricing.price,
+      listPriceMinorUnits: pricing.listPriceMinorUnits ?? pricing.price,
+      originalPriceMinorUnits: pricing.listPriceMinorUnits ?? pricing.price,
+      discountPercent: pricing.discountPercent,
+      dealId: pricing.dealId ?? undefined,
+      currencyCode: pricing.currencyCode,
       rating: Number(product.rating),
       inventoryCount: product.variants.reduce((sum: number, v: { stock: number }) => sum + v.stock, 0),
       variants: product.variants.map((v: any) => ({

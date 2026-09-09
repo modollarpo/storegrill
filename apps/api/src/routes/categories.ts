@@ -1,8 +1,11 @@
 import { Router, Response, Request } from 'express';
 import { prisma } from '../index.js';
 import { getCategoryTree, getRecentCategoryPage, buildTree, CategoryNode } from '../services/categories.js';
+import { cache, TTL } from '../lib/cache.js';
 
 const router = Router();
+
+const MAX_RECENT_OFFSET = 1000;
 
 router.get('/', async (req: Request, res: Response) => {
   const featuredOnly = req.query.featured === 'true';
@@ -16,11 +19,22 @@ router.get('/', async (req: Request, res: Response) => {
   }
 
   if (req.query.sort === 'recent') {
-    const offset = Number(req.query.offset) || 0;
-    const limit = Number(req.query.limit) || 4;
+    const offset = Math.min(Math.max(0, Number(req.query.offset) || 0), MAX_RECENT_OFFSET);
+    const limit = Math.max(1, Math.min(Number(req.query.limit) || 4, 8));
+    const cacheKey = `recent:${regionKey}:${offset}:${limit}`;
+
+    const cached = cache.get<{ categories: CategoryNode[]; hasMore: boolean }>(cacheKey);
+    if (cached) {
+      res.setHeader('X-Cache', 'HIT');
+      return res.json(cached);
+    }
+
     const { categories, hasMore } = await getRecentCategoryPage(prisma, { regionKey, offset, limit });
-    res.json({ categories, hasMore });
-    return;
+    const payload = { categories, hasMore };
+    cache.set(cacheKey, payload, TTL.categories);
+
+    res.setHeader('X-Cache', 'MISS');
+    return res.json(payload);
   }
 
   const roots: CategoryNode[] = await getCategoryTree(prisma, {

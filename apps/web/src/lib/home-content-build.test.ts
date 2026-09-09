@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildCategoryCards,
+  buildCuratedCards,
   buildHeroSlides,
   buildPromos,
   buildRows,
   endLabel,
   type CategoryRow,
+  type CuratedProductRow,
   type DealRow,
   type HomeGridSection,
   type HomePromoSection,
@@ -181,6 +183,60 @@ describe('buildRows', () => {
     expect(promo.priceMinorUnits).toBe(15999);
     expect(promo.listPriceMinorUnits).toBe(19999);
     expect(promo.href).toBe('/products/gas-grill');
+  });
+});
+
+describe('buildCuratedCards', () => {
+  const flash: CuratedProductRow[] = [
+    {
+      name: 'Hairdryer',
+      slug: 'hairdryer',
+      thumbnail: 'https://cdn.storegrill.net/hairdryer.jpg',
+      priceMinorUnits: 4199,
+      listPriceMinorUnits: 5499,
+      discountPercent: 25,
+    },
+    { name: 'Panel Heater', slug: 'panel-heater', thumbnail: 'https://cdn.storegrill.net/heater.jpg' },
+  ];
+  const best = [
+    {
+      name: 'Kettle',
+      slug: 'kettle',
+      thumbnail: 'https://cdn.storegrill.net/kettle.jpg',
+      priceMinorUnits: 1999,
+      currencyCode: 'GBP',
+    },
+  ];
+
+  it('builds a flash deals card from real flash products with max discount and end date', () => {
+    const cards = buildCuratedCards(flash, [], [], 'en', '2026-09-11T23:59:59Z');
+    expect(cards).toHaveLength(1);
+    expect(cards[0].title).toBe('Flash Deals');
+    expect(cards[0].linkHref).toBe('/deals');
+    expect(cards[0].subtitle).toContain('25% off');
+    expect(cards[0].subtitle).toContain('Ends');
+    expect(cards[0].tiles[0]).toMatchObject({
+      title: 'Hairdryer',
+      href: '/products/hairdryer',
+      priceMinorUnits: 4199,
+      listPriceMinorUnits: 5499,
+      currencyCode: undefined,
+    });
+  });
+
+  it('builds best sellers and new arrivals cards pointing at the sorted listing', () => {
+    const cards = buildCuratedCards([], best, [{ ...best[0], name: 'Toaster', slug: 'toaster' }], 'en');
+    expect(cards).toHaveLength(2);
+    expect(cards[0].title).toBe('Best Sellers');
+    expect(cards[0].linkHref).toBe('/products?sort=popular');
+    expect(cards[1].title).toBe('New Arrivals');
+    expect(cards[1].linkHref).toBe('/products?sort=newest');
+    expect(cards[1].tiles[0]).toMatchObject({ title: 'Toaster', priceMinorUnits: 1999, currencyCode: 'GBP' });
+  });
+
+  it('skips sources with no qualified products', () => {
+    expect(buildCuratedCards([], [], [], 'en')).toHaveLength(0);
+    expect(buildCuratedCards([{ name: 'No image', slug: 'x' }], [], [], 'en')).toHaveLength(0);
   });
 });
 

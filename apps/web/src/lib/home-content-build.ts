@@ -63,8 +63,21 @@ export interface DealRow {
   enabled?: boolean;
   slug?: string | null;
   name?: string;
+  type?: string;
   endsAt?: string;
   variants?: DealVariantRow[];
+}
+
+export interface CuratedProductRow {
+  id?: string;
+  slug?: string | null;
+  name?: string;
+  thumbnail?: string | null;
+  priceMinorUnits?: number | null;
+  listPriceMinorUnits?: number | null;
+  discountPercent?: number;
+  endsAt?: string | null;
+  currencyCode?: string;
 }
 
 export interface FeaturedRow {
@@ -158,6 +171,72 @@ export function buildCategoryCards(roots: CategoryRow[], language: string): Home
     });
   }
   return cards;
+}
+
+export function buildCuratedCards(
+  flash: CuratedProductRow[],
+  bestSellers: CuratedProductRow[],
+  newArrivals: CuratedProductRow[],
+  language: string,
+  flashEndsAt?: string | null,
+): HomeGridSection[] {
+  const cards: HomeGridSection[] = [];
+
+  const flashTiles = curatedTiles(flash);
+  if (flashTiles.length > 0) {
+    const maxPercent = Math.max(0, ...flash.map(p => Math.round(Number(p.discountPercent) || 0)));
+    const ends = flashEndsAt ? endLabel(flashEndsAt, language) : '';
+    const subtitle = [
+      maxPercent > 0 ? t(language, 'homePercentOffUpTo', maxPercent) : null,
+      ends ? t(language, 'homeEndsOn', ends) : null,
+    ]
+      .filter(Boolean)
+      .join(' · ') || undefined;
+    cards.push({
+      title: t(language, 'homeFlashDealsTitle'),
+      subtitle,
+      tiles: flashTiles,
+      linkText: t(language, 'homeSeeMore'),
+      linkHref: '/deals',
+      cardBg: 'bg-gradient-to-br from-ember-pale to-smoke-100',
+    });
+  }
+
+  const bestSellerTiles = curatedTiles(bestSellers);
+  if (bestSellerTiles.length > 0) {
+    cards.push({
+      title: t(language, 'homeBestSellersTitle'),
+      tiles: bestSellerTiles,
+      linkText: t(language, 'homeSeeMore'),
+      linkHref: '/products?sort=popular',
+    });
+  }
+
+  const newArrivalTiles = curatedTiles(newArrivals);
+  if (newArrivalTiles.length > 0) {
+    cards.push({
+      title: t(language, 'homeNewArrivalsTitle'),
+      tiles: newArrivalTiles,
+      linkText: t(language, 'homeSeeMore'),
+      linkHref: '/products?sort=newest',
+    });
+  }
+
+  return cards;
+}
+
+function curatedTiles(items: CuratedProductRow[]): HomeCardTile[] {
+  return items
+    .filter(p => p?.name && p?.thumbnail && p?.slug)
+    .slice(0, 4)
+    .map(p => ({
+      title: p.name as string,
+      image: p.thumbnail as string,
+      href: `/products/${p.slug as string}`,
+      priceMinorUnits: p.priceMinorUnits ?? undefined,
+      currencyCode: p.currencyCode,
+      listPriceMinorUnits: p.listPriceMinorUnits ?? undefined,
+    }));
 }
 
 export function buildPromos(language: string): HomePromoSection[] {

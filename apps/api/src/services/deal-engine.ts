@@ -11,6 +11,7 @@ export type DealTypeEnum =
 export interface CartItem {
   productId: string;
   categoryId?: string | null;
+  vendorId?: string | null;
   quantity: number;
   unitMinorUnits: number;
   currencyCode: string;
@@ -33,6 +34,9 @@ export interface DealInput {
   metadata?: DealMetadata | null;
   minOrderAmount?: number | null;
   maxDiscount?: number | null;
+  vendorId?: string | null;
+  variants?: { productId: string }[];
+  endsAt?: string | null;
 }
 
 export interface AppliedDeal {
@@ -65,14 +69,23 @@ function matchedItems(deal: DealInput, items: CartItem[]): CartItem[] {
         ? deal.metadata?.bundleProductIds
         : undefined;
 
+  let scoped: CartItem[];
   if (ids && ids.length > 0) {
     const set = new Set(ids);
-    return items.filter(i => set.has(i.productId));
+    scoped = items.filter(i => set.has(i.productId));
+  } else {
+    const cats = deal.categoryIds ?? [];
+    if (cats.length === 0) {
+      scoped = items;
+    } else {
+      const catSet = new Set(cats);
+      scoped = items.filter(i => i.categoryId && catSet.has(i.categoryId));
+    }
   }
-  const cats = deal.categoryIds ?? [];
-  if (cats.length === 0) return items;
-  const catSet = new Set(cats);
-  return items.filter(i => i.categoryId && catSet.has(i.categoryId));
+  if (deal.vendorId != null && scoped.length > 0) {
+    scoped = scoped.filter(i => i.vendorId === deal.vendorId);
+  }
+  return scoped;
 }
 
 function lineTotal(item: CartItem, orderCurrency: string): number {

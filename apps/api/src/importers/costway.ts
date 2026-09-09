@@ -214,6 +214,7 @@ function toVariant(row: CostwayFeedRow, suffix: string | null, flags: DerivedFla
   const feedPriceMinorUnits = parsePriceToMinor(row.Price);
   if (feedPriceMinorUnits == null) return null;
   const supplierStock = Number.parseInt(row.Stock, 10) || 0;
+  const isClearance = flags.tags.includes('clearance');
   const isFlashSale = flags.tags.includes('flash-sale');
   return {
     sku: row.SKU.trim(),
@@ -221,9 +222,11 @@ function toVariant(row: CostwayFeedRow, suffix: string | null, flags: DerivedFla
     variantSuffix: suffix,
     feedPriceMinorUnits,
     priceMinorUnits: applyIngestPricing(feedPriceMinorUnits, {
-      clearance: flags.tags.includes('clearance'),
+      clearance: isClearance,
     }),
-    ...(isFlashSale ? { listPriceMinorUnits: applyIngestPricing(feedPriceMinorUnits) } : {}),
+    ...(isClearance || isFlashSale
+      ? { listPriceMinorUnits: applyIngestPricing(feedPriceMinorUnits) }
+      : {}),
     supplierStock,
     stock: supplierStock > OUT_OF_STOCK_THRESHOLD ? supplierStock : 0,
     images: normalizeImages(row),

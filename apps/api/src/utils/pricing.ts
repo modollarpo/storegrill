@@ -25,6 +25,9 @@ export function resolveProductPricing(
   price: number;
   listPriceMinorUnits?: number;
   currencyCode: string;
+  discountPercent?: number;
+  dealId?: string | null;
+  dealType?: string | null;
 } {
   const regional =
     (Array.isArray(product?.regionPrices) && product.regionPrices.find((rp: any) => rp.regionKey === regionKey)) ||
@@ -34,16 +37,32 @@ export function resolveProductPricing(
 
   let listPrice = compareAtPriceOf(product);
   let effectivePrice = basePrice;
+  let matchedDealId: string | null | undefined;
+  let matchedDealType: string | null | undefined;
 
   for (const deal of activeDeals) {
-    const isMatched = (deal.variants ?? []).some((dv: any) => dv.productId === product.id);
-    if (isMatched && deal.value != null) {
+    if (deal.vendorId != null && product?.vendorId != null && deal.vendorId !== product.vendorId) continue;
+
+    const flashProductIds = Array.isArray(deal.metadata?.flashProductIds) ? deal.metadata.flashProductIds : [];
+    const dealVariants = Array.isArray(deal.variants) ? deal.variants : [];
+    const categoryIds = Array.isArray(deal.categoryIds) ? deal.categoryIds : [];
+
+    const flashMatch = flashProductIds.includes(product?.id) || dealVariants.some((dv: any) => dv.productId === product?.id);
+    const categoryMatch =
+      product?.categoryId != null &&
+      categoryIds.length > 0 &&
+      categoryIds.includes(product.categoryId);
+    if (!flashMatch && !categoryMatch) continue;
+
+    if (deal.value != null) {
       const dealVal = Number(deal.value);
       if (deal.type === 'PERCENTAGE_OFF' || deal.type === 'FLASH_SALE') {
         const discounted = Math.max(0, Math.round((basePrice * (100 - dealVal)) / 100));
         if (discounted < effectivePrice) {
           listPrice = Math.max(listPrice ?? basePrice, basePrice);
           effectivePrice = discounted;
+          matchedDealId = deal.id;
+          matchedDealType = deal.type;
         }
       } else if (deal.type === 'FIXED_AMOUNT') {
         const off = Math.round(dealVal * 100);
@@ -51,14 +70,22 @@ export function resolveProductPricing(
         if (discounted < effectivePrice) {
           listPrice = Math.max(listPrice ?? basePrice, basePrice);
           effectivePrice = discounted;
+          matchedDealId = deal.id;
+          matchedDealType = deal.type;
         }
       }
     }
   }
 
   if (listPrice !== undefined && listPrice > effectivePrice) {
-    return { price: effectivePrice, listPriceMinorUnits: listPrice, currencyCode };
+    const discountPercent = Math.round(((listPrice - effectivePrice) / listPrice) * 100);
+    return {
+      price: effectivePrice,
+      listPriceMinorUnits: listPrice,
+      currencyCode,
+      ...(discountPercent >= 1 ? { discountPercent, dealId: matchedDealId ?? null, dealType: matchedDealType ?? null } : {}),
+    };
   }
 
-  return { price: effectivePrice, currencyCode };
+  return { price: effectivePrice, currencyCode, dealId: null, dealType: null };
 }

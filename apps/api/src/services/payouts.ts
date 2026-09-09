@@ -1,5 +1,6 @@
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { recordPayoutLedger } from './ledger-entries.js';
+import { calculatePayout, toBasisPoints } from '@Storegrill/shared';
 
 export function periodOf(date: Date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -16,6 +17,33 @@ interface PayoutGroup {
   itemIds: GroupedItem[];
   revenueSharePct: number;
   fixedFeeMinorUnits: number;
+}
+
+interface ComputeGroupPayoutInput {
+  items: GroupedItem[];
+  revenueSharePct: number;
+  fixedFeeMinorUnits: number;
+  currencyCode: string;
+}
+
+/**
+ * Pure payout computation for one (vendor, currency) group. Money math lives in
+ * the shared engine: order-time commission snapshots win when present, otherwise
+ * the vendor's flat revenue share is applied in basis points. No float money.
+ */
+export function computeGroupPayout(input: ComputeGroupPayoutInput) {
+  return calculatePayout(
+    input.items.map(item => ({
+      id: item.id,
+      amountMinorUnits: item.totalMinorUnits,
+      commissionOverrideMinorUnits: item.commissionMinorUnits >= 0 ? item.commissionMinorUnits : undefined,
+    })),
+    {
+      revenueShareBps: toBasisPoints(input.revenueSharePct),
+      fixedFeeMinorUnits: input.fixedFeeMinorUnits,
+      currencyCode: input.currencyCode,
+    },
+  );
 }
 
 /**
@@ -77,24 +105,15 @@ export async function generatePayouts(period: string = periodOf()): Promise<numb
   for (const [key, group] of groups) {
     const [vendorId] = key.split(':');
 
-    const lines = group.itemIds.map(item => {
-      const commission =
-        item.commissionMinorUnits >= 0
-          ? item.commissionMinorUnits
-          : Math.round(item.totalMinorUnits * (group.revenueSharePct / 100));
-      const fixedFee = group.fixedFeeMinorUnits;
-      const payoutAmount = Math.max(0, item.totalMinorUnits - commission - fixedFee);
-      return {
-        orderItemId: item.id,
-        itemAmount: item.totalMinorUnits,
-        commission,
-        fixedFee,
-        payoutAmount,
-      };
+    const result = computeGroupPayout({
+      items: group.itemIds,
+      revenueSharePct: group.revenueSharePct,
+      fixedFeeMinorUnits: group.fixedFeeMinorUnits,
+      currencyCode: group.currencyCode,
     });
 
-    const totalPayoutMinorUnits = lines.reduce((sum, l) => sum + l.payoutAmount, 0);
-    const totalCommissionMinorUnits = lines.reduce((sum, l) => sum + l.commission, 0);
+    const totalPayoutMinorUnits = result.totalPayoutMinorUnits;
+    const totalCommissionMinorUnits = result.totalCommissionMinorUnits;
 
     let payoutId = '';
     await prisma.$transaction(async tx => {
@@ -109,7 +128,7 @@ export async function generatePayouts(period: string = periodOf()): Promise<numb
       });
       payoutId = payout.id;
       await tx.payoutLine.createMany({
-        data: lines.map(line => ({
+        data: result.lines.map(line => ({
           payoutId: payout.id,
           orderItemId: line.orderItemId,
           amount: line.payoutAmount,

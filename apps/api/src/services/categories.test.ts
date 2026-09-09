@@ -35,21 +35,26 @@ type VendorRow = {
 
 function mockPrisma(categories: CategoryRow[], products: ProductRow[], vendors: VendorRow[]) {
   const groupBy = async (opts: any) => {
-    const { by, where } = opts;
+    const { by, where, _max } = opts;
     const rows = products.filter(
       p =>
         p.status === 'ACTIVE' &&
         (!where?.categoryId?.in || where.categoryId.in.includes(p.categoryId)),
     );
-    const counts = new Map<string, number>();
+    const grouped = new Map<string, ProductRow[]>();
     for (const row of rows) {
       const k = by.map((field: string) => (row as any)[field] ?? '').join('|');
-      counts.set(k, (counts.get(k) ?? 0) + 1);
+      grouped.set(k, [...(grouped.get(k) ?? []), row]);
     }
-    return [...counts.entries()].map(([k, count]) => {
+    return [...grouped.entries()].map(([k, group]) => {
       const parts = k.split('|');
-      const obj: Record<string, unknown> = { _count: count };
+      const obj: Record<string, unknown> = { _count: group.length };
       by.forEach((field: string, i: number) => (obj[field] = parts[i]));
+      if (_max?.createdAt) {
+        obj._max = {
+          createdAt: group.reduce((max, r) => (r.createdAt.getTime() > max.getTime() ? r.createdAt : max), group[0].createdAt),
+        };
+      }
       return obj;
     });
   };
@@ -82,7 +87,7 @@ const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000);
 const hoursAgo = (n: number) => new Date(Date.now() - n * 3_600_000);
 
 describe('getRecentCategoryPage', () => {
-  it('returns newest multi-vendor roots first, skipping featured and vendor-narrow roots', async () => {
+  it('returns newest leaf categories first, skipping featured and vendor-narrow roots', async () => {
     const prisma = mockPrisma(
       [
         { id: 'f1', name: 'Featured Departments', slug: 'featured', parentId: null, isFeatured: true, displayOrder: 1, createdAt: daysAgo(50) },
@@ -114,7 +119,8 @@ describe('getRecentCategoryPage', () => {
 
     const first = await getRecentCategoryPage(prisma, { regionKey: 'UK', offset: 0, limit: 4 });
     expect(first.hasMore).toBe(false);
-    expect(first.categories.map(c => c.slug)).toEqual(['outdoor', 'garden', 'kitchen', 'pans']);
+    // Leaf-only focus: Kitchen (c1) has children so it is excluded; its leaf child Pans (c1a) surfaces instead.
+    expect(first.categories.map(c => c.slug)).toEqual(['outdoor', 'garden', 'pans']);
     expect(first.categories[0].featured?.[0].name).toBe('Tent');
   });
 

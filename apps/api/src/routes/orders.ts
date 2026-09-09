@@ -10,6 +10,8 @@ import { v4 as uuid } from 'uuid';
 import { initiatePaypalPayment, initiateStripePayment, type PaymentOrderContext } from '../payments/providers.js';
 import { validateCoupon } from '../services/coupons.js';
 import { notifyOrderCancelled, notifyOrderConfirmed } from '../lib/emails.js';
+import { loadCommissionRules, resolveCommissionFromRules, snapshotToJson } from '../services/commission-snapshot.js';
+import { recordOrderSale, recordOrderRefund } from '../services/ledger-entries.js';
 
 const router = Router();
 
@@ -294,6 +296,36 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
   const shipping = grouped ? Number(grouped.totalMinorUnits) : 0;
   const total = discountedSubtotal + tax + shipping;
 
+  const vendorIds = [...new Set(orderItems.map((item: any) => item.vendorId))];
+  const commissionByVendor = new Map<string, Awaited<ReturnType<typeof loadCommissionRules>>>();
+  for (const vendorId of vendorIds) {
+    commissionByVendor.set(vendorId, await loadCommissionRules(vendorId, regionConfig.key));
+  }
+
+  const orderItemCommissions: Array<{
+    commissionMinorUnits: bigint;
+    rateBps: number;
+    basis: string;
+    snapshot: string;
+  } | null> = orderItems.map((item: any) => {
+    const rules = commissionByVendor.get(item.vendorId) ?? [];
+    const resolved = resolveCommissionFromRules(rules, {
+      merchantId: item.vendorId,
+      regionKey: regionConfig.key,
+      categoryId: item.categoryId,
+      dealPriceMinorUnits: BigInt(item.totalMinorUnits),
+      shippingMinorUnits: BigInt(shipping),
+      taxMinorUnits: BigInt(tax),
+    });
+    if (!resolved) return null;
+    return {
+      commissionMinorUnits: resolved.commissionMinorUnits,
+      rateBps: resolved.snapshot.rateBps,
+      basis: resolved.snapshot.basis,
+      snapshot: snapshotToJson(resolved.snapshot),
+    };
+  });
+
   const fulfillment = planFulfillment(
     orderItems.map((item: any) => ({
       productId: item.productId,
@@ -367,17 +399,26 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
         paymentMethod: body.paymentMethod,
         paymentStatus,
         items: {
-          create: orderItems.map((item: any) => ({
-            productId: item.productId,
-            variantId: item.variantId,
-            vendorId: item.vendorId,
-            name: item.name,
-            sku: item.sku,
-            image: item.image,
-            quantity: item.quantity,
-            unitPriceMinorUnits: item.unitPriceMinorUnits,
-            totalMinorUnits: item.totalMinorUnits,
-          })),
+          create: orderItems.map((item: any, index: number) => {
+            const commission = orderItemCommissions[index];
+            return {
+              productId: item.productId,
+              variantId: item.variantId,
+              vendorId: item.vendorId,
+              name: item.name,
+              sku: item.sku,
+              image: item.image,
+              quantity: item.quantity,
+              unitPriceMinorUnits: item.unitPriceMinorUnits,
+              totalMinorUnits: item.totalMinorUnits,
+              ...(commission && {
+                commissionMinorUnits: commission.commissionMinorUnits,
+                commissionRateBps: commission.rateBps,
+                commissionBasis: commission.basis,
+                commissionSnapshot: commission.snapshot,
+              }),
+            };
+          }),
         },
         ...(initiated && {
           payments: {
@@ -422,6 +463,15 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
 
   if (order.status === 'CONFIRMED') {
     await notifyOrderConfirmed(order.id);
+    await recordOrderSale({
+      orderId: order.id,
+      orderNumber,
+      currencyCode,
+      subtotalMinorUnits: BigInt(subtotal),
+      taxMinorUnits: BigInt(tax),
+      shippingMinorUnits: BigInt(shipping),
+      totalMinorUnits: BigInt(total),
+    });
   }
 
   res.status(201).json({
@@ -505,6 +555,16 @@ router.post('/:id/cancel', async (req: AuthRequest, res: Response) => {
       data: { totalSales: { decrement: item.quantity } },
     });
   }
+
+  await recordOrderRefund({
+    orderId: id,
+    orderNumber: order.orderNumber,
+    currencyCode: order.currencyCode,
+    subtotalMinorUnits: BigInt(order.subtotalMinorUnits),
+    taxMinorUnits: BigInt(order.taxMinorUnits),
+    shippingMinorUnits: BigInt(order.shippingMinorUnits),
+    totalMinorUnits: BigInt(order.totalMinorUnits),
+  });
 
   await notifyOrderCancelled(id);
 

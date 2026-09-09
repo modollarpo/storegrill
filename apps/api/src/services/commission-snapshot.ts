@@ -7,6 +7,7 @@ import {
   type CommissionRule as SharedCommissionRule,
   type CommissionSnapshot as SharedCommissionSnapshot,
 } from '@Storegrill/shared';
+import { mapCommissionRulesToShared } from './commission-rule-mapper.js';
 
 export interface CommissionSnapshotInput {
   merchantId: string;
@@ -21,36 +22,6 @@ export interface ResolvedCommission {
   commissionMinorUnits: bigint;
   snapshot: SharedCommissionSnapshot;
   ruleId: string | null;
-}
-
-function ruleToShared(rule: {
-  id: string;
-  basis: string;
-  rateBps: number;
-  minAmountMinorUnits: bigint | null;
-  maxAmountMinorUnits: bigint | null;
-  vendorId: string | null;
-  categoryId: string | null;
-  regionKey: string | null;
-  priority: number;
-  startsAt: Date | null;
-  endsAt: Date | null;
-  active: boolean;
-}): SharedCommissionRule | null {
-  if (!rule.active) return null;
-  return {
-    id: rule.id,
-    merchantId: rule.vendorId,
-    regionKey: rule.regionKey,
-    categoryId: rule.categoryId,
-    basis: rule.basis as SharedCommissionRule['basis'],
-    rateBps: rule.rateBps,
-    minCommissionMinorUnits: rule.minAmountMinorUnits,
-    maxCommissionMinorUnits: rule.maxAmountMinorUnits,
-    effectiveFrom: rule.startsAt,
-    effectiveTo: rule.endsAt,
-    priority: rule.priority,
-  };
 }
 
 /**
@@ -71,9 +42,7 @@ export async function loadCommissionRules(
       ],
     },
   });
-  return rules
-    .map(r => ruleToShared(r))
-    .filter((r): r is SharedCommissionRule => r !== null);
+  return mapCommissionRulesToShared(rules);
 }
 
 /**

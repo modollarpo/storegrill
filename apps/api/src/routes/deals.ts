@@ -8,6 +8,7 @@ import { validateCoupon } from '../services/coupons.js';
 import { loadActiveDeals } from '../services/deal-eval.js';
 import { evaluateDealEconomics } from '../services/deal-valuation.js';
 import { dealPriceFor, resolveListPrice } from '../services/deal-pricing.js';
+import { mapCommissionRulesToShared } from '../services/commission-rule-mapper.js';
 
 const router = Router();
 
@@ -197,7 +198,7 @@ router.post('/evaluate', optionalAuth, async (req: AuthRequest, res: Response) =
 
   const evaluation = evaluateDealEconomics({
     ...body,
-    commissionRules: rules as any,
+    commissionRules: mapCommissionRulesToShared(rules),
   });
 
   res.json({ evaluation });

@@ -84,33 +84,41 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
               </div>
             </div>
 
-            {/* Dynamic Live Deal Slides from heroSlides */}
+            {/* Dynamic Live Deal Slides from heroSlides — full-height ad-banner cards */}
             {heroSlides.map((slide, idx) => (
-              <div key={idx} className="w-[300px] sm:w-[316px] shrink-0 bg-white text-text-primary p-5 rounded-xs shadow-sm flex flex-col justify-between snap-start h-[420px] relative overflow-hidden group/slide border border-neutral-300">
-                <div>
+              <div key={idx} className="w-[300px] sm:w-[316px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-xs shadow-sm group/slide">
+                <Image
+                  src={slide.image}
+                  alt={slide.title}
+                  fill
+                  sizes="316px"
+                  className="object-cover group-hover/slide:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/10 z-10" />
+                <div className="absolute inset-x-0 top-0 z-20 p-5 flex justify-between items-start">
                   {slide.discountPercent ? (
-                    <span className="inline-block bg-[var(--color-amazon-deal)] text-white text-[10px] font-bold px-2 py-0.5 rounded-xs mb-2">
-                      {slide.discountPercent}% OFF DEAL
+                    <span className="inline-block bg-[var(--color-amazon-deal)] text-white text-[10px] font-extrabold px-2 py-1 rounded-xs tracking-wide shadow-sm">
+                      {slide.discountPercent}% OFF
                     </span>
                   ) : null}
-                  <h3 className="text-lg font-black text-text-primary line-clamp-2 mb-1">{slide.title}</h3>
-                  <p className="text-xs text-neutral-600">{slide.subtitle}</p>
                 </div>
-                <div className="w-full h-40 relative bg-neutral-100 rounded-xs overflow-hidden my-auto border border-neutral-200">
-                  <Image src={slide.image} alt={slide.title} fill className="object-cover group-hover/slide:scale-105 transition-transform" />
-                </div>
-                <div className="pt-3 border-t border-neutral-200 flex items-center justify-between">
-                  <div>
+                <div className="absolute inset-x-0 bottom-0 z-20 p-5 flex flex-col gap-2">
+                  <h3 className="text-xl font-black text-white leading-snug line-clamp-2 drop-shadow-sm">{slide.title}</h3>
+                  <p className="text-xs font-semibold text-white/85 line-clamp-1">{slide.subtitle}</p>
+                  <div className="flex items-center justify-between gap-2 mt-1">
                     {slide.priceMinorUnits !== undefined ? (
-                      <span className="text-lg font-black text-ember">
+                      <span className="text-2xl font-black text-white drop-shadow-sm">
                         {slide.currencyCode === 'GBP' ? '£' : slide.currencyCode === 'EUR' ? '€' : '$'}
                         {(slide.priceMinorUnits / 100).toFixed(2)}
                       </span>
                     ) : null}
+                    <Link
+                      href={slide.href}
+                      className="shrink-0 inline-flex items-center gap-1 bg-white/95 text-neutral-900 text-xs font-extrabold px-3 py-1.5 rounded-xs hover:bg-white transition-colors shadow-sm"
+                    >
+                      Shop deal →
+                    </Link>
                   </div>
-                  <Link href={slide.href} className="text-xs font-bold text-[var(--color-amazon-link)] hover:underline">
-                    Shop deal →
-                  </Link>
                 </div>
               </div>
             ))}

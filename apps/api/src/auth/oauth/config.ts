@@ -79,12 +79,21 @@ export const fetchToken = async (
   const cfg = PROVIDER_CONFIGS[provider]
   if (!cfg) throw new Error(`Unknown provider: ${provider}`)
 
+  const substitute = (value: string): string =>
+    value
+      .replace('{{CLIENT_ID}}', clientId)
+      .replace('{{CLIENT_SECRET}}', clientSecret)
+      .replace('{{CODE}}', code)
+      .replace('{{REDIRECT_URI}}', redirectUri);
+
   const fields: Record<string, string> = {
     client_id: clientId,
     client_secret: clientSecret,
     code,
     redirect_uri: redirectUri,
-    ...(cfg.tokenFields ?? {}),
+  }
+  for (const [key, value] of Object.entries(cfg.tokenFields ?? {})) {
+    fields[key] = substitute(value)
   }
 
   const method: 'GET' | 'POST' = cfg.tokenMethod

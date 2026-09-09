@@ -46,6 +46,7 @@ export interface HomeHeroSlide {
   currencyCode?: string;
   listPriceMinorUnits?: number;
   discountPercent?: number;
+  overlayTint?: string;
 }
 
 export interface DealVariantRow {

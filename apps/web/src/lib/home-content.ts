@@ -1,5 +1,6 @@
 import { API_BASE } from './api';
 import { translateBatch } from './server-translate';
+import { FALLBACK_HERO_DEALS } from './home-hero-fallback';
 import {
   buildCategoryCards,
   buildHeroSlides,
@@ -89,7 +90,10 @@ export async function loadHomeContent(regionKey: string, language: string): Prom
     fetchRecentCategories(regionKey, 0),
   ]);
 
-  const slides = buildHeroSlides(deals, language);
+  let slides = buildHeroSlides(deals, language);
+  if (slides.length === 0) {
+    slides = FALLBACK_HERO_DEALS.map(slide => ({ ...slide }));
+  }
   if (language && language !== 'en' && slides.length > 0) {
     const names = await translateTitles(
       slides.map(slide => slide.title),

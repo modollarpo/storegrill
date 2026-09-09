@@ -2,7 +2,10 @@ export function resolveListPrice(
   product: any,
   regionKey: string,
 ): { listPriceMinorUnits: number; currencyCode: string } {
-  const regional = Array.isArray(product?.regionPrices) && product.regionPrices[0];
+  const regional =
+    (Array.isArray(product?.regionPrices) &&
+      product.regionPrices.find((rp: any) => rp.regionKey === regionKey)) ||
+    product?.regionPrices?.[0];
   const listPriceMinorUnits = regional ? Number(regional.priceMinorUnits) : Number(product?.basePriceMinorUnits);
   const currencyCode = regional?.currencyCode || product?.currencyCode || 'GBP';
   return { listPriceMinorUnits, currencyCode };

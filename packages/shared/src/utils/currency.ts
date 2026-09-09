@@ -1,4 +1,4 @@
-import { Money, createMoney, moneyToDecimal, getCurrencyDecimals } from './money';
+import { Money, createMoney } from './money';
 
 interface ExchangeRate {
   from: string;
@@ -9,6 +9,7 @@ interface ExchangeRate {
 
 const ratesCache = new Map<string, ExchangeRate>();
 const CACHE_TTL_MS = 3600000; // 1 hour
+const RATE_SCALE = 1_000_000;
 
 const FALLBACK_RATES: Record<string, number> = {
   'USD_EUR': 0.92,
@@ -68,19 +69,22 @@ export function getExchangeRate(from: string, to: string): number {
   throw new Error(`Exchange rate not available: ${from} -> ${to}`);
 }
 
+function convertAtRate(money: Money, toCurrency: string, rate: number): Money {
+  const rateScaled = BigInt(Math.round(rate * RATE_SCALE));
+  const numerator = BigInt(money.amountMinorUnits) * rateScaled;
+  const divisor = BigInt(RATE_SCALE);
+  const remainder = numerator % divisor;
+  const converted = numerator / divisor + (remainder >= divisor / 2n ? 1n : 0n);
+  return createMoney(converted, toCurrency);
+}
+
 export function convertMoney(money: Money, toCurrency: string): Money {
   if (money.currencyCode === toCurrency) return money;
   const rate = getExchangeRate(money.currencyCode, toCurrency);
-  const decimals = getCurrencyDecimals(toCurrency);
-  const multiplier = 10 ** decimals;
-  const converted = Number(money.amountMinorUnits) * rate;
-  return createMoney(BigInt(Math.round(converted)), toCurrency);
+  return convertAtRate(money, toCurrency, rate);
 }
 
 export function convertMoneyWithRate(money: Money, toCurrency: string, rate: number): Money {
   if (money.currencyCode === toCurrency) return money;
-  const decimals = getCurrencyDecimals(toCurrency);
-  const multiplier = 10 ** decimals;
-  const converted = Number(money.amountMinorUnits) * rate;
-  return createMoney(BigInt(Math.round(converted)), toCurrency);
+  return convertAtRate(money, toCurrency, rate);
 }

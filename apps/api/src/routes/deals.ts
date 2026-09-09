@@ -14,16 +14,18 @@ import { cache, TTL } from '../lib/cache.js';
 
 const router = Router();
 
-const PRODUCT_SELECT = {
-  id: true,
-  name: true,
-  slug: true,
-  thumbnail: true,
-  basePriceMinorUnits: true,
-  currencyCode: true,
-  rating: true,
-  regionPrices: { select: { priceMinorUnits: true, currencyCode: true } },
-} as const;
+function getProductSelect(regionKey: string) {
+  return {
+    id: true,
+    name: true,
+    slug: true,
+    thumbnail: true,
+    basePriceMinorUnits: true,
+    currencyCode: true,
+    rating: true,
+    regionPrices: { where: { regionKey }, take: 1, select: { regionKey: true, priceMinorUnits: true, currencyCode: true } },
+  } as const;
+}
 
 function priceVariants(deal: any, regionKey: string): any[] {
   return (deal.variants ?? []).map((v: any) => {
@@ -57,7 +59,7 @@ router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
       vendor: { select: { id: true, storeName: true, slug: true } },
       variants: {
         include: {
-          product: { select: PRODUCT_SELECT },
+          product: { select: getProductSelect(regionKey) },
         },
       },
     },
@@ -255,7 +257,7 @@ router.get('/:slug', optionalAuth, async (req: AuthRequest, res: Response) => {
       variants: {
         include: {
           product: {
-            select: { ...PRODUCT_SELECT, reviewCount: true },
+            select: { ...getProductSelect(regionKey), reviewCount: true },
           },
         },
       },

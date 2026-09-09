@@ -15,8 +15,8 @@ import {
   computeCommission,
   selectCommissionRule,
   type CommissionInput,
-  type CommissionRule as SharedCommissionRule,
 } from '@Storegrill/shared';
+import { mapCommissionRulesToShared } from '../services/commission-rule-mapper.js';
 
 const router = Router();
 
@@ -167,19 +167,7 @@ router.post('/commission/preview', requireMerchantPermission(MerchantPermission.
     paymentFeeMinorUnits: body.paymentFeeMinorUnits != null ? BigInt(body.paymentFeeMinorUnits) : null,
   };
 
-  const sharedRules: SharedCommissionRule[] = rules.map(r => ({
-    id: r.id,
-    merchantId: r.vendorId,
-    regionKey: r.regionKey,
-    categoryId: r.categoryId,
-    basis: r.basis as SharedCommissionRule['basis'],
-    rateBps: r.rateBps,
-    minCommissionMinorUnits: r.minAmountMinorUnits,
-    maxCommissionMinorUnits: r.maxAmountMinorUnits,
-    effectiveFrom: r.startsAt,
-    effectiveTo: r.endsAt,
-    priority: r.priority,
-  }));
+  const sharedRules = mapCommissionRulesToShared(rules);
 
   const matched = selectCommissionRule(sharedRules, input);
   const result = matched ? computeCommission(matched, input) : null;

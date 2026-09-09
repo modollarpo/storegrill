@@ -1,4 +1,4 @@
-import { Money, createMoney, addMoney, multiplyMoney } from './money';
+import { Money, createMoney, addMoney, percentOf, toBasisPoints } from './money';
 
 export interface TaxRule {
   id: string;
@@ -54,7 +54,7 @@ export function calculateTax(
         .reduce((sum, item) => sum + item.priceMinorUnits * BigInt(item.quantity), 0n);
     }
 
-    const taxAmount = BigInt(Math.round(Number(taxableAmount) * rule.rate));
+    const taxAmount = percentOf(taxableAmount, toBasisPoints(rule.rate * 100));
     const taxMoney = createMoney(taxAmount, input.subtotal.currencyCode);
 
     taxLines.push({
@@ -85,7 +85,7 @@ export function calculateItemTax(
   const itemTotal = priceMinorUnits * BigInt(quantity);
 
   return applicableRules.reduce((total, rule) => {
-    const tax = BigInt(Math.round(Number(itemTotal) * rule.rate));
+    const tax = percentOf(itemTotal, toBasisPoints(rule.rate * 100));
     return total + tax;
   }, 0n);
 }

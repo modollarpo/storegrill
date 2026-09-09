@@ -1,4 +1,4 @@
-import { getCurrencyDecimals, convertMoney, createMoney } from '@Storegrill/shared';
+import { getCurrencyDecimals, convertMoney, createMoney, percentOf, toBasisPoints } from '@Storegrill/shared';
 
 /**
  * Pure, IO-free coupon discount computation — the single source of truth for
@@ -26,7 +26,7 @@ export function computeCouponDiscount(params: {
 
   let discountMinor: number;
   if (dealType === 'PERCENTAGE_OFF' || dealType === 'FLASH_SALE') {
-    discountMinor = Math.round((subtotalMinorUnits * dealValue) / 100);
+    discountMinor = Number(percentOf(BigInt(subtotalMinorUnits), toBasisPoints(dealValue)));
     if (maxDiscount != null) {
       discountMinor = Math.min(discountMinor, Number(maxDiscount));
     }

@@ -1,12 +1,15 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslations } from '@/components/providers/RegionContext';
 import { CategoryRowGrid } from '@/components/commerce/grid';
 import { getRecentCategories } from '@/lib/api-client';
 import { buildCategoryCards, rowsFromCards } from '@/lib/home-content-build';
 import type { HomeSectionItem } from '@/lib/home-content-build';
+
+const RECENT_MAX_PAGES = 25;
 
 export function RecentlyAddedFeed({
   regionKey,
@@ -26,36 +29,52 @@ export function RecentlyAddedFeed({
   const [more, setMore] = useState(hasMore);
   const [next, setNext] = useState(nextOffset);
   const [loading, setLoading] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failed] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const controllerRef = useRef<AbortController | null>(null);
 
   const loadMore = useCallback(async () => {
     if (loading || failed) return;
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
     setLoading(true);
-    const page = await getRecentCategories(regionKey, next);
-    setLoading(false);
-    if (page.categories.length === 0) {
-      setMore(false);
-      return;
+    try {
+      const page = await getRecentCategories(regionKey, next, { signal: controller.signal });
+      if (page.categories.length === 0) {
+        setMore(false);
+        return;
+      }
+      const cards = buildCategoryCards(page.categories, language).filter(card => card.tiles.length > 0);
+      setRows(current => [...current, ...rowsFromCards(cards)]);
+      const loaded = next + page.categories.length;
+      setNext(loaded);
+      setMore(page.hasMore && loaded < RECENT_MAX_PAGES * 4);
+    } finally {
+      setLoading(false);
     }
-    const cards = buildCategoryCards(page.categories, language).filter(card => card.tiles.length > 0);
-    setRows(current => [...current, ...rowsFromCards(cards)]);
-    setNext(current => current + page.categories.length);
-    setMore(page.hasMore);
   }, [language, loading, failed, next, regionKey]);
 
   useEffect(() => {
     if (!more || loading || failed) return;
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
+    let timer: number | undefined;
     const observer = new IntersectionObserver(
       entries => {
-        if (entries[0]?.isIntersecting) void loadMore();
+        if (entries[0]?.isIntersecting) {
+          clearTimeout(timer);
+          timer = window.setTimeout(() => void loadMore(), 250);
+        }
       },
-      { rootMargin: '700px 0px' },
+      { rootMargin: '200px 0px' },
     );
     observer.observe(sentinel);
-    return () => observer.disconnect();
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+      controllerRef.current?.abort();
+    };
   }, [more, loading, failed, loadMore]);
 
   if (rows.length === 0) return null;
@@ -82,6 +101,16 @@ export function RecentlyAddedFeed({
         </div>
       ) : null}
       {failed ? <p className="py-6 text-center text-sm text-text-tertiary">{t('homeError')}</p> : null}
+      {!more && rows.length > 0 ? (
+        <div className="mt-4 flex justify-center">
+          <Link
+            href="/categories"
+            className="rounded-md border border-border-strong px-4 py-2 text-sm font-medium text-text-primary hover:bg-surface-sunken hover:border-text-primary"
+          >
+            {t('viewAll')}
+          </Link>
+        </div>
+      ) : null}
       <div ref={sentinelRef} aria-hidden="true" />
     </section>
   );

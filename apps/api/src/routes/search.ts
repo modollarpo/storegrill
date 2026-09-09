@@ -1,7 +1,8 @@
 import { Router, Response, Request } from 'express';
 import { z } from 'zod';
 import { prisma } from '../index.js';
-import { compareAtPriceOf } from '../utils/pricing.js';
+import { resolveProductPricing } from '../utils/pricing.js';
+import { loadActiveDeals } from '../services/deal-eval.js';
 
 const router = Router();
 
@@ -59,17 +60,23 @@ router.get('/', async (req: Request, res: Response) => {
     }
   }
 
+  const activeDeals = await loadActiveDeals(prisma);
+
   res.json({
-    results: products.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      thumbnail: p.thumbnail,
-      priceMinorUnits: Number(p.regionPrices[0]?.priceMinorUnits || p.basePriceMinorUnits),
-      listPriceMinorUnits: compareAtPriceOf(p) ?? Number(p.basePriceMinorUnits),
-      originalPriceMinorUnits: compareAtPriceOf(p) ?? Number(p.basePriceMinorUnits),
-      currencyCode: p.regionPrices[0]?.currencyCode || p.currencyCode,
-    })),
+    results: products.map((p: any) => {
+      const pricing = resolveProductPricing(p, query.regionKey, activeDeals);
+      return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        thumbnail: p.thumbnail,
+        priceMinorUnits: pricing.price,
+        listPriceMinorUnits: pricing.listPriceMinorUnits ?? pricing.price,
+        originalPriceMinorUnits: pricing.listPriceMinorUnits ?? pricing.price,
+        discountPercent: pricing.discountPercent,
+        currencyCode: pricing.currencyCode,
+      };
+    }),
     facets: {
       categories: Array.from(categoryFacets.values()),
       brands: Array.from(brandFacets.values()),

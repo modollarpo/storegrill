@@ -1,6 +1,7 @@
+import { percentOf } from './utils/money.js';
 
 export interface VendorTerms {
-  revenueSharePct: number;
+  revenueShareBps: number;
   fixedFeeMinorUnits: number;
   currencyCode: string;
 }
@@ -8,6 +9,7 @@ export interface VendorTerms {
 export interface PayoutOrderItem {
   id: string;
   amountMinorUnits: number;
+  commissionOverrideMinorUnits?: number;
 }
 
 export interface EnginePayoutLine {
@@ -26,26 +28,27 @@ export interface PayoutResult {
 }
 
 /**
- * Calculates the payout for a vendor based on real-world business logic.
- * The platform takes a percentage commission (revenue share) and a fixed transaction fee per item.
+ * Calculates the payout for a vendor using integer minor-unit arithmetic only.
+ * The platform takes a commission (revenue share, expressed in basis points)
+ * and a fixed transaction fee per item.
+ *
+ * When an item carries an order-time commission override (the immutable
+ * CommissionRule snapshot taken at checkout) that value is used verbatim —
+ * historical orders are never recalculated with today's commission rate.
+ * Items without an override fall back to the vendor's flat revenue share.
  */
-export function calculatePayout(
-  items: PayoutOrderItem[],
-  terms: VendorTerms
-): PayoutResult {
+export function calculatePayout(items: PayoutOrderItem[], terms: VendorTerms): PayoutResult {
   let totalPayout = 0;
   let totalCommission = 0;
   let totalFixedFees = 0;
 
   const lines = items.map(item => {
-    // 1. Calculate percentage commission
-    // revenueSharePct is something like 12.0 for 12%
-    const commission = Math.round(item.amountMinorUnits * (terms.revenueSharePct / 100));
-    
-    // 2. Add fixed transaction fee (e.g., 30 cents per item to cover Stripe/PayPal fees)
+    const commission = item.commissionOverrideMinorUnits != null && item.commissionOverrideMinorUnits >= 0
+      ? item.commissionOverrideMinorUnits
+      : Number(percentOf(BigInt(item.amountMinorUnits), terms.revenueShareBps));
+
     const fixedFee = terms.fixedFeeMinorUnits;
 
-    // 3. Ensure payout doesn't go negative on tiny items
     const deductions = commission + fixedFee;
     const payoutAmount = Math.max(0, item.amountMinorUnits - deductions);
 
@@ -58,7 +61,7 @@ export function calculatePayout(
       itemAmount: item.amountMinorUnits,
       commission,
       fixedFee,
-      payoutAmount
+      payoutAmount,
     };
   });
 

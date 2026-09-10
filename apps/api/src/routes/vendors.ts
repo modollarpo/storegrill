@@ -3,12 +3,8 @@ import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../index.js';
 import { authenticate, authorize, requireVerifiedEmail, AuthRequest } from '../middleware/auth.js';
-import {
-  UpdateVendorSchema,
-  VendorApplicationPatchSchema,
-  CarrierShipmentStatus,
-  normalizeCarrierProvider,
-} from '@Storegrill/shared';
+import { requireMerchantPermission } from '../services/merchant-rbac.js';
+import { UpdateVendorSchema, VendorApplicationPatchSchema, CarrierShipmentStatus, normalizeCarrierProvider, MerchantPermission } from '@Storegrill/shared';
 import { slugify } from '../utils/slugify.js';
 
 const KYC_CONTAINER = process.env.AZURE_STORAGE_KYC_CONTAINER || 'kyc-docs';
@@ -859,7 +855,7 @@ router.get('/:slug', async (req: AuthRequest, res: Response) => {
   });
 });
 
-router.get('/me/deals', authenticate, authorize('VENDOR'), async (req: AuthRequest, res: Response) => {
+router.get('/me/deals', authenticate, authorize('VENDOR'), requireMerchantPermission(MerchantPermission.DEAL_CREATE), async (req: AuthRequest, res: Response) => {
   const vendor = await prisma.vendorProfile.findFirst({ where: { userId: req.user!.id } });
   if (!vendor) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Vendor profile not found' } });
 
@@ -882,7 +878,7 @@ router.get('/me/deals', authenticate, authorize('VENDOR'), async (req: AuthReque
   });
 });
 
-router.post('/me/deals', authenticate, authorize('VENDOR'), async (req: AuthRequest, res: Response) => {
+router.post('/me/deals', authenticate, authorize('VENDOR'), requireMerchantPermission(MerchantPermission.DEAL_CREATE), async (req: AuthRequest, res: Response) => {
   const vendor = await prisma.vendorProfile.findFirst({ where: { userId: req.user!.id } });
   if (!vendor) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Vendor profile not found' } });
 
@@ -933,7 +929,7 @@ router.post('/me/deals', authenticate, authorize('VENDOR'), async (req: AuthRequ
   res.status(201).json({ deal });
 });
 
-router.put('/me/deals/:id', authenticate, authorize('VENDOR'), async (req: AuthRequest, res: Response) => {
+router.put('/me/deals/:id', authenticate, authorize('VENDOR'), requireMerchantPermission(MerchantPermission.DEAL_CREATE), async (req: AuthRequest, res: Response) => {
   const vendor = await prisma.vendorProfile.findFirst({ where: { userId: req.user!.id } });
   if (!vendor) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Vendor profile not found' } });
 
@@ -973,7 +969,7 @@ router.put('/me/deals/:id', authenticate, authorize('VENDOR'), async (req: AuthR
   res.json({ deal: updated });
 });
 
-router.delete('/me/deals/:id', authenticate, authorize('VENDOR'), async (req: AuthRequest, res: Response) => {
+router.delete('/me/deals/:id', authenticate, authorize('VENDOR'), requireMerchantPermission(MerchantPermission.DEAL_CREATE), async (req: AuthRequest, res: Response) => {
   const vendor = await prisma.vendorProfile.findFirst({ where: { userId: req.user!.id } });
   if (!vendor) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Vendor profile not found' } });
 

@@ -61,20 +61,23 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
             ref={scrollRef}
             className="flex items-stretch gap-4 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-4 pt-1 px-1"
           >
-            {/* Dynamic Live Deal Slides from heroSlides — full-height ad-banner cards */}
             {heroSlides.map((slide, idx) => (
-              <div key={idx} className="w-[300px] sm:w-[316px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-xs shadow-sm group/slide">
+              <div
+                key={idx}
+                className="w-[300px] sm:w-[316px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-xs shadow-sm bg-white group/slide"
+              >
+                <div className="absolute inset-0 bg-white" aria-hidden="true" />
                 <Image
                   src={slide.image}
                   alt={slide.title}
                   fill
                   sizes="316px"
-                  className="object-cover group-hover/slide:scale-105 transition-transform duration-700"
+                  className="object-contain group-hover/slide:scale-105 transition-transform duration-700"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/10 z-10" />
-                {slide.overlayTint ? (
-                  <div className={`absolute inset-0 z-10 pointer-events-none ${slide.overlayTint}`} />
-                ) : null}
+                <div
+                  className="absolute inset-0 z-10 bg-gradient-to-t from-midnight via-ember-deep/60 to-transparent backdrop-blur-[2px]"
+                  aria-hidden="true"
+                />
                 <div className="absolute inset-x-0 top-0 z-20 p-5 flex justify-between items-start">
                   {slide.discountPercent ? (
                     <span className="inline-block bg-[var(--color-amazon-deal)] text-white text-[10px] font-extrabold px-2 py-1 rounded-xs tracking-wide shadow-sm">
@@ -83,9 +86,8 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
                   ) : null}
                 </div>
                 <div className="absolute inset-x-0 bottom-0 z-20 p-5 flex flex-col gap-2">
-                  <h3 className="text-xl font-black text-white leading-snug line-clamp-2 drop-shadow-sm">{slide.title}</h3>
-                  <p className="text-xs font-semibold text-white/85 line-clamp-1">{slide.subtitle}</p>
-                  <div className="flex items-center justify-between gap-2 mt-1">
+                  <p className="text-sm font-bold text-white/95 line-clamp-1 drop-shadow-sm">{slide.subtitle}</p>
+                  <div className="flex items-center justify-between gap-2">
                     {slide.priceMinorUnits !== undefined ? (
                       <span className="text-2xl font-black text-white drop-shadow-sm">
                         {slide.currencyCode === 'GBP' ? '£' : slide.currencyCode === 'EUR' ? '€' : '$'}

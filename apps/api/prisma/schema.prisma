@@ -23,18 +23,19 @@ model User {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  customerProfile CustomerProfile?
-  vendorProfile   VendorProfile?
-  cart            Cart?
-  orders          Order[]
-  reviews         Review[]
-  notifications   Notification[]
-  oauthAccounts   OAuthAccount[]
-  emailTokens     EmailToken[]
-  wishlistItems   WishlistItem[]
-  blogPosts       BlogPost[]
-  merchantMembers MerchantMember[]
-  disputes        Dispute[]
+  customerProfile    CustomerProfile?
+  vendorProfile      VendorProfile?
+  cart               Cart?
+  orders             Order[]
+  reviews            Review[]
+  notifications      Notification[]
+  oauthAccounts      OAuthAccount[]
+  emailTokens        EmailToken[]
+  wishlistItems      WishlistItem[]
+  blogPosts          BlogPost[]
+  merchantMembers    MerchantMember[]
+  disputes           Dispute[]
+  voucherRedemptions VoucherRedemption[]
 }
 
 model OAuthAccount {
@@ -131,6 +132,7 @@ model VendorProfile {
   balances                VendorBalance[]
   importTemplates         ImportMappingTemplate[]
   shipments               Shipment[]
+  vouchers                Voucher[]
 }
 
 model VendorPayoutAccount {
@@ -373,27 +375,27 @@ model CartItem {
 }
 
 model Order {
-  id                 String   @id @default(cuid())
-  orderNumber        String   @unique
+  id                 String    @id @default(cuid())
+  orderNumber        String    @unique
   userId             String
-  user               User     @relation(fields: [userId], references: [id])
-  status             String   @default("PENDING")
+  user               User      @relation(fields: [userId], references: [id])
+  status             String    @default("PENDING")
   regionKey          String
   currencyCode       String
   subtotalMinorUnits Int
   taxMinorUnits      Int
   shippingMinorUnits Int
-  discountMinorUnits Int      @default(0)
+  discountMinorUnits Int       @default(0)
   totalMinorUnits    Int
   shippingAddress    String
   billingAddress     String?
   paymentMethod      String
   paymentId          String?
-  paymentStatus      String   @default("PENDING")
+  paymentStatus      String    @default("PENDING")
   notes              String?
   confirmationSentAt DateTime?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   items                 OrderItem[]
   shipments             Shipment[]
@@ -402,6 +404,7 @@ model Order {
   returnRequests        ReturnRequest[]
   disputes              Dispute[]
   marketingAttributions MarketingAttribution[]
+  voucherRedemptions    VoucherRedemption[]
 }
 
 model OrderItem {
@@ -474,15 +477,21 @@ model Payment {
 }
 
 model Refund {
-  id               String    @id @default(cuid())
-  orderId          String
-  order            Order     @relation(fields: [orderId], references: [id])
-  amountMinorUnits Int
-  currencyCode     String
-  reason           String
-  status           String    @default("PENDING")
-  processedAt      DateTime?
-  createdAt        DateTime  @default(now())
+  id                       String    @id @default(cuid())
+  orderId                  String
+  order                    Order     @relation(fields: [orderId], references: [id])
+  amountMinorUnits         Int
+  currencyCode             String
+  reason                   String
+  type                     String    @default("FULL") // FULL | PARTIAL | ITEM | SHIPPING | DEAL_REVERSAL
+  status                   String    @default("PENDING") // PENDING | APPROVED | PROCESSED | REJECTED | CANCELLED
+  commissionReversed       Boolean   @default(false)
+  commissionReversalAmount Int?
+  processedAt              DateTime?
+  approvedBy               String?
+  metadata                 String?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 }
 
 model Deal {
@@ -523,6 +532,7 @@ model Deal {
 
   variants DealVariant[]
   coupons  Coupon[]
+  vouchers Voucher[]
 }
 
 model DealVariant {
@@ -576,6 +586,8 @@ model Payout {
   period             String
   settlementPolicyId String?
   settlementPolicy   SettlementPolicy? @relation(fields: [settlementPolicyId], references: [id])
+  payoutBatchId      String?
+  payoutBatch        PayoutBatch?      @relation(fields: [payoutBatchId], references: [id])
   referenceId        String?
   metadata           String?
   processedAt        DateTime?
@@ -1070,4 +1082,102 @@ model VendorBalanceSnapshot {
   createdAt           DateTime @default(now())
 
   @@index([vendorId, snapshotDate])
+}
+
+model Voucher {
+  id             String         @id @default(cuid())
+  dealId         String
+  deal           Deal           @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  code           String         @unique
+  type           String         @default("FIXED_AMOUNT") // FIXED_AMOUNT | PERCENTAGE_OFF | FREE_SHIPPING
+  value          Float
+  currencyCode   String?
+  maxUses        Int?
+  usedCount      Int            @default(0)
+  maxUsesPerUser Int            @default(1)
+  minOrderAmount Int?
+  startsAt       DateTime
+  endsAt         DateTime
+  status         String         @default("ACTIVE") // ACTIVE | EXHAUSTED | EXPIRED | REVOKED
+  regionKey      String?
+  vendorId       String?
+  vendor         VendorProfile? @relation(fields: [vendorId], references: [id])
+  metadata       String?
+  createdBy      String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  redemptions VoucherRedemption[]
+  events      VoucherEvent[]
+}
+
+model VoucherRedemption {
+  id                 String    @id @default(cuid())
+  voucherId          String
+  voucher            Voucher   @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User      @relation(fields: [userId], references: [id])
+  orderId            String?
+  order              Order?    @relation(fields: [orderId], references: [id])
+  discountMinorUnits Int
+  status             String    @default("APPLIED") // APPLIED | CANCELLED | REFUNDED
+  appliedAt          DateTime  @default(now())
+  cancelledAt        DateTime?
+
+  @@unique([voucherId, userId, orderId])
+  @@index([voucherId])
+  @@index([userId])
+}
+
+model VoucherEvent {
+  id        String   @id @default(cuid())
+  voucherId String
+  voucher   Voucher  @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  type      String // REDEEMED | CANCELLED | REVOKED | EXPIRED
+  userId    String?
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  @@index([voucherId])
+}
+
+model PayoutBatch {
+  id              String    @id @default(cuid())
+  period          String
+  currencyCode    String
+  status          String    @default("DRAFT") // DRAFT | SUBMITTED | PROCESSING | COMPLETED | FAILED
+  payoutCount     Int       @default(0)
+  totalMinorUnits BigInt    @default(0)
+  processedAt     DateTime?
+  completedAt     DateTime?
+  metadata        String?
+  createdBy       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  payouts Payout[]
+}
+
+model CampaignAudience {
+  id        String   @id @default(cuid())
+  name      String
+  type      String // ALL_CUSTOMERS | SEGMENT | LIST | REGION
+  rules     String   @default("[]") // JSON: filter criteria
+  size      Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CampaignCreative {
+  id         String    @id @default(cuid())
+  audienceId String?
+  name       String
+  type       String // BANNER | EMAIL | PUSH | SOCIAL
+  content    String    @default("{}") // JSON: creative content
+  status     String    @default("DRAFT") // DRAFT | ACTIVE | PAUSED | ARCHIVED
+  startsAt   DateTime?
+  endsAt     DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 }

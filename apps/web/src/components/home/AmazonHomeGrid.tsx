@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRef } from 'react';
+import { t } from '@/i18n';
 import { RecentlyViewed } from '@/components/commerce/RecentlyViewed';
 import { CategoryRowGrid } from '@/components/commerce/grid';
 import { RecentlyAddedFeed } from '@/components/home/RecentlyAddedFeed';
@@ -76,9 +77,9 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
                 />
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[58%]"
+                  className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[40%]"
                 >
-                  <div className="absolute -inset-x-8 -bottom-14 h-[125%] rounded-[50%] bg-gradient-to-t from-midnight via-ember to-ember/70 blur-2xl" />
+                  <div className="absolute -inset-x-10 -bottom-16 h-[115%] rounded-[50%] bg-gradient-to-t from-midnight via-ember to-ember/60 blur-xl" />
                 </div>
                 <div className="absolute inset-x-0 top-0 z-20 p-5 flex justify-between items-start">
                   {slide.discountPercent ? (
@@ -106,6 +107,22 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
                 </div>
               </div>
             ))}
+            <Link
+              href="/deals"
+              className="w-[300px] sm:w-[316px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-xs shadow-sm bg-gradient-to-br from-midnight via-ember-deep to-ember flex flex-col items-center justify-center gap-5 p-8 text-center group/cta"
+            >
+              <div
+                aria-hidden="true"
+                className="grid place-items-center w-16 h-16 rounded-full bg-white/10 text-white text-2xl font-black shadow-inner"
+              >
+                %
+              </div>
+              <h3 className="text-2xl font-black text-white leading-snug">{t(language ?? 'en', 'seeAllDeals')}</h3>
+              <p className="text-sm font-semibold text-white/85">{t(language ?? 'en', 'homeDealsHeading')}</p>
+              <span className="mt-1 inline-flex items-center gap-1.5 bg-white text-ember text-sm font-extrabold px-5 py-2.5 rounded-full shadow-md">
+                {t(language ?? 'en', 'shopNow')} →
+              </span>
+            </Link>
           </div>
         </div>
       </div>

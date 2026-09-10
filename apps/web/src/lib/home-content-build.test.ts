@@ -2,15 +2,16 @@ import { describe, expect, it } from 'vitest';
 import {
   buildCategoryCards,
   buildCuratedCards,
+  buildFeaturedSection,
   buildHeroSlides,
   buildPromos,
   buildRows,
   endLabel,
+  featuredCursor,
   type CategoryRow,
   type CuratedProductRow,
   type DealRow,
   type HomeGridSection,
-  type HomePromoSection,
 } from './home-content-build';
 
 const CATEGORY: CategoryRow = {
@@ -168,47 +169,85 @@ describe('buildRows', () => {
     const rows = buildRows([1, 2, 3, 4, 5, 6].map(i => card(`C${i}`)), buildPromos('en'), 'en');
     for (const row of rows) expect(row.length).toBeLessThanOrEqual(4);
   });
+});
 
-  it('inserts a full-width real content promo every third card row', () => {
-    const cards = [
-      card('C1'), card('C2'), card('C3'), card('C4'),
-      card('C5'), card('C6'), card('C7'), card('C8'),
-      card('C9'), card('C10'), card('C11'), card('C12'),
-      card('C13'),
-    ];
-    const rows = buildRows(cards, buildPromos('en'), 'en');
-    const wide = rows.find(row => row[0]?.type === 'promo' && row[0].wide === true);
-    expect(wide).toBeDefined();
-    expect(wide).toHaveLength(1);
-    expect(rows.some(row => row.length > 1)).toBe(true);
+describe('featuredCursor', () => {
+  it('is deterministic for a region within the same ISO week', () => {
+    const a = featuredCursor('UK', 5, new Date('2026-09-08T10:00:00Z'));
+    const b = featuredCursor('UK', 5, new Date('2026-09-11T18:30:00Z'));
+    expect(a).toBe(b);
   });
 
-  it('builds the wide promo from the row category real data with a real price', () => {
-    const priced: HomeGridSection = {
-      title: 'Outdoor',
-      subtitle: 'Grills and patio gear for the outdoors.',
-      tiles: [{
-        title: 'Gas Grill',
-        image: 'https://cdn.storegrill.net/grill.jpg',
-        href: '/products/gas-grill',
-        priceMinorUnits: 15999,
+  it('rotates the featured category between ISO weeks', () => {
+    const w1 = featuredCursor('UK', 5, new Date('2026-09-08T12:00:00Z'));
+    const w2 = featuredCursor('UK', 5, new Date('2026-09-15T12:00:00Z'));
+    expect(w1).not.toBe(w2);
+  });
+
+  it('stays in range and returns 0 for an empty list', () => {
+    expect(featuredCursor('US', 3, new Date('2026-09-10T00:00:00Z'))).toBeLessThan(3);
+    expect(featuredCursor('UK', 0, new Date('2026-09-10T00:00:00Z'))).toBe(0);
+  });
+});
+
+describe('buildFeaturedSection', () => {
+  it('builds a featured section from a real category and its real featured products', () => {
+    const section = buildFeaturedSection([CATEGORY], [], 'en', 'UK', new Date('2026-09-10T00:00:00Z'));
+    expect(section).not.toBeNull();
+    expect(section!.type).toBe('featured');
+    expect(section!.eyebrow).toBe('Featured');
+    expect(section!.title).toBe('Home & Kitchen');
+    expect(section!.href).toBe('/categories/home-kitchen');
+    expect(section!.products).toHaveLength(2);
+    expect(section!.products[0]).toMatchObject({
+      title: 'Kettle',
+      image: 'https://cdn.storegrill.net/kettle.jpg',
+      href: '/products/kettle',
+    });
+  });
+
+  it('returns null when no category carries real stocked products', () => {
+    expect(buildFeaturedSection([{ name: 'Empty', slug: 'empty' }], [], 'en', 'UK', new Date('2026-09-10T00:00:00Z'))).toBeNull();
+  });
+
+  it('carries real region prices and a real discount label on featured products', () => {
+    const roots: CategoryRow[] = [{
+      id: 'c-2',
+      name: 'Outdoor',
+      slug: 'outdoor',
+      featured: [{
+        id: 'p1',
+        name: 'Gas Grill',
+        slug: 'gas-grill',
+        thumbnail: 'https://cdn.storegrill.net/grill.jpg',
+        price: 15999,
         currencyCode: 'GBP',
         listPriceMinorUnits: 19999,
       }],
-    };
-    const cards = [...Array(13)].map((_, i) => card(`C${i + 1}`));
-    cards[8] = priced;
-    const rows = buildRows(cards, buildPromos('en'), 'en');
-    const promoRow = rows.find(row => row[0]?.type === 'promo' && row[0].wide === true);
-    const promo = promoRow?.[0] as HomePromoSection;
-    expect(promo).toBeDefined();
-    expect(promo.type).toBe('promo');
-    expect(promo.wide).toBe(true);
-    expect(promo.title).toBe('Outdoor');
-    expect(promo.image).toBe('https://cdn.storegrill.net/grill.jpg');
-    expect(promo.priceMinorUnits).toBe(15999);
-    expect(promo.listPriceMinorUnits).toBe(19999);
-    expect(promo.href).toBe('/products/gas-grill');
+    }];
+    const section = buildFeaturedSection(roots, [], 'en', 'UK', new Date('2026-09-10T00:00:00Z'));
+    expect(section).not.toBeNull();
+    expect(section!.products[0]).toMatchObject({
+      title: 'Gas Grill',
+      href: '/products/gas-grill',
+      priceMinorUnits: 15999,
+      currencyCode: 'GBP',
+      listPriceMinorUnits: 19999,
+      discountLabel: '20% off',
+    });
+  });
+
+  it('reports live deal count and max category discount as honest stats', () => {
+    const roots: CategoryRow[] = [
+      { ...CATEGORY, featured: [{ ...CATEGORY.featured![0], price: 6999, listPriceMinorUnits: 9999 }] },
+    ];
+    const deals: DealRow[] = [{ id: 'd-1', status: 'LIVE', enabled: true, name: 'Costway Flash Sale' }];
+    const section = buildFeaturedSection(roots, deals, 'en', 'UK', new Date('2026-09-10T00:00:00Z'));
+    expect(section).not.toBeNull();
+    expect(section!.stats).toContain('Up to 30% off');
+    expect(section!.stats).toContain('1 live deals today');
+    expect(section!.ctaText).toBe('Shop Home & Kitchen');
+    expect(section!.secondaryHref).toBe('/deals');
   });
 });
 

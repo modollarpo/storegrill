@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { PriceDisplay } from '@/components/commerce/PriceDisplay';
+import { FeaturedBanner } from '@/components/commerce/grid/FeaturedBanner';
 import type { HomeGridSection, HomePromoSection, HomeSectionItem } from '@/lib/home-content-build';
 
 export function SeeMoreLink({
@@ -201,7 +202,9 @@ export function CategoryRowGrid({ items }: { items: HomeSectionItem[] }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {items.map((item, itemIndex) =>
-        item.type === 'promo' ? (
+        item.type === 'featured' ? (
+          <FeaturedBanner key={itemIndex} featured={item} />
+        ) : item.type === 'promo' ? (
           <PromoSectionCard key={itemIndex} promo={item} />
         ) : (
           <CategoryCard key={itemIndex} section={item} />

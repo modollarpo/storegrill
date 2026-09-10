@@ -1,9 +1,11 @@
 import { API_BASE } from './api';
 import { translateBatch } from './server-translate';
+import { t } from '@/i18n';
 import { FALLBACK_HERO_DEALS } from './home-hero-fallback';
 import {
   buildCategoryCards,
   buildCuratedCards,
+  buildFeaturedSection,
   buildHeroSlides,
   buildPromos,
   buildRows,
@@ -13,6 +15,7 @@ import {
   type DealRow,
   type HomeContent,
   type HomeGridSection,
+  type HomeSectionItem,
 } from './home-content-build';
 
 async function fetchJson(url: string, revalidate: number): Promise<unknown> {
@@ -139,7 +142,18 @@ export async function loadHomeContent(regionKey: string, language: string): Prom
   const curated = buildCuratedCards(flash, bestSellers, newArrivals, language, flashDeal?.endsAt);
   const cards = [...buildCategoryCards(roots, language), ...curated];
   await translateCards(cards, language);
-  const sections = buildRows(cards, buildPromos(language), language);
+
+  const featured = buildFeaturedSection(roots, deals, language, regionKey);
+  if (featured && language && language !== 'en') {
+    const texts = await translateTitles([featured.title, featured.subtitle ?? ''], language);
+    featured.title = texts[0] || featured.title;
+    if (featured.subtitle) featured.subtitle = texts[1] || featured.subtitle;
+    featured.ctaText = t(language, 'homeFeaturedCta', featured.title);
+  }
+  const sections: HomeSectionItem[][] = [
+    ...(featured ? [[featured] as HomeSectionItem[]] : []),
+    ...buildRows(cards, buildPromos(language), language),
+  ];
 
   const recentCards = buildCategoryCards(recentPage.categories, language).filter(card => card.tiles.length > 0);
   await translateCards(recentCards, language);

@@ -37,6 +37,8 @@ model User {
   disputes        Dispute[]
   voucherRedemptions VoucherRedemption[]
   aiRequests      AIRequest[]
+  experimentEvents ExperimentEvent[]
+  analyticsEvents AnalyticsEvent[]
 }
 
 model OAuthAccount {
@@ -1308,4 +1310,84 @@ model AIUsageRecord {
   updatedAt       DateTime @updatedAt
 
   @@unique([period])
+}
+
+model Experiment {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  status      String    @default("DRAFT") // DRAFT | RUNNING | PAUSED | COMPLETED
+  trafficPct Int       @default(100) // % of traffic included
+  startsAt   DateTime?
+  endsAt     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  variants   ExperimentVariant[]
+  events     ExperimentEvent[]
+}
+
+model ExperimentVariant {
+  id            String    @id @default(cuid())
+  experimentId  String
+  experiment    Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  name          String
+  weight        Int       @default(50) // relative weight for traffic split
+  config        String    @default("{}") // JSON: variant configuration
+  isControl     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+
+  events        ExperimentEvent[]
+}
+
+model ExperimentEvent {
+  id            String    @id @default(cuid())
+  experimentId  String
+  experiment    Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  variantId     String
+  variant       ExperimentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?     @relation(fields: [userId], references: [id])
+  eventType     String    // IMPRESSION | CLICK | CONVERSION | REVENUE
+  value         Float     @default(0)
+  metadata      String?
+  createdAt     DateTime  @default(now())
+
+  @@index([experimentId])
+  @@index([variantId])
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+model FeatureFlag {
+  id          String    @id @default(cuid())
+  key         String    @unique
+  name        String
+  description String?
+  enabled     Boolean   @default(false)
+  rolloutPct  Int       @default(0) // 0-100% rollout
+  metadata    String?   // JSON: flag-specific config
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model AnalyticsEvent {
+  id          String    @id @default(cuid())
+  eventType   String    // PAGE_VIEW | ADD_TO_CART | CHECKOUT | PURCHASE | SEARCH | CLICK
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+  sessionId   String?
+  entityType  String?   // PRODUCT | DEAL | CAMPAIGN
+  entityId    String?
+  value       Float     @default(0)
+  metadata    String?
+  region      String?
+  createdAt   DateTime  @default(now())
+
+  @@index([eventType])
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([sessionId])
 }

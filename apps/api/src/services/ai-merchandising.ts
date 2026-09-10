@@ -125,7 +125,7 @@ export async function rewriteProductContent(
       return fallbackRewrite(input);
     }
 
-    const data = await response.json();
+    const data = await response.json() as { choices?: { message?: { content?: string } }[]; usage?: { prompt_tokens?: number; completion_tokens?: number } };
     const content = data.choices?.[0]?.message?.content;
     const usage = data.usage;
 

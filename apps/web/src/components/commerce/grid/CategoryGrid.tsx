@@ -85,6 +85,51 @@ export function CategoryCard({ section }: { section: HomeGridSection }) {
   );
 }
 
+function VendorProgrammeArt() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 220 180"
+      fill="none"
+      className="pointer-events-none absolute -right-7 top-1/2 w-52 -translate-y-1/2 text-ember/55"
+    >
+      <circle cx="200" cy="90" r="64" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1.5" />
+      <circle cx="200" cy="90" r="42" stroke="currentColor" strokeOpacity="0.15" strokeWidth="1.5" />
+      <circle cx="34" cy="126" r="1.5" fill="currentColor" fillOpacity="0.6" />
+      <circle cx="55" cy="146" r="1.5" fill="currentColor" fillOpacity="0.45" />
+      <path d="M28 44 H192" stroke="currentColor" strokeOpacity="0.5" strokeWidth="2" strokeLinecap="round" />
+      <path d="M46 44 L46 66 L66 56 Z" fill="currentColor" fillOpacity="0.16" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M76 44 L76 60 L96 52 Z" fill="currentColor" fillOpacity="0.16" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M106 44 L106 66 L126 56 Z" fill="currentColor" fillOpacity="0.16" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M136 44 L136 60 L156 52 Z" fill="currentColor" fillOpacity="0.16" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M166 44 L166 66 L186 56 Z" fill="currentColor" fillOpacity="0.16" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M40 86 H180" stroke="currentColor" strokeOpacity="0.3" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M182 22 l3.2 6.5 6.5 3.2 -6.5 3.2 -3.2 6.5 -3.2 -6.5 -6.5 -3.2 6.5 -3.2 z" fill="currentColor" fillOpacity="0.75" />
+    </svg>
+  );
+}
+
+function GlobalDesignArt() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 220 180"
+      fill="none"
+      className="pointer-events-none absolute -left-7 top-1/2 w-52 -translate-y-1/2 text-white/55"
+    >
+      <circle cx="58" cy="96" r="50" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.5" />
+      <ellipse cx="58" cy="96" rx="50" ry="18" stroke="currentColor" strokeOpacity="0.3" strokeWidth="1.5" />
+      <ellipse cx="58" cy="96" rx="50" ry="35" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1" />
+      <ellipse cx="58" cy="96" rx="18" ry="50" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1" />
+      <circle cx="44" cy="52" r="1.5" fill="currentColor" fillOpacity="0.6" />
+      <circle cx="74" cy="138" r="1.5" fill="currentColor" fillOpacity="0.5" />
+      <path d="M162 60 c-15 0 -27 12 -27 26 c0 19 27 42 27 42 s27 -23 27 -42 c0 -14 -12 -26 -27 -26 z" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeOpacity="0.7" strokeWidth="2" />
+      <circle cx="162" cy="86" r="9" fill="currentColor" fillOpacity="0.12" stroke="currentColor" strokeOpacity="0.7" strokeWidth="1.5" />
+      <circle cx="176" cy="68" r="1.5" fill="currentColor" fillOpacity="0.8" />
+    </svg>
+  );
+}
+
 export function PromoSectionCard({ promo }: { promo: HomePromoSection }) {
   const dark = Boolean(promo.bgClass?.includes('text-white') || promo.bgClass?.includes('bg-neutral-900'));
 
@@ -166,6 +211,8 @@ export function PromoSectionCard({ promo }: { promo: HomePromoSection }) {
           <div aria-hidden className="pointer-events-none absolute -right-8 bottom-0 h-40 w-40 rounded-full bg-ember-pale blur-2xl" />
         </>
       )}
+
+      {dark ? <GlobalDesignArt /> : <VendorProgrammeArt />}
 
       <div className="relative z-10 flex flex-col h-full">
         {promo.eyebrow && (

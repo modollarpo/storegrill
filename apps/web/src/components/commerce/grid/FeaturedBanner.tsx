@@ -17,9 +17,9 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
   } = featured;
 
   return (
-    <section className="sm:col-span-2 lg:col-span-4 relative overflow-hidden rounded-lg border border-black/5 bg-white shadow-card lg:h-[260px]">
+    <section className="sm:col-span-2 lg:col-span-4 relative overflow-hidden rounded-lg border border-black/5 bg-white shadow-card lg:h-[250px]">
       <div className="grid lg:h-full lg:grid-cols-[1fr_1.4fr]">
-        <div className="relative overflow-hidden bg-gradient-to-br from-midnight via-ember-deep to-ember text-white p-4 md:p-5 flex flex-col justify-between gap-3">
+        <div className="relative overflow-hidden bg-gradient-to-br from-midnight via-ember-deep to-ember text-white p-3 md:p-4 flex flex-col justify-between gap-2">
           <div aria-hidden className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-ember/40 blur-3xl" />
           <div aria-hidden className="pointer-events-none absolute -bottom-28 -left-12 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
           <div aria-hidden className="pointer-events-none absolute right-8 top-8 h-40 w-40 rounded-full border border-white/10" />
@@ -30,9 +30,9 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
               <span className="h-1.5 w-1.5 rounded-full bg-ember-light" />
               {eyebrow}
             </span>
-            <h2 className="mt-3 text-xl md:text-3xl font-black tracking-tight leading-tight text-white">{title}</h2>
+            <h2 className="mt-2 text-xl md:text-3xl font-black tracking-tight leading-tight text-white">{title}</h2>
             {subtitle && (
-              <p className="mt-3 max-w-md text-sm md:text-base text-white/85 leading-relaxed">{subtitle}</p>
+              <p className="mt-2 max-w-md text-sm text-white/85 leading-relaxed">{subtitle}</p>
             )}
             {stats && stats.length > 0 && (
               <div className="mt-5 flex flex-wrap gap-2">

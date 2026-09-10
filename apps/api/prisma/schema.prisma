@@ -1202,6 +1202,7 @@ model AIModelConfig {
 
   requests      AIRequest[]
   promptVersions AIPromptVersion[]
+  decisions     AIDecision[]
 
   @@unique([provider, modelId])
 }
@@ -1229,6 +1230,7 @@ model AIRequest {
   @@index([createdAt])
 
   contents AIContent[]
+  decisions     AIDecision[]
 }
 
 model AIContent {
@@ -1310,6 +1312,75 @@ model AIUsageRecord {
   updatedAt       DateTime @updatedAt
 
   @@unique([period])
+}
+
+model AIAsset {
+  id              String    @id @default(cuid())
+  name            String
+  type            String    // IMAGE | VIDEO | DOCUMENT | TEMPLATE
+  source          String?
+  metadata        String?   // JSON
+  contentType     String?
+  sizeBytes       BigInt?
+  createdBy       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model AIRecommendation {
+  id              String    @id @default(cuid())
+  entityType      String    // PRODUCT | DEAL | PAGE | CAMPAIGN
+  entityId        String
+  recommendation  String
+  score           Float     @default(0)
+  reason          String?
+  metadata        String?
+  approved        Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  @@index([entityType, entityId])
+}
+
+model AIDecision {
+  id              String    @id @default(cuid())
+  input           String
+  decision        String
+  confidence      Float     @default(0)
+  modelConfigId   String?
+  modelConfig     AIModelConfig? @relation(fields: [modelConfigId], references: [id])
+  requestId       String?
+  request         AIRequest? @relation(fields: [requestId], references: [id])
+  metadata        String?
+  createdAt       DateTime  @default(now())
+  approvals       AIApproval[]
+}
+
+model AIApproval {
+  id              String    @id @default(cuid())
+  decisionId      String
+  decision        AIDecision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  approvedBy      String?
+  status          String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  comment         String?
+  reviewedAt      DateTime?
+  createdAt       DateTime  @default(now())
+}
+
+model AIAnomaly {
+  id              String    @id @default(cuid())
+  metric          String
+  value           Float
+  threshold       Float
+  severity        String    // LOW | MEDIUM | HIGH | CRITICAL
+  metadata        String?
+  detectedAt      DateTime  @default(now())
+  resolvedAt      DateTime?
+  resolvedBy      String?
+  status          String    @default("OPEN") // OPEN | RESOLVED
+
+  @@index([metric])
+  @@index([status])
+  @@index([detectedAt])
 }
 
 model Experiment {

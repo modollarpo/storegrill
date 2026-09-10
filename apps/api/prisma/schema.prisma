@@ -33,9 +33,10 @@ model User {
   emailTokens        EmailToken[]
   wishlistItems      WishlistItem[]
   blogPosts          BlogPost[]
-  merchantMembers    MerchantMember[]
-  disputes           Dispute[]
+  merchantMembers MerchantMember[]
+  disputes        Dispute[]
   voucherRedemptions VoucherRedemption[]
+  aiRequests      AIRequest[]
 }
 
 model OAuthAccount {
@@ -1180,4 +1181,131 @@ model CampaignCreative {
   endsAt     DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+}
+
+model AIModelConfig {
+  id              String   @id @default(cuid())
+  provider        String   // openai | anthropic | azure | local
+  modelId         String   // gpt-4o | claude-3.5-sonnet | etc
+  displayName     String
+  maxTokens       Int      @default(4096)
+  costPer1kInput  Float    @default(0)
+  costPer1kOutput Float    @default(0)
+  rateLimitRpm    Int      @default(60)
+  rateLimitTpm    Int      @default(100000)
+  enabled         Boolean  @default(true)
+  metadata        String?  // JSON: provider-specific config
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  requests      AIRequest[]
+  promptVersions AIPromptVersion[]
+
+  @@unique([provider, modelId])
+}
+
+model AIRequest {
+  id              String   @id @default(cuid())
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+  modelConfigId   String
+  modelConfig     AIModelConfig @relation(fields: [modelConfigId], references: [id])
+  purpose         String   // REWRITE | CLASSIFY | EMBED | CHAT | SUMMARIZE
+  inputTokens     Int      @default(0)
+  outputTokens    Int      @default(0)
+  latencyMs       Int      @default(0)
+  status          String   @default("SUCCESS") // SUCCESS | ERROR | TIMEOUT | RATE_LIMITED
+  errorMessage    String?
+  cacheHit        Boolean  @default(false)
+  costMinorUnits  Int      @default(0)
+  metadata        String?  // JSON: request/response metadata
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+  @@index([modelConfigId])
+  @@index([purpose])
+  @@index([createdAt])
+
+  contents AIContent[]
+}
+
+model AIContent {
+  id              String   @id @default(cuid())
+  requestId       String?
+  request         AIRequest? @relation(fields: [requestId], references: [id])
+  entityType      String   // PRODUCT | DEAL | CAMPAIGN | PAGE
+  entityId        String
+  content_type    String   // TITLE | DESCRIPTION | BULLET_POINTS | IMAGE_ALT
+  original        String?
+  generated       String
+  confidence      Float    @default(0)
+  approved        Boolean  @default(false)
+  approvedBy      String?
+  metadata        String?  // JSON: generation params
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([entityType, entityId])
+}
+
+model AIKnowledgeDocument {
+  id              String   @id @default(cuid())
+  title           String
+  content         String
+  source          String   // MANUAL | URL | UPLOAD
+  sourceUrl       String?
+  category        String?
+  tags            String   @default("[]")
+  chunkCount      Int      @default(0)
+  enabled         Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  embeddings AIEmbedding[]
+}
+
+model AIEmbedding {
+  id              String   @id @default(cuid())
+  documentId      String
+  document        AIKnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunkIndex      Int
+  content         String
+  embedding       String   // JSON array of floats
+  tokenCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  @@index([documentId])
+}
+
+model AIPromptVersion {
+  id              String   @id @default(cuid())
+  name            String
+  version         Int      @default(1)
+  systemPrompt    String
+  userTemplate    String
+  modelConfigId   String?
+  modelConfig     AIModelConfig? @relation(fields: [modelConfigId], references: [id])
+  temperature     Float    @default(0.7)
+  maxTokens       Int      @default(4096)
+  active          Boolean  @default(false)
+  metadata        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([name, version])
+}
+
+model AIUsageRecord {
+  id              String   @id @default(cuid())
+  period          String   // YYYY-MM
+  totalRequests   Int      @default(0)
+  totalInputTokens Int     @default(0)
+  totalOutputTokens Int    @default(0)
+  totalCostMinorUnits Int  @default(0)
+  byPurpose       String   @default("{}") // JSON: { purpose: count }
+  byModel         String   @default("{}") // JSON: { model: count }
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([period])
 }

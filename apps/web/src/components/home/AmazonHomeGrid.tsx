@@ -79,7 +79,7 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
                   aria-hidden="true"
                   className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[40%]"
                 >
-                  <div className="absolute -inset-x-10 -bottom-16 h-[115%] rounded-[50%] bg-gradient-to-t from-midnight via-ember to-ember/60 blur-xl" />
+                  <div className="absolute -inset-x-10 -bottom-16 h-[115%] rounded-[50%] bg-gradient-to-t from-midnight via-ember to-ember/80 blur-xl" />
                 </div>
                 <div className="absolute inset-x-0 top-0 z-20 p-5 flex justify-between items-start">
                   {slide.discountPercent ? (

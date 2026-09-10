@@ -17,7 +17,7 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
   } = featured;
 
   return (
-    <section className="sm:col-span-2 lg:col-span-4 relative overflow-hidden rounded-lg border border-black/5 bg-white shadow-card lg:h-[240px]">
+    <section className="sm:col-span-2 lg:col-span-4 relative overflow-hidden rounded-lg border border-black/5 bg-white shadow-card lg:h-[290px]">
       <div className="grid lg:h-full lg:grid-cols-[1fr_1.4fr] grid-auto-rows-1fr">
         <div className="relative overflow-hidden bg-gradient-to-br from-midnight via-ember-deep to-ember text-white p-3 md:p-4 flex flex-col justify-between gap-2">
         <div aria-hidden className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-ember/40 blur-3xl" />
@@ -65,12 +65,12 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
         </div>
 
         <div className="bg-smoke-50 h-full">
-          <div className="grid h-full grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3 grid-auto-rows-1fr">
+          <div className="grid h-full grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 grid-auto-rows-1fr">
             {products.map((product, idx) => (
               <Link
                 key={idx}
                 href={product.href}
-                className="group flex flex-col h-full rounded-lg border border-black/5 bg-white p-2 shadow-sm transition-all duration-normal hover:shadow-card-hover"
+                className="group flex flex-col h-full rounded-lg border border-black/5 bg-white p-3 shadow-sm transition-all duration-normal hover:shadow-card-hover"
               >
                 <div className="relative flex-1 w-full overflow-hidden rounded-md bg-smoke-100">
                   <Image
@@ -81,12 +81,12 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
                     className="object-cover transition-transform duration-300 group-hover:scale-[1.05]"
                   />
                 </div>
-                <div className="mt-1.5 flex flex-col gap-1 px-0.5">
-                  <span className="text-[10px] md:text-[11px] leading-tight line-clamp-1 font-medium text-text-primary group-hover:underline">
+                <div className="mt-2 flex flex-col gap-1.5 px-0.5">
+                  <span className="text-[11px] md:text-xs leading-tight line-clamp-1 font-medium text-text-primary group-hover:underline">
                     {product.title}
                   </span>
                   {product.discountLabel && (
-                    <span className="inline-flex w-fit items-center rounded-sm bg-deal px-1 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
+                    <span className="inline-flex w-fit items-center rounded-sm bg-deal px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">
                       {product.discountLabel}
                     </span>
                   )}

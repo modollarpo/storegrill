@@ -17,7 +17,7 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
   } = featured;
 
   return (
-    <section className="sm:col-span-2 lg:col-span-4 relative overflow-hidden rounded-lg border border-black/5 bg-white shadow-card lg:h-[420px]">
+    <section className="sm:col-span-2 lg:col-span-4 relative overflow-hidden rounded-lg border border-black/5 bg-white shadow-card lg:h-[360px]">
       <div className="grid lg:h-full lg:grid-cols-[1fr_1.4fr]">
         <div className="relative overflow-hidden bg-gradient-to-br from-midnight via-ember-deep to-ember text-white p-6 md:p-9 flex flex-col justify-between gap-6">
           <div aria-hidden className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-ember/40 blur-3xl" />
@@ -30,7 +30,7 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
               <span className="h-1.5 w-1.5 rounded-full bg-ember-light" />
               {eyebrow}
             </span>
-            <h2 className="mt-4 text-2xl md:text-4xl font-black tracking-tight leading-tight">{title}</h2>
+            <h2 className="mt-4 text-2xl md:text-4xl font-black tracking-tight leading-tight text-white">{title}</h2>
             {subtitle && (
               <p className="mt-3 max-w-md text-sm md:text-base text-white/85 leading-relaxed">{subtitle}</p>
             )}

@@ -17,8 +17,9 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
   } = featured;
 
   return (
-    <section className="sm:col-span-2 lg:col-span-4 relative overflow-hidden rounded-lg border border-black/5 bg-white shadow-card lg:h-[250px]">
-      <div className="grid lg:h-full lg:grid-cols-[1fr_1.4fr]">
+    <section className="sm:col-span-2 lg:col-span-4 relative overflow-hidden rounded-lg border border-black/5 bg-white shadow-card">
+      <div className="grid lg:h-full lg:grid-cols-[1fr_1.4fr] grid-auto-rows-1fr">
+        <div className="relative overflow-hidden bg-gradient-to-br from-midnight via-ember-deep to-ember text-white p-3 md:p-4 flex flex-col justify-between gap-2">
         <div className="relative overflow-hidden bg-gradient-to-br from-midnight via-ember-deep to-ember text-white p-3 md:p-4 flex flex-col justify-between gap-2">
           <div aria-hidden className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-ember/40 blur-3xl" />
           <div aria-hidden className="pointer-events-none absolute -bottom-28 -left-12 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
@@ -70,9 +71,9 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
               <Link
                 key={idx}
                 href={product.href}
-                className="group flex flex-col rounded-lg border border-black/5 bg-white p-2 shadow-sm transition-all duration-normal hover:shadow-card-hover"
+                className="group flex flex-col h-full rounded-lg border border-black/5 bg-white p-2 shadow-sm transition-all duration-normal hover:shadow-card-hover"
               >
-                <div className="relative aspect-square w-full overflow-hidden rounded-md bg-smoke-100">
+                <div className="relative h-full w-full overflow-hidden rounded-md bg-smoke-100">
                   <Image
                     src={product.image}
                     alt={product.title}

@@ -17,9 +17,9 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
   } = featured;
 
   return (
-    <section className="sm:col-span-2 lg:col-span-4 relative overflow-hidden rounded-lg border border-black/5 bg-white shadow-card">
-      <div className="grid lg:grid-cols-[1fr_1.15fr]">
-        <div className="relative overflow-hidden bg-gradient-to-br from-midnight via-ember-deep to-ember text-white p-6 md:p-10 flex flex-col justify-between gap-8">
+    <section className="sm:col-span-2 lg:col-span-4 relative overflow-hidden rounded-lg border border-black/5 bg-white shadow-card lg:h-[420px]">
+      <div className="grid lg:h-full lg:grid-cols-[1fr_1.4fr]">
+        <div className="relative overflow-hidden bg-gradient-to-br from-midnight via-ember-deep to-ember text-white p-6 md:p-9 flex flex-col justify-between gap-6">
           <div aria-hidden className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-ember/40 blur-3xl" />
           <div aria-hidden className="pointer-events-none absolute -bottom-28 -left-12 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
           <div aria-hidden className="pointer-events-none absolute right-8 top-8 h-40 w-40 rounded-full border border-white/10" />
@@ -65,12 +65,12 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
         </div>
 
         <div className="bg-smoke-50 p-4 md:p-6">
-          <div className="grid h-full grid-cols-2 gap-3 md:gap-4">
+          <div className="grid h-full content-start grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
             {products.map((product, idx) => (
               <Link
                 key={idx}
                 href={product.href}
-                className="group flex flex-col rounded-lg border border-black/5 bg-white p-2.5 shadow-sm transition-all duration-normal hover:shadow-card-hover"
+                className="group flex flex-col rounded-lg border border-black/5 bg-white p-2 shadow-sm transition-all duration-normal hover:shadow-card-hover"
               >
                 <div className="relative aspect-square w-full overflow-hidden rounded-md bg-smoke-100">
                   <Image
@@ -81,12 +81,12 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
                     className="object-cover transition-transform duration-300 group-hover:scale-[1.05]"
                   />
                 </div>
-                <div className="mt-2 flex flex-col gap-1 px-0.5">
-                  <span className="text-xs leading-snug line-clamp-2 font-medium text-text-primary group-hover:underline">
+                <div className="mt-1.5 flex flex-col gap-1 px-0.5">
+                  <span className="text-[10px] md:text-[11px] leading-tight line-clamp-1 font-medium text-text-primary group-hover:underline">
                     {product.title}
                   </span>
                   {product.discountLabel && (
-                    <span className="inline-flex w-fit items-center rounded-sm bg-deal px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">
+                    <span className="inline-flex w-fit items-center rounded-sm bg-deal px-1 py-0.5 text-[9px] font-black uppercase tracking-wide text-white">
                       {product.discountLabel}
                     </span>
                   )}

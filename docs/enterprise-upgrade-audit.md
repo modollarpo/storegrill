@@ -234,3 +234,7 @@ Severity: H = blocks the phase, M = required, L = polish.
 | 5 | ✅ | `82c219e` | AI Gateway: model config, request logging, route |
 | 6 | ✅ | `c730a15` | AI merchandising: gateway-backed async service |
 | 7 | ✅ | `8c8f0f5` | Experiments, feature flags, analytics infrastructure |
+| 8 | ✅ | `27524b2` | Job queue: retry, backoff, registry |
+| 9 | ✅ | `a1262c1` | Scheduler: voucher expiry, analytics aggregation |
+| 10 | ✅ | `478e2f6` | Admin dashboard: summary + finance endpoints |
+| 11 | ✅ | `7bd282b` | Vendor: RBAC wired to deal CRUD endpoints |

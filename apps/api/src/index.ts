@@ -36,6 +36,9 @@ import { returnsRouter } from './routes/returns.js';
 import { disputesRouter } from './routes/disputes.js';
 import { openApiRouter } from './routes/openapi.js';
 import { aiRouter } from './routes/ai.js';
+import { experimentsRouter } from './routes/experiments.js';
+import { featureFlagsRouter } from './routes/feature-flags.js';
+import { analyticsRouter } from './routes/analytics.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 export { prisma } from './db/prisma.js';
@@ -114,6 +117,9 @@ app.use('/api/v1/returns', returnsRouter);
 app.use('/api/v1/disputes', disputesRouter);
 app.use('/api/v1/docs', openApiRouter);
 app.use('/api/v1/ai', aiRouter);
+app.use('/api/v1/experiments', experimentsRouter);
+app.use('/api/v1/feature-flags', featureFlagsRouter);
+app.use('/api/v1/analytics', analyticsRouter);
 
 app.use(errorHandler);
 

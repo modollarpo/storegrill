@@ -13,6 +13,7 @@ import { SearchBar } from '../search/SearchBar';
 import { CategoryMegaMenu, type MegaMenuCategory } from '../navigation/CategoryMegaMenu';
 import { CartDrawer } from '../commerce/CartDrawer';
 import { Drawer } from '../ui/Drawer';
+import { API_BASE } from '@/lib/api';
 import type { CategoryNode } from '@/lib/api-client';
 
 export interface HeaderProps {
@@ -131,7 +132,7 @@ function Header({ categories }: HeaderProps) {
   useEffect(() => {
     if (dealsDropdownOpen && todaysDeals.length === 0) {
       setDealsLoading(true);
-      fetch(`/api/v1/deals?regionKey=${regionKey}`)
+      fetch(`${API_BASE}/api/v1/deals?regionKey=${regionKey}`)
         .then(res => res.json())
         .then(data => {
           if (data && Array.isArray(data.deals)) {

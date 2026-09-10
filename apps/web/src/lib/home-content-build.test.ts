@@ -109,16 +109,42 @@ describe('buildHeroSlides', () => {
     expect(buildHeroSlides([poor], 'en')).toHaveLength(0);
   });
 
-  it('caps at three real slides', () => {
-    const mk = (i: number): DealRow => ({
-      id: `d${i}`,
-      status: 'LIVE',
-      enabled: true,
-      slug: `s${i}`,
-      variants: [{ product: { thumbnail: `https://cdn.storegrill.net/${i}.jpg`, name: `P${i}` }, discountPercent: 10 }],
+  it('fills the slider with many distinct products from a single live deal', () => {
+    const mk = (i: number) => ({
+      product: { thumbnail: `https://cdn.storegrill.net/${i}.jpg`, name: `P${i}`, slug: `p${i}` },
+      discountPercent: 10,
     });
-    const slides = buildHeroSlides([1, 2, 3, 4].map(i => mk(i)), 'en');
-    expect(slides).toHaveLength(3);
+    const oneDeal: DealRow = { ...deal, variants: [1, 2, 3, 4].map(i => mk(i)) };
+    const slides = buildHeroSlides([oneDeal], 'en');
+    expect(slides).toHaveLength(4);
+    expect(slides.map(s => s.title)).toEqual(['P1', 'P2', 'P3', 'P4']);
+    expect(slides.every(s => s.href === '/deals/costway-flash-sale')).toBe(true);
+  });
+
+  it('dedupes the same product across deals and caps at fourteen slides', () => {
+    const mk = (i: number) => ({
+      product: { thumbnail: `https://cdn.storegrill.net/${i}.jpg`, name: `P${i}`, slug: `p${i}` },
+      discountPercent: 10,
+    });
+    const manyDeals: DealRow[] = [1, 2, 3, 4, 5].map(i => ({
+      ...deal,
+      id: `d${i}`,
+      slug: `s${i}`,
+      variants: [mk(i), mk(i), mk(i * 10)],
+    }));
+    const slides = buildHeroSlides(manyDeals, 'en');
+    expect(slides).toHaveLength(10);
+    expect(new Set(slides.map(s => s.title)).size).toBe(10);
+  });
+
+  it('sorts slides by discount descending so the best deal comes first', () => {
+    const mk = (name: string, pct: number) => ({
+      product: { thumbnail: `https://cdn.storegrill.net/${name}.jpg`, name, slug: name },
+      discountPercent: pct,
+    });
+    const oneDeal: DealRow = { ...deal, variants: [mk('Low', 5), mk('High', 40), mk('Mid', 20)] };
+    const slides = buildHeroSlides([oneDeal], 'en');
+    expect(slides.map(s => s.title)).toEqual(['High', 'Mid', 'Low']);
   });
 });
 

@@ -17,7 +17,7 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
   } = featured;
 
   return (
-    <section className="sm:col-span-2 lg:col-span-4 relative overflow-hidden rounded-lg border border-black/5 bg-white shadow-card">
+    <section className="sm:col-span-2 lg:col-span-4 relative overflow-hidden rounded-lg border border-black/5 bg-white shadow-card lg:h-[240px]">
       <div className="grid lg:h-full lg:grid-cols-[1fr_1.4fr] grid-auto-rows-1fr">
         <div className="relative overflow-hidden bg-gradient-to-br from-midnight via-ember-deep to-ember text-white p-3 md:p-4 flex flex-col justify-between gap-2">
         <div aria-hidden className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-ember/40 blur-3xl" />

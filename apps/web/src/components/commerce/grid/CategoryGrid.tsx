@@ -91,7 +91,7 @@ function VendorProgrammeArt() {
       aria-hidden
       viewBox="0 0 220 180"
       fill="none"
-      className="pointer-events-none absolute -right-7 top-1/2 w-52 -translate-y-1/2 text-ember/55"
+      className="pointer-events-none absolute left-1/2 top-1/2 w-52 -translate-x-1/2 -translate-y-1/2 text-ember/55"
     >
       <circle cx="200" cy="90" r="64" stroke="currentColor" strokeOpacity="0.2" strokeWidth="1.5" />
       <circle cx="200" cy="90" r="42" stroke="currentColor" strokeOpacity="0.15" strokeWidth="1.5" />
@@ -115,7 +115,7 @@ function GlobalDesignArt() {
       aria-hidden
       viewBox="0 0 220 180"
       fill="none"
-      className="pointer-events-none absolute -left-7 top-1/2 w-52 -translate-y-1/2 text-white/55"
+      className="pointer-events-none absolute left-1/2 top-1/2 w-52 -translate-x-1/2 -translate-y-1/2 text-white/55"
     >
       <circle cx="58" cy="96" r="50" stroke="currentColor" strokeOpacity="0.5" strokeWidth="1.5" />
       <ellipse cx="58" cy="96" rx="50" ry="18" stroke="currentColor" strokeOpacity="0.3" strokeWidth="1.5" />

@@ -238,3 +238,4 @@ Severity: H = blocks the phase, M = required, L = polish.
 | 9 | ✅ | `a1262c1` | Scheduler: voucher expiry, analytics aggregation |
 | 10 | ✅ | `478e2f6` | Admin dashboard: summary + finance endpoints |
 | 11 | ✅ | `7bd282b` | Vendor: RBAC wired to deal CRUD endpoints |
+| 12 | ✅ | `0f4e7dc` | AI: governance, recommendations, anomaly detection |

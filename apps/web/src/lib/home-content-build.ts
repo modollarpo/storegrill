@@ -36,7 +36,30 @@ export interface HomePromoSection {
   listPriceMinorUnits?: number;
 }
 
-export type HomeSectionItem = HomeGridSection | HomePromoSection;
+export interface HomeFeaturedProduct {
+  title: string;
+  image: string;
+  href: string;
+  priceMinorUnits?: number;
+  currencyCode?: string;
+  listPriceMinorUnits?: number;
+  discountLabel?: string;
+}
+
+export interface HomeFeaturedSection {
+  type: 'featured';
+  eyebrow: string;
+  title: string;
+  subtitle?: string;
+  href: string;
+  ctaText: string;
+  secondaryCtaText: string;
+  secondaryHref: string;
+  stats?: string[];
+  products: HomeFeaturedProduct[];
+}
+
+export type HomeSectionItem = HomeGridSection | HomePromoSection | HomeFeaturedSection;
 
 export interface HomeHeroSlide {
   title: string;
@@ -270,20 +293,67 @@ export function buildPromos(language: string): HomePromoSection[] {
   ];
 }
 
-export function buildRowPromo(card: HomeGridSection, language: string): HomePromoSection {
-  const tile = card.tiles[0];
+function featuredProductPercent(p: FeaturedRow): number {
+  if (!p?.listPriceMinorUnits || !p?.price || p.listPriceMinorUnits <= p.price) return 0;
+  return Math.round((1 - p.price / p.listPriceMinorUnits) * 100);
+}
+
+export function isoWeek(now: Date): number {
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const dow = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dow);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.round(((d.getTime() - yearStart.getTime()) / 86400000 / 7) + 0.5);
+}
+
+export function featuredCursor(regionKey: string, length: number, now: Date = new Date()): number {
+  if (length <= 0) return 0;
+  const regionSeed = [...regionKey].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  return (regionSeed + isoWeek(now) * 7) % length;
+}
+
+export function buildFeaturedSection(
+  roots: CategoryRow[],
+  deals: DealRow[],
+  language: string,
+  regionKey: string,
+  now: Date = new Date(),
+): HomeFeaturedSection | null {
+  const productTiles = (root: CategoryRow): HomeFeaturedProduct[] =>
+    (root.featured ?? [])
+      .filter(p => p?.name && p?.thumbnail && p?.slug)
+      .slice(0, 4)
+      .map(p => ({
+        title: p.name as string,
+        image: p.thumbnail as string,
+        href: `/products/${p.slug as string}`,
+        priceMinorUnits: p.price ?? undefined,
+        currencyCode: p.currencyCode,
+        listPriceMinorUnits: p.listPriceMinorUnits ?? undefined,
+        discountLabel: featuredProductPercent(p) >= 1 ? t(language, 'homePercentOff', featuredProductPercent(p)) : undefined,
+      }));
+
+  const eligible = roots.filter(root => root?.name && root?.slug && productTiles(root).length > 0);
+  if (eligible.length === 0) return null;
+  const category = eligible[featuredCursor(regionKey, eligible.length, now)];
+  const items = productTiles(category);
+
+  const maxDiscount = Math.max(0, ...(category.featured ?? []).map(featuredProductPercent));
+  const stats: string[] = [];
+  if (maxDiscount >= 1 && items.length > 0) stats.push(t(language, 'homePercentOffUpTo', maxDiscount));
+  if (deals.length > 0) stats.push(t(language, 'homeDealsLiveCount', deals.length));
+
   return {
-    type: 'promo',
-    title: card.title,
-    subtitle: card.subtitle ?? (tile?.title ? tile.title : undefined),
+    type: 'featured',
     eyebrow: t(language, 'homePromoFeaturedEyebrow'),
-    image: tile?.image,
-    ctaText: t(language, 'shopNow'),
-    href: tile?.href ?? card.linkHref ?? '/products',
-    wide: true,
-    priceMinorUnits: tile?.priceMinorUnits,
-    currencyCode: tile?.currencyCode,
-    listPriceMinorUnits: tile?.listPriceMinorUnits,
+    title: category.name as string,
+    subtitle: category.tagline ?? undefined,
+    href: `/categories/${category.slug as string}`,
+    ctaText: t(language, 'homeFeaturedCta', category.name as string),
+    secondaryCtaText: t(language, 'homeDealsSeeAll'),
+    secondaryHref: '/deals',
+    stats: stats.length > 0 ? stats : undefined,
+    products: items,
   };
 }
 
@@ -293,7 +363,7 @@ export function rowsFromCards(cards: HomeGridSection[]): HomeSectionItem[][] {
   return rows;
 }
 
-export function buildRows(cards: HomeGridSection[], promos: HomePromoSection[], language: string): HomeSectionItem[][] {
+export function buildRows(cards: HomeGridSection[], promos: HomePromoSection[], _language: string): HomeSectionItem[][] {
   if (cards.length === 0) return promos.length > 0 ? [promos] : [];
 
   const promoSeats = Math.min(promos.length, cards.length);
@@ -301,14 +371,7 @@ export function buildRows(cards: HomeGridSection[], promos: HomePromoSection[], 
   const head = cards.slice(0, cards.length - promoSeats);
 
   const rows: HomeSectionItem[][] = [];
-  const chunkCount = Math.ceil(head.length / 4);
-  for (let c = 0; c < chunkCount; c++) {
-    const chunk = head.slice(c * 4, c * 4 + 4);
-    if (c > 0 && (c + 1) % 3 === 0) {
-      rows.push([buildRowPromo(chunk[0], language)]);
-    }
-    rows.push(chunk);
-  }
+  for (let i = 0; i < head.length; i += 4) rows.push(head.slice(i, i + 4));
   const lastRow = [...promoRowCats, ...promos].slice(0, 4);
   if (lastRow.length > 0) rows.push(lastRow);
   return rows;

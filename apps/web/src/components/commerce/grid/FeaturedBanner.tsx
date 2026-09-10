@@ -64,15 +64,15 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
           </div>
         </div>
 
-        <div className="bg-smoke-50 p-4 md:p-6 h-full">
-          <div className="grid h-full grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3 grid-auto-rows-1fr">
+        <div className="bg-smoke-50 p-0 h-full">
+          <div className="grid h-full grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3 p-4 md:p-6 grid-auto-rows-1fr">
             {products.map((product, idx) => (
               <Link
                 key={idx}
                 href={product.href}
                 className="group flex flex-col h-full rounded-lg border border-black/5 bg-white p-2 shadow-sm transition-all duration-normal hover:shadow-card-hover"
               >
-                <div className="relative h-full w-full overflow-hidden rounded-md bg-smoke-100">
+                <div className="relative flex-1 w-full overflow-hidden rounded-md bg-smoke-100">
                   <Image
                     src={product.image}
                     alt={product.title}

@@ -105,3 +105,34 @@ export async function recordPayoutLedger(
     prisma,
   );
 }
+
+export interface PayoutPaidContext {
+  payoutId: string;
+  currencyCode: string;
+  payoutMinorUnits: bigint;
+}
+
+/**
+ * Records the payout actually leaving the business (e.g., bank transfer sent):
+ *   DR  MERCHANT_PAYOUT_PAYABLE_<CCY> payout  (clear liability)
+ *   CR  CASH_<CCY>                     payout  (money leaves)
+ */
+export async function recordPayoutPaid(
+  ctx: PayoutPaidContext,
+  prisma: PrismaClient = db,
+): Promise<string> {
+  const { currencyCode: ccy } = ctx;
+  return recordLedgerTransaction(
+    {
+      description: `Payout paid ${ctx.payoutId}`,
+      currencyCode: ccy,
+      referenceType: 'SETTLEMENT',
+      referenceId: ctx.payoutId,
+      entries: [
+        { accountCode: `MERCHANT_PAYOUT_PAYABLE_${ccy}`, debitMinorUnits: ctx.payoutMinorUnits },
+        { accountCode: `CASH_${ccy}`, creditMinorUnits: ctx.payoutMinorUnits },
+      ],
+    },
+    prisma,
+  );
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { recordOrderSale, recordOrderRefund, recordPayoutLedger } from './ledger-entries.js';
+import { recordOrderSale, recordOrderRefund, recordPayoutLedger, recordPayoutPaid } from './ledger-entries.js';
 
 function captureRecording() {
   const recordings: Array<{ entries: { create: Array<Record<string, unknown>> }; referenceId?: string; referenceType?: string }> = [];
@@ -102,5 +102,30 @@ describe('recordPayoutLedger', () => {
     expect(debitSum).toBe(1200 + 8770);
     expect(entries.length).toBe(4);
     expect(entries.every(e => e.currencyCode === 'USD')).toBe(true);
+  });
+});
+
+describe('recordPayoutPaid', () => {
+  it('clears the payout liability and credits cash', async () => {
+    const { prisma, recordings } = captureRecording();
+    await recordPayoutPaid(
+      {
+        payoutId: 'payout-1',
+        currencyCode: 'GBP',
+        payoutMinorUnits: 8770n,
+      },
+      prisma,
+    );
+    const entries = entriesOf(recordings[0]);
+    const debit = entries.filter(e => e.direction === 'DEBIT');
+    const credit = entries.filter(e => e.direction === 'CREDIT');
+    const debitSum = debit.reduce((s, e) => s + Number(e.amountMinorUnits), 0);
+    const creditSum = credit.reduce((s, e) => s + Number(e.amountMinorUnits), 0);
+    expect(debitSum).toBe(creditSum);
+    expect(debitSum).toBe(8770);
+    expect(entries.length).toBe(2);
+    expect(entries.every(e => e.currencyCode === 'GBP')).toBe(true);
+    expect(recordings[0].referenceType).toBe('SETTLEMENT');
+    expect(recordings[0].referenceId).toBe('payout-1');
   });
 });

@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { ProductCardData } from '../ProductCard';
 import { PriceDisplay } from '../PriceDisplay';
+import { VerifiedBadge } from '../trust/VerifiedBadge';
+import { StockIndicator } from '../trust/StockIndicator';
 
 interface ProductCardInfoProps {
   product: ProductCardData;
@@ -42,6 +44,8 @@ export function ProductCardInfo({ product, href, locale }: ProductCardInfoProps)
         <Link href={href} className="hover:text-ember transition-colors">{product.name}</Link>
       </h3>
 
+      {product.vendor?.verified && <VerifiedBadge size="sm" className="mb-1" />}
+
       <div className="flex items-end justify-between gap-2 mt-auto">
         <div className="flex flex-col">
           <span className="font-bold text-base text-text-primary">
@@ -59,6 +63,10 @@ export function ProductCardInfo({ product, href, locale }: ProductCardInfoProps)
           </span>
         )}
       </div>
+
+      {product.inventoryCount != null && (
+        <StockIndicator inventoryCount={product.inventoryCount} className="mt-1.5" />
+      )}
     </div>
   );
 }

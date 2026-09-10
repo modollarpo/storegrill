@@ -28,6 +28,8 @@ model User {
   cart               Cart?
   orders             Order[]
   reviews            Review[]
+  reviewVotes        ReviewVote[]
+  reviewQuestions    ReviewQuestion[]
   notifications      Notification[]
   oauthAccounts      OAuthAccount[]
   emailTokens        EmailToken[]
@@ -571,12 +573,41 @@ model Review {
   body        String?
   images      String   @default("[]")
   verified    Boolean  @default(false)
+  helpfulCount Int     @default(0)
   vendorReply String?
   status      String   @default("PENDING")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  votes       ReviewVote[]
+  questions   ReviewQuestion[]
+
   @@unique([userId, productId])
+}
+
+model ReviewVote {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  reviewId  String
+  review    Review   @relation(fields: [reviewId], references: [id])
+  helpful   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, reviewId])
+}
+
+model ReviewQuestion {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  reviewId   String
+  review     Review   @relation(fields: [reviewId], references: [id])
+  question   String
+  answer     String?
+  answererId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Payout {

@@ -20,8 +20,7 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
     <section className="sm:col-span-2 lg:col-span-4 relative overflow-hidden rounded-lg border border-black/5 bg-white shadow-card">
       <div className="grid lg:h-full lg:grid-cols-[1fr_1.4fr] grid-auto-rows-1fr">
         <div className="relative overflow-hidden bg-gradient-to-br from-midnight via-ember-deep to-ember text-white p-3 md:p-4 flex flex-col justify-between gap-2">
-        <div className="relative overflow-hidden bg-gradient-to-br from-midnight via-ember-deep to-ember text-white p-3 md:p-4 flex flex-col justify-between gap-2">
-          <div aria-hidden className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-ember/40 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-ember/40 blur-3xl" />
           <div aria-hidden className="pointer-events-none absolute -bottom-28 -left-12 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
           <div aria-hidden className="pointer-events-none absolute right-8 top-8 h-40 w-40 rounded-full border border-white/10" />
           <div aria-hidden className="pointer-events-none absolute right-12 top-12 h-24 w-24 rounded-full border border-white/10" />
@@ -66,7 +65,7 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
         </div>
 
         <div className="bg-smoke-50 p-4 md:p-6">
-          <div className="grid h-full content-start grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+          <div className="grid h-full grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3 grid-auto-rows-1fr">
             {products.map((product, idx) => (
               <Link
                 key={idx}

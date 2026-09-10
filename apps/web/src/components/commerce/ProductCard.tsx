@@ -13,6 +13,8 @@ import { ProductCardInfo } from './card/ProductCardInfo';
 import { ProductCardActions } from './card/ProductCardActions';
 import { AddToCartInline } from './card/AddToCartInline';
 import { WishlistButton } from './card/WishlistButton';
+import { VerifiedBadge } from './trust/VerifiedBadge';
+import { StockIndicator } from './trust/StockIndicator';
 
 export type ProductCardVariant = 'grid' | 'list' | 'wide' | 'compact';
 

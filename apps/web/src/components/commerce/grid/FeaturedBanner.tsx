@@ -64,7 +64,7 @@ export function FeaturedBanner({ featured }: { featured: HomeFeaturedSection }) 
           </div>
         </div>
 
-        <div className="bg-smoke-50 p-4 md:p-6">
+        <div className="bg-smoke-50 p-4 md:p-6 h-full">
           <div className="grid h-full grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3 grid-auto-rows-1fr">
             {products.map((product, idx) => (
               <Link

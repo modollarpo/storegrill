@@ -322,7 +322,7 @@ export function buildFeaturedSection(
   const productTiles = (root: CategoryRow): HomeFeaturedProduct[] =>
     (root.featured ?? [])
       .filter(p => p?.name && p?.thumbnail && p?.slug)
-      .slice(0, 4)
+      .slice(0, 16)
       .map(p => ({
         title: p.name as string,
         image: p.thumbnail as string,

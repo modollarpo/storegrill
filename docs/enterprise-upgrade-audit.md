@@ -218,3 +218,19 @@ Severity: H = blocks the phase, M = required, L = polish.
 - [x] AI surface confirmed as greenfield.
 - [x] Gaps, duplicates, hard-coded rules, and schema changes catalogued.
 - No production code changed (read-only audit).
+
+## 9. Completion Status (as of enterprise-refactor-session)
+
+| Phase | Status | Commit | Description |
+|-------|--------|--------|-------------|
+| 0 | ✅ | `03f9af5` | Audit doc |
+| 1.1 | ✅ | `0380994` | Payout math: integer/bp engine |
+| 1.2 | ✅ | `75950c9` | Tax, currency, coupon: integer math |
+| 2.1 | ✅ | `c39a1ac` | Commission effective-dated filtering |
+| 2.2 | ✅ | `c39a1ac` | Commission guardrails tests |
+| 3.1 | ✅ | `2ff5c40` | Ledger: `recordPayoutPaid` |
+| 3.2 | ✅ | `bb3f00d` | Voucher, VoucherRedemption, VoucherEvent, PayoutBatch, CampaignAudience, CampaignCreative; Refund engine fields |
+| 4 | ✅ | `12f29d9` | Vendor Deal Studio: vendor-scoped CRUD + page |
+| 5 | ✅ | `82c219e` | AI Gateway: model config, request logging, route |
+| 6 | ✅ | `c730a15` | AI merchandising: gateway-backed async service |
+| 7 | ✅ | `8c8f0f5` | Experiments, feature flags, analytics infrastructure |

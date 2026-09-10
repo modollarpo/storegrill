@@ -32,6 +32,7 @@ export interface ResolvedCommission {
 export async function loadCommissionRules(
   merchantId: string,
   regionKey?: string,
+  now: Date = new Date(),
   prisma: PrismaClient = db,
 ): Promise<SharedCommissionRule[]> {
   const rules = await prisma.commissionRule.findMany({
@@ -39,6 +40,9 @@ export async function loadCommissionRules(
       AND: [
         { OR: [{ vendorId: null }, { vendorId: merchantId }] },
         ...(regionKey ? [{ OR: [{ regionKey: null }, { regionKey }] }] : []),
+        { active: true },
+        { startsAt: { lte: now } },
+        { OR: [{ endsAt: null }, { endsAt: { gt: now } }] },
       ],
     },
   });

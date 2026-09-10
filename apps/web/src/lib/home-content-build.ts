@@ -121,29 +121,37 @@ export function endLabel(endsAt: string | undefined, language: string): string {
   }
 }
 
+export const HERO_MAX_SLIDES = 14;
+
 export function buildHeroSlides(deals: DealRow[], language: string): HomeHeroSlide[] {
   const slides: HomeHeroSlide[] = [];
+  const seen = new Set<string>();
   for (const deal of deals) {
-    if (slides.length >= 3) break;
-    const variant = (deal.variants ?? []).find(
-      v => v?.product?.thumbnail && v?.product?.name && Number(v.discountPercent) >= 1,
-    );
-    if (!variant?.product) continue;
-    const percent = Math.round(Number(variant.discountPercent));
-    const ends = endLabel(deal.endsAt, language);
-    const pctLabel = t(language, 'homePercentOff', percent);
-    slides.push({
-      title: variant.product.name as string,
-      subtitle: ends ? `${pctLabel} · ${t(language, 'homeEndsOn', ends)}` : pctLabel,
-      image: variant.product.thumbnail as string,
-      href: `/deals/${deal.slug ?? deal.id ?? 'deals'}`,
-      priceMinorUnits: variant.priceMinorUnits ?? undefined,
-      currencyCode: 'GBP',
-      listPriceMinorUnits: variant.listPriceMinorUnits ?? undefined,
-      discountPercent: percent,
-    });
+    for (const variant of deal.variants ?? []) {
+      if (slides.length >= HERO_MAX_SLIDES) break;
+      const product = variant?.product;
+      if (!product?.thumbnail || !product?.name) continue;
+      const percent = Math.round(Number(variant.discountPercent));
+      if (!Number.isFinite(percent) || percent < 1) continue;
+      const key = product.slug ?? product.name;
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      const ends = endLabel(deal.endsAt, language);
+      const pctLabel = t(language, 'homePercentOff', percent);
+      slides.push({
+        title: product.name as string,
+        subtitle: ends ? `${pctLabel} · ${t(language, 'homeEndsOn', ends)}` : pctLabel,
+        image: product.thumbnail as string,
+        href: `/deals/${deal.slug ?? deal.id ?? 'deals'}`,
+        priceMinorUnits: variant.priceMinorUnits ?? undefined,
+        currencyCode: 'GBP',
+        listPriceMinorUnits: variant.listPriceMinorUnits ?? undefined,
+        discountPercent: percent,
+      });
+    }
+    if (slides.length >= HERO_MAX_SLIDES) break;
   }
-  return slides;
+  return slides.sort((a, b) => (b.discountPercent ?? 0) - (a.discountPercent ?? 0));
 }
 
 export function buildCategoryCards(roots: CategoryRow[], language: string): HomeGridSection[] {

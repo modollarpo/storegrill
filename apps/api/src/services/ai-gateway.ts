@@ -26,6 +26,8 @@ export interface AIGatewayConfig {
 const DEFAULT_CONFIGS: AIGatewayConfig[] = [
   { provider: 'openai', modelId: 'gpt-4o', maxTokens: 128000, costPer1kInput: 0.0025, costPer1kOutput: 0.01 },
   { provider: 'openai', modelId: 'gpt-4o-mini', maxTokens: 128000, costPer1kInput: 0.00015, costPer1kOutput: 0.0006 },
+  { provider: 'openai', modelId: 'dall-e-3', maxTokens: 0, costPer1kInput: 0.04, costPer1kOutput: 0 },
+  { provider: 'azure', modelId: 'dall-e-3', maxTokens: 0, costPer1kInput: 0.04, costPer1kOutput: 0 },
   { provider: 'anthropic', modelId: 'claude-3-5-sonnet-20241022', maxTokens: 200000, costPer1kInput: 0.003, costPer1kOutput: 0.015 },
 ];
 
@@ -47,18 +49,32 @@ export async function initAIModels(prisma: PrismaClient = db): Promise<void> {
 }
 
 export async function logAIRequest(req: AIGatewayRequest, prisma: PrismaClient = db): Promise<string> {
-  const modelConfig = await prisma.aIModelConfig.findFirst({
-    where: { provider: req.modelProvider ?? 'openai', modelId: req.modelId ?? 'gpt-4o' },
+  const provider = req.modelProvider ?? 'openai';
+  const modelId = req.modelId ?? 'gpt-4o';
+
+  let modelConfig = await prisma.aIModelConfig.findFirst({
+    where: { provider, modelId },
   });
 
-  const costMinorUnits = modelConfig
-    ? Math.round((req.inputTokens * modelConfig.costPer1kInput + req.outputTokens * modelConfig.costPer1kOutput) * 10)
-    : 0;
+  if (!modelConfig) {
+    modelConfig = await prisma.aIModelConfig.create({
+      data: {
+        provider,
+        modelId,
+        displayName: modelId,
+        maxTokens: req.modelId === 'dall-e-3' ? 0 : 4096,
+        costPer1kInput: req.modelId === 'dall-e-3' ? 0.04 : 0,
+        costPer1kOutput: 0,
+      },
+    });
+  }
+
+  const costMinorUnits = Math.round((req.inputTokens * modelConfig.costPer1kInput + req.outputTokens * modelConfig.costPer1kOutput) * 10);
 
   const record = await prisma.aIRequest.create({
     data: {
       userId: req.userId,
-      modelConfigId: modelConfig?.id ?? '',
+      modelConfigId: modelConfig.id,
       purpose: req.purpose,
       inputTokens: req.inputTokens,
       outputTokens: req.outputTokens,

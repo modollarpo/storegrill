@@ -28,6 +28,7 @@ const DEFAULT_CONFIGS: AIGatewayConfig[] = [
   { provider: 'openai', modelId: 'gpt-4o-mini', maxTokens: 128000, costPer1kInput: 0.00015, costPer1kOutput: 0.0006 },
   { provider: 'openai', modelId: 'dall-e-3', maxTokens: 0, costPer1kInput: 0.04, costPer1kOutput: 0 },
   { provider: 'azure', modelId: 'dall-e-3', maxTokens: 0, costPer1kInput: 0.04, costPer1kOutput: 0 },
+  { provider: 'azure', modelId: 'gpt-4-1-mini', maxTokens: 128000, costPer1kInput: 0.0004, costPer1kOutput: 0.0016 },
   { provider: 'anthropic', modelId: 'claude-3-5-sonnet-20241022', maxTokens: 200000, costPer1kInput: 0.003, costPer1kOutput: 0.015 },
 ];
 

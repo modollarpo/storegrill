@@ -98,8 +98,8 @@ async function tickAnalyticsAggregation(prisma: PrismaClient): Promise<void> {
 
     const byPurpose: Record<string, number> = {};
     const byModel: Record<string, number> = {};
-    let totalTokens = 0;
-    let totalCost = 0;
+    const totalTokens = 0;
+    const totalCost = 0;
 
     for (const event of events) {
       byPurpose[event.eventType] = (byPurpose[event.eventType] ?? 0) + 1;

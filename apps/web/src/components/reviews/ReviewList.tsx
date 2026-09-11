@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
-import { useToast } from '@/components/feedback/Toast';
 
 interface Review {
   id: string;
@@ -137,7 +136,9 @@ function ReviewCard({ review, currentUserId, onVote, onAskQuestion, onAnswerQues
         body: JSON.stringify({ helpful }),
       });
       onVote(review.id, helpful);
-    } catch {}
+    } catch {
+      // Vote is best-effort; failure is surfaced by the parent list refresh.
+    }
     setSubmitting(false);
   }
 
@@ -151,7 +152,9 @@ function ReviewCard({ review, currentUserId, onVote, onAskQuestion, onAnswerQues
       });
       onAskQuestion(review.id, newQuestion);
       setNewQuestion('');
-    } catch {}
+    } catch {
+      // Question is best-effort; failure is surfaced by the parent list refresh.
+    }
     setSubmitting(false);
   }
 

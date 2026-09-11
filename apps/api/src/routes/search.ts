@@ -4,6 +4,7 @@ import { prisma } from '../index.js';
 import { resolveProductPricing } from '../utils/pricing.js';
 import { loadActiveDeals } from '../services/deal-eval.js';
 import { isSearchConfigured, searchProducts, reindexProducts, ensureSearchIndex } from '../services/ai-search.js';
+import { enqueueReindexTask } from '../services/reindex-queue.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
@@ -62,9 +63,9 @@ async function keywordSearch(regionKey: string, q: string, limit: number) {
   const where = {
     status: 'ACTIVE' as const,
     OR: searchTerms.flatMap(term => [
-      { name: { contains: term } },
-      { description: { contains: term } },
-      { tags: { contains: term } },
+      { name: { contains: term, mode: 'insensitive' as const } },
+      { description: { contains: term, mode: 'insensitive' as const } },
+      { tags: { contains: term, mode: 'insensitive' as const } },
     ]),
   };
 
@@ -151,6 +152,11 @@ router.post('/init', authenticate, authorize('ADMIN'), async (_req: AuthRequest,
 });
 
 router.post('/reindex', authenticate, authorize('ADMIN'), async (_req: AuthRequest, res: Response) => {
+  const queued = await enqueueReindexTask();
+  if (queued) {
+    res.json({ message: 'Reindex queued' });
+    return;
+  }
   const result = await reindexProducts(prisma);
   res.json(result);
 });

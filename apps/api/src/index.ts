@@ -156,6 +156,18 @@ async function bootstrap() {
     ensureSearchIndex(prisma).catch(error =>
       console.error('Search index ensure failed:', error instanceof Error ? error.message : error),
     );
+    const { ensureQueue, drainReindexQueue, isReindexQueueConfigured } =
+      await import('./services/reindex-queue.js');
+    if (isReindexQueueConfigured()) {
+      ensureQueue().catch(error =>
+        console.error('Reindex queue ensure failed:', error instanceof Error ? error.message : error),
+      );
+      setInterval(() => {
+        drainReindexQueue(prisma).catch(error =>
+          console.error('Reindex queue drain failed:', error instanceof Error ? error.message : error),
+        );
+      }, 30_000).unref();
+    }
     if (process.env.DISABLE_IMPORT_WORKER !== '1') {
       const { startScheduler } = await import('./services/scheduler.js');
       startScheduler(prisma);

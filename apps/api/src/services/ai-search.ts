@@ -209,17 +209,18 @@ export async function ensureSearchIndex(prisma: PrismaClient = db): Promise<bool
         type: 'Collection(Edm.Single)',
         searchable: true,
         dimensions: Number(process.env.AZURE_SEARCH_EMBEDDING_DIMENSIONS) || EMBEDDING_DIMENSIONS,
-        vectorSearchConfiguration: 'vector-config',
+        vectorSearchProfile: 'vector-profile',
       },
     ],
     vectorSearch: {
-      algorithmConfigurations: [
+      algorithms: [
         {
-          name: 'vector-config',
+          name: 'hnsw',
           kind: 'hnsw',
-          parameters: { m: 4, efConstruction: 400, efSearch: 500, metric: 'cosine' },
+          hnswParameters: { m: 4, efConstruction: 400, efSearch: 500, metric: 'cosine' },
         },
       ],
+      profiles: [{ name: 'vector-profile', algorithm: 'hnsw' }],
     },
   };
 
@@ -286,9 +287,7 @@ export async function reindexProducts(prisma: PrismaClient = db, userId?: string
 export async function searchProducts(options: SearchQueryOptions): Promise<SearchQueryResult> {
   const query = options.q.trim();
   const filterParts = ['status eq \'ACTIVE\''];
-  if (options.regionKey) {
-    filterParts.push(`regionKeys/any(r: r eq '${options.regionKey}')`);
-  }
+
   const filter = filterParts.join(' and ');
 
   const payload: Record<string, unknown> = {

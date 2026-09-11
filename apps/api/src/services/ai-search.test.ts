@@ -118,8 +118,8 @@ describe('ai-search service', () => {
     expect(init.method).toBe('PUT');
     expect(url).toContain('/indexes/storegrill-products-v1');
     const body = JSON.parse(init.body);
-    expect(body.fields.some((f: any) => f.name === 'embedding' && f.vectorSearchConfiguration === 'vector-config')).toBe(true);
-    expect(body.vectorSearch.algorithmConfigurations[0].parameters.metric).toBe('cosine');
+    expect(body.fields.some((f: any) => f.name === 'embedding' && f.vectorSearchProfile === 'vector-profile')).toBe(true);
+    expect(body.vectorSearch.algorithms[0].hnswParameters.metric).toBe('cosine');
   });
 
   it('runs a hybrid search with vector and keyword clauses', async () => {
@@ -141,8 +141,8 @@ describe('ai-search service', () => {
     expect(body.search).toBe('grill');
     expect(body.vectorQueries).toBeDefined();
     expect(body.vectorQueries[0].kind).toBe('vector');
-    expect(body.filter).toContain("regionKeys/any(r: r eq 'UK')");
     expect(body.filter).toContain("status eq 'ACTIVE'");
+    expect(body.filter).not.toContain('regionKeys');
   });
 
   it('skips vector queries in keyword mode', async () => {

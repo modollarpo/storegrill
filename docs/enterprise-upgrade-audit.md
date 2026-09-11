@@ -218,3 +218,51 @@ Severity: H = blocks the phase, M = required, L = polish.
 - [x] AI surface confirmed as greenfield.
 - [x] Gaps, duplicates, hard-coded rules, and schema changes catalogued.
 - No production code changed (read-only audit).
+
+## 9. Completion Status (as of enterprise-refactor-session)
+
+| Phase | Status | Commit | Description |
+|-------|--------|--------|-------------|
+| 0 | ✅ | `03f9af5` | Audit doc |
+| 1.1 | ✅ | `0380994` | Payout math: integer/bp engine |
+| 1.2 | ✅ | `75950c9` | Tax, currency, coupon: integer math |
+| 2.1 | ✅ | `c39a1ac` | Commission effective-dated filtering |
+| 2.2 | ✅ | `c39a1ac` | Commission guardrails tests |
+| 3.1 | ✅ | `2ff5c40` | Ledger: `recordPayoutPaid` |
+| 3.2 | ✅ | `bb3f00d` | Voucher, VoucherRedemption, VoucherEvent, PayoutBatch, CampaignAudience, CampaignCreative; Refund engine fields |
+| 4 | ✅ | `12f29d9` | Vendor Deal Studio: vendor-scoped CRUD + page |
+| 5 | ✅ | `82c219e` | AI Gateway: model config, request logging, route |
+| 6 | ✅ | `c730a15` | AI merchandising: gateway-backed async service |
+| 7 | ✅ | `8c8f0f5` | Experiments, feature flags, analytics infrastructure |
+| 8 | ✅ | `27524b2` | Job queue: retry, backoff, registry |
+| 9 | ✅ | `a1262c1` | Scheduler: voucher expiry, analytics aggregation |
+| 10 | ✅ | `478e2f6` | Admin dashboard: summary + finance endpoints |
+| 11 | ✅ | `7bd282b` | Vendor: RBAC wired to deal CRUD endpoints |
+| 12 | ✅ | `0f4e7dc` | AI: governance, recommendations, anomaly detection |
+| Phase | Status | Commit | Description |
+|-------|--------|--------|-------------|
+| 13 | Done | (creative-studio) | Creative Studio: DALL-E 3 banner generation, AIAsset/CampaignCreative persistence, admin UI, asset library |
+
+## 10. AI Creative Studio (Phase 13)
+
+Routes under `/api/v1/creative` (authenticated; ADMIN or VENDOR):
+
+- `POST /generate` - DALL-E 3 banner (hero/deal/category/ad/social/product), persists to `CampaignCreative` (BANNER, DRAFT) and `AIAsset` (IMAGE).
+- `POST /product-hero` - lifestyle/studio/contextual product hero image, persists to `AIAsset`.
+- `POST /ad-copy` - Google/Facebook/Instagram headline + description + CTA.
+- `POST /deal-copy` - deal-aware promotion package (headline, subheadline, hook, urgency, CTA) built from deal-engine facts (type, value, window, region, currency, vendor). LLM never computes money — the value label and dates are injected verbatim. Non-admin callers are scoped to deals owned by their merchant context (403 otherwise). Persists as `AIContent` (entityType DEAL, content_type DEAL_COPY, approved=false). Language comes from the deal's region `defaultLanguage` unless overridden per request; generation is one pass per language, so per-region translation stays with the translator pods.
+- `POST /enhance-alt-text` - SEO alt text; when `productId` is supplied it is stored in `AIContent` (entityType PRODUCT, content_type IMAGE_ALT, approved=false) for governance review.
+- `GET /assets` - recent generated image library (from AIAsset).
+
+Admin UI: `apps/admin/src/app/creative-studio/` (banner types, style presets, size/style/quality, preview, download, gallery, drop-in path hint). AI deal copy: `apps/admin/src/app/deals/page.tsx` and `apps/vendor-portal/src/app/deals/page.tsx` "AI copy" row actions (both call `/deal-copy`; vendor rows resolve via merchant context). Product alt text: `apps/vendor-portal/src/components/ProductForm.tsx` "Generate with AI" button (edit mode, persists to AIContent).
+
+Cost posture: deal copy is a tiny-N job (only curated promotions), ~$0.0003 per generation at gpt-4o-mini-class pricing, so it gets the pennies; full-catalog description rewriting is deliberately out of scope (source-of-truth supplier data, scales with catalog, duplicates across regional pods).
+
+Runtime config (Key Vault in prod, none stored in repo):
+
+- `AZURE_OPENAI_ENDPOINT` (fallback: direct OpenAI)
+- `AZURE_OPENAI_DALLE_DEPLOYMENT` (default `dall-e-3`) / `AZURE_OPENAI_DEPLOYMENT` (text, default `gpt-4o-mini`)
+- `AZURE_OPENAI_API_VERSION` (default `2024-02-01`)
+- `OPENAI_API_KEY` or `AI_API_KEY`
+
+Notes: `logAIRequest` self-heals unknown model configs so cost/FK stays valid; `dall-e-3` (openai + azure) added to seeded model configs. Generated images render with plain `<img>` in admin (no next/image remotePatterns for external blob URLs).

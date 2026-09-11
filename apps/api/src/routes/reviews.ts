@@ -202,4 +202,125 @@ router.post('/:id/reply', authenticate, authorize('VENDOR'), async (req: AuthReq
   res.json({ review: updated });
 });
 
+router.post('/:id/vote', authenticate, async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const body = z.object({ helpful: z.boolean() }).parse(req.body);
+
+  const review = await prisma.review.findUnique({ where: { id } });
+  if (!review) {
+    return res.status(404).json({
+      error: { code: 'NOT_FOUND', message: 'Review not found' },
+    });
+  }
+
+  if (review.userId === req.user!.id) {
+    return res.status(400).json({
+      error: { code: 'CANNOT_VOTE_OWN', message: 'Cannot vote on your own review' },
+    });
+  }
+
+  const existing = await prisma.reviewVote.findUnique({
+    where: { userId_reviewId: { userId: req.user!.id, reviewId: id } },
+  });
+
+  if (existing) {
+    if (existing.helpful === body.helpful) {
+      await prisma.reviewVote.delete({ where: { id: existing.id } });
+      await prisma.review.update({
+        where: { id },
+        data: { helpfulCount: { decrement: 1 } },
+      });
+    } else {
+      await prisma.reviewVote.update({
+        where: { id: existing.id },
+        data: { helpful: body.helpful },
+      });
+    }
+  } else {
+    await prisma.reviewVote.create({
+      data: {
+        userId: req.user!.id,
+        reviewId: id,
+        helpful: body.helpful,
+      },
+    });
+    await prisma.review.update({
+      where: { id },
+      data: { helpfulCount: { increment: 1 } },
+    });
+  }
+
+  const updated = await prisma.review.findUnique({ where: { id } });
+  res.json({ review: updated });
+});
+
+router.post('/:id/questions', authenticate, async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const body = z.object({ question: z.string().min(10).max(1000) }).parse(req.body);
+
+  const review = await prisma.review.findUnique({ where: { id } });
+  if (!review) {
+    return res.status(404).json({
+      error: { code: 'NOT_FOUND', message: 'Review not found' },
+    });
+  }
+
+  const question = await prisma.reviewQuestion.create({
+    data: {
+      userId: req.user!.id,
+      reviewId: id,
+      question: body.question,
+    },
+    include: { user: { select: { id: true, name: true, avatar: true } } },
+  });
+
+  res.status(201).json({ question });
+});
+
+router.post('/:id/questions/:questionId/answer', authenticate, authorize('VENDOR'), async (req: AuthRequest, res: Response) => {
+  const { id, questionId } = req.params;
+  const body = z.object({ answer: z.string().min(1).max(2000) }).parse(req.body);
+
+  const vendor = await prisma.vendorProfile.findUnique({
+    where: { userId: req.user!.id },
+  });
+
+  if (!vendor) {
+    return res.status(404).json({
+      error: { code: 'NOT_FOUND', message: 'Vendor profile not found' },
+    });
+  }
+
+  const review = await prisma.review.findUnique({
+    where: { id },
+    include: { product: { select: { vendorId: true } } },
+  });
+
+  if (!review || review.product.vendorId !== vendor.id) {
+    return res.status(403).json({
+      error: { code: 'FORBIDDEN', message: 'Not your product review' },
+    });
+  }
+
+  const question = await prisma.reviewQuestion.findUnique({
+    where: { id: questionId },
+  });
+
+  if (!question || question.reviewId !== id) {
+    return res.status(404).json({
+      error: { code: 'NOT_FOUND', message: 'Question not found' },
+    });
+  }
+
+  const updated = await prisma.reviewQuestion.update({
+    where: { id: questionId },
+    data: {
+      answer: body.answer,
+      answererId: req.user!.id,
+    },
+  });
+
+  res.json({ question: updated });
+});
+
 export { router as reviewsRouter };

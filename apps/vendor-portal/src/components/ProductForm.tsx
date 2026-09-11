@@ -127,6 +127,9 @@ export function ProductForm({ mode, product }: ProductFormProps) {
   const [variants, setVariants] = useState<VariantDraft[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [altBusy, setAltBusy] = useState(false);
+  const [generatedAlt, setGeneratedAlt] = useState<string | null>(null);
+  const [altError, setAltError] = useState<string | null>(null);
   const nextVariantId = useRef(1);
 
   useEffect(() => {
@@ -240,6 +243,37 @@ export function ProductForm({ mode, product }: ProductFormProps) {
   const submitLabel = mode === 'edit' ? 'Save changes' : 'Create product';
   const submittingLabel = mode === 'edit' ? 'Saving…' : 'Creating…';
 
+  async function generateAltText() {
+    const img = parseImages(imagesText)[0];
+    if (!img) {
+      setAltError('Add at least one image URL before generating alt text.');
+      return;
+    }
+    if (!name.trim()) {
+      setAltError('Give the product a name before generating alt text.');
+      return;
+    }
+    setAltBusy(true);
+    setAltError(null);
+    setGeneratedAlt(null);
+    try {
+      const r = await api<{ altText: string }>('/api/v1/creative/enhance-alt-text', {
+        method: 'POST',
+        body: JSON.stringify({
+          productTitle: name.trim(),
+          productDescription: description.trim() || undefined,
+          imageUrl: img,
+          productId: mode === 'edit' && product ? product.id : undefined,
+        }),
+      });
+      setGeneratedAlt(r.altText);
+    } catch (err) {
+      setAltError(err instanceof ApiError ? err.message : 'Generation failed. Check Azure OpenAI configuration.');
+    } finally {
+      setAltBusy(false);
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} noValidate>
       <FormSection
@@ -304,6 +338,36 @@ export function ProductForm({ mode, product }: ProductFormProps) {
       <FormSection title="Media & attributes">
         <FormRow label="Images" htmlFor="p-images" error={errors.imagesText} description="One image URL per line. The first becomes the thumbnail. Max 20.">
           <textarea id="p-images" value={imagesText} onChange={e => setImagesText(e.target.value)} rows={3} className={textareaClass} placeholder="https://…/crisps.jpg&#10;https://…/box.jpg" />
+        </FormRow>
+
+        <FormRow label="Alt text (AI)" htmlFor="p-alt" description="Generate SEO-friendly alt text for your thumbnail. Saved to the AI content queue for review, powered by Azure OpenAI.">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={generateAltText}
+                disabled={altBusy}
+                aria-busy={altBusy}
+                className="h-9 px-4 rounded-md bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100 disabled:opacity-50 border border-indigo-200 inline-flex items-center gap-1.5 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M11 2a1 1 0 011.96-.28l.5 1.9 1.9.5a1 1 0 010 1.95l-1.9.5-.5 1.9A1 1 0 0111 7.68l-.5-1.9-1.9-.5a1 1 0 010-1.95l1.9-.5.5-1.9A1 1 0 0111 2zm7 8a1 1 0 011.94-.22l.4 1.5 1.5.4a1 1 0 010 1.94l-1.5.4-.4 1.5A1 1 0 0119 15.43l-.4-1.5-1.5-.4a1 1 0 010-1.94l1.5-.4.4-1.5A1 1 0 0118 10zm-9 3a1 1 0 011.9-.4l.7 1.7 1.7.7a1 1 0 010 1.9l-1.7.7-.7 1.7a1 1 0 01-1.9-.4l-.7-1.7-1.7-.7a1 1 0 010-1.9l1.7-.7.7-1.7a1 1 0 011 .4z" /></svg>
+                {altBusy ? 'Generating…' : 'Generate with AI'}
+              </button>
+              {generatedAlt && (
+                <button
+                  type="button"
+                  onClick={() => navigator.clipboard.writeText(generatedAlt).catch(() => {})}
+                  className="h-9 px-3 rounded-md border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors"
+                >
+                  Copy
+                </button>
+              )}
+            </div>
+            {altError && <p role="alert" className="text-xs text-rose-700 font-medium">{altError}</p>}
+            {generatedAlt && (
+              <p className="text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-md px-3 py-2 leading-relaxed">{generatedAlt}</p>
+            )}
+          </div>
         </FormRow>
 
         <FormRow label="Tags" htmlFor="p-tags" error={errors.tagsText} description="Comma-separated keywords for search and merchandising. Max 20.">

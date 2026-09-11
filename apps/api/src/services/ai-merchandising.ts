@@ -80,8 +80,12 @@ export async function rewriteProductContent(
     return fallbackRewrite(input);
   }
 
-  const provider = process.env.AI_PROVIDER || 'openai';
-  const modelId = process.env.AI_MODEL || 'gpt-4o-mini';
+  const endpoint = process.env.AZURE_OPENAI_ENDPOINT;
+  const apiVersion = process.env.AZURE_OPENAI_API_VERSION || '2024-02-01';
+  const deploymentName = process.env.AZURE_OPENAI_DEPLOYMENT || 'gpt-4o-mini';
+
+  const provider = process.env.AI_PROVIDER || (endpoint ? 'azure' : 'openai');
+  const modelId = process.env.AI_MODEL || (endpoint ? deploymentName : 'gpt-4o-mini');
   const modelConfig = await getModelConfig(provider, modelId);
 
   if (!modelConfig) {
@@ -89,15 +93,19 @@ export async function rewriteProductContent(
   }
 
   const startTime = Date.now();
+  const url = endpoint
+    ? `${endpoint}/openai/deployments/${deploymentName}/chat/completions?api-version=${apiVersion}`
+    : 'https://api.openai.com/v1/chat/completions';
+  const headers: Record<string, string> = endpoint
+    ? { 'api-key': apiKey, 'Content-Type': 'application/json' }
+    : { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' };
+
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({
-        model: modelId,
+        model: endpoint ? undefined : modelId,
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           { role: 'user', content: buildUserPrompt(input) },

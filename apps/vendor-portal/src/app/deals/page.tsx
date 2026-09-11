@@ -65,6 +65,8 @@ export default function VendorDealsPage() {
   const [products, setProducts] = useState<VendorProduct[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [copyBusyId, setCopyBusyId] = useState<string | null>(null);
+  const [copyResult, setCopyResult] = useState<{ dealId: string; headline: string; subheadline: string; hook: string; urgency: string; cta: string } | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -150,6 +152,22 @@ export default function VendorDealsPage() {
     }
   }
 
+  async function generateCopy(deal: VendorDeal) {
+    setCopyBusyId(deal.id);
+    setError(null);
+    try {
+      const r = await api<{ copy: { headline: string; subheadline: string; hook: string; urgency: string; cta: string } }>('/api/v1/creative/deal-copy', {
+        method: 'POST',
+        body: JSON.stringify({ dealId: deal.id }),
+      });
+      setCopyResult({ dealId: deal.id, ...r.copy });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Copy generation failed. Check Azure OpenAI configuration.');
+    } finally {
+      setCopyBusyId(null);
+    }
+  }
+
   const valueLabel = (d: VendorDeal) =>
     d.type === 'PERCENTAGE_OFF' ? `${d.value}%` : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(d.value / 100);
 
@@ -188,6 +206,15 @@ export default function VendorDealsPage() {
       align: 'right',
       render: d => (
         <span className="whitespace-nowrap">
+          <button
+            type="button"
+            disabled={busyId === d.id || copyBusyId === d.id}
+            onClick={() => generateCopy(d)}
+            title="Generate AI deal copy"
+            className="rounded-md border border-indigo-200 text-indigo-600 text-[10px] font-bold px-2.5 py-1.5 hover:bg-indigo-50 disabled:opacity-50 mr-1.5 transition-colors"
+          >
+            {copyBusyId === d.id ? 'Generating…' : 'AI copy'}
+          </button>
           <button
             type="button"
             disabled={busyId === d.id}
@@ -307,6 +334,49 @@ export default function VendorDealsPage() {
         }
         caption="Your deals"
       />
+
+      {copyResult && (
+        <div className="mt-4 bg-surface-raised rounded-xl border border-slate-200 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-slate-800">AI Deal Copy</h3>
+            <button type="button" onClick={() => setCopyResult(null)} className="text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors">Close</button>
+          </div>
+          <dl className="grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
+              <dt className="font-semibold text-slate-500 mb-1">Headline</dt>
+              <dd className="font-bold text-slate-800">{copyResult.headline}</dd>
+            </div>
+            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
+              <dt className="font-semibold text-slate-500 mb-1">Subheadline</dt>
+              <dd className="text-slate-700">{copyResult.subheadline}</dd>
+            </div>
+            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
+              <dt className="font-semibold text-slate-500 mb-1">Hook</dt>
+              <dd className="text-slate-700">{copyResult.hook}</dd>
+            </div>
+            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
+              <dt className="font-semibold text-slate-500 mb-1">Urgency</dt>
+              <dd className="text-slate-700">{copyResult.urgency}</dd>
+            </div>
+            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
+              <dt className="font-semibold text-slate-500 mb-1">CTA</dt>
+              <dd className="font-bold text-indigo-700">{copyResult.cta}</dd>
+            </div>
+          </dl>
+          <div className="mt-3 flex gap-2 flex-wrap">
+            {([['headline', copyResult.headline], ['subheadline', copyResult.subheadline], ['hook', copyResult.hook], ['urgency', copyResult.urgency], ['CTA', copyResult.cta]] as const).map(([label, value]) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => navigator.clipboard.writeText(value).catch(() => {})}
+                className="text-[10px] font-bold px-2.5 py-1.5 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Copy {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </VendorShell>
   );
 }

@@ -239,3 +239,30 @@ Severity: H = blocks the phase, M = required, L = polish.
 | 10 | ✅ | `478e2f6` | Admin dashboard: summary + finance endpoints |
 | 11 | ✅ | `7bd282b` | Vendor: RBAC wired to deal CRUD endpoints |
 | 12 | ✅ | `0f4e7dc` | AI: governance, recommendations, anomaly detection |
+| Phase | Status | Commit | Description |
+|-------|--------|--------|-------------|
+| 13 | Done | (creative-studio) | Creative Studio: DALL-E 3 banner generation, AIAsset/CampaignCreative persistence, admin UI, asset library |
+
+## 10. AI Creative Studio (Phase 13)
+
+Routes under `/api/v1/creative` (authenticated; ADMIN or VENDOR):
+
+- `POST /generate` - DALL-E 3 banner (hero/deal/category/ad/social/product), persists to `CampaignCreative` (BANNER, DRAFT) and `AIAsset` (IMAGE).
+- `POST /product-hero` - lifestyle/studio/contextual product hero image, persists to `AIAsset`.
+- `POST /ad-copy` - Google/Facebook/Instagram headline + description + CTA.
+- `POST /deal-copy` - deal-aware promotion package (headline, subheadline, hook, urgency, CTA) built from deal-engine facts (type, value, window, region, currency, vendor). LLM never computes money — the value label and dates are injected verbatim. Non-admin callers are scoped to deals owned by their merchant context (403 otherwise). Persists as `AIContent` (entityType DEAL, content_type DEAL_COPY, approved=false). Language comes from the deal's region `defaultLanguage` unless overridden per request; generation is one pass per language, so per-region translation stays with the translator pods.
+- `POST /enhance-alt-text` - SEO alt text; when `productId` is supplied it is stored in `AIContent` (entityType PRODUCT, content_type IMAGE_ALT, approved=false) for governance review.
+- `GET /assets` - recent generated image library (from AIAsset).
+
+Admin UI: `apps/admin/src/app/creative-studio/` (banner types, style presets, size/style/quality, preview, download, gallery, drop-in path hint). AI deal copy: `apps/admin/src/app/deals/page.tsx` and `apps/vendor-portal/src/app/deals/page.tsx` "AI copy" row actions (both call `/deal-copy`; vendor rows resolve via merchant context). Product alt text: `apps/vendor-portal/src/components/ProductForm.tsx` "Generate with AI" button (edit mode, persists to AIContent).
+
+Cost posture: deal copy is a tiny-N job (only curated promotions), ~$0.0003 per generation at gpt-4o-mini-class pricing, so it gets the pennies; full-catalog description rewriting is deliberately out of scope (source-of-truth supplier data, scales with catalog, duplicates across regional pods).
+
+Runtime config (Key Vault in prod, none stored in repo):
+
+- `AZURE_OPENAI_ENDPOINT` (fallback: direct OpenAI)
+- `AZURE_OPENAI_DALLE_DEPLOYMENT` (default `dall-e-3`) / `AZURE_OPENAI_DEPLOYMENT` (text, default `gpt-4o-mini`)
+- `AZURE_OPENAI_API_VERSION` (default `2024-02-01`)
+- `OPENAI_API_KEY` or `AI_API_KEY`
+
+Notes: `logAIRequest` self-heals unknown model configs so cost/FK stays valid; `dall-e-3` (openai + azure) added to seeded model configs. Generated images render with plain `<img>` in admin (no next/image remotePatterns for external blob URLs).

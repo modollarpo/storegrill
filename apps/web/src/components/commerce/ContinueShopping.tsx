@@ -10,7 +10,9 @@ export function recordLastCategory(categorySlug: string): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(KEY, categorySlug);
-  } catch {}
+  } catch {
+    // localStorage can throw (private mode / quota); last category is best-effort.
+  }
 }
 
 export function ContinueShopping({ className }: { className?: string }) {
@@ -19,7 +21,9 @@ export function ContinueShopping({ className }: { className?: string }) {
   useEffect(() => {
     try {
       setLastCategory(localStorage.getItem(KEY));
-    } catch {}
+    } catch {
+      // localStorage can throw (private mode / quota); continue without a link.
+    }
   }, []);
 
   if (!lastCategory) return null;

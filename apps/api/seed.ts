@@ -359,6 +359,24 @@ async function main() {
   console.log('Seeding database...');
 
   await prisma.$executeRaw`DELETE FROM "SearchSynonym"`;
+  await prisma.searchSynonym.createMany({
+    data: [
+      { term: 'grill', synonyms: '["barbecue","bbq"]' },
+      { term: 'barbecue', synonyms: '["grill","bbq"]' },
+      { term: 'bbq', synonyms: '["barbecue","grill"]' },
+      { term: 'burger', synonyms: '["hamburger"]' },
+      { term: 'sofa', synonyms: '["couch","settee"]' },
+      { term: 'mobile phone', synonyms: '["cellphone","smartphone"]' },
+      { term: 'trainers', synonyms: '["sneakers"]' },
+      { term: 'sneakers', synonyms: '["trainers"]' },
+      { term: 'nappies', synonyms: '["diapers"]' },
+      { term: 'diapers', synonyms: '["nappies"]' },
+      { term: 'torch', synonyms: '["flashlight"]' },
+      { term: 'crisps', synonyms: '["chips"]' },
+      { term: 'chips', synonyms: '["crisps"]' },
+      { term: 'laptop', synonyms: '["notebook"]' },
+    ],
+  });
   await prisma.$executeRaw`DELETE FROM "AuditLog"`;
   await prisma.$executeRaw`DELETE FROM "Notification"`;
   await prisma.$executeRaw`DELETE FROM "ImportJobResult"`;

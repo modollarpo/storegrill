@@ -25,7 +25,7 @@ async function tick(prisma: PrismaClient): Promise<void> {
   await tickImportSchedules(prisma, now, currentMinuteStart);
   await tickTrackingPoll(prisma);
   await tickVoucherExpiry(prisma);
-  await tickAnalyticsAggregation(prisma);
+  await tickAIUsageAggregation(prisma);
 }
 
 async function tickImportSchedules(prisma: PrismaClient, now: Date, currentMinuteStart: Date): Promise<void> {
@@ -84,46 +84,60 @@ async function tickVoucherExpiry(prisma: PrismaClient): Promise<void> {
   }
 }
 
-async function tickAnalyticsAggregation(prisma: PrismaClient): Promise<void> {
+async function tickAIUsageAggregation(prisma: PrismaClient): Promise<void> {
   try {
     const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
     const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const events = await prisma.analyticsEvent.findMany({
-      where: { createdAt: { gte: oneHourAgo, lt: now } },
+    const requests = await prisma.aIRequest.findMany({
+      where: { createdAt: { gte: monthStart } },
+      select: {
+        inputTokens: true,
+        outputTokens: true,
+        costMinorUnits: true,
+        purpose: true,
+        modelConfig: { select: { modelId: true } },
+      },
     });
 
-    if (events.length === 0) return;
+    if (requests.length === 0) return;
 
     const byPurpose: Record<string, number> = {};
     const byModel: Record<string, number> = {};
-    const totalTokens = 0;
-    const totalCost = 0;
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
+    let totalCostMinorUnits = 0;
 
-    for (const event of events) {
-      byPurpose[event.eventType] = (byPurpose[event.eventType] ?? 0) + 1;
+    for (const request of requests) {
+      totalInputTokens += request.inputTokens;
+      totalOutputTokens += request.outputTokens;
+      totalCostMinorUnits += request.costMinorUnits;
+      byPurpose[request.purpose] = (byPurpose[request.purpose] ?? 0) + 1;
+      byModel[request.modelConfig.modelId] = (byModel[request.modelConfig.modelId] ?? 0) + 1;
     }
 
     await prisma.aIUsageRecord.upsert({
       where: { period },
       update: {
-        totalRequests: { increment: events.length },
-        totalInputTokens: { increment: totalTokens },
-        totalOutputTokens: { increment: 0 },
-        totalCostMinorUnits: { increment: totalCost },
+        totalRequests: requests.length,
+        totalInputTokens,
+        totalOutputTokens,
+        totalCostMinorUnits,
+        byPurpose: JSON.stringify(byPurpose),
+        byModel: JSON.stringify(byModel),
       },
       create: {
         period,
-        totalRequests: events.length,
-        totalInputTokens: totalTokens,
-        totalOutputTokens: 0,
-        totalCostMinorUnits: totalCost,
+        totalRequests: requests.length,
+        totalInputTokens,
+        totalOutputTokens,
+        totalCostMinorUnits,
         byPurpose: JSON.stringify(byPurpose),
         byModel: JSON.stringify(byModel),
       },
     });
   } catch (error) {
-    console.error('[analytics-scheduler] failed:', error instanceof Error ? error.message : error);
+    console.error('[ai-usage-scheduler] failed:', error instanceof Error ? error.message : error);
   }
 }

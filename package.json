@@ -19,7 +19,9 @@
                     "infra:plan":  "terraform -chdir=infra/terraform/live/pods/%REGION% plan -input=false",
                     "infra:apply":  "terraform -chdir=infra/terraform/live/pods/%REGION% apply -input=false -auto-approve",
                     "test:e2e":  "playwright test",
-                    "test:e2e:ui":  "playwright test --ui"
+                    "test:e2e:ui":  "playwright test --ui",
+                    "test:lighthouse":  "lhci autorun",
+                    "test:contracts":  "vitest run tests/contracts"
                 },
     "devDependencies":  {
                             "@next/eslint-plugin-next":  "^16.3.2",

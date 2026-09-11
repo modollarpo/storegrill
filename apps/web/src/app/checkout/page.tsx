@@ -65,7 +65,7 @@ export default function CheckoutPage() {
   const shippingCost =
     zone.freeShippingThresholdMinorUnits && subtotal >= zone.freeShippingThresholdMinorUnits
       ? 0
-      : (zone.baseRateMinorUnits ?? 599) + (zone.perKgRateMinorUnits ? 0 : 0);
+      : (zone.baseRateMinorUnits ?? 599);
   const discount = Math.min(cart.appliedCoupon?.discountMinorUnits ?? 0, subtotal);
   const discountedSubtotal = Math.max(0, subtotal - discount);
   const tax = Math.round(discountedSubtotal * (regionConfig.taxRules[0]?.rate ?? 0));
@@ -296,7 +296,12 @@ export default function CheckoutPage() {
                 total={total}
                 couponCode={cart.appliedCoupon?.code}
             />
-            <CheckoutCoupon onApply={applyCoupon} />
+            <CheckoutCoupon 
+              onApply={applyCoupon}
+              appliedCode={cart.appliedCoupon?.code}
+              appliedName={cart.appliedCoupon?.dealName}
+              onRemove={() => cart.setAppliedCoupon(null)}
+            />
             <CheckoutShippingMethod 
                 methods={[{id: 'std', name: 'Standard', description: `${zone.estimatedDaysMin}-${zone.estimatedDaysMax} business days`, priceMinorUnits: shippingCost, currencyCode: currency}]}
                 selectedId="std"

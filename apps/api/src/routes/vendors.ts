@@ -3,12 +3,8 @@ import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../index.js';
 import { authenticate, authorize, requireVerifiedEmail, AuthRequest } from '../middleware/auth.js';
-import {
-  UpdateVendorSchema,
-  VendorApplicationPatchSchema,
-  CarrierShipmentStatus,
-  normalizeCarrierProvider,
-} from '@Storegrill/shared';
+import { requireMerchantPermission } from '../services/merchant-rbac.js';
+import { UpdateVendorSchema, VendorApplicationPatchSchema, CarrierShipmentStatus, normalizeCarrierProvider, MerchantPermission } from '@Storegrill/shared';
 import { slugify } from '../utils/slugify.js';
 
 const KYC_CONTAINER = process.env.AZURE_STORAGE_KYC_CONTAINER || 'kyc-docs';
@@ -857,6 +853,132 @@ router.get('/:slug', async (req: AuthRequest, res: Response) => {
       })),
     },
   });
+});
+
+router.get('/me/deals', authenticate, authorize('VENDOR'), requireMerchantPermission(MerchantPermission.DEAL_CREATE), async (req: AuthRequest, res: Response) => {
+  const vendor = await prisma.vendorProfile.findFirst({ where: { userId: req.user!.id } });
+  if (!vendor) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Vendor profile not found' } });
+
+  const deals = await prisma.deal.findMany({
+    where: { vendorId: vendor.id },
+    include: {
+      variants: { include: { product: { select: { id: true, name: true, slug: true, thumbnail: true } } } },
+      _count: { select: { coupons: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  res.json({
+    deals: deals.map((d: any) => ({
+      ...d,
+      value: Number(d.value),
+      merchantDealPriceMinorUnits: d.merchantDealPriceMinorUnits != null ? Number(d.merchantDealPriceMinorUnits) : null,
+      rrpMinorUnits: d.rrpMinorUnits != null ? Number(d.rrpMinorUnits) : null,
+    })),
+  });
+});
+
+router.post('/me/deals', authenticate, authorize('VENDOR'), requireMerchantPermission(MerchantPermission.DEAL_CREATE), async (req: AuthRequest, res: Response) => {
+  const vendor = await prisma.vendorProfile.findFirst({ where: { userId: req.user!.id } });
+  if (!vendor) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Vendor profile not found' } });
+
+  const body = z.object({
+    name: z.string().min(1).max(200),
+    description: z.string().optional(),
+    type: z.enum(['PERCENTAGE_OFF', 'FIXED_AMOUNT', 'BOGO', 'BUNDLE', 'FLASH_SALE']),
+    value: z.number().min(0),
+    minOrderAmount: z.number().int().optional(),
+    maxDiscount: z.number().int().optional(),
+    maxUsesPerCustomer: z.number().int().optional(),
+    totalUses: z.number().int().optional(),
+    startsAt: z.string().optional(),
+    endsAt: z.string().optional(),
+    regionKey: z.string().optional(),
+    productIds: z.array(z.string()).optional(),
+  }).parse(req.body);
+
+  const slug = body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+  const deal = await prisma.deal.create({
+    data: {
+      name: body.name,
+      slug: `${slug}-${Date.now().toString(36)}`,
+      description: body.description,
+      type: body.type,
+      value: body.value,
+      minOrderAmount: body.minOrderAmount,
+      maxDiscount: body.maxDiscount,
+      maxUsesPerCustomer: body.maxUsesPerCustomer,
+      totalUses: body.totalUses,
+      startsAt: body.startsAt ? new Date(body.startsAt) : new Date(),
+      endsAt: body.endsAt ? new Date(body.endsAt) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      regionKey: body.regionKey,
+      vendorId: vendor.id,
+      status: 'PROPOSED',
+      submittedAt: new Date(),
+      submittedBy: req.user!.id,
+    },
+  });
+
+  if (body.productIds && body.productIds.length > 0) {
+    await prisma.dealVariant.createMany({
+      data: body.productIds.map(productId => ({ dealId: deal.id, productId })),
+    });
+  }
+
+  res.status(201).json({ deal });
+});
+
+router.put('/me/deals/:id', authenticate, authorize('VENDOR'), requireMerchantPermission(MerchantPermission.DEAL_CREATE), async (req: AuthRequest, res: Response) => {
+  const vendor = await prisma.vendorProfile.findFirst({ where: { userId: req.user!.id } });
+  if (!vendor) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Vendor profile not found' } });
+
+  const { id } = req.params;
+  const existing = await prisma.deal.findFirst({ where: { id, vendorId: vendor.id } });
+  if (!existing) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
+
+  const body = z.object({
+    name: z.string().min(1).max(200).optional(),
+    description: z.string().optional(),
+    enabled: z.boolean().optional(),
+    value: z.number().min(0).optional(),
+    minOrderAmount: z.number().int().optional(),
+    maxDiscount: z.number().int().optional(),
+    maxUsesPerCustomer: z.number().int().optional(),
+    totalUses: z.number().int().optional(),
+    startsAt: z.string().optional(),
+    endsAt: z.string().optional(),
+  }).parse(req.body);
+
+  const updated = await prisma.deal.update({
+    where: { id },
+    data: {
+      ...(body.name !== undefined && { name: body.name }),
+      ...(body.description !== undefined && { description: body.description }),
+      ...(body.enabled !== undefined && { enabled: body.enabled }),
+      ...(body.value !== undefined && { value: body.value }),
+      ...(body.minOrderAmount !== undefined && { minOrderAmount: body.minOrderAmount }),
+      ...(body.maxDiscount !== undefined && { maxDiscount: body.maxDiscount }),
+      ...(body.maxUsesPerCustomer !== undefined && { maxUsesPerCustomer: body.maxUsesPerCustomer }),
+      ...(body.totalUses !== undefined && { totalUses: body.totalUses }),
+      ...(body.startsAt !== undefined && { startsAt: new Date(body.startsAt) }),
+      ...(body.endsAt !== undefined && { endsAt: new Date(body.endsAt) }),
+    },
+  });
+
+  res.json({ deal: updated });
+});
+
+router.delete('/me/deals/:id', authenticate, authorize('VENDOR'), requireMerchantPermission(MerchantPermission.DEAL_CREATE), async (req: AuthRequest, res: Response) => {
+  const vendor = await prisma.vendorProfile.findFirst({ where: { userId: req.user!.id } });
+  if (!vendor) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Vendor profile not found' } });
+
+  const { id } = req.params;
+  const existing = await prisma.deal.findFirst({ where: { id, vendorId: vendor.id } });
+  if (!existing) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Deal not found' } });
+
+  await prisma.deal.delete({ where: { id } });
+  res.json({ message: 'Deal deleted' });
 });
 
 export { router as vendorsRouter };

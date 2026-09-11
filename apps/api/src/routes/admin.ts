@@ -1391,4 +1391,33 @@ function safeJsonParse(raw: string) {
   try { return JSON.parse(raw); } catch { return raw; }
 }
 
+router.get('/dashboard/summary', authenticate, authorize('ADMIN'), async (_req: AuthRequest, res: Response) => {
+  const [vendors, products, orders, experiments, flags, aiRequests] = await Promise.all([
+    prisma.vendorProfile.count(),
+    prisma.product.count(),
+    prisma.order.count(),
+    prisma.experiment.count(),
+    prisma.featureFlag.count(),
+    prisma.aIRequest.count(),
+  ]);
+  res.json({ vendors, products, orders, experiments, flags, aiRequests });
+});
+
+router.get('/dashboard/finance', authenticate, authorize('ADMIN'), async (req: AuthRequest, res: Response) => {
+  const startDate = req.query.startDate ? new Date(req.query.startDate as string) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const endDate = req.query.endDate ? new Date(req.query.endDate as string) : new Date();
+
+  const [orders, payouts, refunds] = await Promise.all([
+    prisma.order.aggregate({ where: { createdAt: { gte: startDate, lte: endDate } }, _sum: { totalMinorUnits: true }, _count: true }),
+    prisma.payout.aggregate({ where: { createdAt: { gte: startDate, lte: endDate } }, _sum: { amountMinorUnits: true }, _count: true }),
+    prisma.refund.aggregate({ where: { createdAt: { gte: startDate, lte: endDate } }, _sum: { amountMinorUnits: true }, _count: true }),
+  ]);
+
+  res.json({
+    orders: { count: orders._count, totalRevenue: orders._sum.totalMinorUnits ?? 0 },
+    payouts: { count: payouts._count, totalPaid: payouts._sum.amountMinorUnits ?? 0 },
+    refunds: { count: refunds._count, totalRefunded: refunds._sum.amountMinorUnits ?? 0 },
+  });
+});
+
 export { router as adminRouter };

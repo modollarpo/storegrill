@@ -141,21 +141,21 @@ const hasPostgresTestDb =
     return Boolean(url && /^postgres(ql)?:\/\//i.test(url));
   })();
 
-beforeAll(async () => {
-  const testDatabaseUrl = process.env.TEST_DATABASE_URL;
-  if (!testDatabaseUrl) {
-    throw new Error('TEST_DATABASE_URL is not set. Point it at a scratch database (e.g. storegrill_test).');
-  }
-  process.env.DATABASE_URL = testDatabaseUrl;
-  process.env.NODE_ENV = 'test';
-  const dbModule = await import('../db/prisma.js');
-  prisma = dbModule.prisma;
-  engine = await import('./import-engine.js');
-  await prisma.$connect();
-  houseVendor = await ensureHouseVendor();
-});
-
 describe.skipIf(!hasPostgresTestDb)('import engine (integration)', () => {
+  beforeAll(async () => {
+    const testDatabaseUrl = process.env.TEST_DATABASE_URL;
+    if (!testDatabaseUrl) {
+      throw new Error('TEST_DATABASE_URL is not set. Point it at a scratch database (e.g. storegrill_test).');
+    }
+    process.env.DATABASE_URL = testDatabaseUrl;
+    process.env.NODE_ENV = 'test';
+    const dbModule = await import('../db/prisma.js');
+    prisma = dbModule.prisma;
+    engine = await import('./import-engine.js');
+    await prisma.$connect();
+    houseVendor = await ensureHouseVendor();
+  });
+
   it('runs the full lifecycle: create, unchanged re-run, dry-run diff', async () => {
     await cleanTestArtifacts();
     try {

@@ -16,9 +16,9 @@ on:
         required: false
         default: master
       deploy_regions:
-        description: 'Comma-separated regions to deploy (UK,US,EU,AE,NG)'
+        description: 'Comma-separated regions to deploy (UK,US,EU,AE,NG,IN)'
         required: false
-        default: 'UK,US,EU,AE,NG'
+        default: 'UK,US,EU,AE,NG,IN'
   workflow_run:
     workflows: ['CI Quality Gates']
     types:
@@ -30,7 +30,7 @@ env:
   ACR: storegrillcr.azurecr.io
   API_TAG: ${{ github.event.inputs.api_version || format('build-{0}', github.run_id) }}
   WEB_TAG: ${{ github.event.inputs.web_version || format('build-{0}', github.run_id) }}
-  DEPLOY_REGIONS: ${{ github.event.inputs.deploy_regions || 'UK,US,EU,AE,NG' }}
+  DEPLOY_REGIONS: ${{ github.event.inputs.deploy_regions || 'UK,US,EU,AE,NG,IN' }}
   BRANCH: ${{ github.event.inputs.branch || 'master' }}
 
 jobs:
@@ -58,6 +58,9 @@ jobs:
           - region: NG
             region_lc: ng
             api_url: https://ng-api.storegrill.net
+          - region: IN
+            region_lc: in
+            api_url: https://in-api.storegrill.net
 
     steps:
       - uses: actions/checkout@v4
@@ -126,6 +129,12 @@ jobs:
             api_app: app-storegrill-api-prod-ng
             web_app: app-storegrill-web-prod-ng
             api_url: https://ng-api.storegrill.net
+          - region: IN
+            region_lc: in
+            rg: rg-storegrill-prod-in
+            api_app: app-storegrill-api-in
+            web_app: app-storegrill-web-in
+            api_url: https://in-api.storegrill.net
 
     steps:
       - uses: actions/checkout@v4

@@ -1,4 +1,4 @@
-﻿-- AlterTable
+-- AlterTable
 ALTER TABLE "VendorProfile" ADD COLUMN "verified" BOOLEAN NOT NULL DEFAULT false;
 
 -- CreateTable

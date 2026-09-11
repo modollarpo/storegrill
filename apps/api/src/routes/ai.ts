@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import { initAIModels, logAIRequest, getUsageStats } from '../services/ai-gateway.js';
+import { rewriteProductContent } from '../services/ai-merchandising.js';
 
 const router = Router();
 
@@ -49,6 +50,71 @@ router.post('/init', authenticate, authorize('ADMIN'), async (_req: AuthRequest,
   const { prisma } = await import('../index.js');
   await initAIModels(prisma);
   res.json({ message: 'AI models initialized' });
+});
+
+router.post('/rewrite', authenticate, authorize('ADMIN'), async (req: AuthRequest, res: Response) => {
+  const { productId } = z.object({ productId: z.string().min(1) }).parse(req.body);
+  const { prisma } = await import('../index.js');
+
+  const product = await prisma.product.findUnique({
+    where: { id: productId },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      sku: true,
+      tags: true,
+      brand: { select: { name: true } },
+      category: { select: { name: true } },
+    },
+  });
+
+  if (!product) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Product not found' } });
+  }
+
+  let tags: string[] = [];
+  try {
+    const parsed: unknown = JSON.parse(product.tags);
+    if (Array.isArray(parsed)) tags = parsed.filter((tag): tag is string => typeof tag === 'string');
+  } catch {
+    tags = [];
+  }
+
+  const sourceFacts = [product.sku, product.brand?.name, product.category?.name, ...tags]
+    .filter((fact): fact is string => Boolean(fact));
+
+  const result = await rewriteProductContent(
+    { title: product.name, description: product.description, sourceFacts },
+    req.user!.id,
+  );
+
+  if (result.modelUsed !== 'fallback') {
+    await prisma.aIContent.createMany({
+      data: [
+        {
+          entityType: 'PRODUCT',
+          entityId: product.id,
+          content_type: 'TITLE',
+          original: product.name,
+          generated: result.rewrittenTitle,
+          confidence: result.confidence,
+          metadata: JSON.stringify({ validated: result.validated, model: result.modelUsed }),
+        },
+        {
+          entityType: 'PRODUCT',
+          entityId: product.id,
+          content_type: 'DESCRIPTION',
+          original: product.description,
+          generated: result.rewrittenDescription,
+          confidence: result.confidence,
+          metadata: JSON.stringify({ validated: result.validated, model: result.modelUsed }),
+        },
+      ],
+    });
+  }
+
+  res.json({ result });
 });
 
 export { router as aiRouter };

@@ -9,6 +9,7 @@ import { slugify } from '../utils/slugify.js';
 import { resolveProductPricing } from '../utils/pricing.js';
 import { loadActiveDeals } from '../services/deal-eval.js';
 import { getCompanions } from '../lib/companions.js';
+import { syncProductToIndex } from '../services/ai-search.js';
 
 const router = Router();
 
@@ -480,6 +481,12 @@ router.put('/:id', authenticate, authorize('VENDOR', 'ADMIN'), async (req: AuthR
     include: { variants: true, regionPrices: true },
   });
 
+  if (product.regionPrices.length > 0) {
+    void syncProductToIndex(id).catch(error =>
+      console.error(`[search-index] sync failed for product ${id}:`, error instanceof Error ? error.message : error),
+    );
+  }
+
   res.json({
     product: {
       ...product,
@@ -519,6 +526,9 @@ router.delete('/:id', authenticate, authorize('VENDOR', 'ADMIN'), async (req: Au
   }
 
   await prisma.product.delete({ where: { id } });
+  void syncProductToIndex(id).catch(error =>
+    console.error(`[search-index] delete sync failed for product ${id}:`, error instanceof Error ? error.message : error),
+  );
   res.status(204).send();
 });
 

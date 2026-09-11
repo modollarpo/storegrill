@@ -41,6 +41,8 @@ import { experimentsRouter } from './routes/experiments.js';
 import { featureFlagsRouter } from './routes/feature-flags.js';
 import { analyticsRouter } from './routes/analytics.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { initAIModels } from './services/ai-gateway.js';
+import { ensureSearchIndex } from './services/ai-search.js';
 
 export { prisma } from './db/prisma.js';
 import { prisma } from './db/prisma.js';
@@ -148,6 +150,12 @@ async function bootstrap() {
     await provisionSchema();
     await prisma.$connect();
     console.log('Database connected');
+    initAIModels(prisma).catch(error =>
+      console.error('AI model init failed:', error instanceof Error ? error.message : error),
+    );
+    ensureSearchIndex(prisma).catch(error =>
+      console.error('Search index ensure failed:', error instanceof Error ? error.message : error),
+    );
     if (process.env.DISABLE_IMPORT_WORKER !== '1') {
       const { startScheduler } = await import('./services/scheduler.js');
       startScheduler(prisma);

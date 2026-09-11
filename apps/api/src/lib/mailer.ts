@@ -11,7 +11,7 @@ export interface MailMessage {
 const PROVIDER = process.env.MAIL_PROVIDER || 'console';
 const MAIL_FROM = process.env.MAIL_FROM || 'no-reply@storegrill.net';
 
-function parseConnectionString(connectionString: string): { endpoint: string; accessKey: string } {
+export function parseConnectionString(connectionString: string): { endpoint: string; accessKey: string } {
   const parts = Object.fromEntries(
     connectionString.split(';').map(pair => {
       const idx = pair.indexOf('=');

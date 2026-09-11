@@ -117,6 +117,7 @@ model VendorProfile {
   shippingCountries      String?
   rating                 Float     @default(0)
   reviewCount            Int       @default(0)
+  verified               Boolean   @default(false)
   trustScore             Int       @default(0)
   trustTier              String    @default("NEW") // NEW | STANDARD | TRUSTED | PREMIUM | HIGH_RISK
   createdAt              DateTime  @default(now())

@@ -1,18 +1,23 @@
 import { prisma } from '../db/prisma.js';
 import { sendMail } from './mailer.js';
 import { statusLabel } from '../services/carriers.js';
-import { createMoney, formatMoney } from '@Storegrill/shared';
 import { CarrierShipmentStatus, type CarrierShipmentStatusValue } from '@Storegrill/shared';
+import {
+  escapeHtml,
+  formatPrice,
+  formatAddress,
+  emailLayout,
+  emailButton,
+  renderItemsTable,
+  renderTotalsBlock,
+  callout,
+  paragraph,
+  SUPPORT_EMAIL,
+} from './email-templates.js';
+
+export { escapeHtml, formatPrice, formatAddress } from './email-templates.js';
 
 const WEB_BASE = process.env.WEB_BASE_URL || 'http://localhost:3000';
-const SUPPORT_EMAIL = 'support@storegrill.net';
-
-const BRAND_GRADIENT = 'linear-gradient(135deg,#1c073d 0%,#4c12a1 100%)';
-const BRAND_TEXT = '#f2ebfb';
-const BODY_BG = '#f5f2fa';
-const CARD_BG = '#ffffff';
-const MUTED_TEXT = '#6b5e83';
-const ACCENT = '#4c12a1';
 
 const SHIPMENT_EMAIL_STATUSES = new Set<CarrierShipmentStatusValue>([
   CarrierShipmentStatus.SHIPPED,
@@ -22,31 +27,6 @@ const SHIPMENT_EMAIL_STATUSES = new Set<CarrierShipmentStatusValue>([
   CarrierShipmentStatus.ATTEMPTED,
   CarrierShipmentStatus.EXCEPTION,
 ]);
-
-export function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-export function formatPrice(amountMinorUnits: number, currencyCode: string): string {
-  return formatMoney(createMoney(BigInt(amountMinorUnits), currencyCode));
-}
-
-export function formatAddress(json: string): string {
-  try {
-    const parsed = JSON.parse(json) as Record<string, unknown>;
-    const parts = [parsed.name, parsed.line1, parsed.line2, parsed.city, parsed.county, parsed.postcode, parsed.country]
-      .filter((part): part is string => typeof part === 'string' && part.trim() !== '' && part !== 'undefined')
-      .map(part => part.trim());
-    return parts.join(', ') || 'Address on account';
-  } catch {
-    return 'Address on account';
-  }
-}
 
 export interface OrderEmailItem {
   name: string;
@@ -75,109 +55,35 @@ export interface OrderEmailSnapshot {
   orderUrl: string;
 }
 
-function layout(subject: string, bodyHtml: string): string {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>${escapeHtml(subject)}</title>
-</head>
-<body style="margin:0;padding:0;background-color:${BODY_BG};font-family:Arial,Helvetica,sans-serif;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${BODY_BG};padding:24px 0;">
-  <tr>
-    <td align="center">
-      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
-        <tr>
-          <td style="border-radius:14px 14px 0 0;background:${BRAND_GRADIENT};padding:22px 28px;">
-            <div style="color:${BRAND_TEXT};font-size:22px;font-weight:bold;letter-spacing:0.5px;">Storegrill</div>
-            <div style="color:${BRAND_TEXT};opacity:0.75;font-size:12px;margin-top:2px;">Shop trusted partners in your local currency</div>
-          </td>
-        </tr>
-        <tr>
-          <td style="background-color:${CARD_BG};padding:32px 28px;border-left:1px solid #eee8f5;border-right:1px solid #eee8f5;">
-            ${bodyHtml}
-          </td>
-        </tr>
-        <tr>
-          <td style="background-color:${CARD_BG};border-radius:0 0 14px 14px;border:1px solid #eee8f5;border-top:none;padding:8px 28px 28px;">
-            <div style="font-size:11px;color:${MUTED_TEXT};line-height:1.7;">
-              Questions about your order? <a href="mailto:${SUPPORT_EMAIL}" style="color:${ACCENT};">${SUPPORT_EMAIL}</a><br />
-              &copy; ${new Date().getFullYear()} Storegrill Inc Ltd. All rights reserved.
-            </div>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-</body>
-</html>`;
-}
-
-function ctaButton(href: string, label: string): string {
-  return `<p><a href="${escapeHtml(href)}" style="display:inline-block;background-color:${ACCENT};color:#ffffff;text-decoration:none;font-weight:bold;font-size:14px;padding:12px 24px;border-radius:8px;">${escapeHtml(label)}</a></p>`;
-}
-
-function itemsTable(items: OrderEmailItem[], currencyCode: string): string {
-  const rows = items
-    .map(item => {
-      const imageCell = item.image
-        ? `<img src="${escapeHtml(item.image)}" width="52" height="52" alt="" style="border-radius:6px;" />`
-        : '<span style="width:52px;height:52px;display:inline-block;background-color:#efE8f8;border-radius:6px;"></span>';
-      return `<tr>
-  <td style="padding:10px 8px;border-bottom:1px solid #f0eaf8;vertical-align:middle;">${imageCell}</td>
-  <td style="padding:10px 8px;border-bottom:1px solid #f0eaf8;font-size:13px;color:#20162e;">${escapeHtml(item.name)}<br /><span style="color:${MUTED_TEXT};font-size:12px;">Qty ${item.quantity}</span></td>
-  <td style="padding:10px 8px;border-bottom:1px solid #f0eaf8;font-size:13px;color:#20162e;text-align:right;">${escapeHtml(formatPrice(item.totalMinorUnits, currencyCode))}</td>
-</tr>`;
-    })
-    .join('');
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-<thead><tr>
-<th style="text-align:left;padding:6px 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:${MUTED_TEXT};border-bottom:2px solid ${ACCENT};">Item</th>
-<th style="text-align:right;padding:6px 8px;font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:${MUTED_TEXT};border-bottom:2px solid ${ACCENT};">Total</th>
-</tr></thead>
-<tbody>${rows}</tbody></table>`;
-}
-
-function totalsBlock(totals: OrderEmailTotals, currencyCode: string): string {
-  const discountRow =
-    totals.discountMinorUnits > 0
-      ? `<tr><td style="padding:4px 0;font-size:13px;color:${MUTED_TEXT};">Discount</td><td style="padding:4px 0;font-size:13px;color:#16a34a;text-align:right;">&minus; ${escapeHtml(formatPrice(totals.discountMinorUnits, currencyCode))}</td></tr>`
-      : '';
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;">
-<tr><td style="padding:4px 0;font-size:13px;color:${MUTED_TEXT};">Subtotal</td><td style="padding:4px 0;font-size:13px;color:#20162e;text-align:right;">${escapeHtml(formatPrice(totals.subtotalMinorUnits, currencyCode))}</td></tr>
-<tr><td style="padding:4px 0;font-size:13px;color:${MUTED_TEXT};">Shipping</td><td style="padding:4px 0;font-size:13px;color:#20162e;text-align:right;">${escapeHtml(formatPrice(totals.shippingMinorUnits, currencyCode))}</td></tr>
-<tr><td style="padding:4px 0;font-size:13px;color:${MUTED_TEXT};">Tax</td><td style="padding:4px 0;font-size:13px;color:#20162e;text-align:right;">${escapeHtml(formatPrice(totals.taxMinorUnits, currencyCode))}</td></tr>
-${discountRow}
-<tr><td style="padding:8px 0 0;font-size:15px;font-weight:bold;color:#20162e;border-top:2px solid ${ACCENT};">Total</td><td style="padding:8px 0 0;font-size:15px;font-weight:bold;color:#20162e;border-top:2px solid ${ACCENT};text-align:right;">${escapeHtml(formatPrice(totals.totalMinorUnits, currencyCode))}</td></tr>
-</table>`;
-}
-
 export function renderOrderConfirmationHtml(snapshot: OrderEmailSnapshot): string {
   const body = `
 <p style="margin:0 0 6px;font-size:18px;font-weight:bold;color:#20162e;">Thanks for your order, ${escapeHtml(snapshot.customerName)}</p>
-<p style="margin:0 0 20px;color:${MUTED_TEXT};font-size:14px;">Your order <strong>${escapeHtml(snapshot.orderNumber)}</strong> is confirmed. We will email you when it ships.</p>
-<div style="background-color:#f7f3fd;border:1px solid #eee8f5;border-radius:10px;padding:14px 16px;margin-bottom:20px;">
-  <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:${MUTED_TEXT};margin-bottom:6px;">Ship to</div>
-  <div style="font-size:13px;color:#20162e;">${escapeHtml(snapshot.shippingAddress)}</div>
-</div>
-${itemsTable(snapshot.items, snapshot.currencyCode)}
-${totalsBlock(snapshot.totals, snapshot.currencyCode)}
-<div style="margin-top:24px;">${ctaButton(snapshot.orderUrl, 'Track your order')}</div>
-<p style="margin:0;color:${MUTED_TEXT};font-size:12px;line-height:1.6;">Items are sent by each vendor separately; you may receive more than one parcel.</p>`;
-  return layout(`Order ${snapshot.orderNumber} confirmed`, body);
+<p style="margin:0 0 20px;color:#6b5e83;font-size:14px;">Your order <strong>${escapeHtml(snapshot.orderNumber)}</strong> is confirmed. We will email you when it ships.</p>
+${callout('Ship to', escapeHtml(snapshot.shippingAddress))}
+${renderItemsTable(snapshot.items, snapshot.currencyCode)}
+${renderTotalsBlock(snapshot.totals, snapshot.currencyCode)}
+<div style="margin-top:24px;">${emailButton(snapshot.orderUrl, 'Track your order')}</div>
+<p style="margin:0;color:#6b5e83;font-size:12px;line-height:1.6;">Items are sent by each vendor separately; you may receive more than one parcel.</p>`;
+  return emailLayout({
+    preheader: `Your order ${snapshot.orderNumber} is confirmed.`,
+    body,
+    footer: { keepOpen: true },
+  });
 }
 
 export function renderOrderCancelledHtml(snapshot: OrderEmailSnapshot): string {
   const body = `
 <p style="margin:0 0 6px;font-size:18px;font-weight:bold;color:#20162e;">Order cancelled, ${escapeHtml(snapshot.customerName)}</p>
-<p style="margin:0 0 20px;color:${MUTED_TEXT};font-size:14px;">Order <strong>${escapeHtml(snapshot.orderNumber)}</strong> has been cancelled. Any payment was refunded to your original payment method — it may take a few days to appear.</p>
-${itemsTable(snapshot.items, snapshot.currencyCode)}
-${totalsBlock(snapshot.totals, snapshot.currencyCode)}
-<div style="margin-top:24px;">${ctaButton(snapshot.orderUrl, 'Continue shopping')}</div>
-<p style="margin:0;color:${MUTED_TEXT};font-size:12px;">If a refund does not arrive within 7 working days, contact ${SUPPORT_EMAIL}.</p>`;
-  return layout(`Order ${snapshot.orderNumber} cancelled`, body);
+<p style="margin:0 0 20px;color:#6b5e83;font-size:14px;">Order <strong>${escapeHtml(snapshot.orderNumber)}</strong> has been cancelled. Any payment was refunded to your original payment method — it may take a few days to appear.</p>
+${renderItemsTable(snapshot.items, snapshot.currencyCode)}
+${renderTotalsBlock(snapshot.totals, snapshot.currencyCode)}
+<div style="margin-top:24px;">${emailButton(snapshot.orderUrl, 'Continue shopping')}</div>
+<p style="margin:0;color:#6b5e83;font-size:12px;">If a refund does not arrive within 7 working days, contact ${SUPPORT_EMAIL}.</p>`;
+  return emailLayout({
+    preheader: `Order ${snapshot.orderNumber} has been cancelled.`,
+    body,
+    footer: { keepOpen: true },
+  });
 }
 
 export interface ShipmentUpdateEmailInput {
@@ -194,18 +100,19 @@ export function renderShipmentUpdateHtml(input: ShipmentUpdateEmailInput): strin
   const label = statusLabel(input.status);
   const locationLine = input.location ? ` near ${escapeHtml(input.location)}` : '';
   const trackingLine = input.trackingNumber
-    ? `<p style="margin:16px 0 0;color:${MUTED_TEXT};font-size:13px;">Tracking: <strong>${escapeHtml(input.trackingNumber)}</strong></p>`
+    ? `<p style="margin:16px 0 0;color:#6b5e83;font-size:13px;">Tracking: <strong>${escapeHtml(input.trackingNumber)}</strong></p>`
     : '';
   const body = `
 <p style="margin:0 0 6px;font-size:18px;font-weight:bold;color:#20162e;">Your order is on the move, ${escapeHtml(input.customerName)}</p>
-<p style="margin:0 0 8px;color:${MUTED_TEXT};font-size:14px;">${escapeHtml(label)}${locationLine} for order <strong>${escapeHtml(input.orderNumber)}</strong>. Carrier: <strong>${escapeHtml(input.carrier)}</strong>.</p>
-<div style="background-color:#f7f3fd;border:1px solid #eee8f5;border-radius:10px;padding:16px 18px;margin-top:12px;">
-  <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:${MUTED_TEXT};">Latest status</div>
-  <div style="font-size:16px;font-weight:bold;color:#20162e;margin-top:4px;">${escapeHtml(label)}</div>
-</div>
+<p style="margin:0 0 8px;color:#6b5e83;font-size:14px;">${escapeHtml(label)}${locationLine} for order <strong>${escapeHtml(input.orderNumber)}</strong>. Carrier: <strong>${escapeHtml(input.carrier)}</strong>.</p>
+${callout('Latest status', `<span style="font-size:16px;font-weight:bold;color:#20162e;">${escapeHtml(label)}</span>`)}
 ${trackingLine}
-<div style="margin-top:24px;">${ctaButton(input.orderUrl, 'Track your order')}</div>`;
-  return layout(`Update on order ${input.orderNumber}`, body);
+<div style="margin-top:24px;">${emailButton(input.orderUrl, 'Track your order')}</div>`;
+  return emailLayout({
+    preheader: `Update on order ${input.orderNumber}: ${label}`,
+    body,
+    footer: { keepOpen: true },
+  });
 }
 
 export interface VendorAlertEmailInput {
@@ -220,11 +127,15 @@ export interface VendorAlertEmailInput {
 export function renderVendorAlertHtml(input: VendorAlertEmailInput): string {
   const body = `
 <p style="margin:0 0 6px;font-size:18px;font-weight:bold;color:#20162e;">New Storegrill order for ${escapeHtml(input.storeName)}</p>
-<p style="margin:0 0 20px;color:${MUTED_TEXT};font-size:14px;">Order <strong>${escapeHtml(input.orderNumber)}</strong> has been placed. Please fulfil it promptly to keep delivery estimates on track.</p>
-${itemsTable(input.items, input.currencyCode)}
+${paragraph(`Order <strong>${escapeHtml(input.orderNumber)}</strong> has been placed. Please fulfil it promptly to keep delivery estimates on track.`)}
+${renderItemsTable(input.items, input.currencyCode)}
 <p style="margin:8px 0 0;color:#20162e;font-size:14px;font-weight:bold;text-align:right;">Subtotal ${escapeHtml(formatPrice(input.subtotalMinorUnits, input.currencyCode))}</p>
-<div style="margin-top:14px;">${ctaButton(input.orderUrl, 'Open vendor dashboard')}</div>`;
-  return layout(`New order ${input.orderNumber} — ${input.storeName}`, body);
+<div style="margin-top:14px;">${emailButton(input.orderUrl, 'Open vendor dashboard')}</div>`;
+  return emailLayout({
+    preheader: `New order ${input.orderNumber} for ${input.storeName}`,
+    body,
+    footer: { keepOpen: true },
+  });
 }
 
 function queryOrderForEmail(orderId: string) {

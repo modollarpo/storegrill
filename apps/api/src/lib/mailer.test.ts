@@ -5,7 +5,7 @@ vi.mock('node-fetch', () => ({ default: fetchMock }));
 
 async function loadMailer(env: Record<string, string>) {
   for (const key of Object.keys(process.env)) {
-    if (key === 'MAIL_PROVIDER' || key === 'MAIL_FROM' || key === 'ACS_CONNECTION_STRING') {
+    if (key === 'MAIL_PROVIDER' || key === 'MAIL_FROM' || key === 'MAIL_FROM_NAME' || key === 'ACS_CONNECTION_STRING') {
       delete process.env[key];
     }
   }

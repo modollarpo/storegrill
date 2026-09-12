@@ -8,6 +8,11 @@ import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { PriceDisplay } from '@/components/commerce/PriceDisplay';
 
+import { AccountShell } from '@/components/account/AccountShell';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Your Orders | Storegrill', robots: { index: false } };
+
 interface OrderRow {
   id: string;
   orderNumber: string;
@@ -33,9 +38,10 @@ export default function OrdersPage() {
   }, []);
 
   return (
-    <div data-testid="orders-list">
-      <h2 className="text-displaysm font-semibold mb-4">Your Orders</h2>
-      {orders === null ? (
+    <AccountShell>
+      <div data-testid="orders-list">
+        <h2 className="text-displaysm font-semibold mb-4">Your Orders</h2>
+        {orders === null ? (
         <div className="space-y-3">{[...Array(3)].map((_, i) => <Skeleton key={i} height={120} className="w-full" rounded="md" />)}</div>
       ) : orders.length === 0 ? (
         <div className="card p-10 text-center">
@@ -74,5 +80,6 @@ export default function OrdersPage() {
         </ul>
       )}
     </div>
+    </AccountShell>
   );
 }

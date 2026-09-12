@@ -1,4 +1,3 @@
-import { createMoney, roundUpTo99 } from '@Storegrill/shared';
 import type {
   AdaptResult,
   AdapterRowError,
@@ -149,10 +148,6 @@ export function parseGbpPrice(raw: string | null | undefined): number | null {
   return Math.round(value * 100);
 }
 
-function charmGbp(minorUnits: number): number {
-  return Number(roundUpTo99(createMoney(BigInt(minorUnits), 'GBP')).amountMinorUnits);
-}
-
 export function stripUkBrand(title: string): string {
   let clean = String(title ?? '').trim();
   clean = clean
@@ -264,17 +259,13 @@ export function mergeAosomUkFeeds(
   return merged;
 }
 
-const AOSOM_UK_MARKUP_RATE = 0.20;
-
 function toVariant(row: AosomUkMergedRow, suffix: string | null): NormalizedVariant | null {
-  const listPriceMinorUnits = charmGbp(Math.round(row.sellPriceMinorUnits * (1 + AOSOM_UK_MARKUP_RATE)));
   return {
     sku: row.sku,
     name: row.title,
     variantSuffix: suffix,
     feedPriceMinorUnits: row.sellPriceMinorUnits,
-    priceMinorUnits: charmGbp(row.sellPriceMinorUnits),
-    listPriceMinorUnits,
+    priceMinorUnits: row.sellPriceMinorUnits,
     supplierStock: row.stock,
     stock: row.stock,
     images: normalizeAosomUkImages(row.baseImage, row.images),

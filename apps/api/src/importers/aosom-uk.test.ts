@@ -149,15 +149,15 @@ describe('deduceAosomBrand', () => {
 });
 
 describe('adaptAosomUkRows', () => {
-  it('sets base price = wholesale and compare-at = wholesale x 1.20, both charmed to .99', () => {
+  it('sets price = wholesale with no markup or compare-at', () => {
     const products = [productRow('AAA')];
     const stock = [stockRow('AAA', { '2B-S': '60.49 GBP' })];
     const merged = mergeAosomUkFeeds(products, stock);
     const result = adaptAosomUkRows(merged);
     const variant = result.products[0].variants[0];
     expect(variant.feedPriceMinorUnits).toBe(6049);
-    expect(variant.priceMinorUnits).toBe(6099);
-    expect(variant.listPriceMinorUnits!).toBeGreaterThan(variant.priceMinorUnits);
+    expect(variant.priceMinorUnits).toBe(6049);
+    expect(variant.listPriceMinorUnits).toBeUndefined();
   });
 
   it('strips HOMCOM from the base name and tags as uk', () => {

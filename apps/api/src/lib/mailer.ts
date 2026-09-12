@@ -9,7 +9,7 @@ export interface MailMessage {
 }
 
 const PROVIDER = process.env.MAIL_PROVIDER || 'console';
-const MAIL_FROM = process.env.MAIL_FROM || 'no-reply@storegrill.net';
+const MAIL_FROM = process.env.MAIL_FROM || 'hello@mail.storegrill.net';
 
 export function parseConnectionString(connectionString: string): { endpoint: string; accessKey: string } {
   const parts = Object.fromEntries(

@@ -383,7 +383,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "MAIL_FROM"
-        value = "no-reply@storegrill.net"
+        value = "hello@mail.storegrill.net"
       }
       env {
         name  = "LIBRETRANSLATE_URL"

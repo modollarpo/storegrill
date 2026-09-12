@@ -4,6 +4,7 @@ import { prisma as db } from '../db/prisma.js';
 import { startImportJob } from './import-engine.js';
 import { pollTrackedShipments } from './carriers.js';
 import { executeJob } from './job-queue.js';
+import { checkAndSendAbandonedCarts, checkAndSendReviewRequests } from './customer-journey.js';
 
 const TICK_MS = 60_000;
 
@@ -26,6 +27,19 @@ async function tick(prisma: PrismaClient): Promise<void> {
   await tickTrackingPoll(prisma);
   await tickVoucherExpiry(prisma);
   await tickAIUsageAggregation(prisma);
+  await tickCustomerJourneys(prisma);
+}
+
+async function tickCustomerJourneys(_prisma: PrismaClient): Promise<void> {
+  try {
+    const cartsSent = await checkAndSendAbandonedCarts();
+    const reviewsSent = await checkAndSendReviewRequests();
+    if (cartsSent > 0 || reviewsSent > 0) {
+      console.log(`[customer-journey] sent ${cartsSent} abandoned cart reminders and ${reviewsSent} review requests`);
+    }
+  } catch (error) {
+    console.error('[customer-journey] tick failed:', error instanceof Error ? error.message : error);
+  }
 }
 
 async function tickImportSchedules(prisma: PrismaClient, now: Date, currentMinuteStart: Date): Promise<void> {

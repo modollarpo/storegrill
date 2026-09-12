@@ -1,4 +1,4 @@
-const VERSION = 'v1';
+const VERSION = 'v2';
 const OFFLINE_URL = '/offline';
 
 const SHELL_CACHE = `sg-shell-${VERSION}`;
@@ -38,6 +38,68 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+// E-Commerce Push Notifications & Alerts Handler
+self.addEventListener('push', event => {
+  let data = {
+    title: 'Storegrill Alert',
+    body: 'You have a new update from Storegrill.',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-96.png',
+    url: '/',
+    tag: 'storegrill-ecom-alert',
+  };
+
+  try {
+    if (event.data) {
+      const payload = event.data.json();
+      data = { ...data, ...payload };
+    }
+  } catch {
+    if (event.data) {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon,
+    badge: data.badge,
+    tag: data.tag,
+    data: { url: data.url, ...data.extra },
+    actions: data.actions || [
+      { action: 'explore', title: 'View Details' },
+      { action: 'close', title: 'Dismiss' }
+    ],
+    vibrate: [100, 50, 100],
+    requireInteraction: Boolean(data.requireInteraction),
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+
+  if (event.action === 'close') return;
+
+  const targetUrl = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      for (const client of clientList) {
+        if (client.url === targetUrl && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
 });
 
 function withTimeout(fetchPromise, ms) {

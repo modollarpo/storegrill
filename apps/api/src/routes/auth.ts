@@ -64,6 +64,9 @@ router.post('/register', async (req: Request, res: Response) => {
     select: { id: true, email: true, name: true, role: true, tokenVersion: true, createdAt: true },
   });
 
+  // Trigger welcome journey email
+  void import('../services/customer-journey.js').then(m => m.sendWelcomeJourney(user.id)).catch(() => undefined);
+
   const verifyToken = await issueEmailToken(user.id, 'EMAIL_VERIFY', VERIFY_TOKEN_TTL_MS);
   await sendMail({
     to: user.email,

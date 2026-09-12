@@ -14,9 +14,9 @@ terraform {
 }
 
 locals {
-  suffix       = lower("${var.environment}-${var.region_key}")
-  flat_suffix  = lower(replace(local.suffix, "-", ""))
-  cors_header  = join(",", var.cors_origins)
+  suffix      = lower("${var.environment}-${var.region_key}")
+  flat_suffix = lower(replace(local.suffix, "-", ""))
+  cors_header = join(",", var.cors_origins)
 }
 
 variable "environment" {
@@ -67,6 +67,25 @@ variable "database_names" {
   type        = list(string)
   default     = ["storegrill", "storegrill_dev", "storegrill_test"]
   description = "Databases created on the server: prod, local-dev, integration-test"
+}
+
+variable "acr_server" {
+  type        = string
+  default     = "storegrillcr.azurecr.io"
+  description = "Container registry the web/api container apps pull images from"
+}
+
+variable "acr_username" {
+  type        = string
+  default     = "storegrillcr"
+  description = "ACR admin username used to pull images"
+}
+
+variable "acr_password" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "ACR admin password. Leave empty to skip registry configuration (e.g. when apps are managed by the CI deploy workflow)."
 }
 
 resource "azurerm_resource_group" "pod" {
@@ -299,6 +318,22 @@ resource "azurerm_container_app" "api" {
     name  = "acs-connection-string"
     value = azurerm_key_vault_secret.slots["acs-connection-string"].value
   }
+  dynamic "secret" {
+    for_each = var.acr_password == "" ? [] : [1]
+    content {
+      name  = "acr-password"
+      value = var.acr_password
+    }
+  }
+
+  dynamic "registry" {
+    for_each = var.acr_password == "" ? [] : [1]
+    content {
+      server               = var.acr_server
+      username             = var.acr_username
+      password_secret_name = "acr-password"
+    }
+  }
 
   ingress {
     external_enabled = true
@@ -410,6 +445,23 @@ resource "azurerm_container_app" "next_apps" {
   identity {
     type         = "SystemAssigned, UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.apps.id]
+  }
+
+  dynamic "secret" {
+    for_each = var.acr_password == "" ? [] : [1]
+    content {
+      name  = "acr-password"
+      value = var.acr_password
+    }
+  }
+
+  dynamic "registry" {
+    for_each = var.acr_password == "" ? [] : [1]
+    content {
+      server               = var.acr_server
+      username             = var.acr_username
+      password_secret_name = "acr-password"
+    }
   }
 
   ingress {
@@ -537,25 +589,25 @@ locals {
 resource "azurerm_container_app_custom_domain" "next_apps" {
   for_each = toset(["web", "admin", "vendor"])
 
-  name                               = local.pod_custom_domains[each.value]
-  container_app_id                   = azurerm_container_app.next_apps[each.value].id
-  certificate_binding_type           = "SniEnabled"
+  name                                     = local.pod_custom_domains[each.value]
+  container_app_id                         = azurerm_container_app.next_apps[each.value].id
+  certificate_binding_type                 = "SniEnabled"
   container_app_environment_certificate_id = local.custom_domain_certificate_id
 }
 
 resource "azurerm_container_app_custom_domain" "api" {
-  name                               = local.pod_custom_domains["api"]
-  container_app_id                   = azurerm_container_app.api.id
-  certificate_binding_type           = "SniEnabled"
+  name                                     = local.pod_custom_domains["api"]
+  container_app_id                         = azurerm_container_app.api.id
+  certificate_binding_type                 = "SniEnabled"
   container_app_environment_certificate_id = local.custom_domain_certificate_id
 }
 
 resource "azurerm_container_app_custom_domain" "web_extra" {
   for_each = toset(var.web_extra_domains)
 
-  name                               = each.value
-  container_app_id                   = azurerm_container_app.next_apps["web"].id
-  certificate_binding_type           = "SniEnabled"
+  name                                     = each.value
+  container_app_id                         = azurerm_container_app.next_apps["web"].id
+  certificate_binding_type                 = "SniEnabled"
   container_app_environment_certificate_id = local.custom_domain_certificate_id
 }
 

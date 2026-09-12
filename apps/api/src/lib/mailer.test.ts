@@ -45,6 +45,7 @@ describe('mailer', () => {
   });
 
   it('sends through ACS Email with an HMAC signature when provider is acs', async () => {
+    const { default: crypto } = await import('crypto');
     fetchMock.mockResolvedValueOnce({ ok: true });
     const { sendMail } = await loadMailer({
       MAIL_PROVIDER: 'acs',
@@ -63,7 +64,19 @@ describe('mailer', () => {
     expect(init.method).toBe('POST');
     expect(init.headers['Content-Type']).toBe('application/json');
     expect(init.headers['x-ms-date']).toBeDefined();
-    expect(init.headers.Authorization).toMatch(/^HMAC-SHA256 SignedHeaders=host;x-ms-content-sha256;x-ms-date&/);
+    expect(init.headers['x-ms-content-sha256']).toBeDefined();
+    expect(init.headers.Authorization).toMatch(/^HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&/);
+
+    const date = init.headers['x-ms-date'];
+    const host = new URL(String(url)).host;
+    const pathAndQuery = String(url).replace(/^https?:\/\/[^/]+/, '');
+    const stringToSign = `POST\n${pathAndQuery}\n${date};${host};${init.headers['x-ms-content-sha256']}`;
+    const expectedSignature = crypto
+      .createHmac('sha256', Buffer.from('YWJjY2Rl', 'base64'))
+      .update(stringToSign, 'utf8')
+      .digest('base64');
+    expect(init.headers.Authorization).toBe(`HMAC-SHA256 SignedHeaders=x-ms-date;host;x-ms-content-sha256&Signature=${expectedSignature}`);
+
     const body = JSON.parse(init.body);
     expect(body.senderAddress).toBe('DoNotReply@storegrill.net');
     expect(body.content.subject).toBe('Sub');

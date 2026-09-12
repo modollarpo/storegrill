@@ -1,12 +1,8 @@
-import { createMoney, roundUpTo99 } from '@Storegrill/shared';
 import { canonicalizePath } from './category-taxonomy.js';
 
 export const COSTWAY_FEED_URL =
   'https://www.costway.co.uk/media/feed/costway_uk_dropship_products.csv';
 
-export const PRICE_MARKUP_RATE = 0.20;
-export const CLEARANCE_MARKUP_REDUCTION = 0.10;
-export const DEAL_PROMO_RATE = 25;
 export const OUT_OF_STOCK_THRESHOLD = 20;
 
 export const HOUSE_BRAND = 'Costway';
@@ -81,7 +77,7 @@ export function splitByStock(products: NormalizedProduct[]): { sellable: Normali
   const outOfStock: NormalizedProduct[] = [];
   for (const p of products) {
     const total = p.variants.reduce((sum, v) => sum + v.stock, 0);
-    (total > OUT_OF_STOCK_THRESHOLD ? sellable : outOfStock).push(p);
+    (total >= OUT_OF_STOCK_THRESHOLD ? sellable : outOfStock).push(p);
   }
   return { sellable, outOfStock };
 }
@@ -93,21 +89,6 @@ export function parsePriceToMinor(raw: string): number | null {
   const value = Number(cleaned.replace(/,/g, ''));
   if (!Number.isFinite(value) || value < 0) return null;
   return Math.round(value * 100);
-}
-
-function mulPenny(minorUnits: number, factor: number): number {
-  return Math.round(minorUnits * factor);
-}
-
-export interface PricingFlags {
-  clearance?: boolean;
-}
-
-export function applyIngestPricing(feedPriceMinorUnits: number, flags?: PricingFlags): number {
-  const priced = flags?.clearance
-    ? mulPenny(feedPriceMinorUnits, 1 + PRICE_MARKUP_RATE - CLEARANCE_MARKUP_REDUCTION)
-    : mulPenny(feedPriceMinorUnits, 1 + PRICE_MARKUP_RATE);
-  return Number(roundUpTo99(createMoney(BigInt(priced), 'GBP')).amountMinorUnits);
 }
 
 export function httpsify(url: string): string {
@@ -210,32 +191,25 @@ export function parseSpec(spec: string): { weightGrams?: number; dimensions?: { 
   return result;
 }
 
-function toVariant(row: CostwayFeedRow, suffix: string | null, flags: DerivedFlags): NormalizedVariant | null {
+function toVariant(row: CostwayFeedRow, suffix: string | null): NormalizedVariant | null {
   const feedPriceMinorUnits = parsePriceToMinor(row.Price);
   if (feedPriceMinorUnits == null) return null;
   const supplierStock = Number.parseInt(row.Stock, 10) || 0;
-  const isClearance = flags.tags.includes('clearance');
-  const isFlashSale = flags.tags.includes('flash-sale');
   return {
     sku: row.SKU.trim(),
     name: row['Item Name'].trim(),
     variantSuffix: suffix,
     feedPriceMinorUnits,
-    priceMinorUnits: applyIngestPricing(feedPriceMinorUnits, {
-      clearance: isClearance,
-    }),
-    ...(isClearance || isFlashSale
-      ? { listPriceMinorUnits: applyIngestPricing(feedPriceMinorUnits) }
-      : {}),
+    priceMinorUnits: feedPriceMinorUnits,
     supplierStock,
-    stock: supplierStock > OUT_OF_STOCK_THRESHOLD ? supplierStock : 0,
+    stock: supplierStock >= OUT_OF_STOCK_THRESHOLD ? supplierStock : 0,
     images: normalizeImages(row),
   };
 }
 
 function standaloneProduct(row: CostwayFeedRow): NormalizedProduct | null {
   const flags = parseFlags(row);
-  const variant = toVariant(row, null, flags);
+  const variant = toVariant(row, null);
   if (!variant) return null;
   return {
     groupKey: null,
@@ -297,7 +271,7 @@ export function adaptCostwayRows(rows: CostwayFeedRow[]): AdaptResult {
     const flags = parseFlags(bucket[0].row);
     const variants: NormalizedVariant[] = [];
     bucket.forEach((entry, index) => {
-      const variant = toVariant(entry.row, suffixes[index], flags);
+      const variant = toVariant(entry.row, suffixes[index]);
       if (variant) variants.push(variant);
     });
 

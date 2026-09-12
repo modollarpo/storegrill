@@ -1,4 +1,3 @@
-import { createMoney, roundUpTo99 } from '@Storegrill/shared';
 import type {
   AdaptResult,
   AdapterRowError,
@@ -98,10 +97,6 @@ export function parseEurPrice(raw: string | null | undefined): number | null {
   return Math.round(value * 100);
 }
 
-function charmEur(minorUnits: number): number {
-  return Number(roundUpTo99(createMoney(BigInt(minorUnits), 'EUR')).amountMinorUnits);
-}
-
 function stripSiteSuffix(title: string): string {
   let clean = (title ?? '').trim();
   for (const suffix of SITE_SUFFIXES) {
@@ -177,15 +172,12 @@ function toVariant(row: AosomFeedRow, suffix: string | null): NormalizedVariant 
   const special = parseEurPrice(row['Special Price']) ?? parseEurPrice(row.Price);
   if (special == null) return null;
   const supplierStock = parseStock(row.Stock);
-  const priceMinorUnits = charmEur(special);
-  const listPriceMinorUnits = charmEur(Math.round(special * (1 + 0.20)));
   return {
     sku: row.SKU.trim(),
     name: row.Title.trim(),
     variantSuffix: suffix,
     feedPriceMinorUnits: special,
-    priceMinorUnits,
-    listPriceMinorUnits,
+    priceMinorUnits: special,
     supplierStock,
     stock: supplierStock > 0 ? 20 : 0,
     images: normalizeAosomImages(row['Base image'], row.Image),

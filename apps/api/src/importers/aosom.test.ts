@@ -133,14 +133,14 @@ describe('adaptAosomRows', () => {
     expect(salon).toBeDefined();
     expect(salon!.groupKey).not.toBeNull();
     expect(salon!.variants.map(v => v.variantSuffix).sort()).toEqual(['Black', 'White']);
-    expect(salon!.variants.every(v => v.priceMinorUnits % 100 === 99)).toBe(true);
+    expect(salon!.variants.every(v => v.priceMinorUnits === v.feedPriceMinorUnits)).toBe(true);
   });
 
-  it('preserves a discounted list price for savings display', () => {
+  it('imports prices at the raw feed price with no compare-at', () => {
     const cleaning = result.products.find(p => p.baseName.includes('Cleaning'));
     const variant = cleaning!.variants[0];
-    expect(variant.listPriceMinorUnits).toBeDefined();
-    expect(variant.listPriceMinorUnits!).toBeGreaterThan(variant.priceMinorUnits);
+    expect(variant.priceMinorUnits).toBe(variant.feedPriceMinorUnits);
+    expect(variant.listPriceMinorUnits).toBeUndefined();
   });
 
   it('dedupes images and rewrites http to https', () => {

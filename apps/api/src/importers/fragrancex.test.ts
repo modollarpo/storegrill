@@ -27,24 +27,17 @@ function row(overrides: Partial<FragranceXFeedRow> = {}): FragranceXFeedRow {
 }
 
 describe('applyFragranceXPricing', () => {
-  it('prices at 60% of MSRP when that clears the margin floor', () => {
-    expect(applyFragranceXPricing(4140, 9800)).toBe(5899);
+  it('sells at MSRP when present', () => {
+    expect(applyFragranceXPricing(4140, 9800)).toBe(9800);
+    expect(applyFragranceXPricing(17800, 29000)).toBe(29000);
   });
 
-  it('clamps to the margin floor when street price would go below it', () => {
-    expect(applyFragranceXPricing(17800, 29000)).toBe(22299);
-  });
-
-  it('clamps to the wholesale ceiling when gray-market MSRP is inflated', () => {
-    expect(applyFragranceXPricing(550, 4000)).toBe(1299);
-  });
-
-  it('uses the default markup when MSRP is missing', () => {
-    expect(applyFragranceXPricing(1700, null)).toBe(2899);
+  it('falls back to wholesale when MSRP is missing', () => {
+    expect(applyFragranceXPricing(1700, null)).toBe(1700);
   });
 
   it('treats empty MSRP strings as missing', () => {
-    expect(applyFragranceXPricing(1700, null)).toBe(2899);
+    expect(applyFragranceXPricing(1700, null)).toBe(1700);
   });
 });
 
@@ -101,17 +94,17 @@ describe('adaptFragranceXRows', () => {
     expect(result.errors.map(e => e.field)).toEqual(['ITEM', 'Wholesale_USD', 'NAME']);
   });
 
-  it('clamps stock at zero, keeps raw quantities, and splits low stock into outOfStock', () => {
+  it('clamps stock below the threshold while keeping the raw supplier quantity', () => {
     const result = adaptFragranceXRows([
       row({ QTY: '-3' }),
       row({ ITEM: '2', NAME: 'B by B', QTY: '7' }),
       row({ ITEM: '3', NAME: 'C by C', QTY: '40' }),
     ]);
     expect(result.outOfStock).toHaveLength(2);
-    expect(result.outOfStock[0].variants[0].stock).toBe(0);
-    expect(result.outOfStock[1].variants[0].stock).toBe(7);
+    expect(result.outOfStock[0].variants[0]).toMatchObject({ stock: 0, supplierStock: 0 });
+    expect(result.outOfStock[1].variants[0]).toMatchObject({ stock: 0, supplierStock: 7 });
     expect(result.products).toHaveLength(1);
-    expect(result.products[0].variants[0].stock).toBe(40);
+    expect(result.products[0].variants[0]).toMatchObject({ stock: 40, supplierStock: 40 });
   });
 
   it('rewrites image URLs to https', () => {

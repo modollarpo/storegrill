@@ -1,7 +1,7 @@
-import { createMoney, roundUpTo99 } from '@Storegrill/shared';
 import {
   cleanSourceUrl,
   httpsify,
+  OUT_OF_STOCK_THRESHOLD,
   parsePriceToMinor,
   splitByStock,
   type AdaptResult,
@@ -11,14 +11,6 @@ import {
 } from './costway.js';
 
 export const FRAGRANCEX_FEED_PATH = '/frgxdatafeed/outgoingfeed_new.csv';
-
-export const FX_MARKUP_DEFAULT = 1.7;
-export const FX_MSRP_STREET_FACTOR = 0.6;
-export const FX_MARGIN_FLOOR = 1.25;
-export const FX_MSRP_CEILING = 2.2;
-export const FX_DEAL_DISCOUNT_RATE = 0.15;
-export const FX_DEAL_MIN_RATIO = FX_MARGIN_FLOOR / (1 - FX_DEAL_DISCOUNT_RATE);
-export const FX_DEAL_TAG = 'deal';
 
 export interface FragranceXFeedRow {
   ITEM: string;
@@ -37,22 +29,9 @@ export interface FragranceXFeedRow {
   QTY: string;
 }
 
-export function computeFxRetailBase(wholesaleMinor: number, msrpMinor: number | null): number {
-  if (msrpMinor != null && msrpMinor > 0) {
-    const candidate = Math.round(msrpMinor * FX_MSRP_STREET_FACTOR);
-    const floor = Math.round(wholesaleMinor * FX_MARGIN_FLOOR);
-    const ceiling = Math.round(wholesaleMinor * FX_MSRP_CEILING);
-    return Math.min(Math.max(candidate, floor), ceiling);
-  }
-  return Math.round(wholesaleMinor * FX_MARKUP_DEFAULT);
-}
-
-function charm99(minorUnits: number): number {
-  return Number(roundUpTo99(createMoney(BigInt(minorUnits), 'USD')).amountMinorUnits);
-}
-
 export function applyFragranceXPricing(wholesaleMinor: number, msrpMinor: number | null): number {
-  return charm99(computeFxRetailBase(wholesaleMinor, msrpMinor));
+  if (msrpMinor != null && msrpMinor > 0) return msrpMinor;
+  return wholesaleMinor;
 }
 
 function normalizeGender(raw: string): string {
@@ -87,16 +66,14 @@ function toVariant(row: FragranceXFeedRow): NormalizedVariant | null {
   const msrpMinor = parsePriceToMinor(row.MSRP);
   const supplierStock = Math.max(0, Number.parseInt(row.QTY, 10) || 0);
   const suffix = row.TYPE?.trim() && row.TYPE.trim() !== row.NAME.trim() ? row.TYPE.trim() : null;
-  const baseRetailMinor = computeFxRetailBase(wholesaleMinor, msrpMinor);
   return {
     sku: row.ITEM.trim(),
     name: row.TITLE?.trim() || `${row.NAME} ${row.TYPE ?? ''}`.trim(),
     variantSuffix: suffix,
     feedPriceMinorUnits: wholesaleMinor,
-    priceMinorUnits: charm99(baseRetailMinor),
-    listPriceMinorUnits: charm99(baseRetailMinor),
+    priceMinorUnits: applyFragranceXPricing(wholesaleMinor, msrpMinor),
     supplierStock,
-    stock: supplierStock,
+    stock: supplierStock >= OUT_OF_STOCK_THRESHOLD ? supplierStock : 0,
     images: row.IMAGE?.trim() ? [httpsify(row.IMAGE)] : [],
   };
 }
@@ -143,30 +120,6 @@ export function adaptFragranceXRows(rows: FragranceXFeedRow[]): AdaptResult {
     }
     const variants = entries.map(e => e.variant);
 
-    const minRatio = Math.min(
-      ...entries.map(e =>
-        computeFxRetailBase(
-          parsePriceToMinor(e.entry.row.Wholesale_USD)!,
-          parsePriceToMinor(e.entry.row.MSRP),
-        ) / parsePriceToMinor(e.entry.row.Wholesale_USD)!,
-      ),
-    );
-    const dealEligible = minRatio >= FX_DEAL_MIN_RATIO;
-    if (dealEligible) {
-      for (const e of entries) {
-        const base = computeFxRetailBase(
-          parsePriceToMinor(e.entry.row.Wholesale_USD)!,
-          parsePriceToMinor(e.entry.row.MSRP),
-        );
-        e.variant.priceMinorUnits = charm99(Math.round(base * (1 - FX_DEAL_DISCOUNT_RATE)));
-      }
-    }
-
-    // Skip products priced under $50 (5000 minor units)
-    if (entries.length > 0 && entries[0].variant.priceMinorUnits < 5000) {
-      continue;
-    }
-
     const first = bucket[0].row;
     products.push({
       groupKey,
@@ -174,7 +127,7 @@ export function adaptFragranceXRows(rows: FragranceXFeedRow[]): AdaptResult {
       description: (first.DESCRIPTION ?? '').trim(),
       specification: (first.TYPE ?? '').trim(),
       categoryPath: ['Fragrances', displayGender(first.GENDER)],
-      tags: dealEligible ? [...deriveTags(first), FX_DEAL_TAG] : deriveTags(first),
+      tags: deriveTags(first),
       attributes: {
         gender: normalizeGender(first.GENDER),
         ...(first.Size?.trim() && first.Size.trim() !== '--' ? { size: first.Size.trim() } : {}),

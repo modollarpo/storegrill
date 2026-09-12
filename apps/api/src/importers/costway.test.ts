@@ -5,7 +5,6 @@ import { fileURLToPath } from 'node:url';
 import { parse } from 'csv-parse/sync';
 import {
   adaptCostwayRows,
-  applyIngestPricing,
   cleanSourceUrl,
   normalizeImages,
   parseCategoryPath,
@@ -39,28 +38,6 @@ describe('parsePriceToMinor', () => {
     expect(parsePriceToMinor('abc')).toBeNull();
     expect(parsePriceToMinor('-5.00')).toBeNull();
     expect(parsePriceToMinor('')).toBeNull();
-  });
-});
-
-describe('applyIngestPricing', () => {
-  it('applies 20% markup then rounds up to .99', () => {
-    expect(applyIngestPricing(10495)).toBe(12599);
-    expect(applyIngestPricing(2495)).toBe(2999);
-    expect(applyIngestPricing(4495)).toBe(5399);
-  });
-
-  it('no longer bakes a flash-sale discount at ingest (handled by the deal engine)', () => {
-    expect(applyIngestPricing(10495, {})).toBe(12599);
-    expect(applyIngestPricing(10000, {})).toBe(12099);
-  });
-
-  it('prices clearance items at a reduced 10-point markup (net 10%)', () => {
-    expect(applyIngestPricing(10495, { clearance: true })).toBe(11599);
-    expect(applyIngestPricing(2495, { clearance: true })).toBe(2799);
-  });
-
-  it('treats clearance independently of the flash-sale flag', () => {
-    expect(applyIngestPricing(10495, { clearance: true })).toBe(11599);
   });
 });
 
@@ -154,12 +131,12 @@ const bySku = new Map(
 adapted.products.flatMap(p => p.variants.map(v => [v.sku, v])),
 );
 expect(bySku.get('LOW1')).toMatchObject({ stock: 0, supplierStock: 7 });
-expect(bySku.get('EDGE')).toMatchObject({ stock: 0, supplierStock: 20 });
+expect(bySku.get('EDGE')).toMatchObject({ stock: 20, supplierStock: 20 });
 expect(bySku.get('OK1')).toMatchObject({ stock: 21, supplierStock: 21 });
 expect(bySku.get('GARBAGE')).toMatchObject({ stock: 0, supplierStock: 0 });
 });
 
-it('records a compare-at list price for clearance and flash variants only', () => {
+it('imports prices at the raw feed price with no markup or compare-at', () => {
   const feed = parsePriceToMinor(String(rows[0].Price))!;
   const adapted = adaptCostwayRows([
     { ...rows[0], SKU: 'CLR1', item_group_id: 'CLR1', 'Is it clearance': '1', 'Is it flash-sale': '0' },
@@ -169,14 +146,12 @@ it('records a compare-at list price for clearance and flash variants only', () =
   const bySku = new Map(
     adapted.products.flatMap(p => p.variants.map(v => [v.sku, v])),
   );
-  const clr = bySku.get('CLR1')!;
-  expect(clr.priceMinorUnits).toBe(applyIngestPricing(feed, { clearance: true }));
-  expect(clr.listPriceMinorUnits).toBe(applyIngestPricing(feed));
-  expect(clr.listPriceMinorUnits!).toBeGreaterThan(clr.priceMinorUnits);
-  const fs = bySku.get('FS1')!;
-  expect(fs.listPriceMinorUnits).toBe(applyIngestPricing(feed));
-  const reg = bySku.get('REG1')!;
-  expect(reg.listPriceMinorUnits).toBeUndefined();
+  expect(bySku.get('CLR1')!).toMatchObject({ priceMinorUnits: feed });
+  expect(bySku.get('FS1')!).toMatchObject({ priceMinorUnits: feed });
+  expect(bySku.get('REG1')!).toMatchObject({ priceMinorUnits: feed });
+  expect(bySku.get('CLR1')!.listPriceMinorUnits).toBeUndefined();
+  expect(bySku.get('FS1')!.listPriceMinorUnits).toBeUndefined();
+  expect(bySku.get('REG1')!.listPriceMinorUnits).toBeUndefined();
 });
 
   it('adapts every fixture row without errors', () => {
@@ -191,7 +166,7 @@ it('records a compare-at list price for clearance and flash variants only', () =
     expect(tree!.baseName).toBe('5/6/7/8 Feet White Artificial Christmas Tree with Metal Stand');
     expect(tree!.variants.map(v => v.variantSuffix)).toEqual(['5 ft', '6 ft', '7 ft', '8 ft']);
     expect(tree!.variants.map(v => v.sku)).toEqual(['CM19733', 'CM19734', 'CM19735', 'CM19736']);
-    expect(tree!.variants.every(v => v.priceMinorUnits % 100 === 99)).toBe(true);
+    expect(tree!.variants.every(v => v.priceMinorUnits === v.feedPriceMinorUnits)).toBe(true);
   });
 
   it('treats rows whose group id equals their sku as standalone products', () => {
@@ -202,11 +177,11 @@ it('records a compare-at list price for clearance and flash variants only', () =
     expect(skeleton!.variants[0].sku).toBe('AP2181');
   });
 
-  it('marks up all prices and rewrites image schemes', () => {
+  it('imports prices at raw feed values and rewrites image schemes', () => {
     for (const product of result.products) {
       for (const variant of product.variants) {
-        expect(variant.priceMinorUnits % 100).toBe(99);
-        expect(variant.feedPriceMinorUnits).toBeLessThan(variant.priceMinorUnits);
+        expect(variant.priceMinorUnits).toBe(variant.feedPriceMinorUnits);
+        expect(variant.listPriceMinorUnits).toBeUndefined();
         for (const image of variant.images) {
           expect(image.startsWith('https://')).toBe(true);
         }

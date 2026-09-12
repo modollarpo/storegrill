@@ -87,6 +87,35 @@ Notes / caveats:
 - **HOSTNAME binding**: if a Next app binds to loopback only, add app setting `HOSTNAME=0.0.0.0`.
 - Apps use `WEBSITE_RUN_FROM_PACKAGE=1`; deploys are zip packages via `az webapp deploy`.
 
+### Container Apps image pull (ACR registry credentials)
+
+The web/api container apps pull images from `storegrillcr.azurecr.io` using the ACR admin
+account (`storegrillcr` / admin password). A freshly created app has **no registry
+credentials** and therefore always starts on the mcr `containerapps-helloworld` placeholder
+(`az containerapp update --image ...` fails with `UNAUTHORIZED: authentication required`).
+
+To fix a live app (this happened for UK and AE web apps):
+
+```powershell
+$acrPassword = az acr credential show -n storegrillcr --query "passwords[0].value" -o tsv
+az containerapp registry set -g rg-storegrill-prod-<REGION> -n app-storegrill-web-prod-<REGION> `
+  --server storegrillcr.azurecr.io --username storegrillcr --password $acrPassword
+az containerapp update -g rg-storegrill-prod-<REGION> -n app-storegrill-web-prod-<REGION> `
+  --image storegrillcr.azurecr.io/web-<region>:build-<run_id>
+```
+
+To make Terraform-created apps carry the registry from the start (so a fresh apply doesn't
+produce a placeholder app), pass on the pod module / in `terraform.tfvars`:
+
+```hcl
+acr_password = "<ACR admin password>"   # sensitive; never commit. Empty = no registry block.
+```
+
+See also: the running-image credentials are mutable live state on the container apps, not
+reconciled by `infra/terraform/` (its container-app blocks are placeholders). If an app is ever
+recreated from Terraform without `acr_password`, re-apply the `az containerapp registry set`
+step above before deploying images.
+
 ## 3. Bootstrap production data
 
 After first deploy (workflow input or locally against the pod DB):

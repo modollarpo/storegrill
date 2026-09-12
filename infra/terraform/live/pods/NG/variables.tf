@@ -14,6 +14,13 @@ variable "dev_client_ip" {
   description = "Public IP allowed direct Postgres access for local development. Update when your IP changes."
 }
 
+variable "acr_password" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "ACR admin password for pulling web/api images. Leave empty to skip registry config on the container apps."
+}
+
 output "web_hostname" {
   value = module.pod.web_hostname
 }

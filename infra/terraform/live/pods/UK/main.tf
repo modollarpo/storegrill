@@ -17,4 +17,5 @@ module "pod" {
   deploy_translator = false
   deploy_redis      = var.deploy_redis
   dev_client_ip     = var.dev_client_ip
+  acr_password      = var.acr_password
 }

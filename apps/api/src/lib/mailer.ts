@@ -50,8 +50,9 @@ async function sendViaAcs(message: MailMessage): Promise<void> {
 
   const date = new Date().toUTCString();
   const contentHash = sha256Base64(body);
-  const signedHeaders = 'host;x-ms-content-sha256;x-ms-date';
-  const stringToSign = `POST\n${pathAndQuery}\n${contentHash};${signedHeaders}\n${date}`;
+  const host = new URL(endpoint).host;
+  const signedHeaders = 'x-ms-date;host;x-ms-content-sha256';
+  const stringToSign = `POST\n${pathAndQuery}\n${date};${host};${contentHash}`;
   const signature = hmacSha256Base64(Buffer.from(accessKey, 'base64'), stringToSign);
 
   const res = await fetch(`${endpoint}${pathAndQuery}`, {

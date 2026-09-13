@@ -18,7 +18,11 @@ export const AOSOM_UK_STOCK_FEED_URL =
 export const AOSOM_UK_SOURCE = `${AOSOM_UK_PRODUCT_FEED_URL}|${AOSOM_UK_STOCK_FEED_URL}`;
 
 export function isAosomUkSource(source: string): boolean {
-  return typeof source === 'string' && source.split('|').length === 2 && source.includes(AOSOM_UK_PRODUCT_FEED_URL);
+  return (
+    typeof source === 'string' &&
+    source.split('|').length === 2 &&
+    (source.includes(AOSOM_UK_PRODUCT_FEED_URL) || source.startsWith('file://'))
+  );
 }
 
 export const HOUSE_BRAND = 'HOMCOM';

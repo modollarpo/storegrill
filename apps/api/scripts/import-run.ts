@@ -13,9 +13,14 @@ const { COSTWAY_FEED_URL } = await import('../src/importers/costway.js');
 
 const prisma = new PrismaClient();
 
-const slug = process.argv[2] ?? 'storegrill-uk';
-const url = process.argv[3] ?? COSTWAY_FEED_URL;
-const withSchedule = process.argv.includes('--schedule');
+const args = process.argv.slice(2);
+const slug = args[0] ?? 'storegrill-uk';
+const localFileIdx = args.indexOf('--file');
+const localPairIdx = args.indexOf('--pair');
+const localFile = localFileIdx >= 0;
+const localPair = localPairIdx >= 0;
+const valueIdx = localFile ? localFileIdx + 1 : localPair ? localPairIdx + 1 : 1;
+const cliValue = args[valueIdx];
 
 let vendor: { id: string } | null = null;
 for (let attempt = 1; attempt <= 5; attempt++) {
@@ -30,39 +35,27 @@ for (let attempt = 1; attempt <= 5; attempt++) {
 }
 if (!vendor) throw new Error(`vendor ${slug} not found`);
 
-if (withSchedule && !url.startsWith('ftp://')) throw new Error('--schedule only intended for ftp feeds');
-if (withSchedule) {
-  const schedule = await prisma.importSchedule.upsert({
-    where: { id: (await prisma.importSchedule.findFirst({ where: { vendorId: vendor.id, url } }))?.id ?? 'none' },
-    update: { enabled: true },
-    create: {
-      vendorId: vendor.id,
-      name: 'FragranceX daily feed',
-      url,
-      format: 'csv',
-      cadenceCron: '0 3 * * *',
-      enabled: true,
-    },
-  });
-  console.log(`schedule ready: ${schedule.id}`);
-}
-
 const orphaned = await prisma.importJob.updateMany({
   where: { vendorId: vendor.id, status: { in: ['PENDING', 'RUNNING'] } },
   data: { status: 'FAILED', errors: JSON.stringify([{ message: 'Orphaned by server restart' }]), completedAt: new Date() },
 });
 console.log(`orphaned jobs reset: ${orphaned.count}`);
 
+const source =
+  localFile || localPair
+    ? cliValue!
+    : (cliValue ?? COSTWAY_FEED_URL);
+
 const job = await prisma.importJob.create({
   data: {
     vendorId: vendor.id,
-    type: 'URL_FEED',
-    source: url,
+    type: localFile ? 'CSV_UPLOAD' : 'URL_FEED',
+    source,
     mode: 'APPLY',
-    phase: 'FETCHING',
+    phase: localFile ? 'PENDING' : 'FETCHING',
   },
 });
-console.log(`job ${job.id} queued`);
+console.log(`job ${job.id} queued (type=${job.type} source=${source.slice(0, 80)})`);
 
 await startImportJob(job.id);
 

@@ -82,7 +82,7 @@ describe('buildHeroSlides', () => {
     id: 'deal-1',
     status: 'LIVE',
     enabled: true,
-    slug: 'costway-flash-sale',
+    slug: 'flash-sale',
     endsAt: '2026-09-09T23:59:59Z',
     variants: [
       {
@@ -97,7 +97,7 @@ describe('buildHeroSlides', () => {
     expect(slides).toHaveLength(1);
     expect(slides[0].title).toBe('Professional Portable Hood Hairdryer');
     expect(slides[0].image).toBe('https://cdn.storegrill.net/hairdryer.jpg');
-    expect(slides[0].href).toBe('/deals/costway-flash-sale');
+    expect(slides[0].href).toBe('/deals/flash-sale');
     expect(slides[0].subtitle).toContain('25% off');
     expect(slides[0].subtitle).toContain('Ends');
   });
@@ -119,7 +119,7 @@ describe('buildHeroSlides', () => {
     const slides = buildHeroSlides([oneDeal], 'en');
     expect(slides).toHaveLength(4);
     expect(slides.map(s => s.title)).toEqual(['P1', 'P2', 'P3', 'P4']);
-    expect(slides.every(s => s.href === '/deals/costway-flash-sale')).toBe(true);
+    expect(slides.every(s => s.href === '/deals/flash-sale')).toBe(true);
   });
 
   it('dedupes the same product across deals and caps at fourteen slides', () => {

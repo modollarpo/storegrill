@@ -57,7 +57,7 @@ export default async function DealDetailPage({ params }: { params: Promise<{ slu
         regionKey={regionKey}
       />
 
-      <div className="max-w-4xl mx-auto mt-6">
+      <div className="mt-6">
         <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-sm">
           {/* Deal header band */}
           <div className="relative h-56 bg-text-primary overflow-hidden">

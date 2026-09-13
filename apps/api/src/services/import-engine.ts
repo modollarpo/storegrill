@@ -35,7 +35,7 @@ const APPLY_CONCURRENCY = 12;
 const ACTIVE_JOB_STATUSES = ['PENDING', 'RUNNING'];
 const DELISTABLE_STATUSES = ['ACTIVE', 'PENDING_REVIEW', 'OUT_OF_STOCK'];
 const FLASH_SALE_TAG = 'flash-sale';
-const DAILY_DEAL_SLUG = 'costway-flash-sale';
+const DAILY_DEAL_SLUG = 'flash-sale';
 
 interface AdapterProfile {
   currencyCode: string;
@@ -205,10 +205,12 @@ async function runImport(jobId: string): Promise<void> {
           : adaptCostwayRows(records as unknown as CostwayFeedRow[]);
     } else {
       const [productUrl, stockUrl] = job.source.split('|');
-      const [productResult, stockResult] = await Promise.all([
-        fetchFeedToFile(productUrl, { etag: schedule?.etag ?? null, jobId, label: 'prod' }),
-        fetchFeedToFile(stockUrl, { jobId, label: 'stock' }),
-      ]);
+      const productResult = productUrl.startsWith('file://')
+        ? { filePath: productUrl.slice('file://'.length), etag: null, unchanged: false }
+        : await fetchFeedToFile(productUrl, { etag: schedule?.etag ?? null, jobId, label: 'prod' });
+      const stockResult = stockUrl.startsWith('file://')
+        ? { filePath: stockUrl.slice('file://'.length), etag: null, unchanged: false }
+        : await fetchFeedToFile(stockUrl, { jobId, label: 'stock' });
       if (productResult.unchanged) {
         await completeJob(jobId, { summary: { unchanged: true, message: 'Feed not modified since last run' } });
         await touchSchedule(schedule?.id, 'UNCHANGED');
@@ -617,8 +619,8 @@ async function disableAutoDeals(vendorId: string): Promise<number> {
       vendorId,
       enabled: true,
       OR: [
-        { slug: 'costway-flash-sale' },
-        { slug: 'fragrancex-deals' },
+        { slug: 'flash-sale' },
+        { slug: 'fragrance-deals' },
         { slug: { startsWith: 'costway-cat-' } },
       ],
     },

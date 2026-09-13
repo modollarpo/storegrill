@@ -29,7 +29,7 @@ Catalog behavior that differs per vendor is configured, not hardcoded:
 | --- | --- | --- |
 | `currencyCode` | GBP | USD |
 | Brand resolution | house brand "Costway" | per-row `BRAND` (~689 brands) |
-| Flash-sale deal | `costway-flash-sale` upsert | disabled (`dealSlug: null`) |
+| Flash-sale deal | `flash-sale` upsert | disabled (`dealSlug: null`) |
 | Stock rule | `>10 else 0` threshold | raw `QTY`; product flips to `OUT_OF_STOCK` when total stock reaches 0 (shared `statusOf()`) |
 
 ## Pricing formula

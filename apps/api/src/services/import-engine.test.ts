@@ -90,7 +90,7 @@ async function cleanTestArtifacts() {
     await prisma.dealVariant.deleteMany({ where: { productId: { in: productIds } } });
     await prisma.product.deleteMany({ where: { id: { in: productIds } } });
   }
-  await prisma.deal.deleteMany({ where: { slug: 'costway-flash-sale' } });
+  await prisma.deal.deleteMany({ where: { slug: 'flash-sale' } });
   for (const slug of ['play-kitchens', 'toys', 'halloween', 'decor']) {
     await prisma.category.deleteMany({ where: { slug, products: { none: {} }, children: { none: {} } } });
   }
@@ -191,7 +191,7 @@ describe.skipIf(!hasPostgresTestDb)('import engine (integration)', () => {
       const lowStock = products.get('CW-TST-E');
       expect(lowStock).toBeUndefined();
 
-      const flashDeal = await prisma.deal.findFirst({ where: { slug: 'costway-flash-sale' } });
+      const flashDeal = await prisma.deal.findFirst({ where: { slug: 'flash-sale' } });
       expect(flashDeal).toBeNull();
       const skeleton = products.get('CW-TST-C')!;
       expect(skeleton.variants[0].basePriceMinorUnits).toBe(5495);

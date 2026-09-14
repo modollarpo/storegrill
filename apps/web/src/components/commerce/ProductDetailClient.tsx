@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { storefrontImage } from '@/lib/images';
 import { StarRating } from '../StarRating';
+import { useAnalytics } from '../providers/AnalyticsProvider';
 
 // Imported PDP sub-components
 import { PdpImageGallery } from './pdp/PdpImageGallery';
@@ -56,6 +57,7 @@ export interface ProductDetailClientProps {
 }
 
 export function ProductDetailClient({ product, shipping: _shipping, locale = 'en-US', tabs }: ProductDetailClientProps) {
+  const { track } = useAnalytics();
   const images = useMemo(() => {
     const variantImages = product.variants?.flatMap(v => v.images || []) || [];
     return [...(product.images || []), ...variantImages].map(storefrontImage).filter((image): image is string => Boolean(image));
@@ -83,6 +85,29 @@ export function ProductDetailClient({ product, shipping: _shipping, locale = 'en
   const variant = product.variants?.find(v => v.id === variantId);
   const activeUnitPrice = variant?.basePriceMinorUnits ?? product.price;
   const currency = variant?.currencyCode ?? product.currencyCode;
+
+  useEffect(() => {
+    if (!product) return;
+    track({
+      event: 'view_item',
+      product_id: variant?.id || product.id,
+      product_name: variant ? `${product.name} - ${variant.name}` : product.name,
+      category: product.category?.name,
+      value: activeUnitPrice / 100,
+      currency,
+      items: [{
+        item_id: variant?.id || product.id,
+        item_name: variant ? `${product.name} - ${variant.name}` : product.name,
+        item_category: product.category?.name,
+        item_brand: product.brand?.name,
+        price: activeUnitPrice / 100,
+        quantity: 1,
+        currency,
+      }],
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id, variantId]);
+
   const stock = variant ? variant.stock : product.inventoryCount;
   const listPrice = product.listPrice ?? product.listPriceMinorUnits;
 

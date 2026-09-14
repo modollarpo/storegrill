@@ -1,10 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart, CartItemLine } from '@/components/providers/CartContext';
 import { useRegion } from '@/components/providers/RegionContext';
+import { useAnalytics } from '@/components/providers/AnalyticsProvider';
 import { useToast } from '@/components/feedback/Toast';
 import { api, ApiError, API_BASE } from '@/lib/api';
 import { DEFAULT_REGIONS, PAYMENT_METHOD_PROVIDER, PaymentMethodId } from '@Storegrill/shared';
@@ -43,6 +44,7 @@ export default function CheckoutPage() {
   const cart = useCart();
   const { regionKey, language } = useRegion();
   const { toast } = useToast();
+  const { track } = useAnalytics();
   const router = useRouter();
 
   const [step, setStep] = useState<Step>(1);
@@ -70,6 +72,23 @@ export default function CheckoutPage() {
   const discountedSubtotal = Math.max(0, subtotal - discount);
   const tax = Math.round(discountedSubtotal * (regionConfig.taxRules[0]?.rate ?? 0));
   const total = discountedSubtotal + shippingCost + tax;
+
+  useEffect(() => {
+    if (cart.items.length === 0) return;
+    track({
+      event: 'begin_checkout',
+      value: total / 100,
+      currency,
+      items: cart.items.map(i => ({
+        item_id: i.variantId || i.productId,
+        item_name: i.name,
+        price: i.unitPriceMinorUnits / 100,
+        quantity: i.quantity,
+        currency: i.currencyCode,
+      })),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const stepValid = useMemo(() => {
     if (step === 1) return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) && address.street.length > 2 && address.city.length > 1 && address.zip.length > 2;
@@ -153,6 +172,19 @@ export default function CheckoutPage() {
       setSandboxNotice(result.payment?.mode === 'sandbox');
 
       const orderNumber = result.order?.orderNumber || result.orderNumber || result.id || '';
+      track({
+        event: 'purchase',
+        transaction_id: orderNumber,
+        value: total / 100,
+        currency,
+        items: cart.items.map(i => ({
+          item_id: i.variantId || i.productId,
+          item_name: i.name,
+          price: i.unitPriceMinorUnits / 100,
+          quantity: i.quantity,
+          currency: i.currencyCode,
+        })),
+      });
       cart.clear();
       router.push(`/checkout/confirmation?order=${encodeURIComponent(orderNumber)}`);
     } catch (e) {

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart, CartItemLine } from '../providers/CartContext';
 import { useToast } from '../feedback/Toast';
+import { useAnalytics } from '../providers/AnalyticsProvider';
 import { cn } from '@/lib/utils';
 
 export interface AddToCartButtonProps {
@@ -36,6 +37,7 @@ export function AddToCartButton(props: AddToCartButtonProps) {
   const cart = useCart();
   const router = useRouter();
   const { toast } = useToast();
+  const { track } = useAnalytics();
   const [justAdded, setJustAdded] = useState(false);
   
   const outOfStock = props.stock !== undefined && props.stock <= 0;
@@ -58,6 +60,23 @@ export function AddToCartButton(props: AddToCartButtonProps) {
       categoryId: props.categoryId,
     };
     cart.addItem(line);
+
+    const value = props.unitPriceMinorUnits / 100;
+    track({
+      event: 'add_to_cart',
+      product_id: props.variantId || props.productId,
+      product_name: props.name,
+      value,
+      currency: props.currencyCode,
+      items: [{
+        item_id: props.variantId || props.productId,
+        item_name: props.name,
+        item_category: props.categoryId,
+        price: value,
+        quantity: props.quantity || 1,
+        currency: props.currencyCode,
+      }],
+    });
     
     if (isBuyNow) {
       router.push('/checkout');

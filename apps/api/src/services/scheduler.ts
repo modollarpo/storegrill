@@ -1,12 +1,15 @@
-import { isCronDue } from '@Storegrill/shared';
+import { isCronDue, DEFAULT_REGIONS } from '@Storegrill/shared';
 import type { PrismaClient } from '@prisma/client';
 import { prisma as db } from '../db/prisma.js';
 import { startImportJob } from './import-engine.js';
 import { pollTrackedShipments } from './carriers.js';
 import { executeJob } from './job-queue.js';
 import { checkAndSendAbandonedCarts, checkAndSendReviewRequests } from './customer-journey.js';
+import { buildFeed, FeedChannel } from './feed-builder.js';
 
 const TICK_MS = 60_000;
+const FEED_WARM_INTERVAL_MS = 3_600_000;
+const FEED_WARM_ENABLED = process.env.FEED_WARMER_ENABLED !== 'false';
 
 export function startScheduler(prisma: PrismaClient = db): NodeJS.Timeout {
   const timer = setInterval(() => {
@@ -16,7 +19,42 @@ export function startScheduler(prisma: PrismaClient = db): NodeJS.Timeout {
   }, TICK_MS);
   timer.unref();
   console.log(`[scheduler] started, checking schedules every ${TICK_MS / 1000}s`);
+  if (FEED_WARM_ENABLED) {
+    const warmer = setInterval(() => {
+      void tickFeedWarmer(prisma).catch(error => {
+        console.error('[feed-warmer] tick failed:', error instanceof Error ? error.message : error);
+      });
+    }, FEED_WARM_INTERVAL_MS);
+    warmer.unref();
+    console.log(`[feed-warmer] started, warming feeds every ${FEED_WARM_INTERVAL_MS / 1000}s`);
+  } else {
+    console.log('[feed-warmer] disabled (FEED_WARMER_ENABLED=false)');
+  }
   return timer;
+}
+
+export async function tickFeedWarmer(prisma: PrismaClient): Promise<void> {
+  const rows = await prisma.productRegionPrice.findMany({
+    distinct: ['regionKey'],
+    select: { regionKey: true },
+  });
+  const regionKeys = rows.map(r => r.regionKey).filter(k => DEFAULT_REGIONS.some(r => r.key === k));
+  if (regionKeys.length === 0) {
+    console.log('[feed-warmer] no regions with priced products; skipping warm');
+    return;
+  }
+
+  const channels: FeedChannel[] = ['google-merchant', 'facebook', 'tiktok', 'pinterest'];
+  for (const regionKey of regionKeys) {
+    for (const channel of channels) {
+      try {
+        await buildFeed(regionKey, channel);
+      } catch (error) {
+        console.error(`[feed-warmer] ${regionKey}/${channel} failed:`, error instanceof Error ? error.message : error);
+      }
+    }
+  }
+  console.log('[feed-warmer] warmed', channels.length, 'channels for', regionKeys.join(', '));
 }
 
 async function tick(prisma: PrismaClient): Promise<void> {

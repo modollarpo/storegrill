@@ -26,15 +26,33 @@ Channels: `google-merchant`, `facebook`, `tiktok`, `pinterest`.
 
 ### Feed URLs per region
 
-Replace `<REGION>` with the region key (UK, US, EU, AE, NG):
+Feeds are served by the pod API at `https://<region>-api.storegrill.net` (not the storefront host). Paste these URLs exactly into each platform (Google Merchant Center → Products → Feeds → Add primary feed).
 
 | Region | Google Merchant | Facebook | TikTok | Pinterest |
 |--------|----------------|----------|--------|-----------|
-| UK     | `GET /api/v1/feeds/google-merchant?regionKey=UK` | `.../facebook?regionKey=UK` | `.../tiktok?regionKey=UK` | `.../pinterest?regionKey=UK` |
-| US     | `GET /api/v1/feeds/google-merchant?regionKey=US` | `.../facebook?regionKey=US` | `.../tiktok?regionKey=US` | `.../pinterest?regionKey=US` |
-| EU     | `GET /api/v1/feeds/google-merchant?regionKey=EU` | `.../facebook?regionKey=EU` | `.../tiktok?regionKey=EU` | `.../pinterest?regionKey=EU` |
-| AE     | `GET /api/v1/feeds/google-merchant?regionKey=AE` | `.../facebook?regionKey=AE` | `.../tiktok?regionKey=AE` | `.../pinterest?regionKey=AE` |
-| NG     | `GET /api/v1/feeds/google-merchant?regionKey=NG` | `.../facebook?regionKey=NG` | `.../tiktok?regionKey=NG` | `.../pinterest?regionKey=NG` |
+| UK     | `https://uk-api.storegrill.net/api/v1/feeds/google-merchant?regionKey=UK` | `https://uk-api.storegrill.net/api/v1/feeds/facebook?regionKey=UK` | `https://uk-api.storegrill.net/api/v1/feeds/tiktok?regionKey=UK` | `https://uk-api.storegrill.net/api/v1/feeds/pinterest?regionKey=UK` |
+| US     | `https://us-api.storegrill.net/api/v1/feeds/google-merchant?regionKey=US` | `https://us-api.storegrill.net/api/v1/feeds/facebook?regionKey=US` | `https://us-api.storegrill.net/api/v1/feeds/tiktok?regionKey=US` | `https://us-api.storegrill.net/api/v1/feeds/pinterest?regionKey=US` |
+| EU     | `https://eu-api.storegrill.net/api/v1/feeds/google-merchant?regionKey=DE` | `https://eu-api.storegrill.net/api/v1/feeds/facebook?regionKey=DE` | `https://eu-api.storegrill.net/api/v1/feeds/tiktok?regionKey=DE` | `https://eu-api.storegrill.net/api/v1/feeds/pinterest?regionKey=DE` |
+| AE     | `https://ae-api.storegrill.net/api/v1/feeds/google-merchant?regionKey=AE` | `https://ae-api.storegrill.net/api/v1/feeds/facebook?regionKey=AE` | `https://ae-api.storegrill.net/api/v1/feeds/tiktok?regionKey=AE` | `https://ae-api.storegrill.net/api/v1/feeds/pinterest?regionKey=AE` |
+| NG     | `https://ng-api.storegrill.net/api/v1/feeds/google-merchant?regionKey=NG` | `https://ng-api.storegrill.net/api/v1/feeds/facebook?regionKey=NG` | `https://ng-api.storegrill.net/api/v1/feeds/tiktok?regionKey=NG` | `https://ng-api.storegrill.net/api/v1/feeds/pinterest?regionKey=NG` |
+
+> **EU pod:** the continent pod serves all European country keys (DE, FR, IE, NL, …). Use a **country key**, not `regionKey=EU` — the feed route validates against `DEFAULT_REGIONS`, which lists sellable countries only. Swap `DE` for the market (e.g. `FR` for France, `IE` for Ireland) to get that country's feed.
+>
+> **AE/NG pods** return a valid feed with **0 items** until products are uploaded — an empty `google-merchant` feed will be rejected by Merchant Center with "no items", that is expected today.
+
+### Feed status endpoint
+
+`GET /api/v1/feeds/status?regionKey=<REGION>` (public) returns the latest recorded build for all four channels:
+
+```json
+{ "regionKey": "UK", "feeds": { "google-merchant": { "itemCount": 11596, "builtAt": "…", "status": "SUCCESS" } } }
+```
+
+Use it to confirm a pod has picked up products before submitting the URL to a publisher.
+
+### Feed warming
+
+A scheduler job pre-builds every active region's feeds hourly (only regions that have priced products in the pod's DB — so empty AE/NG pods are skipped). Publishers therefore hit a warm cache instead of triggering a one-off 2-minute cold build. Disable with `FEED_WARMER_ENABLED=false`.
 
 ### Feed build telemetry
 

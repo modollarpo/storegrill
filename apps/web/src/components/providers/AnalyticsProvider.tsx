@@ -138,6 +138,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   const gtagInitialized = useRef(false);
 
   useEffect(() => {
+    window.dataLayer = window.dataLayer || [];
     if (!gtagEnabled || gtagInitialized.current) return;
     gtagInitialized.current = true;
     loadGtag();
@@ -148,6 +149,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
 
   const track = useCallback((event: DataLayerEvent) => {
     if (typeof window === 'undefined') return;
+    window.dataLayer = window.dataLayer || [];
 
     const mapped = toGtagEvent(event);
     window.dataLayer.push(event);

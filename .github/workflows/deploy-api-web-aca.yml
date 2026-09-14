@@ -34,7 +34,7 @@ env:
   BRANCH: ${{ github.event.inputs.branch || 'master' }}
   GA4_ID: G-SPM0SNX5QK
   ADS_ID: AW-16735390613
-  ADS_CONVERSION_LABEL: ''
+  ADS_CONVERSION_LABEL: SdK6CNqF5vccEJWXh6w-
 
 jobs:
   build:

@@ -16,6 +16,7 @@ import { AnalyticsProvider } from '@/components/providers/AnalyticsProvider';
 import { UserContextProvider } from '@/components/providers/UserContext';
 import { PWAProvider } from '@/components/providers/PWAProvider';
 import { PwaSplashScreen } from '@/components/layout/PwaSplashScreen';
+import { Suspense } from 'react';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,6 +88,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={language} dir={dir}>
       <body className="min-h-screen flex flex-col antialiased bg-surface-page text-primary">
         <PwaSplashScreen />
+        <Suspense>
         <AnalyticsProvider>
           <UserContextProvider>
             <ToastProvider>
@@ -109,6 +111,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </ToastProvider>
           </UserContextProvider>
         </AnalyticsProvider>
+        </Suspense>
       </body>
     </html>
   );

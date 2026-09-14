@@ -129,4 +129,13 @@ All ecommerce events include an `items` array per GA4 spec:
 
 ### Internal analytics
 
-Ecommerce events (`view_item`, `add_to_cart`, `begin_checkout`, `purchase`) are also POSTed to the backend at `/api/v1/analytics/event` (fire-and-forget, `keepalive: true`). This feeds the admin analytics dashboard without requiring a separate integration.
+All GA4 events (`page_view`, `searchhit`, `detail`, `view_item`, `add_to_cart`, `begin_checkout`, `purchase`) are also POSTed to the backend at `/api/v1/analytics/event` (fire-and-forget, `keepalive: true`). This backs the admin analytics dashboard without requiring a separate integration.
+
+### Verifying GA4 vs first-party data
+
+Because every GA4 event is mirrored to the `AnalyticsEvent` table in the pod DB, you can sanity-check GA4's numbers against your own data:
+
+- **Admin console → Analytics → "First-party event stream"** shows last-14-day counts by event type, day and region (`page_view` vs GA4's report, cart/checkout drop-off vs GA4's funnel, `purchase` count vs the store's paid orders).
+- Raw endpoint: `GET /api/v1/admin/analytics/events?days=14[&eventType=PURCHASE][&region=UK]` (admin auth). `days` caps at 90; the window is the last N full days (excludes the current, still-filling day so totals match GA4's daily aggregation).
+
+Expect the first-party `page_view` count to be **lower** than GA4's — the API watcher only records SPA navigations on bundle load, while GA4 also fires on full page loads that never hydrate. Volume trends, funnel shape and purchase counts should track closely.

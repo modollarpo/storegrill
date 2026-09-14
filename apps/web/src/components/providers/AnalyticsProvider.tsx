@@ -123,10 +123,14 @@ function toInternalEvent(event: DataLayerEvent) {
   if (event.items?.length) {
     metadata.items = event.items.map(i => ({ id: i.item_id, name: i.item_name, qty: i.quantity, price: i.price }));
   }
+  const entityType =
+    event.event === 'purchase' ? 'order'
+    : event.event === 'page_view' || event.event === 'searchhit' || event.event === 'detail' ? undefined
+    : 'product';
   return {
     eventType: event.event,
-    entityType: event.event === 'purchase' ? 'order' : 'product',
-    entityId: event.product_id || event.items?.[0]?.item_id,
+    entityType,
+    entityId: event.event === 'detail' ? event.product_id : (event.product_id || event.items?.[0]?.item_id),
     value: event.value,
     metadata,
   };
@@ -167,7 +171,8 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       });
     }
 
-    if (event.event === 'add_to_cart' || event.event === 'begin_checkout' || event.event === 'purchase' || event.event === 'view_item') {
+    const EVENT_TYPES_TO_INTERNAL = new Set(['page_view', 'searchhit', 'detail', 'view_item', 'add_to_cart', 'begin_checkout', 'purchase']);
+    if (EVENT_TYPES_TO_INTERNAL.has(event.event)) {
       fetch(`${API_BASE}/api/v1/analytics/event`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

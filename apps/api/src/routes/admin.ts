@@ -8,6 +8,7 @@ import { assertMerchantApproval, assertMerchantTransition } from '../services/me
 import { MerchantPermission } from '@Storegrill/shared';
 import { getLatestFeeds, getFeedHistory } from '../services/feed-log.js';
 import { FeedChannel } from '../services/feed-builder.js';
+import { getEventVolumes } from '../services/analytics.js';
 
 const router = Router();
 
@@ -1420,6 +1421,17 @@ router.get('/dashboard/finance', authenticate, authorize('ADMIN'), async (req: A
     payouts: { count: payouts._count, totalPaid: payouts._sum.amountMinorUnits ?? 0 },
     refunds: { count: refunds._count, totalRefunded: refunds._sum.amountMinorUnits ?? 0 },
   });
+});
+
+router.get('/analytics/events', async (req: AuthRequest, res: Response) => {
+  const days = Math.min(90, Math.max(1, Number(req.query.days ?? 7) || 7));
+  const eventType = req.query.eventType ? String(req.query.eventType).toUpperCase() : undefined;
+  const region = req.query.region ? String(req.query.region).toUpperCase() : undefined;
+  const endDate = new Date(Date.now() - 86400000); // yesterday inclusive
+  const startDate = new Date(endDate.getTime() - (days - 1) * 86400000);
+
+  const volumes = await getEventVolumes({ startDate, endDate, eventType, region });
+  res.json({ days, startDate, endDate, events: volumes });
 });
 
 router.get('/feeds/latest', async (_req: AuthRequest, res: Response) => {

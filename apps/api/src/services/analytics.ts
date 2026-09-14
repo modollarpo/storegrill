@@ -114,3 +114,51 @@ export async function getUserEvents(
     take: limit,
   });
 }
+
+export interface EventVolumeOptions {
+  startDate: Date;
+  endDate: Date;
+  eventType?: string;
+  region?: string;
+}
+
+export interface EventVolumes {
+  totals: { count: number; totalValue: number };
+  byEventType: Array<{ eventType: string; count: number }>;
+  byDay: Array<{ date: string; count: number }>;
+  byRegion: Array<{ region: string; count: number }>;
+}
+
+export async function getEventVolumes(
+  options: EventVolumeOptions,
+  prisma: PrismaClient = db,
+): Promise<EventVolumes> {
+  const where = {
+    ...(options.eventType ? { eventType: options.eventType } : {}),
+    ...(options.region ? { region: options.region } : {}),
+    createdAt: { gte: options.startDate, lte: options.endDate },
+  };
+  const events = await prisma.analyticsEvent.findMany({ where });
+
+  const byEventType = new Map<string, number>();
+  const byDay = new Map<string, number>();
+  const byRegion = new Map<string, number>();
+  let totalValue = 0;
+
+  for (const event of events) {
+    byEventType.set(event.eventType, (byEventType.get(event.eventType) ?? 0) + 1);
+    byDay.set(event.createdAt.toISOString().slice(0, 10), (byDay.get(event.createdAt.toISOString().slice(0, 10)) ?? 0) + 1);
+    byRegion.set(event.region ?? 'UNKNOWN', (byRegion.get(event.region ?? 'UNKNOWN') ?? 0) + 1);
+    totalValue += event.value;
+  }
+
+  const sortByCount = (a: { count: number }, b: { count: number }) => b.count - a.count;
+  return {
+    totals: { count: events.length, totalValue },
+    byEventType: Array.from(byEventType.entries()).map(([eventType, count]) => ({ eventType, count })).sort(sortByCount),
+    byDay: Array.from(byDay.entries())
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date)),
+    byRegion: Array.from(byRegion.entries()).map(([region, count]) => ({ region, count })).sort(sortByCount),
+  };
+}

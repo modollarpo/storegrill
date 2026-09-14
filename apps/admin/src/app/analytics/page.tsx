@@ -15,18 +15,29 @@ interface Analytics {
   topProducts: Array<{ productId: string; name: string; category: string; revenue: number; units: number }>;
 }
 
+interface EventVolumes {
+  totals: { count: number; totalValue: number };
+  byEventType: Array<{ eventType: string; count: number }>;
+  byDay: Array<{ date: string; count: number }>;
+  byRegion: Array<{ region: string; count: number }>;
+}
+
 function money(minor: number, currencyCode = 'GBP'): string {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode }).format(minor / 100);
 }
 
 function AnalyticsInner() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [events, setEvents] = useState<EventVolumes | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     api<{ analytics: Analytics }>('/api/v1/admin/analytics')
       .then(d => { setAnalytics(d.analytics); setError(null); })
       .catch(e => setError(e instanceof ApiError ? e.message : 'Load failed'));
+    api<{ events: EventVolumes }>('/api/v1/admin/analytics/events?days=14')
+      .then(d => setEvents(d.events))
+      .catch(() => setEvents(null));
   }, []);
 
   useEffect(load, [load]);
@@ -118,6 +129,80 @@ function AnalyticsInner() {
               <span>{new Date(data.revenueByDay[0]?.date ?? Date.now()).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
               <span>{new Date(data.revenueByDay[data.revenueByDay.length - 1]?.date ?? Date.now()).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
             </div>
+          </div>
+
+          <div className="bg-surface-raised rounded-xl border border-slate-200 p-5 mb-6">
+            <h2 className="text-sm font-bold text-slate-900 mb-4">First-party event stream — last 14 days</h2>
+            <p className="text-xs text-slate-500 mb-4">Counts captured from the storefront API (same events as GA4). Use to sanity-check GA4 reports (page_view, view_item, add_to_cart, begin_checkout, purchase).</p>
+            {!events && <p className="text-xs text-slate-400">No events recorded yet in this window.</p>}
+            {events && (
+              <>
+                <div className="grid grid-cols-2 gap-3 mb-5">
+                  <div className="rounded-lg border border-slate-100 bg-slate-50/60 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Events</p>
+                    <p className="text-xl font-extrabold text-slate-900 mt-1 [font-variant-numeric:tabular-nums]">{events.totals.count.toLocaleString()}</p>
+                  </div>
+                  <div className="rounded-lg border border-slate-100 bg-slate-50/60 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Event value</p>
+                    <p className="text-xl font-extrabold text-slate-900 mt-1 [font-variant-numeric:tabular-nums]">{money(events.totals.totalValue)}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-end gap-1 h-24 mb-4" role="img" aria-label="Event volume per day over the last 14 days">
+                  {(() => {
+                    const maxEventDay = Math.max(1, ...events.byDay.map(d => d.count));
+                    return events.byDay.map(d => (
+                      <div key={d.date} className="flex-1 flex flex-col items-center gap-1 group" title={`${d.date}: ${d.count.toLocaleString()} events`}>
+                        <div className="w-full rounded-t bg-amber-200 group-hover:bg-amber-400 transition-colors" style={{ height: `${Math.max(3, (d.count / maxEventDay) * 100)}%` }} />
+                      </div>
+                    ));
+                  })()}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-700 mb-2">By event type</h3>
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
+                        <tr>
+                          <th scope="col" className="px-3 py-2 font-semibold">Event</th>
+                          <th scope="col" className="px-3 py-2 font-semibold text-right">Count</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {events.byEventType.map(e => (
+                          <tr key={e.eventType} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="px-3 py-2 font-semibold text-slate-800">{e.eventType}</td>
+                            <td className="px-3 py-2 text-right font-bold text-slate-900 [font-variant-numeric:tabular-nums]">{e.count.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-700 mb-2">By region</h3>
+                    {(() => {
+                      const maxRegionEvents = Math.max(1, ...events.byRegion.map(r => r.count));
+                      return (
+                        <ul className="space-y-3 pt-1">
+                          {events.byRegion.map(r => (
+                            <li key={r.region}>
+                              <div className="flex items-center justify-between text-xs mb-1">
+                                <span className="font-semibold text-slate-700">{r.region}</span>
+                                <span className="text-slate-500 [font-variant-numeric:tabular-nums]">{r.count.toLocaleString()}</span>
+                              </div>
+                              <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                                <div className="h-full rounded-full bg-amber-400" style={{ width: `${(r.count / maxRegionEvents) * 100}%` }} />
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

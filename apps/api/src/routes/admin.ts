@@ -6,6 +6,8 @@ import { slugify } from '../utils/slugify.js';
 import { generatePayouts } from '../services/payouts.js';
 import { assertMerchantApproval, assertMerchantTransition } from '../services/merchant-lifecycle.js';
 import { MerchantPermission } from '@Storegrill/shared';
+import { getLatestFeeds, getFeedHistory } from '../services/feed-log.js';
+import { FeedChannel } from '../services/feed-builder.js';
 
 const router = Router();
 
@@ -1418,6 +1420,24 @@ router.get('/dashboard/finance', authenticate, authorize('ADMIN'), async (req: A
     payouts: { count: payouts._count, totalPaid: payouts._sum.amountMinorUnits ?? 0 },
     refunds: { count: refunds._count, totalRefunded: refunds._sum.amountMinorUnits ?? 0 },
   });
+});
+
+router.get('/feeds/latest', async (_req: AuthRequest, res: Response) => {
+  const feeds = await getLatestFeeds();
+  res.json({ feeds: feeds.map(({ id, ...feed }) => feed) });
+});
+
+router.get('/feeds/history', async (req: AuthRequest, res: Response) => {
+  const regionKey = String(req.query.regionKey ?? '');
+  const channel = String(req.query.channel ?? '');
+  if (!regionKey || !channel) {
+    return res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'regionKey and channel are required' } });
+  }
+  if (!['google-merchant', 'facebook', 'tiktok', 'pinterest'].includes(channel)) {
+    return res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Unknown channel' } });
+  }
+  const history = await getFeedHistory(regionKey, channel as FeedChannel, 20);
+  res.json({ history: history.map(({ id, ...row }) => row) });
 });
 
 export { router as adminRouter };

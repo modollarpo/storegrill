@@ -420,31 +420,53 @@ export function renderFacebookCsv(items: FeedItem[]): string {
 }
 
 import { cache, TTL } from '../lib/cache.js';
+import { recordFeedGeneration } from './feed-log.js';
 
 export async function buildFeed(regionKey: string, channel: FeedChannel): Promise<string> {
   const cacheKey = `feed:${regionKey}:${channel}`;
   const cached = cache.get<string>(cacheKey);
   if (cached) return cached;
 
-  const items = await loadFeedItems(regionKey);
-  const region = regionFromConfig(regionKey);
-  let feed: string;
+  const startedAt = Date.now();
+  let items: FeedItem[] = [];
+  try {
+    items = await loadFeedItems(regionKey);
+    const region = regionFromConfig(regionKey);
+    let feed: string;
 
-  switch (channel) {
-    case 'google-merchant':
-      feed = renderGoogleMerchant(items, regionKey, region.name);
-      break;
-    case 'facebook':
-      feed = renderFacebookCsv(items);
-      break;
-    case 'tiktok':
-      feed = renderTikTokCsv(items);
-      break;
-    case 'pinterest':
-      feed = renderPinterestCsv(items);
-      break;
+    switch (channel) {
+      case 'google-merchant':
+        feed = renderGoogleMerchant(items, regionKey, region.name);
+        break;
+      case 'facebook':
+        feed = renderFacebookCsv(items);
+        break;
+      case 'tiktok':
+        feed = renderTikTokCsv(items);
+        break;
+      case 'pinterest':
+        feed = renderPinterestCsv(items);
+        break;
+    }
+
+    cache.set(cacheKey, feed, TTL.feeds);
+    void recordFeedGeneration({
+      regionKey,
+      channel,
+      status: 'SUCCESS',
+      itemCount: items.length,
+      durationMs: Date.now() - startedAt,
+    }).catch(() => undefined);
+    return feed;
+  } catch (error) {
+    void recordFeedGeneration({
+      regionKey,
+      channel,
+      status: 'FAILED',
+      itemCount: items.length,
+      durationMs: Date.now() - startedAt,
+      error: error instanceof Error ? error.message : 'Unknown feed build error',
+    }).catch(() => undefined);
+    throw error;
   }
-
-  cache.set(cacheKey, feed, TTL.feeds);
-  return feed;
 }

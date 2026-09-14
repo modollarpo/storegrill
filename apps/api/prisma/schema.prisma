@@ -1507,3 +1507,17 @@ model AnalyticsEvent {
   @@index([createdAt])
   @@index([sessionId])
 }
+
+model FeedGenerationLog {
+  id         String   @id @default(cuid())
+  regionKey  String
+  channel    String // google-merchant | facebook | tiktok | pinterest
+  status     String // SUCCESS | FAILED
+  itemCount  Int      @default(0)
+  durationMs Int      @default(0)
+  error      String?
+  createdAt  DateTime @default(now())
+
+  @@index([regionKey, channel, createdAt])
+  @@index([status])
+}

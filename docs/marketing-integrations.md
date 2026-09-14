@@ -36,6 +36,15 @@ Replace `<REGION>` with the region key (UK, US, EU, AE, NG):
 | AE     | `GET /api/v1/feeds/google-merchant?regionKey=AE` | `.../facebook?regionKey=AE` | `.../tiktok?regionKey=AE` | `.../pinterest?regionKey=AE` |
 | NG     | `GET /api/v1/feeds/google-merchant?regionKey=NG` | `.../facebook?regionKey=NG` | `.../tiktok?regionKey=NG` | `.../pinterest?regionKey=NG` |
 
+### Feed build telemetry
+
+Every feed build (success or failure) is recorded on the `FeedGenerationLog` table — region, channel, status, item count, build duration and error message. Persisted metrics power:
+
+- **Admin console → Feeds** (`GET /api/v1/admin/feeds/latest`): latest build per region × channel, with Empty/Failed/OK badges and item counts.
+- **Per channel history** (`GET /api/v1/admin/feeds/history?regionKey=<REGION>&channel=<CHANNEL>`): last 20 builds for one feed.
+
+An empty feed (0 items, e.g. AE/NG before products are uploaded) shows as `Empty`, not `OK`, so a misconfigured ingest is visible at a glance.
+
 ### Google Merchant requirements met
 
 - `<g:country>` matches region shipping country (verified: GB for UK feed).

@@ -19,6 +19,9 @@ on:
 env:
   ACR: storegrillcr.azurecr.io
   VERSION: v9
+  GA4_ID: G-SPM0SNX5QK
+  ADS_ID: AW-16735390613
+  ADS_CONVERSION_LABEL: ''
 
 jobs:
   deploy-web:
@@ -67,6 +70,9 @@ jobs:
         run: |
           docker build \
             --build-arg NEXT_PUBLIC_API_URL=${{ matrix.api }} \
+            --build-arg NEXT_PUBLIC_GA4_MEASUREMENT_ID=${{ env.GA4_ID }} \
+            --build-arg NEXT_PUBLIC_GOOGLE_ADS_ID=${{ env.ADS_ID }} \
+            --build-arg NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL=${{ env.ADS_CONVERSION_LABEL }} \
             -t ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.VERSION }} \
             -f apps/web/Dockerfile .
 

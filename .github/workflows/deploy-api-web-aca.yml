@@ -32,6 +32,9 @@ env:
   WEB_TAG: ${{ github.event.inputs.web_version || format('build-{0}', github.run_id) }}
   DEPLOY_REGIONS: ${{ github.event.inputs.deploy_regions || 'UK,US,EU,AE,NG' }}
   BRANCH: ${{ github.event.inputs.branch || 'master' }}
+  GA4_ID: G-SPM0SNX5QK
+  ADS_ID: AW-16735390613
+  ADS_CONVERSION_LABEL: ''
 
 jobs:
   build:
@@ -84,6 +87,9 @@ jobs:
           docker build \
             --build-arg CACHEBUST=${{ github.run_id }} \
             --build-arg NEXT_PUBLIC_API_URL=${{ matrix.api_url }} \
+            --build-arg NEXT_PUBLIC_GA4_MEASUREMENT_ID=${{ env.GA4_ID }} \
+            --build-arg NEXT_PUBLIC_GOOGLE_ADS_ID=${{ env.ADS_ID }} \
+            --build-arg NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL=${{ env.ADS_CONVERSION_LABEL }} \
             -t ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.WEB_TAG }} \
             -f apps/web/Dockerfile .
           docker push ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.WEB_TAG }}

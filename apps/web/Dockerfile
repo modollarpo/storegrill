@@ -18,10 +18,16 @@ RUN npm ci --ignore-scripts
 # ---- builder -------------------------------------------------------------
 FROM deps AS builder
 
-# API origin for client-side calls — baked into the Next.js client bundle at
-# build time. Pass via --build-arg NEXT_PUBLIC_API_URL=<region api fqdn>.
+# Region-scoped build-time values baked into the Next.js client bundle.
+# Pass via --build-arg. Analytics IDs are public client-side identifiers.
 ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_GA4_MEASUREMENT_ID
+ARG NEXT_PUBLIC_GOOGLE_ADS_ID
+ARG NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+    NEXT_PUBLIC_GA4_MEASUREMENT_ID=$NEXT_PUBLIC_GA4_MEASUREMENT_ID \
+    NEXT_PUBLIC_GOOGLE_ADS_ID=$NEXT_PUBLIC_GOOGLE_ADS_ID \
+    NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL=$NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL
 
 # 1. Build packages/shared (tsc → dist)
 COPY tsconfig.base.json ./

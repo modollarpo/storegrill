@@ -184,3 +184,45 @@ pods are synced via `prisma db push` (see `docs/audit-2026.md`), and the migrati
 
 - Vitest workers can crash natively on Windows (0xC0000409) during teardown — rerun.
 - First build after cleaning `.next` may hit transient file locks ("Cannot find module for page") — rerun.
+
+## 7. Web push (VAPID)
+
+Web push is powered by the Web Push API. Keys are per-environment and per-pod.
+
+### 7.1 Generate VAPID keys (first time only)
+
+```bash
+npx tsx apps/api/scripts/generate-vapid.ts          # writes .env with VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY
+```
+
+Copy the generated values into the Azure Key Vault for the pod (`kv-storegrill-<flat>`):
+
+```powershell
+az keyvault secret set --vault-name kv-storegrill-<flat> --name vapid-public-key  --value "<public>"
+az keyvault secret set --vault-name kv-storegrill-<flat> --name vapid-private-key --value "<private>"
+```
+
+Add the app settings to each API + web app (via portal or Terraform):
+
+| App setting                 | Value                  |
+|-----------------------------|------------------------|
+| `VAPID_PUBLIC_KEY`          | KV ref / literal       |
+| `VAPID_PRIVATE_KEY`         | KV ref / literal       |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Public key (web only) |
+
+### 7.2 PushSubscription schema
+
+`prisma db push` applies `PushSubscription` to each pod's dev/prod DB.
+On production pods run against the pod DB directly (not the TF container-app
+modules — per §1 rules, never `terraform apply` on pod apps):
+
+```powershell
+$env:DATABASE_URL = <pod prod DB URL from KV>
+npx prisma db push --schema apps/api/prisma/schema.prisma --skip-generate
+```
+
+### 7.3 Post-deploy smoke test
+
+Visit any account page → Preferences → toggle push notifications.
+In DevTools → Application → Push Messaging, confirm a subscription was created
+and the `PushSubscription` row exists in the pod DB.

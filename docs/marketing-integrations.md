@@ -109,6 +109,10 @@ GA4 respects the `sg_consent` cookie. Events only flow to GA4 when `analytics: t
 
 When `NEXT_PUBLIC_GOOGLE_ADS_ID` and `NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL` are both set, a `conversion` event with `send_to: <ADS_ID>/<LABEL>` is fired on each purchase.
 
+### Guaranteed purchase beacon before navigation
+
+The `purchase` event (GA4 + Ads conversion when enabled) is not fire-and-forget on the success path — checkout awaits the gtag `event_callback` before navigating to `/checkout/confirmation`. `event_timeout` (2000 ms) is set as a fallback, and the callback is invoked immediately when gtag isn't loaded (e.g. consent denied), so the order never depends on tag processing. This is the same guarantee as Google's `gtagSendEvent` delayed-navigation snippet, implemented inside `AnalyticsProvider.track()` instead of a global script so the purchase event is fired exactly once.
+
 ### Items payload format
 
 All ecommerce events include an `items` array per GA4 spec:

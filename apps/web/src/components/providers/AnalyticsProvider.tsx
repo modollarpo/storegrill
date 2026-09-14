@@ -40,7 +40,7 @@ declare global {
 }
 
 interface AnalyticsContextType {
-  track: (event: DataLayerEvent) => void;
+  track: (event: DataLayerEvent, onEventSent?: () => void) => void;
 }
 
 const AnalyticsContext = createContext<AnalyticsContextType>({
@@ -151,15 +151,33 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('storegrill:consent-changed', onConsentChanged);
   }, []);
 
-  const track = useCallback((event: DataLayerEvent) => {
+  const track = useCallback((event: DataLayerEvent, onEventSent?: () => void) => {
     if (typeof window === 'undefined') return;
     window.dataLayer = window.dataLayer || [];
 
     const mapped = toGtagEvent(event);
     window.dataLayer.push(event);
 
+    let sent = false;
+    const markSent = () => {
+      if (!sent) {
+        sent = true;
+        onEventSent?.();
+      }
+    };
+
     if (gtagEnabled && window.gtag && mapped) {
-      window.gtag('event', mapped.name, mapped.params);
+      if (event.event === 'purchase') {
+        window.gtag('event', mapped.name, {
+          ...mapped.params,
+          event_callback: markSent,
+          event_timeout: 2000,
+        });
+      } else {
+        window.gtag('event', mapped.name, mapped.params);
+      }
+    } else {
+      markSent();
     }
 
     if (ADS_ID && ADS_CONVERSION_LABEL && event.event === 'purchase') {
@@ -168,6 +186,8 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
         value: event.value,
         currency: event.currency,
         transaction_id: event.transaction_id,
+        event_callback: markSent,
+        event_timeout: 2000,
       });
     }
 

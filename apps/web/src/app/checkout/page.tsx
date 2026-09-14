@@ -172,18 +172,20 @@ export default function CheckoutPage() {
       setSandboxNotice(result.payment?.mode === 'sandbox');
 
       const orderNumber = result.order?.orderNumber || result.orderNumber || result.id || '';
-      track({
-        event: 'purchase',
-        transaction_id: orderNumber,
-        value: total / 100,
-        currency,
-        items: cart.items.map(i => ({
-          item_id: i.variantId || i.productId,
-          item_name: i.name,
-          price: i.unitPriceMinorUnits / 100,
-          quantity: i.quantity,
-          currency: i.currencyCode,
-        })),
+      await new Promise<void>(resolve => {
+        track({
+          event: 'purchase',
+          transaction_id: orderNumber,
+          value: total / 100,
+          currency,
+          items: cart.items.map(i => ({
+            item_id: i.variantId || i.productId,
+            item_name: i.name,
+            price: i.unitPriceMinorUnits / 100,
+            quantity: i.quantity,
+            currency: i.currencyCode,
+          })),
+        }, resolve);
       });
       cart.clear();
       router.push(`/checkout/confirmation?order=${encodeURIComponent(orderNumber)}`);

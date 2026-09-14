@@ -88,6 +88,29 @@ variable "acr_password" {
   description = "ACR admin password. Leave empty to skip registry configuration (e.g. when apps are managed by the CI deploy workflow)."
 }
 
+variable "vapid_public_key" {
+  type        = string
+  default     = ""
+  description = "Web Push VAPID public key. Provide together with vapid_private_key to enable push alerts on this pod. Empty disables."
+}
+
+variable "vapid_private_key" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "Web Push VAPID private key. Should be the same across all pods so subscriptions registered on one pod stay valid for sends on others. Empty disables."
+}
+
+variable "vapid_subject" {
+  type        = string
+  default     = "mailto:alerts@storegrill.net"
+  description = "Contact recorded in VAPID JWT aud claims (RFC 8292 requires https or mailto)."
+}
+
+locals {
+  vapid_configured = var.vapid_public_key != "" && var.vapid_private_key != ""
+}
+
 resource "azurerm_resource_group" "pod" {
   name     = "rg-storegrill-${local.suffix}"
   location = var.azure_location
@@ -241,6 +264,24 @@ resource "azurerm_key_vault_secret" "slots" {
   depends_on = [azurerm_key_vault_access_policy.deployer]
 }
 
+resource "azurerm_key_vault_secret" "vapid_public" {
+  count        = local.vapid_configured ? 1 : 0
+  name         = "vapid-public-key"
+  value        = var.vapid_public_key
+  key_vault_id = azurerm_key_vault.vault.id
+
+  depends_on = [azurerm_key_vault_access_policy.deployer]
+}
+
+resource "azurerm_key_vault_secret" "vapid_private" {
+  count        = local.vapid_configured ? 1 : 0
+  name         = "vapid-private-key"
+  value        = var.vapid_private_key
+  key_vault_id = azurerm_key_vault.vault.id
+
+  depends_on = [azurerm_key_vault_access_policy.deployer]
+}
+
 resource "azurerm_storage_account" "media" {
   name                     = "ststoregrill${lower(var.region_key)}${lower(var.environment)}"
   resource_group_name      = azurerm_resource_group.pod.name
@@ -317,6 +358,20 @@ resource "azurerm_container_app" "api" {
   secret {
     name  = "acs-connection-string"
     value = azurerm_key_vault_secret.slots["acs-connection-string"].value
+  }
+  dynamic "secret" {
+    for_each = local.vapid_configured ? [1] : []
+    content {
+      name  = "vapid-public-key"
+      value = var.vapid_public_key
+    }
+  }
+  dynamic "secret" {
+    for_each = local.vapid_configured ? [1] : []
+    content {
+      name  = "vapid-private-key"
+      value = var.vapid_private_key
+    }
   }
   dynamic "secret" {
     for_each = var.acr_password == "" ? [] : [1]
@@ -428,6 +483,27 @@ resource "azurerm_container_app" "api" {
         name  = "APPLICATIONINSIGHTS_CONNECTION_STRING"
         value = azurerm_application_insights.insights.connection_string
       }
+      dynamic "env" {
+        for_each = local.vapid_configured ? [1] : []
+        content {
+          name        = "VAPID_PUBLIC_KEY"
+          secret_name = "vapid-public-key"
+        }
+      }
+      dynamic "env" {
+        for_each = local.vapid_configured ? [1] : []
+        content {
+          name        = "VAPID_PRIVATE_KEY"
+          secret_name = "vapid-private-key"
+        }
+      }
+      dynamic "env" {
+        for_each = local.vapid_configured ? [1] : []
+        content {
+          name  = "VAPID_SUBJECT"
+          value = var.vapid_subject
+        }
+      }
     }
   }
 
@@ -492,6 +568,13 @@ resource "azurerm_container_app" "next_apps" {
       env {
         name  = "NEXT_PUBLIC_API_URL"
         value = "https://${lower(var.region_key)}-api.${var.dns_zone_name}"
+      }
+      dynamic "env" {
+        for_each = local.vapid_configured ? [1] : []
+        content {
+          name  = "NEXT_PUBLIC_VAPID_PUBLIC_KEY"
+          value = var.vapid_public_key
+        }
       }
       env {
         name  = "SG_REGION_KEY"

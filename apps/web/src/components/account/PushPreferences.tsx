@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { registerPushNotifications } from '@/lib/push';
+import { registerPushNotifications, unregisterPushNotifications } from '@/lib/push';
+import { useRegion } from '@/components/providers/RegionContext';
 import { useToast } from '@/components/feedback/Toast';
 
 export function PushPreferences() {
   const { toast } = useToast();
+  const { regionKey } = useRegion();
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [supported, setSupported] = useState(false);
@@ -27,15 +29,11 @@ export function PushPreferences() {
     setLoading(true);
     try {
       if (!subscribed) {
-        await registerPushNotifications();
+        await registerPushNotifications(regionKey);
         setSubscribed(true);
         toast({ variant: 'success', title: 'Push alerts enabled', description: 'You will now receive order updates, price drops, and flash sale alerts.' });
       } else {
-        const reg = await navigator.serviceWorker.ready;
-        const sub = await reg.pushManager.getSubscription();
-        if (sub) {
-          await sub.unsubscribe();
-        }
+        await unregisterPushNotifications();
         setSubscribed(false);
         toast({ variant: 'info', title: 'Push alerts disabled', description: 'You have unsubscribed from browser push alerts.' });
       }

@@ -35,12 +35,13 @@ model User {
   emailTokens        EmailToken[]
   wishlistItems      WishlistItem[]
   blogPosts          BlogPost[]
-  merchantMembers MerchantMember[]
-  disputes        Dispute[]
+  merchantMembers    MerchantMember[]
+  disputes           Dispute[]
   voucherRedemptions VoucherRedemption[]
-  aiRequests      AIRequest[]
-  experimentEvents ExperimentEvent[]
-  analyticsEvents AnalyticsEvent[]
+  aiRequests         AIRequest[]
+  experimentEvents   ExperimentEvent[]
+  analyticsEvents    AnalyticsEvent[]
+  pushSubscriptions  PushSubscription[]
 }
 
 model OAuthAccount {
@@ -564,24 +565,24 @@ model Coupon {
 }
 
 model Review {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  rating      Int
-  title       String?
-  body        String?
-  images      String   @default("[]")
-  verified    Boolean  @default(false)
-  helpfulCount Int     @default(0)
-  vendorReply String?
-  status      String   @default("PENDING")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id])
+  rating       Int
+  title        String?
+  body         String?
+  images       String   @default("[]")
+  verified     Boolean  @default(false)
+  helpfulCount Int      @default(0)
+  vendorReply  String?
+  status       String   @default("PENDING")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  votes       ReviewVote[]
-  questions   ReviewQuestion[]
+  votes     ReviewVote[]
+  questions ReviewQuestion[]
 
   @@unique([userId, productId])
 }
@@ -702,6 +703,18 @@ model Notification {
   read      Boolean  @default(false)
   data      String?
   createdAt DateTime @default(now())
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  regionKey String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model AuditLog {
@@ -1219,8 +1232,8 @@ model CampaignCreative {
 
 model AIModelConfig {
   id              String   @id @default(cuid())
-  provider        String   // openai | anthropic | azure | local
-  modelId         String   // gpt-4o | claude-3.5-sonnet | etc
+  provider        String // openai | anthropic | azure | local
+  modelId         String // gpt-4o | claude-3.5-sonnet | etc
   displayName     String
   maxTokens       Int      @default(4096)
   costPer1kInput  Float    @default(0)
@@ -1228,187 +1241,187 @@ model AIModelConfig {
   rateLimitRpm    Int      @default(60)
   rateLimitTpm    Int      @default(100000)
   enabled         Boolean  @default(true)
-  metadata        String?  // JSON: provider-specific config
+  metadata        String? // JSON: provider-specific config
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  requests      AIRequest[]
+  requests       AIRequest[]
   promptVersions AIPromptVersion[]
-  decisions     AIDecision[]
+  decisions      AIDecision[]
 
   @@unique([provider, modelId])
 }
 
 model AIRequest {
-  id              String   @id @default(cuid())
-  userId          String?
-  user            User?    @relation(fields: [userId], references: [id])
-  modelConfigId   String
-  modelConfig     AIModelConfig @relation(fields: [modelConfigId], references: [id])
-  purpose         String   // REWRITE | CLASSIFY | EMBED | CHAT | SUMMARIZE
-  inputTokens     Int      @default(0)
-  outputTokens    Int      @default(0)
-  latencyMs       Int      @default(0)
-  status          String   @default("SUCCESS") // SUCCESS | ERROR | TIMEOUT | RATE_LIMITED
-  errorMessage    String?
-  cacheHit        Boolean  @default(false)
-  costMinorUnits  Int      @default(0)
-  metadata        String?  // JSON: request/response metadata
-  createdAt       DateTime @default(now())
+  id             String        @id @default(cuid())
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id])
+  modelConfigId  String
+  modelConfig    AIModelConfig @relation(fields: [modelConfigId], references: [id])
+  purpose        String // REWRITE | CLASSIFY | EMBED | CHAT | SUMMARIZE
+  inputTokens    Int           @default(0)
+  outputTokens   Int           @default(0)
+  latencyMs      Int           @default(0)
+  status         String        @default("SUCCESS") // SUCCESS | ERROR | TIMEOUT | RATE_LIMITED
+  errorMessage   String?
+  cacheHit       Boolean       @default(false)
+  costMinorUnits Int           @default(0)
+  metadata       String? // JSON: request/response metadata
+  createdAt      DateTime      @default(now())
+
+  contents  AIContent[]
+  decisions AIDecision[]
 
   @@index([userId])
   @@index([modelConfigId])
   @@index([purpose])
   @@index([createdAt])
-
-  contents AIContent[]
-  decisions     AIDecision[]
 }
 
 model AIContent {
-  id              String   @id @default(cuid())
-  requestId       String?
-  request         AIRequest? @relation(fields: [requestId], references: [id])
-  entityType      String   // PRODUCT | DEAL | CAMPAIGN | PAGE
-  entityId        String
-  content_type    String   // TITLE | DESCRIPTION | BULLET_POINTS | IMAGE_ALT
-  original        String?
-  generated       String
-  confidence      Float    @default(0)
-  approved        Boolean  @default(false)
-  approvedBy      String?
-  metadata        String?  // JSON: generation params
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id           String     @id @default(cuid())
+  requestId    String?
+  request      AIRequest? @relation(fields: [requestId], references: [id])
+  entityType   String // PRODUCT | DEAL | CAMPAIGN | PAGE
+  entityId     String
+  content_type String // TITLE | DESCRIPTION | BULLET_POINTS | IMAGE_ALT
+  original     String?
+  generated    String
+  confidence   Float      @default(0)
+  approved     Boolean    @default(false)
+  approvedBy   String?
+  metadata     String? // JSON: generation params
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@index([entityType, entityId])
 }
 
 model AIKnowledgeDocument {
-  id              String   @id @default(cuid())
-  title           String
-  content         String
-  source          String   // MANUAL | URL | UPLOAD
-  sourceUrl       String?
-  category        String?
-  tags            String   @default("[]")
-  chunkCount      Int      @default(0)
-  enabled         Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id         String   @id @default(cuid())
+  title      String
+  content    String
+  source     String // MANUAL | URL | UPLOAD
+  sourceUrl  String?
+  category   String?
+  tags       String   @default("[]")
+  chunkCount Int      @default(0)
+  enabled    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   embeddings AIEmbedding[]
 }
 
 model AIEmbedding {
-  id              String   @id @default(cuid())
-  documentId      String
-  document        AIKnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  chunkIndex      Int
-  content         String
-  embedding       String   // JSON array of floats
-  tokenCount      Int      @default(0)
-  createdAt       DateTime @default(now())
+  id         String              @id @default(cuid())
+  documentId String
+  document   AIKnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  chunkIndex Int
+  content    String
+  embedding  String // JSON array of floats
+  tokenCount Int                 @default(0)
+  createdAt  DateTime            @default(now())
 
   @@index([documentId])
 }
 
 model AIPromptVersion {
-  id              String   @id @default(cuid())
-  name            String
-  version         Int      @default(1)
-  systemPrompt    String
-  userTemplate    String
-  modelConfigId   String?
-  modelConfig     AIModelConfig? @relation(fields: [modelConfigId], references: [id])
-  temperature     Float    @default(0.7)
-  maxTokens       Int      @default(4096)
-  active          Boolean  @default(false)
-  metadata        String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String         @id @default(cuid())
+  name          String
+  version       Int            @default(1)
+  systemPrompt  String
+  userTemplate  String
+  modelConfigId String?
+  modelConfig   AIModelConfig? @relation(fields: [modelConfigId], references: [id])
+  temperature   Float          @default(0.7)
+  maxTokens     Int            @default(4096)
+  active        Boolean        @default(false)
+  metadata      String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@unique([name, version])
 }
 
 model AIUsageRecord {
-  id              String   @id @default(cuid())
-  period          String   // YYYY-MM
-  totalRequests   Int      @default(0)
-  totalInputTokens Int     @default(0)
-  totalOutputTokens Int    @default(0)
-  totalCostMinorUnits Int  @default(0)
-  byPurpose       String   @default("{}") // JSON: { purpose: count }
-  byModel         String   @default("{}") // JSON: { model: count }
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  period              String // YYYY-MM
+  totalRequests       Int      @default(0)
+  totalInputTokens    Int      @default(0)
+  totalOutputTokens   Int      @default(0)
+  totalCostMinorUnits Int      @default(0)
+  byPurpose           String   @default("{}") // JSON: { purpose: count }
+  byModel             String   @default("{}") // JSON: { model: count }
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@unique([period])
 }
 
 model AIAsset {
-  id              String    @id @default(cuid())
-  name            String
-  type            String    // IMAGE | VIDEO | DOCUMENT | TEMPLATE
-  source          String?
-  metadata        String?   // JSON
-  contentType     String?
-  sizeBytes       BigInt?
-  createdBy       String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  name        String
+  type        String // IMAGE | VIDEO | DOCUMENT | TEMPLATE
+  source      String?
+  metadata    String? // JSON
+  contentType String?
+  sizeBytes   BigInt?
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model AIRecommendation {
-  id              String    @id @default(cuid())
-  entityType      String    // PRODUCT | DEAL | PAGE | CAMPAIGN
-  entityId        String
-  recommendation  String
-  score           Float     @default(0)
-  reason          String?
-  metadata        String?
-  approved        Boolean   @default(false)
-  createdAt       DateTime  @default(now())
+  id             String   @id @default(cuid())
+  entityType     String // PRODUCT | DEAL | PAGE | CAMPAIGN
+  entityId       String
+  recommendation String
+  score          Float    @default(0)
+  reason         String?
+  metadata       String?
+  approved       Boolean  @default(false)
+  createdAt      DateTime @default(now())
 
   @@index([entityType, entityId])
 }
 
 model AIDecision {
-  id              String    @id @default(cuid())
-  input           String
-  decision        String
-  confidence      Float     @default(0)
-  modelConfigId   String?
-  modelConfig     AIModelConfig? @relation(fields: [modelConfigId], references: [id])
-  requestId       String?
-  request         AIRequest? @relation(fields: [requestId], references: [id])
-  metadata        String?
-  createdAt       DateTime  @default(now())
-  approvals       AIApproval[]
+  id            String         @id @default(cuid())
+  input         String
+  decision      String
+  confidence    Float          @default(0)
+  modelConfigId String?
+  modelConfig   AIModelConfig? @relation(fields: [modelConfigId], references: [id])
+  requestId     String?
+  request       AIRequest?     @relation(fields: [requestId], references: [id])
+  metadata      String?
+  createdAt     DateTime       @default(now())
+  approvals     AIApproval[]
 }
 
 model AIApproval {
-  id              String    @id @default(cuid())
-  decisionId      String
-  decision        AIDecision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
-  approvedBy      String?
-  status          String    @default("PENDING") // PENDING | APPROVED | REJECTED
-  comment         String?
-  reviewedAt      DateTime?
-  createdAt       DateTime  @default(now())
+  id         String     @id @default(cuid())
+  decisionId String
+  decision   AIDecision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  approvedBy String?
+  status     String     @default("PENDING") // PENDING | APPROVED | REJECTED
+  comment    String?
+  reviewedAt DateTime?
+  createdAt  DateTime   @default(now())
 }
 
 model AIAnomaly {
-  id              String    @id @default(cuid())
-  metric          String
-  value           Float
-  threshold       Float
-  severity        String    // LOW | MEDIUM | HIGH | CRITICAL
-  metadata        String?
-  detectedAt      DateTime  @default(now())
-  resolvedAt      DateTime?
-  resolvedBy      String?
-  status          String    @default("OPEN") // OPEN | RESOLVED
+  id         String    @id @default(cuid())
+  metric     String
+  value      Float
+  threshold  Float
+  severity   String // LOW | MEDIUM | HIGH | CRITICAL
+  metadata   String?
+  detectedAt DateTime  @default(now())
+  resolvedAt DateTime?
+  resolvedBy String?
+  status     String    @default("OPEN") // OPEN | RESOLVED
 
   @@index([metric])
   @@index([status])
@@ -1420,41 +1433,41 @@ model Experiment {
   name        String
   description String?
   status      String    @default("DRAFT") // DRAFT | RUNNING | PAUSED | COMPLETED
-  trafficPct Int       @default(100) // % of traffic included
-  startsAt   DateTime?
-  endsAt     DateTime?
+  trafficPct  Int       @default(100) // % of traffic included
+  startsAt    DateTime?
+  endsAt      DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  variants   ExperimentVariant[]
-  events     ExperimentEvent[]
+  variants ExperimentVariant[]
+  events   ExperimentEvent[]
 }
 
 model ExperimentVariant {
-  id            String    @id @default(cuid())
-  experimentId  String
-  experiment    Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
-  name          String
-  weight        Int       @default(50) // relative weight for traffic split
-  config        String    @default("{}") // JSON: variant configuration
-  isControl     Boolean   @default(false)
-  createdAt     DateTime  @default(now())
+  id           String     @id @default(cuid())
+  experimentId String
+  experiment   Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  name         String
+  weight       Int        @default(50) // relative weight for traffic split
+  config       String     @default("{}") // JSON: variant configuration
+  isControl    Boolean    @default(false)
+  createdAt    DateTime   @default(now())
 
-  events        ExperimentEvent[]
+  events ExperimentEvent[]
 }
 
 model ExperimentEvent {
-  id            String    @id @default(cuid())
-  experimentId  String
-  experiment    Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
-  variantId     String
-  variant       ExperimentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  userId        String?
-  user          User?     @relation(fields: [userId], references: [id])
-  eventType     String    // IMPRESSION | CLICK | CONVERSION | REVENUE
-  value         Float     @default(0)
-  metadata      String?
-  createdAt     DateTime  @default(now())
+  id           String            @id @default(cuid())
+  experimentId String
+  experiment   Experiment        @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  variantId    String
+  variant      ExperimentVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?             @relation(fields: [userId], references: [id])
+  eventType    String // IMPRESSION | CLICK | CONVERSION | REVENUE
+  value        Float             @default(0)
+  metadata     String?
+  createdAt    DateTime          @default(now())
 
   @@index([experimentId])
   @@index([variantId])
@@ -1464,29 +1477,29 @@ model ExperimentEvent {
 }
 
 model FeatureFlag {
-  id          String    @id @default(cuid())
-  key         String    @unique
+  id          String   @id @default(cuid())
+  key         String   @unique
   name        String
   description String?
-  enabled     Boolean   @default(false)
-  rolloutPct  Int       @default(0) // 0-100% rollout
-  metadata    String?   // JSON: flag-specific config
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  enabled     Boolean  @default(false)
+  rolloutPct  Int      @default(0) // 0-100% rollout
+  metadata    String? // JSON: flag-specific config
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model AnalyticsEvent {
-  id          String    @id @default(cuid())
-  eventType   String    // PAGE_VIEW | ADD_TO_CART | CHECKOUT | PURCHASE | SEARCH | CLICK
-  userId      String?
-  user        User?     @relation(fields: [userId], references: [id])
-  sessionId   String?
-  entityType  String?   // PRODUCT | DEAL | CAMPAIGN
-  entityId    String?
-  value       Float     @default(0)
-  metadata    String?
-  region      String?
-  createdAt   DateTime  @default(now())
+  id         String   @id @default(cuid())
+  eventType  String // PAGE_VIEW | ADD_TO_CART | CHECKOUT | PURCHASE | SEARCH | CLICK
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  sessionId  String?
+  entityType String? // PRODUCT | DEAL | CAMPAIGN
+  entityId   String?
+  value      Float    @default(0)
+  metadata   String?
+  region     String?
+  createdAt  DateTime @default(now())
 
   @@index([eventType])
   @@index([userId])

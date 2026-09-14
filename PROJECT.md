@@ -1,7 +1,7 @@
 # STOREGRILL — Multi-Region Marketplace & Multi-Vendor Commerce Platform
 
 **Domain:** https://storegrill.net
-**Status:** Scaffold — Milestone 1 not yet started
+**Status:** Enterprise build complete (P1–P12 per `docs/audit-2026.md`) — live in 5 prod regions: UK, US, EU, AE, NG
 **Principles:** Azure free-tier first · Region-as-data · Money as integer minor units · Quality gates before Done
 
 ---
@@ -115,14 +115,22 @@ OWASP Top-10: input validation (zod), parameterized SQL, rate limiting, CORS all
 
 ## 9. Milestones (checkpoints, in order)
 
-1. Scaffold monorepo, CI, lint/typecheck, Bicep baseline, seed command, README.
-2. Auth + regions + catalog + per-region pricing + basic storefront UI.
-3. Cart/checkout/payments/shipping + order lifecycle.
-4. Vendor portal + storefronts + reviews.
-5. Import engine (CSV → URL → FTP) + dashboard + notifications.
-6. Deals/coupons + search/facets + SEO.
-7. Admin backend + moderation + payouts + analytics.
-8. Multi-region polish, E2E, security pass, docs, deploy to storegrill.net.
+Enterprise phases P1–P12 (see `docs/audit-2026.md`) are **all DONE**:
+
+1. P1 Canonical domain + financial foundations (pure engines, bigint money)
+2. P2 Schema + API foundations (baseline migration, thin REST wrappers)
+3. P3 Merchant/catalog/ingestion hardening (lifecycle, RBAC, mapping templates, job queue)
+4. P4 Shipping/fulfilment/carrier tracking (canonical carrier engine, webhooks, tracking UI)
+5. P5 Deals/profitability (deal valuation + score)
+6. P6 Commission/ledger/settlement (double-entry ledger, payouts)
+7. P7 Returns/disputes/buyer protection
+8. P8 AI merchandising (flagged, grounded, fact-checked)
+9. P9 Marketing/campaigns/attribution
+10. P10 Connectors (WooCommerce first)
+11. P11 Recommendations + merchant intelligence
+12. P12 Hardening (OpenAPI, i18n pipeline, security, rate-limiting, observability)
+
+Plus production deliverables since: product feeds (Google Merchant XML + Facebook/TikTok/Pinterest CSV per region), web push notifications (VAPID, live on all 5 pods), GA4/Google Ads ecommerce tracking with Consent Mode v2, and live deployment of web + API to 5 prod pods (UK/US/EU/AE/NG) via GitHub Actions.
 
 ## 10. Definition of Done
 

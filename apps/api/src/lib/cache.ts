@@ -53,4 +53,5 @@ export const TTL = {
   categories: 300_000,
   vendors: 60_000,
   deals: 60_000,
+  feeds: 3_600_000,
 };

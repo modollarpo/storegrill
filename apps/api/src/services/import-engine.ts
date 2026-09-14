@@ -3,6 +3,7 @@ import { readFile, unlink } from 'node:fs/promises';
 import { parse as csvParse } from 'csv-parse';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
+import { cache as appCache } from '../lib/cache.js';
 import {
   adaptCostwayRows,
   type CostwayFeedRow,
@@ -814,6 +815,11 @@ async function completeJob(jobId: string, payload: { summary: Record<string, unk
       errors: JSON.stringify([summary]),
     },
   });
+  invalidateFeedCache();
+}
+
+function invalidateFeedCache(): void {
+  appCache.del('feed:');
 }
 
 async function setPhase(jobId: string, phase: string): Promise<void> {

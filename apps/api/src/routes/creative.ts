@@ -4,8 +4,11 @@ import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import { generateBannerImage, enhanceProductImage, generateAdCopy } from '../services/image-generation.js';
 import { generateDealCopy, type DealFacts } from '../services/deal-copy.js';
 import { resolveMerchantContext } from '../services/merchant-rbac.js';
+import { persistBannerImage } from '../services/banner-storage.js';
 
 const router = Router();
+
+const BANNER_STATUSES = ['DRAFT', 'ACTIVE', 'PAUSED', 'ARCHIVED'] as const;
 
 const GenerateImageSchema = z.object({
   prompt: z.string().min(10).max(2000),
@@ -13,8 +16,34 @@ const GenerateImageSchema = z.object({
   style: z.enum(['vivid', 'natural']).default('vivid'),
   quality: z.enum(['standard', 'hd']).default('hd'),
   purpose: z.enum(['HERO_BANNER', 'DEAL_BANNER', 'CATEGORY_BANNER', 'AD_BANNER', 'SOCIAL_MEDIA', 'PRODUCT_HERO']),
-  regionKey: z.string().optional(),
+  regionKey: z.string().max(20).optional(),
+  title: z.string().trim().max(120).optional(),
+  subtitle: z.string().trim().max(200).optional(),
+  href: z.string().trim().max(300).optional(),
+  order: z.number().int().min(0).max(9999).optional(),
 });
+
+const PatchBannerSchema = z.object({
+  status: z.enum(BANNER_STATUSES).optional(),
+  title: z.string().trim().max(120).optional(),
+  subtitle: z.string().trim().max(200).optional(),
+  href: z.string().trim().max(300).optional(),
+  regionKey: z.string().trim().max(20).nullable().optional(),
+  order: z.number().int().min(0).max(9999).optional(),
+});
+
+function safeContent(content: string): Record<string, unknown> {
+  try {
+    const parsed = JSON.parse(content);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function isInternalLink(href?: string): boolean {
+  return typeof href === 'string' && href.startsWith('/') && !href.startsWith('//');
+}
 
 router.get('/assets', authenticate, authorize('ADMIN', 'VENDOR'), async (_req: AuthRequest, res: Response) => {
   const { prisma } = await import('../index.js');
@@ -47,6 +76,9 @@ router.post('/generate', authenticate, authorize('ADMIN', 'VENDOR'), async (req:
     const { prisma } = await import('../index.js');
     const name = `${body.purpose.toLowerCase().replace('_', ' ')} ${new Date().toISOString().slice(0, 10)}`;
 
+    const stored = await persistBannerImage(result.url, name).catch(() => null);
+    const bannerUrl = stored?.url ?? result.url;
+
     const creative = await prisma.campaignCreative.create({
       data: {
         name,
@@ -54,12 +86,17 @@ router.post('/generate', authenticate, authorize('ADMIN', 'VENDOR'), async (req:
         status: 'DRAFT',
         content: JSON.stringify({
           url: result.url,
+          blobUrl: stored?.url ?? null,
           revisedPrompt: result.revisedPrompt,
           prompt: body.prompt,
           size: body.size,
           style: body.style,
           quality: body.quality,
           regionKey: body.regionKey ?? null,
+          title: body.title ?? null,
+          subtitle: body.subtitle ?? null,
+          href: body.href ?? null,
+          order: body.order ?? null,
         }),
       },
     });
@@ -68,7 +105,7 @@ router.post('/generate', authenticate, authorize('ADMIN', 'VENDOR'), async (req:
       data: {
         name,
         type: 'IMAGE',
-        source: result.url,
+        source: bannerUrl,
         contentType: 'image/png',
         metadata: JSON.stringify({
           creativeId: creative.id,
@@ -85,7 +122,7 @@ router.post('/generate', authenticate, authorize('ADMIN', 'VENDOR'), async (req:
 
     res.json({
       image: {
-        url: result.url,
+        url: bannerUrl,
         revisedPrompt: result.revisedPrompt,
         modelUsed: result.modelUsed,
       },
@@ -97,6 +134,64 @@ router.post('/generate', authenticate, authorize('ADMIN', 'VENDOR'), async (req:
       error: { code: 'GENERATION_FAILED', message },
     });
   }
+});
+
+router.get('/banners', authenticate, authorize('ADMIN'), async (_req: AuthRequest, res: Response) => {
+  const { prisma } = await import('../index.js');
+  const rows = await prisma.campaignCreative.findMany({
+    where: { type: 'BANNER' },
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+  });
+  res.json({
+    banners: rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      status: r.status,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+      content: safeContent(r.content),
+    })),
+  });
+});
+
+router.patch('/banners/:id', authenticate, authorize('ADMIN'), async (req: AuthRequest, res: Response) => {
+  const body = PatchBannerSchema.parse(req.body);
+
+  if (isInternalLink(body.href) === false && body.href !== undefined) {
+    return res.status(400).json({ error: { code: 'INVALID_HREF', message: 'href must be an internal path starting with "/"' } });
+  }
+
+  const { prisma } = await import('../index.js');
+  const creative = await prisma.campaignCreative.findUnique({ where: { id: req.params.id } });
+  if (!creative || creative.type !== 'BANNER') {
+    return res.status(404).json({ error: { code: 'BANNER_NOT_FOUND', message: 'Banner creative not found' } });
+  }
+
+  const content = { ...safeContent(creative.content) };
+  for (const key of ['title', 'subtitle', 'href', 'order'] as const) {
+    if (body[key] !== undefined) content[key] = body[key] ?? null;
+  }
+  if (body.regionKey !== undefined) content.regionKey = body.regionKey ?? null;
+
+  const updated = await prisma.campaignCreative.update({
+    where: { id: creative.id },
+    data: {
+      status: body.status ?? creative.status,
+      content: JSON.stringify(content),
+    },
+  });
+
+  res.json({
+    creative: {
+      id: updated.id,
+      name: updated.name,
+      status: updated.status,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt,
+      content: safeContent(updated.content),
+    },
+  });
 });
 
 router.post('/product-hero', authenticate, authorize('ADMIN', 'VENDOR'), async (req: AuthRequest, res: Response) => {

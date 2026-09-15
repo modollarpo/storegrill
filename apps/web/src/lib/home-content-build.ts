@@ -71,6 +71,7 @@ export interface HomeHeroSlide {
   listPriceMinorUnits?: number;
   discountPercent?: number;
   overlayTint?: string;
+  imageFit?: 'contain' | 'cover';
 }
 
 export interface DealVariantRow {
@@ -175,6 +176,35 @@ export function buildHeroSlides(deals: DealRow[], language: string): HomeHeroSli
     if (slides.length >= HERO_MAX_SLIDES) break;
   }
   return slides.sort((a, b) => (b.discountPercent ?? 0) - (a.discountPercent ?? 0));
+}
+
+export interface HomeBannerSlide {
+  title: string;
+  subtitle: string;
+  image: string;
+  href: string;
+  imageFit?: 'contain' | 'cover';
+  creativeId?: string;
+}
+
+export function mapBannerSlides(data: unknown): HomeHeroSlide[] {
+  const rows = Array.isArray((data as { slides?: unknown })?.slides) ? (data as { slides: unknown[] }).slides : [];
+  const slides: HomeHeroSlide[] = [];
+  for (const entry of rows) {
+    const banner = entry as Record<string, unknown>;
+    if (typeof banner.title !== 'string' || typeof banner.image !== 'string' || typeof banner.href !== 'string') {
+      continue;
+    }
+    if (!banner.href.startsWith('/') || banner.href.startsWith('//')) continue;
+    slides.push({
+      title: banner.title,
+      subtitle: typeof banner.subtitle === 'string' ? banner.subtitle : '',
+      image: banner.image,
+      href: banner.href,
+      imageFit: banner.imageFit === 'cover' ? 'cover' : 'contain',
+    });
+  }
+  return slides.slice(0, HERO_MAX_SLIDES);
 }
 
 export function buildCategoryCards(roots: CategoryRow[], language: string): HomeGridSection[] {

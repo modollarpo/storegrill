@@ -73,7 +73,7 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
                   alt={slide.title}
                   fill
                   sizes="316px"
-                  className="object-contain group-hover/slide:scale-105 transition-transform duration-700"
+                  className={`${slide.imageFit === 'cover' ? 'object-cover' : 'object-contain'} group-hover/slide:scale-105 transition-transform duration-700`}
                 />
                 <div
                   aria-hidden="true"

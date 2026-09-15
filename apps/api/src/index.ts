@@ -42,6 +42,7 @@ import { experimentsRouter } from './routes/experiments.js';
 import { featureFlagsRouter } from './routes/feature-flags.js';
 import { analyticsRouter } from './routes/analytics.js';
 import { feedsRouter } from './routes/feeds.js';
+import { bannersRouter } from './routes/banners.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { initAIModels } from './services/ai-gateway.js';
 import { ensureSearchIndex } from './services/ai-search.js';
@@ -128,6 +129,7 @@ app.use('/api/v1/experiments', experimentsRouter);
 app.use('/api/v1/feature-flags', featureFlagsRouter);
 app.use('/api/v1/analytics', analyticsRouter);
 app.use('/api/v1/feeds', feedsRouter);
+app.use('/api/v1/banners', bannersRouter);
 
 app.use(errorHandler);
 

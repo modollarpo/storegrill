@@ -18,6 +18,15 @@ interface CreativeAsset {
   createdAt: string;
 }
 
+interface HomepageBanner {
+  id: string;
+  name: string;
+  status: 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'ARCHIVED';
+  createdAt: string;
+  updatedAt: string;
+  content: Record<string, unknown>;
+}
+
 const BANNER_TYPES: { value: BannerType; label: string; description: string; defaultSize: ImageSize }[] = [
   { value: 'HERO_BANNER', label: 'Hero Banner', description: 'Main homepage hero, ~1280×360 rendered', defaultSize: '1792x1024' },
   { value: 'DEAL_BANNER', label: 'Deal Banner', description: 'Flash-sale / discount banner', defaultSize: '1792x1024' },
@@ -72,6 +81,142 @@ const STYLE_PRESETS: Record<BannerType, string[]> = {
   ],
 };
 
+function BannerRowCard({ banner, onSaved, onError }: { banner: HomepageBanner; onSaved: () => void; onError: (msg: string) => void }) {
+  const [status, setStatus] = useState(banner.status);
+  const [title, setTitle] = useState(typeof banner.content.title === 'string' ? banner.content.title : '');
+  const [subtitle, setSubtitle] = useState(typeof banner.content.subtitle === 'string' ? banner.content.subtitle : '');
+  const [href, setHref] = useState(typeof banner.content.href === 'string' ? banner.content.href : '');
+  const [region, setRegion] = useState(typeof banner.content.regionKey === 'string' ? banner.content.regionKey : '');
+  const [order, setOrder] = useState(typeof banner.content.order === 'number' ? banner.content.order : 0);
+  const [saving, setSaving] = useState(false);
+
+  const image =
+    typeof banner.content.blobUrl === 'string'
+      ? banner.content.blobUrl
+      : typeof banner.content.url === 'string'
+        ? banner.content.url
+        : null;
+
+  async function save(nextStatus: string) {
+    setSaving(true);
+    try {
+      await api(`/api/v1/creative/banners/${banner.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: nextStatus,
+          title,
+          subtitle,
+          href,
+          regionKey: region || null,
+          order,
+        }),
+      });
+      setStatus(nextStatus as HomepageBanner['status']);
+      onSaved();
+    } catch (e) {
+      onError(e instanceof ApiError ? e.message : 'Failed to save banner');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const isActive = status === 'ACTIVE';
+
+  return (
+    <div className="border border-slate-200 rounded-xl p-3 bg-white">
+      <div className="flex gap-3">
+        {image ? (
+          <img src={image} alt={banner.name} className="w-20 h-24 object-cover rounded-lg bg-slate-100 shrink-0" loading="lazy" />
+        ) : (
+          <div className="w-20 h-24 rounded-lg bg-slate-100 shrink-0" />
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <p className="text-xs font-bold text-slate-700 truncate">{banner.name}</p>
+            <span
+              className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
+              }`}
+            >
+              {status}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="Title"
+              className="p-1.5 border border-slate-200 rounded text-xs"
+              maxLength={120}
+            />
+            <input
+              value={subtitle}
+              onChange={e => setSubtitle(e.target.value)}
+              placeholder="Subtitle"
+              className="p-1.5 border border-slate-200 rounded text-xs"
+              maxLength={200}
+            />
+            <input
+              value={href}
+              onChange={e => setHref(e.target.value)}
+              placeholder="/categories/slug"
+              className="p-1.5 border border-slate-200 rounded text-xs"
+              maxLength={300}
+            />
+            <div className="flex gap-2">
+              <input
+                value={region}
+                onChange={e => setRegion(e.target.value)}
+                placeholder="Region"
+                className="flex-1 p-1.5 border border-slate-200 rounded text-xs"
+                maxLength={20}
+              />
+              <select
+                value={order}
+                onChange={e => setOrder(Number(e.target.value))}
+                className="w-16 p-1.5 border border-slate-200 rounded text-xs"
+              >
+                {Array.from({ length: 20 }, (_, i) => i).map(i => (
+                  <option key={i} value={i}>{i}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-2 mt-3 justify-end">
+        {!isActive ? (
+          <button
+            type="button"
+            onClick={() => save('ACTIVE')}
+            disabled={saving}
+            className="py-1.5 px-3 bg-green-600 hover:bg-green-700 disabled:bg-slate-300 text-white text-xs font-bold rounded-lg transition-colors"
+          >
+            {saving ? 'Saving…' : 'Publish'}
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => save('PAUSED')}
+            disabled={saving}
+            className="py-1.5 px-3 bg-slate-100 hover:bg-slate-200 disabled:bg-slate-100 text-slate-600 text-xs font-bold rounded-lg transition-colors"
+          >
+            {saving ? 'Saving…' : 'Unpublish'}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => save(status)}
+          disabled={saving}
+          className="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white text-xs font-bold rounded-lg transition-colors"
+        >
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function CreativeStudioPage() {
   const [prompt, setPrompt] = useState('');
   const [bannerType, setBannerType] = useState<BannerType>('HERO_BANNER');
@@ -84,6 +229,12 @@ export default function CreativeStudioPage() {
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [assets, setAssets] = useState<CreativeAsset[] | null>(null);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [heroTitle, setHeroTitle] = useState('');
+  const [heroSubtitle, setHeroSubtitle] = useState('');
+  const [heroHref, setHeroHref] = useState('');
+  const [heroRegion, setHeroRegion] = useState('');
+  const [homeBanners, setHomeBanners] = useState<HomepageBanner[] | null>(null);
+  const [bannerError, setBannerError] = useState<string | null>(null);
 
   const loadAssets = useCallback(() => {
     api<{ assets: CreativeAsset[] }>('/api/v1/creative/assets')
@@ -91,7 +242,16 @@ export default function CreativeStudioPage() {
       .catch(() => { setAssets([]); });
   }, []);
 
-  useEffect(loadAssets, [loadAssets]);
+  const loadBanners = useCallback(() => {
+    api<{ banners: HomepageBanner[] }>('/api/v1/creative/banners')
+      .then(d => { setHomeBanners(d.banners); setBannerError(null); })
+      .catch(() => { setHomeBanners([]); });
+  }, []);
+
+  useEffect(() => {
+    loadAssets();
+    loadBanners();
+  }, [loadAssets, loadBanners]);
 
   async function handleGenerate() {
     if (!prompt.trim()) {
@@ -114,12 +274,17 @@ export default function CreativeStudioPage() {
             style,
             quality,
             purpose: bannerType,
+            ...(heroTitle.trim() ? { title: heroTitle.trim() } : {}),
+            ...(heroSubtitle.trim() ? { subtitle: heroSubtitle.trim() } : {}),
+            ...(heroHref.trim() ? { href: heroHref.trim() } : {}),
+            ...(heroRegion.trim() ? { regionKey: heroRegion.trim() } : {}),
           }),
         }
       );
 
       setGeneratedImage({ url: result.image.url, revisedPrompt: result.image.revisedPrompt, creativeId: result.creativeId });
       loadAssets();
+      loadBanners();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Generation failed. Check your Azure OpenAI configuration.');
     } finally {
@@ -241,6 +406,52 @@ export default function CreativeStudioPage() {
                   <option value="standard">Standard</option>
                   <option value="hd">HD</option>
                 </select>
+              </div>
+            </div>
+
+            <div className="mt-5 pt-5 border-t border-slate-100">
+              <h4 className="text-xs font-bold text-slate-700 mb-3">Homepage hero placement</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Card title</label>
+                  <input
+                    value={heroTitle}
+                    onChange={e => setHeroTitle(e.target.value)}
+                    placeholder="e.g. High-end audio"
+                    className="w-full p-2 border border-slate-200 rounded-lg text-sm"
+                    maxLength={120}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Card subtitle</label>
+                  <input
+                    value={heroSubtitle}
+                    onChange={e => setHeroSubtitle(e.target.value)}
+                    placeholder="e.g. Curated category drop"
+                    className="w-full p-2 border border-slate-200 rounded-lg text-sm"
+                    maxLength={200}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Link (internal path)</label>
+                  <input
+                    value={heroHref}
+                    onChange={e => setHeroHref(e.target.value)}
+                    placeholder="/categories/audio"
+                    className="w-full p-2 border border-slate-200 rounded-lg text-sm"
+                    maxLength={300}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">Region (optional)</label>
+                  <input
+                    value={heroRegion}
+                    onChange={e => setHeroRegion(e.target.value)}
+                    placeholder="e.g. UK"
+                    className="w-full p-2 border border-slate-200 rounded-lg text-sm"
+                    maxLength={20}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -365,13 +576,41 @@ export default function CreativeStudioPage() {
             )}
           </div>
 
+          <div className="rounded-xl border border-slate-200 bg-surface-raised p-5">
+            <h3 className="text-sm font-bold text-slate-800 mb-1">Homepage hero banners</h3>
+            <p className="text-xs text-slate-500 mb-3">
+              ACTIVE banners replace the deal-driven hero cards (same 316×420 card size, up to 14). Homepage falls back to deals/static until any banner is published.
+            </p>
+
+            {bannerError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 mb-3" role="alert">
+                {bannerError}
+              </div>
+            )}
+
+            {homeBanners === null ? (
+              <p className="text-xs text-slate-400 py-2">Loading banners…</p>
+            ) : homeBanners.length === 0 ? (
+              <p className="text-xs text-slate-400 py-2">
+                No banners yet. Generate one, set the title/link, then publish it.
+              </p>
+            ) : (
+              <div className="space-y-3 max-h-[560px] overflow-y-auto pr-1">
+                {homeBanners.map(b => (
+                  <BannerRowCard key={b.id} banner={b} onSaved={loadBanners} onError={msg => setBannerError(msg)} />
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="rounded-xl border border-brand-200 bg-brand-50 p-4">
             <p className="text-xs font-bold text-brand-800 mb-1">Going live</p>
             <p className="text-xs text-brand-700 leading-relaxed">
-              Save the downloaded PNG over the static banner file the storefront already loads, e.g.{' '}
-              <code className="font-mono text-[11px]">apps/web/public/banners/bannerOne.jpg</code> (hero),
-              <code className="font-mono text-[11px]">bannerTwo.jpg</code> or
-              <code className="font-mono text-[11px]">bannerThree.jpg</code> (deals/category). Next deploy serves it.
+              Generate a <span className="font-mono text-[11px]">HERO_BANNER</span> or{' '}
+              <span className="font-mono text-[11px]">CATEGORY_BANNER</span> portrait image, set an internal link, and
+              press <span className="font-semibold">Publish</span>. Active banners are served by{' '}
+              <span className="font-mono text-[11px]">GET /api/v1/banners?regionKey=</span> and render on the homepage
+              immediately (ISR 60s). No static file copy is needed.
             </p>
           </div>
         </div>

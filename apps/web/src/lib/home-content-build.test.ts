@@ -8,6 +8,7 @@ import {
   buildRows,
   endLabel,
   featuredCursor,
+  mapBannerSlides,
   type CategoryRow,
   type CuratedProductRow,
   type DealRow,
@@ -312,5 +313,30 @@ describe('endLabel', () => {
   it('returns empty for missing or invalid dates', () => {
     expect(endLabel(undefined, 'en')).toBe('');
     expect(endLabel('not-a-date', 'en')).toBe('');
+  });
+});
+
+describe('mapBannerSlides', () => {
+  const payload = {
+    regionKey: 'UK',
+    slides: [
+      { title: 'High-end audio', subtitle: 'Category drop', image: 'https://blob/audio.png', href: '/categories/audio', imageFit: 'cover', creativeId: 'cre-1' },
+      { title: 'Kitchen refresh', subtitle: '', image: 'https://blob/kitchen.png', href: '/categories/home-kitchen', imageFit: 'cover', creativeId: 'cre-2' },
+      { title: 'Bad external', subtitle: 'nope', image: 'https://blob/bad.png', href: 'https://evil.example', creativeId: 'cre-3' },
+      { title: 'Missing image' },
+    ],
+  };
+
+  it('maps banner slides preserving cover fit and defaulting contain', () => {
+    const slides = mapBannerSlides(payload);
+    expect(slides).toHaveLength(2);
+    expect(slides[0]).toMatchObject({ title: 'High-end audio', imageFit: 'cover', href: '/categories/audio' });
+    expect(slides[1]).toMatchObject({ title: 'Kitchen refresh', subtitle: '', imageFit: 'cover' });
+  });
+
+  it('returns empty for non-conforming payloads', () => {
+    expect(mapBannerSlides(null)).toEqual([]);
+    expect(mapBannerSlides({ slides: 'nope' })).toEqual([]);
+    expect(mapBannerSlides({})).toEqual([]);
   });
 });

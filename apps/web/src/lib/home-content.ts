@@ -9,12 +9,14 @@ import {
   buildHeroSlides,
   buildPromos,
   buildRows,
+  mapBannerSlides,
   rowsFromCards,
   type CategoryRow,
   type CuratedProductRow,
   type DealRow,
   type HomeContent,
   type HomeGridSection,
+  type HomeHeroSlide,
   type HomeSectionItem,
 } from './home-content-build';
 
@@ -54,6 +56,14 @@ async function fetchLiveDeals(regionKey: string): Promise<DealRow[]> {
   )) as { deals?: DealRow[] } | null;
   const deals = Array.isArray(data?.deals) ? data.deals : [];
   return deals.filter(deal => deal?.enabled === true && deal?.status === 'LIVE');
+}
+
+async function fetchHeroBanners(regionKey: string): Promise<HomeHeroSlide[]> {
+  const data = await fetchJson(
+    `${API_BASE}/api/v1/banners?regionKey=${encodeURIComponent(regionKey)}`,
+    60,
+  );
+  return mapBannerSlides(data);
 }
 
 async function fetchFlashProducts(regionKey: string): Promise<CuratedProductRow[]> {
@@ -115,20 +125,22 @@ async function translateCards(cards: HomeGridSection[], language: string): Promi
 }
 
 export async function loadHomeContent(regionKey: string, language: string): Promise<HomeContent> {
-  const [roots, deals, recentPage, flash, bestSellers, newArrivals] = await Promise.all([
+  const [roots, deals, recentPage, flash, bestSellers, newArrivals, banners] = await Promise.all([
     fetchCategories(regionKey),
     fetchLiveDeals(regionKey),
     fetchRecentCategories(regionKey, 0),
     fetchFlashProducts(regionKey),
     fetchProducts(regionKey, 'popular'),
     fetchProducts(regionKey, 'newest'),
+    fetchHeroBanners(regionKey),
   ]);
 
-  let slides = buildHeroSlides(deals, language);
+  const hasBanners = banners.length > 0;
+  let slides: HomeHeroSlide[] = hasBanners ? banners : buildHeroSlides(deals, language);
   if (slides.length === 0) {
     slides = FALLBACK_HERO_DEALS.map(slide => ({ ...slide }));
   }
-  if (language && language !== 'en' && slides.length > 0) {
+  if (language && language !== 'en' && slides.length > 0 && !hasBanners) {
     const names = await translateTitles(
       slides.map(slide => slide.title),
       language,

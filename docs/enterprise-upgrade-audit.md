@@ -266,3 +266,20 @@ Runtime config (Key Vault in prod, none stored in repo):
 - `OPENAI_API_KEY` or `AI_API_KEY`
 
 Notes: `logAIRequest` self-heals unknown model configs so cost/FK stays valid; `dall-e-3` (openai + azure) added to seeded model configs. Generated images render with plain `<img>` in admin (no next/image remotePatterns for external blob URLs).
+
+## 11. Post-verification: outstanding items resolved (2026-09-15)
+
+Follow-up to the commercial-engine verification super-prompt. Status of every item it listed:
+
+- **Typecheck triage (Category A/B)**: resolved. Category A was packages/shared not built before apps/api typechecks; building shared clears it. Category B (import-engine Prisma errors, empty-object inference) was the cascade and disappeared with Category A. Full 
+pm run typecheck (all five workspaces) is green.
+- **ecordPayoutPaid wiring (§2)**: now live in PUT /payouts/:id/status (admin.ts). Marking a payout PAID posts DR MERCHANT_PAYOUT_PAYABLE / CR CASH; re-opening a PAID payout to CANCELLED posts the exact reversal (referenceType REVERSAL) via the new ecordPayoutPaidReversal. Both are atomic with the status change in one interactive transaction.
+- **Ledger core composability (§3 bullet 3)**: ecordLedgerTransaction no longer opens its own inner interactive transaction; it now accepts a caller's Prisma.TransactionClient and mints accounts via upsert. This lets every financial write be atomic with its surrounding row:
+  - checkout: order create + sale entry in one transaction;
+  - cancel: status flip + refund row + ledger reversal in one transaction;
+  - payout generation: payout + lines + commission/payable ledger entry in one transaction;
+  - admin payout status: status flip + paid/reversal ledger entry in one transaction.
+- **Double-post risk in markCaptured (§3 bullet 2)**: real and fixed. Stripe/PayPal webhooks and the client settle route both called markCaptured, which recorded the sale unconditionally — a webhook racing a client settle could double-post revenue. markCaptured is now a compare-and-swap (PENDING/REQUIRES_REDIRECT ? CAPTURED) that only records the sale when it performs the transition. Exclusivity contract documented at both sale-recording call sites: checkout (COD + sandbox-captured) and markCaptured (live async captures) are disjoint by payment flow.
+- **Financial lifecycle integration test (§3 bullet 1)**: pps/api/src/services/financial-lifecycle.test.ts runs against TEST_DATABASE_URL (skipped locally when unset, executed in CI's postgres service). It places an order ? records the sale ? generates a payout ? refunds the order ? marks the payout paid ? reopens and reverses it, then asserts global debit == credit across every ledger transaction and zero net CASH movement. A second case fires two concurrent markCaptured calls and asserts exactly one PAYMENT ledger transaction.
+- **Homepage testimonials (§5a)**: resolved. The Testimonials component in pps/web/src/components/home/Sections.tsx is unused dead code (no caller imports it; homepage renders real data only) and returns null when passed no items. No fabricated "verified buyer" quotes render anywhere.
+- **Committed SSL certificate (§5b)**: storegrill-wildcard.pfx (private key) was removed from tracking and gitignored (*.pfx). It is still present in git history (commit edca21e) and must be treated as compromised: rotate the certificate in Azure/Cloudflare, and consider history rewrite + force-push + GitHub purge of cached forks/PRs. No infra or workflow references the file, so removal breaks nothing.

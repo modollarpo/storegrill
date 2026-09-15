@@ -1,5 +1,7 @@
 import { prisma as db } from '../db/prisma.js';
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
+
+export type LedgerClient = PrismaClient | Prisma.TransactionClient;
 
 export interface LedgerEntryInput {
   accountCode: string;
@@ -16,9 +18,17 @@ export interface RecordTransactionInput {
   entries: LedgerEntryInput[];
 }
 
+/**
+ * Posts a balanced double-entry transaction. Composable: accepts either the
+ * module Prisma client or a caller's interactive transaction client, so callers
+ * can make the ledger post atomic with the write it settles (order creation,
+ * payout generation, payout paid). The account ensure + transaction + nested
+ * entries are a single atomic write — no inner interactive transaction — so it
+ * is safe to call inside a surrounding $transaction callback.
+ */
 export async function recordLedgerTransaction(
   input: RecordTransactionInput,
-  prisma: PrismaClient = db,
+  client: LedgerClient = db,
 ): Promise<string> {
   if (!input.currencyCode) {
     throw new Error('Ledger transaction requires a currencyCode');
@@ -41,7 +51,7 @@ export async function recordLedgerTransaction(
   }
 
   const accountCodes = [...new Set(input.entries.map(e => e.accountCode))];
-  const accounts = await prisma.ledgerAccount.findMany({
+  const accounts = await client.ledgerAccount.findMany({
     where: { code: { in: accountCodes } },
   });
   const accountMap = new Map(accounts.map(a => [a.code, a.id]));
@@ -56,52 +66,51 @@ export async function recordLedgerTransaction(
             ? 'REVENUE'
             : 'EXPENSE';
 
-      const created = await prisma.ledgerAccount.create({
-        data: {
+      const account = await client.ledgerAccount.upsert({
+        where: { code },
+        update: {},
+        create: {
           code,
           name: code,
           type,
           currencyCode: input.currencyCode,
         },
       });
-      accountMap.set(code, created.id);
+      accountMap.set(code, account.id);
     }
   }
 
-  const transactionId = await prisma.$transaction(async txClient => {
-    const transaction = await txClient.ledgerTransaction.create({
-      data: {
-        description: input.description,
-        referenceType: input.referenceType ?? 'PAYMENT',
-        referenceId: input.referenceId,
-        entries: {
-          create: input.entries.flatMap(entry => {
-            const d = BigInt(entry.debitMinorUnits ?? 0n);
-            const c = BigInt(entry.creditMinorUnits ?? 0n);
-            const results = [];
-            if (d > 0n) {
-              results.push({
-                accountId: accountMap.get(entry.accountCode)!,
-                direction: 'DEBIT',
-                amountMinorUnits: d,
-                currencyCode: entry.currencyCode ?? input.currencyCode,
-              });
-            }
-            if (c > 0n) {
-              results.push({
-                accountId: accountMap.get(entry.accountCode)!,
-                direction: 'CREDIT',
-                amountMinorUnits: c,
-                currencyCode: entry.currencyCode ?? input.currencyCode,
-              });
-            }
-            return results;
-          }),
-        },
+  const transaction = await client.ledgerTransaction.create({
+    data: {
+      description: input.description,
+      referenceType: input.referenceType ?? 'PAYMENT',
+      referenceId: input.referenceId,
+      entries: {
+        create: input.entries.flatMap(entry => {
+          const d = BigInt(entry.debitMinorUnits ?? 0n);
+          const c = BigInt(entry.creditMinorUnits ?? 0n);
+          const results = [];
+          if (d > 0n) {
+            results.push({
+              accountId: accountMap.get(entry.accountCode)!,
+              direction: 'DEBIT',
+              amountMinorUnits: d,
+              currencyCode: entry.currencyCode ?? input.currencyCode,
+            });
+          }
+          if (c > 0n) {
+            results.push({
+              accountId: accountMap.get(entry.accountCode)!,
+              direction: 'CREDIT',
+              amountMinorUnits: c,
+              currencyCode: entry.currencyCode ?? input.currencyCode,
+            });
+          }
+          return results;
+        }),
       },
-    });
-    return transaction.id;
+    },
   });
 
-  return transactionId;
+  return transaction.id;
 }

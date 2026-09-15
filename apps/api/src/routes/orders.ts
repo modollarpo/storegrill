@@ -443,6 +443,25 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
       });
     }
 
+    // Synchronous-captured orders (COD; sandbox provider mode when no live
+    // keys are configured) record the sale here, atomically with order
+    // creation. Redirect-payment orders (live Stripe/PayPal) are created as
+    // AWAITING_PAYMENT and thus skip this branch — their sale is recorded
+    // exactly once by markCaptured() (settlement.ts) when the async capture
+    // webhook/return fires. The two sale-recording paths are disjoint by
+    // payment flow, never both for the same order.
+    if (created.status === 'CONFIRMED') {
+      await recordOrderSale({
+        orderId: created.id,
+        orderNumber,
+        currencyCode,
+        subtotalMinorUnits: BigInt(subtotal),
+        taxMinorUnits: BigInt(tax),
+        shippingMinorUnits: BigInt(shipping),
+        totalMinorUnits: BigInt(total),
+      }, tx);
+    }
+
     return created;
   });
 
@@ -463,15 +482,6 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
 
   if (order.status === 'CONFIRMED') {
     await notifyOrderConfirmed(order.id);
-    await recordOrderSale({
-      orderId: order.id,
-      orderNumber,
-      currencyCode,
-      subtotalMinorUnits: BigInt(subtotal),
-      taxMinorUnits: BigInt(tax),
-      shippingMinorUnits: BigInt(shipping),
-      totalMinorUnits: BigInt(total),
-    });
   }
 
   res.status(201).json({
@@ -516,13 +526,16 @@ router.post('/:id/cancel', async (req: AuthRequest, res: Response) => {
     });
   }
 
-  await prisma.$transaction([
-    prisma.order.update({
+  // The refund financial record, status flip, audit log, and the ledger
+  // reversal of the original sale are one atomic write: a refund that fails to
+  // post its ledger entry (e.g. imbalance) rolls back the cancellation too.
+  await prisma.$transaction(async (tx: any) => {
+    await tx.order.update({
       where: { id },
       data: { status: 'CANCELLED', paymentStatus: 'REFUNDED' },
-    }),
+    });
     // A cancellation that refunds payment must leave an immutable financial record.
-    prisma.refund.create({
+    await tx.refund.create({
       data: {
         orderId: id,
         amountMinorUnits: order.totalMinorUnits,
@@ -531,8 +544,8 @@ router.post('/:id/cancel', async (req: AuthRequest, res: Response) => {
         status: 'PROCESSED',
         processedAt: new Date(),
       },
-    }),
-    prisma.auditLog.create({
+    });
+    await tx.auditLog.create({
       data: {
         userId: req.user!.id,
         action: 'ORDER_CANCELLED',
@@ -540,8 +553,17 @@ router.post('/:id/cancel', async (req: AuthRequest, res: Response) => {
         entityId: id,
         after: JSON.stringify({ status: 'CANCELLED', paymentStatus: 'REFUNDED' }),
       },
-    }),
-  ]);
+    });
+    await recordOrderRefund({
+      orderId: id,
+      orderNumber: order.orderNumber,
+      currencyCode: order.currencyCode,
+      subtotalMinorUnits: BigInt(order.subtotalMinorUnits),
+      taxMinorUnits: BigInt(order.taxMinorUnits),
+      shippingMinorUnits: BigInt(order.shippingMinorUnits),
+      totalMinorUnits: BigInt(order.totalMinorUnits),
+    }, tx);
+  });
 
   for (const item of order.items) {
     if (item.variantId) {
@@ -555,16 +577,6 @@ router.post('/:id/cancel', async (req: AuthRequest, res: Response) => {
       data: { totalSales: { decrement: item.quantity } },
     });
   }
-
-  await recordOrderRefund({
-    orderId: id,
-    orderNumber: order.orderNumber,
-    currencyCode: order.currencyCode,
-    subtotalMinorUnits: BigInt(order.subtotalMinorUnits),
-    taxMinorUnits: BigInt(order.taxMinorUnits),
-    shippingMinorUnits: BigInt(order.shippingMinorUnits),
-    totalMinorUnits: BigInt(order.totalMinorUnits),
-  });
 
   await notifyOrderCancelled(id);
 

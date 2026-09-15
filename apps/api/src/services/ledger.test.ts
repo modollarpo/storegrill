@@ -16,9 +16,9 @@ function mockPrisma(overrides: Partial<Record<keyof PrismaClient, unknown>> = {}
   return {
     ledgerAccount: {
       findMany: vi.fn(async () => []),
-      create: vi.fn(async (args: { data: Record<string, unknown> }) => {
-        accounts.push(args.data);
-        return { id: `acct-${accounts.length}`, ...args.data };
+      upsert: vi.fn(async (args: { create: Record<string, unknown> }) => {
+        accounts.push(args.create);
+        return { id: `acct-${accounts.length}`, ...args.create };
       }),
     },
     ledgerTransaction: {
@@ -31,7 +31,7 @@ function mockPrisma(overrides: Partial<Record<keyof PrismaClient, unknown>> = {}
     __transactions: transactions,
     ...overrides,
   } as unknown as PrismaClient & {
-    ledgerAccount: { create: ReturnType<typeof vi.fn> };
+    ledgerAccount: { upsert: ReturnType<typeof vi.fn> };
     ledgerTransaction: { create: ReturnType<typeof vi.fn> };
     __transactions: Array<{ referenceType?: string; referenceId?: string; entries: { create: Array<Record<string, unknown>> } }>;
   };
@@ -105,7 +105,7 @@ describe('ledger service', () => {
       prisma,
     );
 
-    const createdAccounts = prisma.ledgerAccount.create.mock.calls.map(c => c[0].data);
+    const createdAccounts = prisma.ledgerAccount.upsert.mock.calls.map(c => c[0].create);
     expect(createdAccounts).toHaveLength(2);
     for (const account of createdAccounts) {
       expect(account.currencyCode).toBe('JPY');

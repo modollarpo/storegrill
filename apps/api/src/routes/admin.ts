@@ -9,6 +9,7 @@ import { MerchantPermission } from '@Storegrill/shared';
 import { getLatestFeeds, getFeedHistory } from '../services/feed-log.js';
 import { FeedChannel } from '../services/feed-builder.js';
 import { getEventVolumes } from '../services/analytics.js';
+import { recordPayoutPaid, recordPayoutPaidReversal } from '../services/ledger-entries.js';
 
 const router = Router();
 
@@ -1109,7 +1110,33 @@ router.put('/payouts/:id/status', async (req: AuthRequest, res: Response) => {
   }
 
   const processedAt = body.status === 'PAID' ? new Date() : body.status === 'CANCELLED' ? existing.processedAt : null;
-  const payout = await prisma.payout.update({ where: { id }, data: { status: body.status, processedAt } });
+  const hadPaidLedger = existing.status === 'PAID';
+
+  // The payout row and its ledger entry are one atomic write: marking a payout
+  // PAID posts DR MERCHANT_PAYOUT_PAYABLE / CR CASH; re-opening a paid payout
+  // to CANCELLED posts the exact reversal (referenceType REVERSAL). If the
+  // ledger post fails (e.g. imbalance) the status change rolls back too, so a
+  // payout can never be PAID/CANCELLED without a matching ledger record.
+  const payout = await prisma.$transaction(async tx => {
+    const updated = await tx.payout.update({
+      where: { id },
+      data: { status: body.status, processedAt },
+    });
+    if (body.status === 'PAID' && existing.status !== 'PAID') {
+      await recordPayoutPaid({
+        payoutId: id,
+        currencyCode: existing.currencyCode,
+        payoutMinorUnits: BigInt(existing.amountMinorUnits),
+      }, tx as any);
+    } else if (body.status === 'CANCELLED' && hadPaidLedger) {
+      await recordPayoutPaidReversal({
+        payoutId: id,
+        currencyCode: existing.currencyCode,
+        payoutMinorUnits: BigInt(existing.amountMinorUnits),
+      }, tx as any);
+    }
+    return updated;
+  });
 
   await audit(req, 'PAYOUT_STATUS_CHANGED', 'Payout', id, { status: body.status });
   res.json({ payout: { ...payout, amountMinorUnits: Number(payout.amountMinorUnits) } });

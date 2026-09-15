@@ -115,7 +115,6 @@ export async function generatePayouts(period: string = periodOf()): Promise<numb
     const totalPayoutMinorUnits = result.totalPayoutMinorUnits;
     const totalCommissionMinorUnits = result.totalCommissionMinorUnits;
 
-    let payoutId = '';
     await prisma.$transaction(async tx => {
       const payout = await tx.payout.create({
         data: {
@@ -126,7 +125,6 @@ export async function generatePayouts(period: string = periodOf()): Promise<numb
           period,
         },
       });
-      payoutId = payout.id;
       await tx.payoutLine.createMany({
         data: result.lines.map(line => ({
           payoutId: payout.id,
@@ -136,12 +134,15 @@ export async function generatePayouts(period: string = periodOf()): Promise<numb
           fixedFee: line.fixedFee,
         })),
       });
-    });
-    await recordPayoutLedger({
-      referenceId: payoutId,
-      currencyCode: group.currencyCode,
-      commissionMinorUnits: BigInt(totalCommissionMinorUnits),
-      payoutMinorUnits: BigInt(totalPayoutMinorUnits),
+      // Payout row, its lines, and the commission/payable ledger entry commit
+      // or roll back together: a payout that fails to post its ledger entry
+      // (e.g. imbalance) is not left dangling as a PENDING row.
+      await recordPayoutLedger({
+        referenceId: payout.id,
+        currencyCode: group.currencyCode,
+        commissionMinorUnits: BigInt(totalCommissionMinorUnits),
+        payoutMinorUnits: BigInt(totalPayoutMinorUnits),
+      }, tx as any);
     });
     created += 1;
   }

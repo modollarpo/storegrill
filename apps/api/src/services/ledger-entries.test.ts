@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { recordOrderSale, recordOrderRefund, recordPayoutLedger, recordPayoutPaid } from './ledger-entries.js';
+import { recordOrderSale, recordOrderRefund, recordPayoutLedger, recordPayoutPaid, recordPayoutPaidReversal } from './ledger-entries.js';
 
 function captureRecording() {
   const recordings: Array<{ entries: { create: Array<Record<string, unknown>> }; referenceId?: string; referenceType?: string }> = [];
@@ -14,7 +14,7 @@ function captureRecording() {
   const prisma = {
     ledgerAccount: {
       findMany: vi.fn(async () => []),
-      create: vi.fn(async (args: { data: Record<string, unknown> }) => ({ id: 'acct', ...args.data })),
+      upsert: vi.fn(async (args: { create: Record<string, unknown> }) => ({ id: 'acct', ...args.create })),
     },
     ledgerTransaction: { create: txClient.ledgerTransaction.create },
     $transaction: vi.fn(async (fn: (c: unknown) => unknown) => fn(txClient)),
@@ -127,5 +127,29 @@ describe('recordPayoutPaid', () => {
     expect(entries.every(e => e.currencyCode === 'GBP')).toBe(true);
     expect(recordings[0].referenceType).toBe('SETTLEMENT');
     expect(recordings[0].referenceId).toBe('payout-1');
+  });
+});
+
+describe('recordPayoutPaidReversal', () => {
+  it('re-establish the liability and debits cash when a paid payout is cancelled', async () => {
+    const { prisma, recordings } = captureRecording();
+    await recordPayoutPaidReversal(
+      {
+        payoutId: 'payout-1',
+        currencyCode: 'GBP',
+        payoutMinorUnits: 8770n,
+      },
+      prisma,
+    );
+    const entries = entriesOf(recordings[0]);
+    const debit = entries.filter(e => e.direction === 'DEBIT');
+    const credit = entries.filter(e => e.direction === 'CREDIT');
+    const debitSum = debit.reduce((s, e) => s + Number(e.amountMinorUnits), 0);
+    const creditSum = credit.reduce((s, e) => s + Number(e.amountMinorUnits), 0);
+    expect(debitSum).toBe(creditSum);
+    expect(debit[0].accountId).toBe('acct'); // CASH first
+    expect(debitSum).toBe(8770);
+    expect(entries.length).toBe(2);
+    expect(recordings[0].referenceType).toBe('REVERSAL');
   });
 });

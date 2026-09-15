@@ -29,6 +29,11 @@ BUILD_PROMPT.md
 .terraform/
 *.bak
 *.db
+*.pfx
+*.crt
+*.pem
+*.key
+*.p12
 apps/currys/
 apps/web/public/Screenshot*.png
 

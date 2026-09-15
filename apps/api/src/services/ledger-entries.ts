@@ -1,6 +1,5 @@
-import type { PrismaClient } from '@prisma/client';
 import { prisma as db } from '../db/prisma.js';
-import { recordLedgerTransaction } from './ledger.js';
+import { recordLedgerTransaction, type LedgerClient } from './ledger.js';
 
 export interface OrderLedgerContext {
   orderId: string;
@@ -21,7 +20,7 @@ export interface OrderLedgerContext {
  */
 export async function recordOrderSale(
   ctx: OrderLedgerContext,
-  prisma: PrismaClient = db,
+  prisma: LedgerClient = db,
 ): Promise<string> {
   const { currencyCode: ccy } = ctx;
   return recordLedgerTransaction(
@@ -50,7 +49,7 @@ export async function recordOrderSale(
  */
 export async function recordOrderRefund(
   ctx: OrderLedgerContext,
-  prisma: PrismaClient = db,
+  prisma: LedgerClient = db,
 ): Promise<string> {
   const { currencyCode: ccy } = ctx;
   return recordLedgerTransaction(
@@ -86,7 +85,7 @@ export interface PayoutCommissionLedgerContext {
  */
 export async function recordPayoutLedger(
   ctx: PayoutCommissionLedgerContext,
-  prisma: PrismaClient = db,
+  prisma: LedgerClient = db,
 ): Promise<string> {
   const { currencyCode: ccy } = ctx;
   return recordLedgerTransaction(
@@ -119,7 +118,7 @@ export interface PayoutPaidContext {
  */
 export async function recordPayoutPaid(
   ctx: PayoutPaidContext,
-  prisma: PrismaClient = db,
+  prisma: LedgerClient = db,
 ): Promise<string> {
   const { currencyCode: ccy } = ctx;
   return recordLedgerTransaction(
@@ -131,6 +130,31 @@ export async function recordPayoutPaid(
       entries: [
         { accountCode: `MERCHANT_PAYOUT_PAYABLE_${ccy}`, debitMinorUnits: ctx.payoutMinorUnits },
         { accountCode: `CASH_${ccy}`, creditMinorUnits: ctx.payoutMinorUnits },
+      ],
+    },
+    prisma,
+  );
+}
+
+/**
+ * Reverses a paid payout that is re-opened and cancelled:
+ *   DR  CASH_<CCY>                    payout  (money comes back)
+ *   CR  MERCHANT_PAYOUT_PAYABLE_<CCY> payout  (re-establish liability)
+ */
+export async function recordPayoutPaidReversal(
+  ctx: PayoutPaidContext,
+  prisma: LedgerClient = db,
+): Promise<string> {
+  const { currencyCode: ccy } = ctx;
+  return recordLedgerTransaction(
+    {
+      description: `Payout ${ctx.payoutId} cancelled (reverses paid)`,
+      currencyCode: ccy,
+      referenceType: 'REVERSAL',
+      referenceId: ctx.payoutId,
+      entries: [
+        { accountCode: `CASH_${ccy}`, debitMinorUnits: ctx.payoutMinorUnits },
+        { accountCode: `MERCHANT_PAYOUT_PAYABLE_${ccy}`, creditMinorUnits: ctx.payoutMinorUnits },
       ],
     },
     prisma,

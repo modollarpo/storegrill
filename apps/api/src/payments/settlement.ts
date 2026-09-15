@@ -1,18 +1,34 @@
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { notifyOrderConfirmed } from '../lib/emails.js';
 import { recordOrderSale } from '../services/ledger-entries.js';
 
+/**
+ * Marks a payment captured and records the sale exactly once per order.
+ *
+ * The sale is recorded here only for asynchronous payment flows (Stripe
+ * Checkout / PayPal), which reach this function from the client settle route,
+ * the Stripe webhook, or the PayPal webhook. Whichever fires first wins: the
+ * compare-and-swap on the payment status PENDING/REQUIRES_REDIRECT -> CAPTURED
+ * makes concurrent webhook + client settle mutually exclusive, so the ledger
+ * sale entry can never be double-posted. COD and sandbox-captured orders are
+ * recorded synchronously in the checkout route (orders.ts) and never reach
+ * this function, so the two sale-recording paths are disjoint by payment flow.
+ */
 export async function markCaptured(orderId: string): Promise<void> {
-  await prisma.$transaction([
-    prisma.payment.updateMany({
+  const captured = await prisma.$transaction(async tx => {
+    const flipped = await tx.payment.updateMany({
       where: { orderId, status: { in: ['REQUIRES_REDIRECT', 'PENDING'] } },
       data: { status: 'CAPTURED' },
-    }),
-    prisma.order.update({
+    });
+    if (flipped.count === 0) return false;
+    await tx.order.update({
       where: { id: orderId },
       data: { paymentStatus: 'CAPTURED', status: 'CONFIRMED' },
-    }),
-  ]);
+    });
+    return true;
+  });
+
+  if (!captured) return;
 
   const order = await prisma.order.findUnique({
     where: { id: orderId },

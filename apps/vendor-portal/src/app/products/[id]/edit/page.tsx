@@ -52,11 +52,11 @@ export default function EditProductPage() {
     <VendorShell>
       <PageHeader title="Edit product" subtitle="Update listing details" />
       {loading ? (
-        <div className="bg-surface-raised rounded-lg border border-slate-200 p-10 text-center text-sm font-medium text-slate-500" aria-busy="true">Loading product…</div>
+        <div className="bg-white rounded-xl border border-surface-200 p-10 text-center text-sm font-medium text-surface-500 shadow-xs" aria-busy="true">Loading product…</div>
       ) : notFound || !product ? (
-        <div className="bg-surface-raised rounded-lg border border-slate-200 p-10 text-center">
-          <p className="text-sm font-semibold text-slate-700">Product not found</p>
-          <p className="text-xs text-slate-500 mt-1">It may have been deleted, or it belongs to another store.</p>
+        <div className="bg-white rounded-xl border border-surface-200 p-10 text-center shadow-xs">
+          <p className="text-sm font-semibold text-surface-700">Product not found</p>
+          <p className="text-xs text-surface-500 mt-1">It may have been deleted, or it belongs to another store.</p>
         </div>
       ) : (
         <ProductForm mode="edit" product={product} />

@@ -281,10 +281,13 @@ export function ProductForm({ mode, product }: ProductFormProps) {
         description={mode === 'create' ? 'New products are submitted for review before going live.' : 'Changes are re-checked by review before going live.'}
         footer={
           <>
-            <Link href="/products" className="h-9 px-4 rounded-md border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 inline-flex items-center transition-colors">
+            <Link href="/products" className="h-9 px-4 rounded-lg border border-surface-300 text-surface-700 text-xs font-bold hover:bg-surface-50 inline-flex items-center transition-colors">
               Cancel
             </Link>
-            <button type="submit" disabled={saving} aria-busy={saving} className="h-9 px-5 rounded-md bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+            <button type="submit" disabled={saving} aria-busy={saving} className="h-9 px-5 rounded-lg bg-surface-900 text-white text-xs font-bold hover:bg-surface-800 disabled:opacity-50 transition-colors flex items-center gap-2">
+              {saving && (
+                <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>
+              )}
               {saving ? submittingLabel : submitLabel}
             </button>
           </>
@@ -348,7 +351,7 @@ export function ProductForm({ mode, product }: ProductFormProps) {
                 onClick={generateAltText}
                 disabled={altBusy}
                 aria-busy={altBusy}
-                className="h-9 px-4 rounded-md bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100 disabled:opacity-50 border border-indigo-200 inline-flex items-center gap-1.5 transition-colors"
+                className="h-9 px-4 rounded-lg bg-brand-50 text-brand-700 text-xs font-bold hover:bg-brand-100 disabled:opacity-50 border border-brand-200 inline-flex items-center gap-1.5 transition-colors"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M11 2a1 1 0 011.96-.28l.5 1.9 1.9.5a1 1 0 010 1.95l-1.9.5-.5 1.9A1 1 0 0111 7.68l-.5-1.9-1.9-.5a1 1 0 010-1.95l1.9-.5.5-1.9A1 1 0 0111 2zm7 8a1 1 0 011.94-.22l.4 1.5 1.5.4a1 1 0 010 1.94l-1.5.4-.4 1.5A1 1 0 0119 15.43l-.4-1.5-1.5-.4a1 1 0 010-1.94l1.5-.4.4-1.5A1 1 0 0118 10zm-9 3a1 1 0 011.9-.4l.7 1.7 1.7.7a1 1 0 010 1.9l-1.7.7-.7 1.7a1 1 0 01-1.9-.4l-.7-1.7-1.7-.7a1 1 0 010-1.9l1.7-.7.7-1.7a1 1 0 011 .4z" /></svg>
                 {altBusy ? 'Generating…' : 'Generate with AI'}
@@ -357,15 +360,15 @@ export function ProductForm({ mode, product }: ProductFormProps) {
                 <button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(generatedAlt).catch(() => {})}
-                  className="h-9 px-3 rounded-md border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors"
+                  className="h-9 px-3 rounded-lg border border-surface-300 text-surface-700 text-xs font-bold hover:bg-surface-50 transition-colors"
                 >
                   Copy
                 </button>
               )}
             </div>
-            {altError && <p role="alert" className="text-xs text-rose-700 font-medium">{altError}</p>}
+            {altError && <p role="alert" className="text-xs text-red-700 font-medium">{altError}</p>}
             {generatedAlt && (
-              <p className="text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-md px-3 py-2 leading-relaxed">{generatedAlt}</p>
+              <p className="text-xs text-surface-700 bg-surface-50 border border-surface-200 rounded-lg px-3 py-2 leading-relaxed">{generatedAlt}</p>
             )}
           </div>
         </FormRow>
@@ -385,35 +388,35 @@ export function ProductForm({ mode, product }: ProductFormProps) {
           description="Optional. Create one row per variant (e.g. size or colour). Leave empty for a single product."
         >
           {variants.map(v => (
-            <div key={v.id} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_120px_120px_36px] gap-2 items-end py-3 border-b border-slate-100 last:border-0">
+            <div key={v.id} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_120px_120px_36px] gap-2 items-end py-3 border-b border-surface-100 last:border-0">
               <label className="block">
-                <span className="text-[10px] font-semibold text-slate-500">Variant name</span>
+                <span className="text-[10px] font-semibold text-surface-500">Variant name</span>
                 <input value={v.name} onChange={e => updateVariant(v.id, { name: e.target.value })} className={`${inputClass} mt-1`} placeholder="e.g. 240 g bag" />
               </label>
               <label className="block">
-                <span className="text-[10px] font-semibold text-slate-500">SKU</span>
+                <span className="text-[10px] font-semibold text-surface-500">SKU</span>
                 <input value={v.sku} onChange={e => updateVariant(v.id, { sku: e.target.value })} className={`${inputClass} mt-1`} placeholder="e.g. CRISP-ORG-240" />
               </label>
               <label className="block">
-                <span className="text-[10px] font-semibold text-slate-500">Price {currencyCode}</span>
+                <span className="text-[10px] font-semibold text-surface-500">Price {currencyCode}</span>
                 <input value={v.price} onChange={e => updateVariant(v.id, { price: e.target.value })} className={`${inputClass} mt-1`} placeholder="0.00" />
               </label>
               <label className="block">
-                <span className="text-[10px] font-semibold text-slate-500">Stock</span>
+                <span className="text-[10px] font-semibold text-surface-500">Stock</span>
                 <input type="number" min={0} value={v.stock} onChange={e => updateVariant(v.id, { stock: e.target.value })} className={`${inputClass} mt-1`} placeholder="0" />
               </label>
               <button
                 type="button"
                 onClick={() => removeVariant(v.id)}
                 aria-label={`Remove variant ${v.name || v.sku || v.id}`}
-                className="h-9 w-9 rounded-md border border-slate-300 text-slate-500 grid place-items-center hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors"
+                className="h-9 w-9 rounded-lg border border-surface-300 text-surface-500 grid place-items-center hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
           ))}
-          {errors.variants && <p role="alert" className="pt-2 text-xs text-rose-700 font-medium">{errors.variants}</p>}
-          <button type="button" onClick={addVariant} className="mt-3 h-9 px-4 rounded-md border border-dashed border-slate-300 text-slate-600 text-xs font-bold hover:border-indigo-400 hover:text-indigo-600 transition-colors">
+          {errors.variants && <p role="alert" className="pt-2 text-xs text-red-700 font-medium">{errors.variants}</p>}
+          <button type="button" onClick={addVariant} className="mt-3 h-9 px-4 rounded-lg border border-dashed border-surface-300 text-surface-600 text-xs font-bold hover:border-brand-400 hover:text-brand-600 transition-colors">
             + Add variant
           </button>
         </FormSection>
@@ -422,7 +425,7 @@ export function ProductForm({ mode, product }: ProductFormProps) {
       {mode === 'edit' && product && (
         <FormSection title="Review status">
           <FormRow label="Status" htmlFor="p-status">
-            <p id="p-status" className="text-xs font-semibold text-slate-700 pt-1">{product.status.replace(/_/g, ' ')}</p>
+            <p id="p-status" className="text-xs font-semibold text-surface-700 pt-1">{product.status.replace(/_/g, ' ')}</p>
           </FormRow>
         </FormSection>
       )}

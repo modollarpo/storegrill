@@ -47,10 +47,10 @@ export function Toaster() {
           key={m.id}
           role="status"
           className={cn(
-            'pointer-events-auto w-80 rounded-lg border px-3.5 py-3 text-xs font-medium shadow-popover bg-surface-raised animate-in',
+            'pointer-events-auto w-80 rounded-xl border px-3.5 py-3 text-xs font-medium shadow-lg bg-white animate-in',
             m.kind === 'success' && 'border-emerald-200 text-emerald-800',
             m.kind === 'error' && 'border-rose-200 text-rose-800',
-            m.kind === 'info' && 'border-slate-200 text-slate-700'
+            m.kind === 'info' && 'border-surface-200 text-surface-700'
           )}
         >
           {m.kind === 'success' && <span className="mr-1.5 font-bold">✓</span>}

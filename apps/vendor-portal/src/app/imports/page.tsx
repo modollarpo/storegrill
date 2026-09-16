@@ -90,7 +90,7 @@ export default function VendorImportsPage() {
     { key: 'type', label: 'Method', sortable: true, sortValue: j => `${j.type} ${j.source}`, render: j => <span className="font-semibold uppercase">{j.type}{j.source ? ` · ${j.source}` : ''}</span> },
     { key: 'totalRows', label: 'Rows', align: 'right', sortable: true, sortValue: j => j.totalRows },
     { key: 'successRows', label: 'OK', align: 'right', sortable: true, sortValue: j => j.successRows, render: j => <span className="text-emerald-700 font-semibold">{j.successRows}</span> },
-    { key: 'errorRows', label: 'Errors', align: 'right', sortable: true, sortValue: j => j.errorRows, render: j => j.errorRows > 0 ? <span className="text-rose-700 font-bold">{j.errorRows}</span> : <span className="text-slate-300">0</span> },
+    { key: 'errorRows', label: 'Errors', align: 'right', sortable: true, sortValue: j => j.errorRows, render: j => j.errorRows > 0 ? <span className="text-red-700 font-bold">{j.errorRows}</span> : <span className="text-surface-300">0</span> },
     { key: 'status', label: 'Status', render: j => <StatusBadge status={j.status} /> },
   ];
 
@@ -99,8 +99,8 @@ export default function VendorImportsPage() {
       <PageHeader title="Bulk Imports" subtitle="CSV upload or scheduled feed URL — rows are validated before anything goes live" />
 
       <div className="grid md:grid-cols-2 gap-4 mb-5">
-        <section aria-labelledby="csv-heading" className="bg-surface-raised rounded-lg border border-slate-200 p-5">
-          <h2 id="csv-heading" className="text-sm font-bold text-slate-900 mb-3">CSV upload</h2>
+        <section aria-labelledby="csv-heading" className="bg-white rounded-xl border border-surface-200 p-5 shadow-xs">
+          <h2 id="csv-heading" className="text-sm font-bold text-surface-900 mb-3">CSV upload</h2>
           <div
             ref={dropRef}
             data-testid="dropzone"
@@ -118,15 +118,15 @@ export default function VendorImportsPage() {
             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') fileRef.current?.click(); }}
             aria-disabled={uploading}
             className={cn(
-              'flex flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-8 text-center cursor-pointer transition-colors',
-              dragging ? 'border-indigo-500 bg-indigo-50' : 'border-slate-300 hover:border-indigo-400 hover:bg-slate-50'
+              'flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-8 text-center cursor-pointer transition-colors',
+              dragging ? 'border-brand-500 bg-brand-50' : 'border-surface-300 hover:border-brand-400 hover:bg-surface-50'
             )}
           >
-            <svg className={cn('w-8 h-8 mb-2', uploading ? 'animate-bounce text-indigo-500' : 'text-slate-400')} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg className={cn('w-8 h-8 mb-2', uploading ? 'animate-bounce text-brand-500' : 'text-surface-400')} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
             </svg>
-            <p className="text-xs font-semibold text-slate-700">{uploading ? 'Uploading…' : dragging ? 'Drop to upload' : 'Drag & drop a CSV, or click to browse'}</p>
-            <p className="text-[10px] text-slate-400 mt-1">Max 10 MB · .csv only</p>
+            <p className="text-xs font-semibold text-surface-700">{uploading ? 'Uploading…' : dragging ? 'Drop to upload' : 'Drag & drop a CSV, or click to browse'}</p>
+            <p className="text-[10px] text-surface-400 mt-1">Max 10 MB · .csv only</p>
           </div>
           <input
             ref={fileRef}
@@ -141,9 +141,9 @@ export default function VendorImportsPage() {
           />
         </section>
 
-        <section aria-labelledby="url-heading" className="bg-surface-raised rounded-lg border border-slate-200 p-5">
-          <h2 id="url-heading" className="text-sm font-bold text-slate-900 mb-1">Feed URL</h2>
-          <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">HTTP(S) JSON or CSV feed with webhook signature validation.</p>
+        <section aria-labelledby="url-heading" className="bg-white rounded-xl border border-surface-200 p-5 shadow-xs">
+          <h2 id="url-heading" className="text-sm font-bold text-surface-900 mb-1">Feed URL</h2>
+          <p className="text-[11px] text-surface-500 mb-3 leading-relaxed">HTTP(S) JSON or CSV feed with webhook signature validation.</p>
           <form onSubmit={importFromUrl} className="space-y-2">
             <label htmlFor="feed-url" className="sr-only">Feed URL</label>
             <input
@@ -152,12 +152,12 @@ export default function VendorImportsPage() {
               onChange={e => setUrl(e.target.value)}
               placeholder="https://supplier.example/feed.json"
               inputMode="url"
-              className="w-full h-9 rounded-md border border-slate-300 px-3 text-xs placeholder:text-slate-400 focus:border-indigo-500 outline-none"
+              className="w-full h-9 rounded-lg border border-surface-300 px-3 text-xs placeholder:text-surface-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none transition-colors bg-white"
             />
             <button
               type="submit"
               disabled={uploading}
-              className="h-9 w-full rounded-md bg-primary-600 text-white text-xs font-bold hover:bg-primary-700 disabled:opacity-50 transition-colors"
+              className="h-9 w-full rounded-lg bg-surface-900 text-white text-xs font-bold hover:bg-surface-800 disabled:opacity-50 transition-colors"
             >
               {uploading ? 'Working…' : 'Import from feed'}
             </button>
@@ -166,7 +166,7 @@ export default function VendorImportsPage() {
       </div>
 
       {message && (
-        <p role={message.kind === 'err' ? 'alert' : 'status'} className={`mb-4 text-xs rounded-md px-3 py-2 border ${message.kind === 'ok' ? 'text-emerald-800 bg-emerald-50 border-emerald-200' : 'text-rose-700 bg-rose-50 border-rose-200'}`}>
+        <p role={message.kind === 'err' ? 'alert' : 'status'} className={`mb-4 text-xs rounded-lg px-3 py-2 border ${message.kind === 'ok' ? 'text-emerald-800 bg-emerald-50 border-emerald-200' : 'text-red-700 bg-red-50 border-red-200'}`}>
           {message.text}
         </p>
       )}
@@ -177,7 +177,7 @@ export default function VendorImportsPage() {
         loading={jobs === null}
         rowKey={j => j.id}
         emptyTitle="No imports yet"
-        emptyAction={<p className="text-xs text-slate-400">Upload a CSV above — errors are reported row-by-row.</p>}
+        emptyAction={<p className="text-xs text-surface-400">Upload a CSV above — errors are reported row-by-row.</p>}
         caption="Import job history"
       />
     </VendorShell>

@@ -171,7 +171,7 @@ export default function VendorDealsPage() {
   const valueLabel = (d: VendorDeal) =>
     d.type === 'PERCENTAGE_OFF' ? `${d.value}%` : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(d.value / 100);
 
-  const input = 'rounded-md border border-slate-300 text-xs px-3 py-2 w-full bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500/40';
+  const input = 'rounded-lg border border-surface-300 text-xs px-3 py-2 w-full bg-white focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100';
 
   const columns: Array<DataTableColumn<VendorDeal>> = [
     {
@@ -181,8 +181,8 @@ export default function VendorDealsPage() {
       sortValue: d => d.name,
       render: d => (
         <div>
-          <p className="font-semibold text-slate-800">{d.name}</p>
-          <p className="text-slate-400 text-[10px]">{d.type} · {d.slug}</p>
+          <p className="font-semibold text-surface-800">{d.name}</p>
+          <p className="text-surface-400 text-[10px]">{d.type} · {d.slug}</p>
         </div>
       ),
     },
@@ -191,9 +191,9 @@ export default function VendorDealsPage() {
       key: 'window',
       label: 'Window',
       render: d => (
-        <span className="whitespace-nowrap text-slate-500">
+        <span className="whitespace-nowrap text-surface-500">
           {new Date(d.startsAt).toLocaleDateString()} → {new Date(d.endsAt).toLocaleDateString()}
-          <p className="text-slate-400 text-[10px]">{d.usedCount} uses</p>
+          <p className="text-surface-400 text-[10px]">{d.usedCount} uses</p>
         </span>
       ),
     },
@@ -211,7 +211,7 @@ export default function VendorDealsPage() {
             disabled={busyId === d.id || copyBusyId === d.id}
             onClick={() => generateCopy(d)}
             title="Generate AI deal copy"
-            className="rounded-md border border-indigo-200 text-indigo-600 text-[10px] font-bold px-2.5 py-1.5 hover:bg-indigo-50 disabled:opacity-50 mr-1.5 transition-colors"
+            className="rounded-lg border border-brand-200 text-brand-600 text-[10px] font-bold px-2.5 py-1.5 hover:bg-brand-50 disabled:opacity-50 mr-1.5 transition-colors"
           >
             {copyBusyId === d.id ? 'Generating…' : 'AI copy'}
           </button>
@@ -221,7 +221,7 @@ export default function VendorDealsPage() {
             onClick={() => toggleEnabled(d)}
             className={
               (d.enabled ? 'bg-amber-600 hover:bg-amber-500' : 'bg-emerald-600 hover:bg-emerald-500') +
-              ' text-white text-[10px] font-bold px-2.5 py-1.5 rounded-md transition-colors disabled:opacity-50 mr-1.5'
+              ' text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50 mr-1.5'
             }
           >
             {d.enabled ? 'Disable' : 'Enable'}
@@ -230,7 +230,7 @@ export default function VendorDealsPage() {
             type="button"
             disabled={busyId === d.id}
             onClick={() => removeDeal(d)}
-            className="rounded-md border border-red-300 text-red-700 text-[10px] font-bold px-2.5 py-1.5 hover:bg-red-50 disabled:opacity-50"
+            className="rounded-lg border border-red-300 text-red-700 text-[10px] font-bold px-2.5 py-1.5 hover:bg-red-50 disabled:opacity-50"
           >Delete</button>
         </span>
       ),
@@ -242,58 +242,58 @@ export default function VendorDealsPage() {
       <PageHeader title="Deal Studio" subtitle="Create and manage promotions for your products" />
 
       <div className="mb-4 flex items-center justify-between">
-        <span className="text-xs text-slate-400">{deals ? `${deals.length} deals` : ''}</span>
-        <button type="button" onClick={() => setShowForm(s => !s)} className="rounded-md bg-slate-900 text-white text-xs font-bold px-3 py-2 hover:bg-slate-700 transition-colors">
+        <span className="text-xs text-surface-400">{deals ? `${deals.length} deals` : ''}</span>
+        <button type="button" onClick={() => setShowForm(s => !s)} className="rounded-lg bg-surface-900 text-white text-xs font-bold px-3 py-2 hover:bg-surface-800 transition-colors">
           {showForm ? 'Cancel' : '+ New deal'}
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={createDeal} className="bg-surface-raised rounded-xl border border-slate-200 p-5 mb-6 grid gap-4 sm:grid-cols-2">
+        <form onSubmit={createDeal} className="bg-white rounded-xl border border-surface-200 p-5 mb-6 grid gap-4 sm:grid-cols-2 shadow-xs">
           <div className="sm:col-span-2">
-            <label htmlFor="d-name" className="block text-xs font-semibold text-slate-600 mb-1">Name</label>
+            <label htmlFor="d-name" className="block text-xs font-semibold text-surface-600 mb-1">Name</label>
             <input id="d-name" required value={form.name} onChange={e => set('name', e.target.value)} placeholder="Summer Grill Sale" className={input} />
           </div>
           <div className="sm:col-span-2">
-            <label htmlFor="d-desc" className="block text-xs font-semibold text-slate-600 mb-1">Description</label>
+            <label htmlFor="d-desc" className="block text-xs font-semibold text-surface-600 mb-1">Description</label>
             <input id="d-desc" value={form.description} onChange={e => set('description', e.target.value)} placeholder="Optional" className={input} />
           </div>
           <div>
-            <label htmlFor="d-type" className="block text-xs font-semibold text-slate-600 mb-1">Type</label>
+            <label htmlFor="d-type" className="block text-xs font-semibold text-surface-600 mb-1">Type</label>
             <select id="d-type" value={form.type} onChange={e => set('type', e.target.value)} className={input}>
               {DEAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
           <div>
-            <label htmlFor="d-value" className="block text-xs font-semibold text-slate-600 mb-1">Value <span className="text-slate-400">(minor units)</span></label>
+            <label htmlFor="d-value" className="block text-xs font-semibold text-surface-600 mb-1">Value <span className="text-surface-400">(minor units)</span></label>
             <input id="d-value" required type="number" min="0" step="any" value={form.value} onChange={e => set('value', e.target.value)} className={input} />
           </div>
           <div>
-            <label htmlFor="d-min" className="block text-xs font-semibold text-slate-600 mb-1">Min order</label>
+            <label htmlFor="d-min" className="block text-xs font-semibold text-surface-600 mb-1">Min order</label>
             <input id="d-min" type="number" min="0" value={form.minOrderAmount} onChange={e => set('minOrderAmount', e.target.value)} className={input} />
           </div>
           <div>
-            <label htmlFor="d-maxdiscount" className="block text-xs font-semibold text-slate-600 mb-1">Max discount</label>
+            <label htmlFor="d-maxdiscount" className="block text-xs font-semibold text-surface-600 mb-1">Max discount</label>
             <input id="d-maxdiscount" type="number" min="0" value={form.maxDiscount} onChange={e => set('maxDiscount', e.target.value)} className={input} />
           </div>
           <div>
-            <label htmlFor="d-maxuses" className="block text-xs font-semibold text-slate-600 mb-1">Max uses / customer</label>
+            <label htmlFor="d-maxuses" className="block text-xs font-semibold text-surface-600 mb-1">Max uses / customer</label>
             <input id="d-maxuses" type="number" min="1" value={form.maxUsesPerCustomer} onChange={e => set('maxUsesPerCustomer', e.target.value)} className={input} />
           </div>
           <div>
-            <label htmlFor="d-totaluses" className="block text-xs font-semibold text-slate-600 mb-1">Total uses cap</label>
+            <label htmlFor="d-totaluses" className="block text-xs font-semibold text-surface-600 mb-1">Total uses cap</label>
             <input id="d-totaluses" type="number" min="1" value={form.totalUses} onChange={e => set('totalUses', e.target.value)} className={input} />
           </div>
           <div>
-            <label htmlFor="d-start" className="block text-xs font-semibold text-slate-600 mb-1">Starts</label>
+            <label htmlFor="d-start" className="block text-xs font-semibold text-surface-600 mb-1">Starts</label>
             <input id="d-start" type="datetime-local" value={form.startsAt} onChange={e => set('startsAt', e.target.value)} className={input} />
           </div>
           <div>
-            <label htmlFor="d-end" className="block text-xs font-semibold text-slate-600 mb-1">Ends</label>
+            <label htmlFor="d-end" className="block text-xs font-semibold text-surface-600 mb-1">Ends</label>
             <input id="d-end" type="datetime-local" value={form.endsAt} onChange={e => set('endsAt', e.target.value)} className={input} />
           </div>
           <div>
-            <label htmlFor="d-region" className="block text-xs font-semibold text-slate-600 mb-1">Region</label>
+            <label htmlFor="d-region" className="block text-xs font-semibold text-surface-600 mb-1">Region</label>
             <select id="d-region" value={form.regionKey} onChange={e => set('regionKey', e.target.value)} className={input}>
               <option value="">All regions</option>
               <option value="UK">UK</option>
@@ -302,26 +302,26 @@ export default function VendorDealsPage() {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Products on deal</label>
-            <div className="max-h-32 overflow-auto rounded-md border border-slate-200 bg-surface-raised p-2 space-y-1">
+            <label className="block text-xs font-semibold text-surface-600 mb-1">Products on deal</label>
+            <div className="max-h-32 overflow-auto rounded-lg border border-surface-200 bg-surface-50 p-2 space-y-1">
               {products.map(p => (
-                <label key={p.id} className="flex items-center gap-2 text-xs text-slate-700">
-                  <input type="checkbox" checked={form.productIds.includes(p.id)} onChange={() => toggleProduct(p.id)} />
+                <label key={p.id} className="flex items-center gap-2 text-xs text-surface-700">
+                  <input type="checkbox" checked={form.productIds.includes(p.id)} onChange={() => toggleProduct(p.id)} className="accent-[var(--color-brand-600)]" />
                   <span className="truncate">{p.name}</span>
                 </label>
               ))}
-              {products.length === 0 && <p className="text-slate-400 text-xs">No active products.</p>}
+              {products.length === 0 && <p className="text-surface-400 text-xs">No active products.</p>}
             </div>
           </div>
           <div className="sm:col-span-2 flex justify-end">
-            <button type="submit" disabled={submitting} className="rounded-md bg-emerald-600 text-white text-xs font-bold px-4 py-2 hover:bg-emerald-500 transition-colors disabled:opacity-50">
+            <button type="submit" disabled={submitting} className="rounded-lg bg-brand-600 text-white text-xs font-bold px-4 py-2 hover:bg-brand-700 transition-colors disabled:opacity-50">
               {submitting ? 'Creating…' : 'Create deal'}
             </button>
           </div>
         </form>
       )}
 
-      {error && <p role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+      {error && <p role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
 
       <DataTable
         columns={columns}
@@ -330,37 +330,37 @@ export default function VendorDealsPage() {
         rowKey={d => d.id}
         emptyTitle="No deals yet"
         emptyAction={
-          <p className="text-xs text-slate-400">Create a deal to start promoting your products.</p>
+          <p className="text-xs text-surface-400">Create a deal to start promoting your products.</p>
         }
         caption="Your deals"
       />
 
       {copyResult && (
-        <div className="mt-4 bg-surface-raised rounded-xl border border-slate-200 p-5">
+        <div className="mt-4 bg-white rounded-xl border border-surface-200 p-5 shadow-xs">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-slate-800">AI Deal Copy</h3>
-            <button type="button" onClick={() => setCopyResult(null)} className="text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors">Close</button>
+            <h3 className="text-sm font-bold text-surface-800">AI Deal Copy</h3>
+            <button type="button" onClick={() => setCopyResult(null)} className="text-xs font-semibold text-surface-400 hover:text-surface-600 transition-colors">Close</button>
           </div>
           <dl className="grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
-              <dt className="font-semibold text-slate-500 mb-1">Headline</dt>
-              <dd className="font-bold text-slate-800">{copyResult.headline}</dd>
+            <div className="rounded-lg border border-surface-200 p-3 bg-surface-50">
+              <dt className="font-semibold text-surface-500 mb-1">Headline</dt>
+              <dd className="font-bold text-surface-800">{copyResult.headline}</dd>
             </div>
-            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
-              <dt className="font-semibold text-slate-500 mb-1">Subheadline</dt>
-              <dd className="text-slate-700">{copyResult.subheadline}</dd>
+            <div className="rounded-lg border border-surface-200 p-3 bg-surface-50">
+              <dt className="font-semibold text-surface-500 mb-1">Subheadline</dt>
+              <dd className="text-surface-700">{copyResult.subheadline}</dd>
             </div>
-            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
-              <dt className="font-semibold text-slate-500 mb-1">Hook</dt>
-              <dd className="text-slate-700">{copyResult.hook}</dd>
+            <div className="rounded-lg border border-surface-200 p-3 bg-surface-50">
+              <dt className="font-semibold text-surface-500 mb-1">Hook</dt>
+              <dd className="text-surface-700">{copyResult.hook}</dd>
             </div>
-            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
-              <dt className="font-semibold text-slate-500 mb-1">Urgency</dt>
-              <dd className="text-slate-700">{copyResult.urgency}</dd>
+            <div className="rounded-lg border border-surface-200 p-3 bg-surface-50">
+              <dt className="font-semibold text-surface-500 mb-1">Urgency</dt>
+              <dd className="text-surface-700">{copyResult.urgency}</dd>
             </div>
-            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
-              <dt className="font-semibold text-slate-500 mb-1">CTA</dt>
-              <dd className="font-bold text-indigo-700">{copyResult.cta}</dd>
+            <div className="rounded-lg border border-surface-200 p-3 bg-surface-50">
+              <dt className="font-semibold text-surface-500 mb-1">CTA</dt>
+              <dd className="font-bold text-brand-700">{copyResult.cta}</dd>
             </div>
           </dl>
           <div className="mt-3 flex gap-2 flex-wrap">
@@ -369,7 +369,7 @@ export default function VendorDealsPage() {
                 key={label}
                 type="button"
                 onClick={() => navigator.clipboard.writeText(value).catch(() => {})}
-                className="text-[10px] font-bold px-2.5 py-1.5 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors"
+                className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-surface-300 text-surface-600 hover:bg-surface-50 transition-colors"
               >
                 Copy {label}
               </button>

@@ -86,7 +86,7 @@ function OrdersInner() {
       sortable: true,
       sortValue: r => r.orderNumber,
       render: r => (
-        <Link href={`/orders/${r.id}`} className="font-mono font-semibold text-indigo-700 hover:underline">
+        <Link href={`/orders/${r.id}`} className="font-mono font-semibold text-brand-700 hover:underline">
           #{r.orderNumber}
         </Link>
       ),
@@ -131,12 +131,12 @@ function OrdersInner() {
       <PageHeader title="Orders" subtitle="Every order containing your items" />
 
       <div className="flex flex-wrap items-center gap-2 mb-3" data-testid="order-filters">
-        <label htmlFor="f-status" className="text-xs font-semibold text-slate-600">Status</label>
+        <label htmlFor="f-status" className="text-xs font-semibold text-surface-600">Status</label>
         <select
           id="f-status"
           value={status}
           onChange={e => setParam('status', e.target.value)}
-          className="h-8 rounded-md border border-slate-300 bg-surface-raised px-2 text-xs focus:border-indigo-500 outline-none"
+          className="h-8 rounded-lg border border-surface-300 bg-white px-2 text-xs focus:border-brand-500 outline-none"
         >
           {STATUS_OPTIONS.map(s => (
             <option key={s} value={s}>{s === '' ? 'All statuses' : s}</option>
@@ -150,25 +150,25 @@ function OrdersInner() {
           onKeyDown={e => { if (e.key === 'Enter') setParam('q', (e.target as HTMLInputElement).value); }}
           onBlur={e => setParam('q', e.target.value)}
           placeholder="Search SKU or order #…"
-          className="h-8 w-56 rounded-md border border-slate-300 bg-surface-raised px-2.5 text-xs placeholder:text-slate-400 focus:border-indigo-500 outline-none"
+          className="h-8 w-56 rounded-lg border border-surface-300 bg-white px-2.5 text-xs placeholder:text-surface-400 focus:border-brand-500 outline-none"
         />
 
         {selected.size > 0 && (
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-slate-500 font-medium">{selected.size} selected</span>
+            <span className="text-xs text-surface-500 font-medium">{selected.size} selected</span>
             <button
               type="button"
               onClick={bulkShip}
               disabled={bulkBusy}
               data-testid="bulk-ship"
-              className="h-8 px-3 rounded-md bg-indigo-600 text-white text-[11px] font-bold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              className="h-8 px-3 rounded-lg bg-surface-900 text-white text-[11px] font-bold hover:bg-surface-800 disabled:opacity-50 transition-colors"
             >
               {bulkBusy ? 'Shipping…' : 'Mark as Shipped'}
             </button>
             <button
               type="button"
               onClick={() => window.print()}
-              className="h-8 px-3 rounded-md border border-slate-300 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+              className="h-8 px-3 rounded-lg border border-surface-300 text-[11px] font-semibold text-surface-700 hover:bg-surface-50"
             >
               Print packing slips
             </button>
@@ -176,7 +176,7 @@ function OrdersInner() {
         )}
       </div>
 
-      {error && <p role="alert" className="mb-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-md px-3 py-2">{error}</p>}
+      {error && <div role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</div>}
 
       <DataTable
         columns={columns}
@@ -187,7 +187,7 @@ function OrdersInner() {
         selectedKeys={selected}
         onSelectionChange={setSelected}
         emptyTitle="No orders yet"
-        emptyAction={<Link href="/products" className="text-xs font-semibold text-indigo-600 hover:underline">List a product →</Link>}
+        emptyAction={<Link href="/products" className="text-xs font-semibold text-brand-600 hover:underline">List a product →</Link>}
         caption="Orders containing this store's items"
       />
     </VendorShell>
@@ -196,7 +196,7 @@ function OrdersInner() {
 
 export default function VendorOrdersPage() {
   return (
-    <Suspense fallback={<div className="h-64 rounded-lg bg-surface-raised border border-slate-200 animate-pulse" />}>
+    <Suspense fallback={<div className="h-64 rounded-xl bg-white border border-surface-200 animate-pulse" />}>
       <OrdersInner />
     </Suspense>
   );

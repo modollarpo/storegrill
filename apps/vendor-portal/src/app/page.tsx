@@ -71,10 +71,10 @@ export default function VendorDashboardPage() {
     <VendorShell>
       <PageHeader title="Dashboard" subtitle="Today at a glance" />
 
-      {error && <p role="alert" className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-md px-4 py-3">Failed to load dashboard.</p>}
+      {error && <div role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4">Failed to load dashboard.</div>}
       {!data && !error && (
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-surface-raised rounded-lg border border-slate-200 animate-pulse" />)}
+          {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-white rounded-xl border border-surface-200 animate-pulse" />)}
         </div>
       )}
 
@@ -100,7 +100,7 @@ export default function VendorDashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6 mb-8">
             {/* Sales bar chart */}
-            <section aria-labelledby="sales-heading" className="bg-surface-raised rounded-2xl border border-surface-200 p-6 shadow-sm">
+            <section aria-labelledby="sales-heading" className="bg-white rounded-2xl border border-surface-200 p-6 shadow-xs">
               <div className="mb-6">
                 <h2 id="sales-heading" className="text-base font-extrabold text-surface-900">Sales by day</h2>
                 <p className="text-xs font-medium text-surface-500 mt-1">Derived from your most recent order items (last 7 days)</p>
@@ -126,7 +126,7 @@ export default function VendorDashboardPage() {
             </section>
 
             {/* Action items */}
-            <section aria-labelledby="actions-heading" className="bg-surface-raised rounded-2xl border border-surface-200 p-6 shadow-sm">
+            <section aria-labelledby="actions-heading" className="bg-white rounded-2xl border border-surface-200 p-6 shadow-xs">
               <h2 id="actions-heading" className="text-base font-extrabold text-surface-900 mb-5">Action items</h2>
               <ul className="space-y-3 text-sm">
                 <ActionItem
@@ -141,7 +141,7 @@ export default function VendorDashboardPage() {
           </div>
 
           {/* Recent orders */}
-          <section aria-labelledby="recent-heading" className="bg-surface-raised rounded-2xl border border-surface-200 overflow-hidden shadow-sm">
+          <section aria-labelledby="recent-heading" className="bg-white rounded-2xl border border-surface-200 overflow-hidden shadow-xs">
             <div className="flex items-center justify-between px-6 py-5 border-b border-surface-100">
               <h2 id="recent-heading" className="text-base font-extrabold text-surface-900">Recent orders</h2>
               <Link href="/orders" className="text-sm font-bold text-brand-600 hover:text-brand-700 transition-colors">View all →</Link>
@@ -159,37 +159,37 @@ function ApplicationPending({ application }: { application: ApplicationState }) 
   return (
     <VendorShell>
       <PageHeader title="Seller application" subtitle="Your application status" />
-      <div className="bg-surface-raised rounded-lg border border-slate-200 p-8 text-center max-w-xl mx-auto mt-6" data-testid="applicant-state">
+      <div className="bg-white rounded-xl border border-surface-200 shadow-xs p-8 text-center max-w-xl mx-auto mt-6" data-testid="applicant-state">
         <span
           aria-hidden="true"
-          className={`inline-grid place-items-center w-12 h-12 rounded-full text-xl font-bold ${isRejected ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700'}`}
+          className={`inline-grid place-items-center w-12 h-12 rounded-full text-xl font-bold ${isRejected ? 'bg-red-100 text-red-700' : 'bg-brand-100 text-brand-700'}`}
         >
           {isRejected ? '✕' : '⏳'}
         </span>
-        <h2 className="text-base font-bold text-slate-900 mt-4">
+        <h2 className="text-base font-bold text-surface-900 mt-4">
           {application.status === 'UNDER_REVIEW' && 'Application under review'}
           {application.status === 'PENDING' && 'Application not submitted yet'}
           {application.status === 'REJECTED' && 'Application declined'}
           {!['UNDER_REVIEW', 'PENDING', 'REJECTED'].includes(application.status) && application.status}
         </h2>
         {application.submittedAt && (
-          <p className="text-xs text-slate-400 mt-1">Submitted {new Date(application.submittedAt).toLocaleDateString()}</p>
+          <p className="text-xs text-surface-400 mt-1">Submitted {new Date(application.submittedAt).toLocaleDateString()}</p>
         )}
-        <p className="text-sm text-slate-600 mt-3 leading-relaxed">
+        <p className="text-sm text-surface-600 mt-3 leading-relaxed">
           {application.status === 'UNDER_REVIEW' && 'Our team reviews new applications within two working days. We will email your decision — this dashboard unlocks automatically once your store is approved.'}
           {application.status === 'PENDING' && 'You started an application but have not submitted it yet. Finish the remaining steps to send it for review.'}
           {isRejected && 'We were unable to approve your application. You can update your answers and reapply at any time.'}
         </p>
         {isRejected && application.reviewNotes && (
-          <div className="mt-4 rounded-md bg-rose-50 border border-rose-200 px-4 py-3 text-left">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-rose-700 mb-1">Reviewer notes</p>
-            <p className="text-xs text-slate-600 leading-relaxed">{application.reviewNotes}</p>
+          <div className="mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-left">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-red-700 mb-1">Reviewer notes</p>
+            <p className="text-xs text-surface-600 leading-relaxed">{application.reviewNotes}</p>
           </div>
         )}
         {application.status !== 'UNDER_REVIEW' && (
           <a
             href={process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3000/vendor/apply'}
-            className="inline-block mt-5 rounded-md bg-primary-500 text-white text-xs font-bold px-5 py-2.5 hover:bg-primary-600"
+            className="inline-block mt-5 rounded-lg bg-surface-900 text-white text-xs font-bold px-5 py-2.5 hover:bg-surface-700 transition-colors"
           >
             {application.status === 'PENDING' ? 'Continue application' : 'Reapply'}
           </a>
@@ -207,7 +207,7 @@ function RecentOrders({ orders }: { orders: Dashboard['recentOrders'] }) {
       sortable: true,
       sortValue: r => r.order?.orderNumber ?? '',
       render: r => (
-        <Link href={`/orders/${r.order?.id ?? ''}`} className="font-mono font-semibold text-indigo-700 hover:underline">
+        <Link href={`/orders/${r.order?.id ?? ''}`} className="font-mono font-semibold text-brand-700 hover:underline">
           #{r.order?.orderNumber}
         </Link>
       ),
@@ -231,7 +231,7 @@ function RecentOrders({ orders }: { orders: Dashboard['recentOrders'] }) {
       rows={orders}
       rowKey={r => r.id}
       emptyTitle="No orders yet"
-      emptyAction={<Link href="/products" className="text-xs font-semibold text-indigo-600 hover:underline">List a product →</Link>}
+      emptyAction={<Link href="/products" className="text-xs font-semibold text-brand-600 hover:underline">List a product →</Link>}
       pageSize={5}
       caption="Five most recent order items"
     />

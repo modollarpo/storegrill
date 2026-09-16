@@ -17,13 +17,12 @@ const NAV: Array<{ label: string; href: string; icon: string }> = [
   { label: 'Settings', href: '/settings', icon: 'M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
 ];
 
-const REGIONS = [
-  { key: 'UK', currency: 'GBP', flag: '🇬🇧' },
-  { key: 'US', currency: 'USD', flag: '🇺🇸' },
-  { key: 'DE', currency: 'EUR', flag: '🇩🇪' },
-  { key: 'FR', currency: 'EUR', flag: '🇫🇷' },
-  { key: 'JP', currency: 'JPY', flag: '🇯🇵' },
-];
+function getEnvironment(): { label: string; isProd: boolean } {
+  if (typeof window === 'undefined') return { label: 'dev', isProd: false };
+  const host = window.location.hostname;
+  if (host === 'localhost' || host.endsWith('.local')) return { label: 'dev', isProd: false };
+  return { label: host.split('-')[0]?.toUpperCase() ?? 'PROD', isProd: true };
+}
 
 export function VendorShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -32,11 +31,11 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
   const [applicantMode, setApplicantMode] = useState(false);
   const [checking, setChecking] = useState(true);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [region, setRegion] = useState('UK');
   const [notifications, setNotifications] = useState<Array<{ id: string; text: string; kind: string }>>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const bellRef = useRef<HTMLDivElement>(null);
+  const env = getEnvironment();
 
   useEffect(() => {
     api<{ user: { name: string; email: string; role: string } }>('/api/v1/auth/me')
@@ -107,7 +106,7 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
   if (applicantMode) {
     return (
       <div className="min-h-screen bg-surface-50">
-        <header className="bg-surface-raised border-b border-surface-200 px-6 py-4 flex items-center justify-between">
+        <header className="bg-white border-b border-surface-200 px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 font-extrabold">S</div>
             <div>
@@ -115,7 +114,7 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
               <span className="text-[10px] font-bold uppercase tracking-widest text-surface-400 block mt-0.5">Seller Portal</span>
             </div>
           </Link>
-          <button type="button" onClick={signOut} className="rounded-md border border-surface-200 text-surface-600 text-xs font-semibold px-3 py-1.5 hover:bg-surface-100">
+          <button type="button" onClick={signOut} className="h-8 px-3 rounded-lg border border-surface-200 text-surface-600 text-xs font-semibold hover:bg-surface-50 transition-colors">
             Sign out
           </button>
         </header>
@@ -126,35 +125,37 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-surface-50 flex">
-      {/* Sidebar Navigation */}
+      {/* Sidebar */}
       <aside
         className={cn(
-          'w-[250px] shrink-0 bg-surface-raised border-r border-surface-200 flex flex-col sticky top-0 h-screen',
+          'w-[240px] shrink-0 bg-white border-r border-surface-200 flex flex-col sticky top-0 h-screen',
           'max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:top-0 max-lg:h-full max-lg:z-50 max-lg:shadow-2xl max-lg:transition-transform',
           mobileNavOpen ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'
         )}
         aria-label="Portal navigation"
       >
-        <div className="px-6 py-5 border-b border-surface-100 flex items-center justify-between">
+        {/* Brand header */}
+        <div className="px-5 py-5 border-b border-surface-100 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center text-brand-600 font-extrabold group-hover:bg-brand-100 transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
               S
             </div>
             <div>
-              <span className="text-sm font-extrabold text-surface-900 leading-none block">StoreGrill</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-surface-400 block mt-0.5">Seller Portal</span>
+              <span className="text-[13px] font-extrabold text-surface-900 leading-none block">StoreGrill</span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-surface-400 block mt-0.5">Seller Portal</span>
             </div>
           </Link>
           <button
             type="button"
-            className="lg:hidden p-2 text-surface-400 hover:bg-surface-100 rounded-md"
+            className="lg:hidden p-2 text-surface-400 hover:bg-surface-100 rounded-lg"
             onClick={() => setMobileNavOpen(false)}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
-        
-        <nav className="flex-1 py-4 px-3 overflow-y-auto space-y-1">
+
+        {/* Nav */}
+        <nav className="flex-1 py-3 px-3 overflow-y-auto space-y-0.5">
           {NAV.map(item => {
             const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
             return (
@@ -164,13 +165,13 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
                 onClick={() => setMobileNavOpen(false)}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all group',
+                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all',
                   active
-                    ? 'bg-brand-50 text-brand-700'
-                    : 'text-surface-600 hover:bg-surface-100 hover:text-surface-900'
+                    ? 'bg-brand-50 text-brand-700 border-l-[3px] border-brand-600 -ml-0.5 pl-[9px]'
+                    : 'text-surface-600 hover:bg-surface-50 hover:text-surface-900'
                 )}
               >
-                <svg className={cn('w-4.5 h-4.5 shrink-0 transition-colors', active ? 'text-brand-600' : 'text-surface-400 group-hover:text-surface-500')} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <svg className={cn('w-[18px] h-[18px] shrink-0 transition-colors', active ? 'text-brand-600' : 'text-surface-400')} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
                   <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                 </svg>
                 {item.label}
@@ -179,23 +180,23 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-surface-100">
-          <div className="rounded-xl bg-gradient-to-br from-surface-900 to-surface-950 p-4 shadow-md text-white relative overflow-hidden group">
-            <div className="absolute -right-4 -top-4 w-16 h-16 bg-surface-raised/10 rounded-full blur-xl group-hover:bg-brand-400/20 transition-colors" />
-            <p className="text-[11px] font-extrabold uppercase tracking-wider text-brand-400 mb-1">Global Reach</p>
-            <p className="text-xs text-white/90 font-medium leading-relaxed">Your products are automatically live across all regions.</p>
+        {/* Bottom promo card */}
+        <div className="p-3 border-t border-surface-100">
+          <div className="rounded-xl bg-gradient-to-br from-surface-900 to-surface-950 p-4 shadow-md text-white relative overflow-hidden">
+            <p className="text-[10px] font-extrabold uppercase tracking-wider text-brand-400 mb-1">Global Reach</p>
+            <p className="text-[11px] text-white/80 font-medium leading-relaxed">Your products are automatically live across all regions.</p>
           </div>
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-        {/* Top Header */}
-        <header className="sticky top-0 z-40 h-16 bg-surface-raised/80 backdrop-blur-md border-b border-surface-200 flex items-center justify-between px-4 lg:px-8">
+        {/* Top header */}
+        <header className="sticky top-0 z-40 h-14 bg-white/80 backdrop-blur-md border-b border-surface-200 flex items-center justify-between px-4 lg:px-8">
           <div className="flex items-center gap-3 flex-1">
             <button
               type="button"
-              className="lg:hidden p-2 -ml-2 text-surface-500 hover:bg-surface-100 rounded-md"
+              className="lg:hidden p-2 -ml-2 text-surface-500 hover:bg-surface-100 rounded-lg"
               onClick={() => setMobileNavOpen(true)}
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
@@ -209,47 +210,42 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search orders, SKUs…"
-                  className="w-full h-10 rounded-full bg-surface-100/50 border border-transparent pl-10 pr-4 text-sm font-medium placeholder:text-surface-400 focus:bg-surface-raised focus:border-brand-300 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all"
+                  className="w-full h-9 rounded-full bg-surface-50 border border-transparent pl-10 pr-4 text-xs font-medium placeholder:text-surface-400 focus:bg-white focus:border-brand-300 focus:ring-4 focus:ring-brand-50/10 outline-none transition-all"
                 />
               </div>
             </form>
           </div>
 
-          <div className="flex items-center gap-4 shrink-0">
-            <label className="hidden md:flex items-center gap-1.5 shrink-0 bg-surface-50 border border-surface-200 rounded-md px-2 py-1.5">
-              <select
-                value={region}
-                onChange={e => setRegion(e.target.value)}
-                className="bg-transparent text-xs font-bold text-surface-700 cursor-pointer outline-none border-none pr-1"
-              >
-                {REGIONS.map(r => (
-                  <option key={r.key} value={r.key}>{r.flag} {r.currency}</option>
-                ))}
-              </select>
-            </label>
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Env badge */}
+            <span className="hidden md:inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider border border-surface-200 bg-surface-50 rounded-md px-2 py-1 text-surface-600">
+              <span className={env.isProd ? 'w-1.5 h-1.5 rounded-full bg-emerald-500' : 'w-1.5 h-1.5 rounded-full bg-amber-500'} />
+              {env.label}
+            </span>
 
+            {/* Notifications */}
             <div ref={bellRef} className="relative">
               <button
                 type="button"
                 onClick={() => setShowNotifications(s => !s)}
                 className="relative p-2 rounded-full hover:bg-surface-100 text-surface-500 hover:text-surface-900 transition-colors"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
                 </svg>
                 {notifications.length > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
                 )}
               </button>
               {showNotifications && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-surface-raised rounded-xl shadow-lg border border-surface-200 overflow-hidden animate-in z-50">
-                  <p className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-surface-500 border-b border-surface-100 bg-surface-50">Alerts</p>
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-lg border border-surface-200 overflow-hidden z-50">
+                  <p className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-surface-500 border-b border-surface-100 bg-surface-50">Alerts</p>
                   {notifications.length === 0 ? (
                     <p className="px-4 py-8 text-center text-sm font-medium text-surface-400">All caught up.</p>
                   ) : (
                     <ul className="divide-y divide-surface-100">
                       {notifications.map(n => (
-                         <li key={n.id} className="p-4 text-sm font-medium flex items-start gap-3 hover:bg-surface-50 transition-colors cursor-default">
+                        <li key={n.id} className="p-4 text-sm font-medium flex items-start gap-3 hover:bg-surface-50 transition-colors cursor-default">
                           <span className={cn("w-2 h-2 rounded-full mt-1.5 shrink-0", n.kind === 'error' ? 'bg-red-500' : 'bg-amber-500')} />
                           <span className="text-surface-700">{n.text}</span>
                         </li>
@@ -260,33 +256,35 @@ export function VendorShell({ children }: { children: React.ReactNode }) {
               )}
             </div>
 
-            <div className="relative group shrink-0 ml-2 border-l border-surface-200 pl-4">
+            {/* User menu */}
+            <div className="relative group shrink-0 border-l border-surface-200 pl-3">
               <button className="flex items-center gap-2.5 outline-none">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-surface-800 to-surface-900 text-white flex items-center justify-center text-[11px] font-bold shadow-sm">
                   {(user?.name || user?.email || '?').slice(0, 1).toUpperCase()}
                 </div>
               </button>
               <div className="absolute right-0 top-full pt-2 hidden group-hover:block z-50">
-                <div className="w-56 bg-surface-raised rounded-xl shadow-lg border border-surface-200 p-2 animate-in">
-                  <div className="px-3 py-2 border-b border-surface-100 mb-2">
-                    <p className="text-sm font-bold text-surface-900 truncate">{user?.name}</p>
-                    <p className="text-xs text-surface-500 truncate">{user?.email}</p>
+                <div className="w-56 bg-white rounded-xl shadow-lg border border-surface-200 p-1.5">
+                  <div className="px-3 py-2 border-b border-surface-100 mb-1">
+                    <p className="text-[13px] font-bold text-surface-900 truncate">{user?.name}</p>
+                    <p className="text-[11px] text-surface-500 truncate">{user?.email}</p>
                   </div>
-                  <Link href="/profile" className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-surface-700 hover:bg-surface-100 rounded-md transition-colors">Store Profile</Link>
-                  <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-surface-700 hover:bg-surface-100 rounded-md transition-colors">Settings</Link>
-                  <button onClick={signOut} className="w-full text-left flex items-center gap-2 px-3 py-2 mt-1 text-sm font-bold text-red-600 hover:bg-red-50 rounded-md transition-colors">Sign out</button>
+                  <Link href="/profile" className="flex items-center gap-2 px-3 py-2 text-[13px] font-medium text-surface-700 hover:bg-surface-50 rounded-lg transition-colors">Store Profile</Link>
+                  <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-[13px] font-medium text-surface-700 hover:bg-surface-50 rounded-lg transition-colors">Settings</Link>
+                  <button onClick={signOut} className="w-full text-left flex items-center gap-2 px-3 py-2 mt-1 text-[13px] font-bold text-red-600 hover:bg-red-50 rounded-lg transition-colors">Sign out</button>
                 </div>
               </div>
             </div>
           </div>
         </header>
 
+        {/* Content */}
         <main className="flex-1 min-w-0 p-6 lg:p-10">
           <div className="max-w-6xl mx-auto">{children}</div>
         </main>
-        
+
         {mobileNavOpen && (
-          <div className="max-lg:fixed inset-0 z-40 bg-surface-900/40 backdrop-blur-sm lg:hidden animate-in" onClick={() => setMobileNavOpen(false)} />
+          <div className="max-lg:fixed inset-0 z-40 bg-surface-900/40 backdrop-blur-sm lg:hidden" onClick={() => setMobileNavOpen(false)} />
         )}
       </div>
       <Toaster />

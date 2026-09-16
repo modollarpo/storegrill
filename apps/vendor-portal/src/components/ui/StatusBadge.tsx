@@ -1,40 +1,42 @@
 import { cn } from '@/lib/utils';
 
-export type OrderStatusName =
-  | 'PENDING' | 'CONFIRMED' | 'PAID' | 'PROCESSING'
-  | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED';
-
 export interface StatusBadgeProps {
   status: string;
   size?: 'sm' | 'md';
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  PENDING: 'bg-amber-50 text-amber-700 ring-amber-600/20',
-  CONFIRMED: 'bg-sky-50 text-sky-700 ring-sky-600/20',
-  PAID: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-  PROCESSING: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-  SHIPPED: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20',
-  IN_TRANSIT: 'bg-indigo-50 text-indigo-700 ring-indigo-600/20',
-  DELIVERED: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
-  CANCELLED: 'bg-rose-50 text-rose-700 ring-rose-600/20',
-  REFUNDED: 'bg-purple-50 text-purple-700 ring-purple-600/20',
-  FAILED: 'bg-rose-50 text-rose-700 ring-rose-600/20',
-  COMPLETED: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
-  RUNNING: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-  ACTIVE: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
-  INACTIVE: 'bg-slate-100 text-slate-600 ring-slate-500/20',
-  DRAFT: 'bg-slate-100 text-slate-600 ring-slate-500/20',
-  PENDING_REVIEW: 'bg-sky-50 text-sky-700 ring-sky-600/20',
+  PENDING: 'bg-amber-50 text-amber-700 border-amber-200/60',
+  CONFIRMED: 'bg-blue-50 text-blue-700 border-blue-200/60',
+  PAID: 'bg-blue-50 text-blue-700 border-blue-200/60',
+  PROCESSING: 'bg-amber-50 text-amber-700 border-amber-200/60',
+  SHIPPED: 'bg-sky-50 text-sky-700 border-sky-200/60',
+  IN_TRANSIT: 'bg-sky-50 text-sky-700 border-sky-200/60',
+  DELIVERED: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+  CANCELLED: 'bg-red-50 text-red-700 border-red-200/60',
+  REFUNDED: 'bg-purple-50 text-purple-700 border-purple-200/60',
+  FAILED: 'bg-red-50 text-red-700 border-red-200/60',
+  ERROR: 'bg-red-50 text-red-700 border-red-200/60',
+  COMPLETED: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+  RUNNING: 'bg-blue-50 text-blue-700 border-blue-200/60',
+  ACTIVE: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+  APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-200/60',
+  INACTIVE: 'bg-surface-50 text-surface-500 border-surface-200',
+  DRAFT: 'bg-surface-50 text-surface-500 border-surface-200',
+  PAUSED: 'bg-amber-50 text-amber-700 border-amber-200/60',
+  SUSPENDED: 'bg-red-50 text-red-700 border-red-200/60',
+  REJECTED: 'bg-red-50 text-red-700 border-red-200/60',
+  PENDING_REVIEW: 'bg-indigo-50 text-indigo-700 border-indigo-200/60',
+  UNDER_REVIEW: 'bg-indigo-50 text-indigo-700 border-indigo-200/60',
 };
 
 export function StatusBadge({ status, size = 'sm' }: StatusBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full font-semibold ring-1 ring-inset whitespace-nowrap [font-variant-numeric:tabular-nums]',
-        size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-xs',
-        STATUS_STYLES[status] ?? 'bg-slate-100 text-slate-600 ring-slate-500/20'
+        'inline-flex items-center font-bold uppercase tracking-wider border rounded-md whitespace-nowrap tabular-nums',
+        size === 'sm' ? 'px-2 py-0.5 text-[10px]' : 'px-2.5 py-1 text-[11px]',
+        STATUS_STYLES[status] ?? 'bg-surface-50 text-surface-600 border-surface-200'
       )}
     >
       {status.replace(/_/g, ' ')}

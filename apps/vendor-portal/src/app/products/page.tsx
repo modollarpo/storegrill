@@ -86,11 +86,11 @@ export default function VendorCatalogPage() {
       sortable: true,
       sortValue: p => p.name,
       render: p => (
-        <span className="block max-w-[280px] truncate font-semibold text-slate-800">{p.name}</span>
+        <span className="block max-w-[280px] truncate font-semibold text-surface-800">{p.name}</span>
       ),
     },
-    { key: 'sku', label: 'SKU', sortable: true, sortValue: p => p.sku, render: p => <span className="font-mono text-[10px] text-slate-500">{p.sku}</span> },
-    { key: 'category', label: 'Category', render: p => <span className="text-slate-500">{p.category?.name ?? '—'}</span> },
+    { key: 'sku', label: 'SKU', sortable: true, sortValue: p => p.sku, render: p => <span className="font-mono text-[10px] text-surface-500">{p.sku}</span> },
+    { key: 'category', label: 'Category', render: p => <span className="text-surface-500">{p.category?.name ?? '—'}</span> },
     {
       key: 'price',
       label: 'Price',
@@ -127,7 +127,7 @@ export default function VendorCatalogPage() {
               onClick={() => void saveStock(p)}
               disabled={savingId === p.id}
               aria-label={`Save stock for ${p.sku}`}
-              className="w-6 h-6 rounded bg-indigo-600 text-white grid place-items-center hover:bg-indigo-700 disabled:opacity-50"
+              className="w-6 h-6 rounded bg-brand-600 text-white grid place-items-center hover:bg-brand-700 disabled:opacity-50"
             >
               ✓
             </button>
@@ -135,7 +135,7 @@ export default function VendorCatalogPage() {
               type="button"
               onClick={() => setEditingId(null)}
               aria-label={`Cancel stock edit for ${p.sku}`}
-              className="w-6 h-6 rounded border border-slate-300 text-slate-500 grid place-items-center hover:bg-slate-50"
+              className="w-6 h-6 rounded border border-surface-300 text-surface-500 grid place-items-center hover:bg-surface-50"
             >
               ✕
             </button>
@@ -146,7 +146,7 @@ export default function VendorCatalogPage() {
             onClick={() => startEdit(p)}
             data-testid={`stock-${p.sku}`}
             aria-label={`Edit stock for ${p.sku}`}
-            className={p.variants?.[0]?.stock === 0 ? 'text-rose-600 font-bold hover:underline' : 'hover:text-indigo-600 hover:underline'}
+            className={p.variants?.[0]?.stock === 0 ? 'text-brand-600 font-bold hover:underline' : 'hover:text-brand-600 hover:underline'}
           >
             {(p.variants?.[0]?.stock ?? 0).toLocaleString()}
           </button>
@@ -162,7 +162,7 @@ export default function VendorCatalogPage() {
           <Link
             href={`/products/${p.id}/edit`}
             data-testid={`edit-${p.sku}`}
-            className="text-indigo-600 font-bold hover:underline"
+            className="text-brand-600 font-bold hover:underline"
           >
             Edit
           </Link>
@@ -171,7 +171,7 @@ export default function VendorCatalogPage() {
             onClick={() => void deleteProduct(p)}
             disabled={deletingId === p.id}
             aria-label={`Delete ${p.name}`}
-            className="text-rose-600 font-bold hover:underline disabled:opacity-50"
+            className="text-red-600 font-bold hover:underline disabled:opacity-50"
           >
             Delete
           </button>
@@ -188,14 +188,14 @@ export default function VendorCatalogPage() {
         <Link
           href="/products/new"
           data-testid="new-product"
-          className="inline-flex items-center gap-1.5 h-9 px-4 rounded-md bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+          className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-surface-900 text-white text-xs font-bold hover:bg-surface-800 transition-colors"
         >
           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M12 5v14m-7-7h14" /></svg>
           New product
         </Link>
       </div>
 
-      {error && <p role="alert" className="mb-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-md px-3 py-2">{error}</p>}
+      {error && <p role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
 
       <DataTable
         columns={columns}
@@ -204,7 +204,7 @@ export default function VendorCatalogPage() {
         rowKey={p => p.id}
         emptyTitle="Your catalog is empty"
         emptyAction={
-          <Link href="/products/new" className="text-xs font-semibold text-indigo-600 hover:underline">Add your first product →</Link>
+          <Link href="/products/new" className="text-xs font-semibold text-brand-600 hover:underline">Add your first product →</Link>
         }
         caption="Products in your catalog"
       />

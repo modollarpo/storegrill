@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
-import { VendorShell } from '@/components/VendorShell';
+import { VendorShell, PageHeader } from '@/components/VendorShell';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { toastSuccess, toastError } from '@/components/ui/Toast';
 import { inputClass } from '@/components/ui/FormLayout';
@@ -65,9 +65,9 @@ export default function VendorOrderDetailPage() {
   if (notFound) {
     return (
       <VendorShell>
-        <div className="bg-surface-raised rounded-lg border border-slate-200 p-12 text-center">
-          <p className="text-sm font-semibold text-slate-700">Order not found in your store.</p>
-          <Link href="/orders" className="text-xs font-semibold text-indigo-600 hover:underline mt-2 inline-block">← Back to orders</Link>
+        <div className="bg-white rounded-xl border border-surface-200 p-12 text-center shadow-xs">
+          <p className="text-sm font-semibold text-surface-700">Order not found in your store.</p>
+          <Link href="/orders" className="text-xs font-semibold text-brand-600 hover:underline mt-2 inline-block">← Back to orders</Link>
         </div>
       </VendorShell>
     );
@@ -75,49 +75,50 @@ export default function VendorOrderDetailPage() {
 
   return (
     <VendorShell>
-      <Link href="/orders" className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-indigo-600 mb-3">
-        <svg className="w-3 h-3 icon-directional" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+      <Link href="/orders" className="inline-flex items-center gap-1 text-xs font-medium text-surface-500 hover:text-brand-600 mb-3 transition-colors">
+        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
         All orders
       </Link>
 
       {!order ? (
         <div className="space-y-3">
-          <div className="h-20 rounded-lg bg-surface-raised border border-slate-200 animate-pulse" />
-          <div className="h-64 rounded-lg bg-surface-raised border border-slate-200 animate-pulse" />
+          <div className="h-20 rounded-xl bg-white border border-surface-200 animate-pulse" />
+          <div className="h-64 rounded-xl bg-white border border-surface-200 animate-pulse" />
         </div>
       ) : (
         <>
-          <header className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-5">
-            <h1 className="text-lg font-bold text-slate-900 font-mono">#{order.orderNumber}</h1>
+          <PageHeader
+            title={`Order #${order.orderNumber}`}
+            subtitle={`Placed ${new Date(order.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`}
+          />
+          <div className="flex items-center gap-3 mb-6">
             <StatusBadge status={order.status} size="md" />
-            <span className="text-xs text-slate-400 ml-auto">
-              Placed {new Date(order.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-            </span>
-          </header>
+            <span className="text-xs text-surface-400 ml-auto">{order.regionKey}</span>
+          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 items-start mb-4">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5 items-start mb-5">
             {/* Line items */}
-            <section aria-label="Your items in this order" className="bg-surface-raised rounded-lg border border-slate-200 overflow-hidden">
-              <h2 className="text-sm font-bold px-5 py-3.5 border-b border-slate-100">Items ({order.items.length})</h2>
-              <ul className="divide-y divide-slate-100">
+            <section aria-label="Your items in this order" className="bg-white rounded-xl border border-surface-200 overflow-hidden shadow-xs">
+              <h2 className="text-sm font-bold px-5 py-3.5 border-b border-surface-100 text-surface-900">Items ({order.items.length})</h2>
+              <ul className="divide-y divide-surface-100">
                 {order.items.map(item => (
                   <li key={item.id} className="px-5 py-3 flex items-center gap-4">
                     {item.image ? (
-                                            <img src={item.image} alt="" className="w-11 h-11 rounded-md object-contain border border-slate-100 bg-surface-raised p-0.5 shrink-0" />
+                      <img src={item.image} alt="" className="w-11 h-11 rounded-lg object-contain border border-surface-100 bg-surface-50 p-0.5 shrink-0" />
                     ) : (
-                      <span className="w-11 h-11 rounded-md bg-slate-100 shrink-0" aria-hidden="true" />
+                      <span className="w-11 h-11 rounded-lg bg-surface-100 shrink-0" aria-hidden="true" />
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-slate-800 truncate">{item.name}</p>
-                      <p className="text-[10px] text-slate-400 font-mono mt-0.5">SKU {item.sku} · Qty {item.quantity} · {money(item.unitPriceMinorUnits)} ea</p>
+                      <p className="text-xs font-semibold text-surface-800 truncate">{item.name}</p>
+                      <p className="text-[10px] text-surface-400 font-mono mt-0.5">SKU {item.sku} · Qty {item.quantity} · {money(item.unitPriceMinorUnits)} ea</p>
                     </div>
-                    <p className="text-xs font-bold [font-variant-numeric:tabular-nums]">{money(item.totalMinorUnits)}</p>
+                    <p className="text-xs font-bold [font-variant-numeric:tabular-nums] text-surface-900">{money(item.totalMinorUnits)}</p>
                   </li>
                 ))}
               </ul>
-              <div className="px-5 py-3 bg-slate-50/70 flex justify-between items-center border-t border-slate-100">
-                <span className="text-xs font-semibold text-slate-600">Your order subtotal</span>
-                <span className="text-sm font-bold [font-variant-numeric:tabular-nums]">
+              <div className="px-5 py-3 bg-surface-50 flex justify-between items-center border-t border-surface-100">
+                <span className="text-xs font-semibold text-surface-600">Your order subtotal</span>
+                <span className="text-sm font-bold [font-variant-numeric:tabular-nums] text-surface-900">
                   {money(order.items.reduce((s, i) => s + i.totalMinorUnits, 0), order.currencyCode)}
                 </span>
               </div>
@@ -125,11 +126,11 @@ export default function VendorOrderDetailPage() {
 
             {/* Right rail */}
             <div className="space-y-4">
-              <section aria-label="Customer and delivery" className="bg-surface-raised rounded-lg border border-slate-200 p-4 text-xs">
-                <h2 className="font-bold text-slate-900 mb-2">Delivery</h2>
-                <p className="text-slate-700">{order.customerName}</p>
-                {order.customerEmail && <p className="text-slate-400 mb-2">{order.customerEmail}</p>}
-                <address className="not-italic text-slate-500 leading-relaxed">
+              <section aria-label="Customer and delivery" className="bg-white rounded-xl border border-surface-200 p-4 text-xs shadow-xs">
+                <h2 className="font-bold text-surface-900 mb-2">Delivery</h2>
+                <p className="text-surface-700">{order.customerName}</p>
+                {order.customerEmail && <p className="text-surface-400 mb-2">{order.customerEmail}</p>}
+                <address className="not-italic text-surface-500 leading-relaxed">
                   {order.shippingAddress.street}
                   <br />
                   {[order.shippingAddress.city, order.shippingAddress.state].filter(Boolean).join(', ')} {order.shippingAddress.zip}
@@ -138,8 +139,8 @@ export default function VendorOrderDetailPage() {
                 </address>
               </section>
 
-              <section aria-label="Ship this order" className="bg-surface-raised rounded-lg border border-slate-200 p-4">
-                <h2 className="font-bold text-slate-900 text-xs mb-2.5">Fulfilment</h2>
+              <section aria-label="Ship this order" className="bg-white rounded-xl border border-surface-200 p-4 shadow-xs">
+                <h2 className="font-bold text-surface-900 text-xs mb-2.5">Fulfilment</h2>
                 <div className="space-y-2">
                   <label className="block">
                     <span className="sr-only">Carrier</span>
@@ -155,11 +156,11 @@ export default function VendorOrderDetailPage() {
                     disabled={shipping}
                     data-testid="mark-shipped"
                     aria-busy={shipping}
-                    className="w-full h-9 rounded-md bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                    className="w-full h-9 rounded-lg bg-surface-900 text-white text-xs font-bold hover:bg-surface-800 disabled:opacity-50 transition-colors"
                   >
                     {shipping ? 'Saving…' : 'Mark as Shipped'}
                   </button>
-                  <button type="button" disabled className="w-full h-9 rounded-md border border-slate-200 text-xs font-medium text-slate-400 cursor-not-allowed" title="Available once payment provider refunds are configured">
+                  <button type="button" disabled className="w-full h-9 rounded-lg border border-surface-200 text-xs font-medium text-surface-400 cursor-not-allowed" title="Available once payment provider refunds are configured">
                     Process refund
                   </button>
                 </div>
@@ -168,30 +169,30 @@ export default function VendorOrderDetailPage() {
           </div>
 
           {/* Timeline */}
-          <section aria-label="Shipment timeline" className="bg-surface-raised rounded-lg border border-slate-200 p-5">
-            <h2 className="text-sm font-bold text-slate-900 mb-3">Timeline</h2>
+          <section aria-label="Shipment timeline" className="bg-white rounded-xl border border-surface-200 p-5 shadow-xs">
+            <h2 className="text-sm font-bold text-surface-900 mb-3">Timeline</h2>
             {order.shipments.length === 0 ? (
-              <p className="text-xs text-slate-400">No shipments yet — add tracking above when you dispatch.</p>
+              <p className="text-xs text-surface-400">No shipments yet — add tracking above when you dispatch.</p>
             ) : (
-              <ol className="relative ml-2 border-l border-slate-200 space-y-4">
+              <ol className="relative ml-2 border-l border-surface-200 space-y-4">
                 {order.shipments[0].events.map(evt => (
                   <li key={evt.id} className="pl-5 relative">
-                    <span className="absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full bg-indigo-600 ring-4 ring-indigo-50" aria-hidden="true" />
-                    <p className="text-xs font-semibold text-slate-800">{evt.status}</p>
-                    {evt.description && <p className="text-[11px] text-slate-500">{evt.description}</p>}
-                    <time className="text-[10px] text-slate-400">{new Date(evt.timestamp).toLocaleString()}</time>
+                    <span className="absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full bg-brand-600 ring-4 ring-brand-50" aria-hidden="true" />
+                    <p className="text-xs font-semibold text-surface-800">{evt.status}</p>
+                    {evt.description && <p className="text-[11px] text-surface-500">{evt.description}</p>}
+                    <time className="text-[10px] text-surface-400">{new Date(evt.timestamp).toLocaleString()}</time>
                   </li>
                 ))}
                 <li className="pl-5 relative">
-                  <span className="absolute -left-[7px] top-1 w-3 h-3 rounded-full border-2 border-dashed border-slate-300 bg-surface-raised" aria-hidden="true" />
-                  <p className="text-xs font-medium text-slate-400">Delivered (pending)</p>
+                  <span className="absolute -left-[7px] top-1 w-3 h-3 rounded-full border-2 border-dashed border-surface-300 bg-white" aria-hidden="true" />
+                  <p className="text-xs font-medium text-surface-400">Delivered (pending)</p>
                 </li>
               </ol>
             )}
             {order.shipments[0]?.trackingNumber && (
-              <p className="mt-3 text-[11px] text-slate-500">
-                Carrier <strong className="text-slate-700">{order.shipments[0].carrier}</strong> · Tracking{' '}
-                <strong className="font-mono text-slate-700">{order.shipments[0].trackingNumber}</strong>
+              <p className="mt-3 text-[11px] text-surface-500">
+                Carrier <strong className="text-surface-700">{order.shipments[0].carrier}</strong> · Tracking{' '}
+                <strong className="font-mono text-surface-700">{order.shipments[0].trackingNumber}</strong>
               </p>
             )}
           </section>

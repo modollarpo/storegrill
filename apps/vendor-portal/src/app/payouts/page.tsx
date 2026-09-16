@@ -56,7 +56,7 @@ export default function VendorPayoutsPage() {
       <PageHeader title="Payouts" subtitle="Settlements to your connected account" />
 
       {error && (
-        <p role="alert" className="mb-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-md px-3 py-2">
+        <p role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
           Failed to load payouts.
         </p>
       )}
@@ -68,7 +68,7 @@ export default function VendorPayoutsPage() {
         rowKey={p => p.id}
         emptyTitle="No payouts yet"
         emptyAction={
-          <p className="text-xs text-slate-400">Payouts are generated for delivered orders after the settlement window.</p>
+          <p className="text-xs text-surface-400">Payouts are generated for delivered orders after the settlement window.</p>
         }
         caption="Payout history"
       />

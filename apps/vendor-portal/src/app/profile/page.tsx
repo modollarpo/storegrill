@@ -102,7 +102,10 @@ export default function VendorProfilePage() {
           footer={
             <>
               {isDirty && <span className="text-[11px] text-amber-600 self-center mr-auto font-medium">Unsaved changes</span>}
-              <button type="submit" disabled={saving} aria-busy={saving} className="h-9 px-5 rounded-md bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+              <button type="submit" disabled={saving} aria-busy={saving} className="h-9 px-5 rounded-lg bg-surface-900 text-white text-xs font-bold hover:bg-surface-800 disabled:opacity-50 transition-colors flex items-center gap-2">
+                {saving && (
+                  <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>
+                )}
                 {saving ? 'Saving…' : 'Save changes'}
               </button>
             </>
@@ -113,7 +116,7 @@ export default function VendorProfilePage() {
           </FormRow>
 
           <FormRow label="Storefront URL" htmlFor="storeSlug" description="Permanent — used in product pages and marketing">
-            <input id="storeSlug" value={slug ? `/vendors/${slug}` : '/vendors/…'} readOnly disabled className={`${inputClass} font-mono !text-slate-500`} />
+            <input id="storeSlug" value={slug ? `/vendors/${slug}` : '/vendors/…'} readOnly disabled className={`${inputClass} font-mono !text-surface-500`} />
           </FormRow>
 
           <FormRow label="Description" htmlFor="description" error={errors.description?.message} description="Shown on your storefront hero. Max 2000 characters.">

@@ -71,10 +71,18 @@ export default function VendorDashboardPage() {
     <VendorShell>
       <PageHeader title="Dashboard" subtitle="Today at a glance" />
 
-      {error && <div role="alert" className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4">Failed to load dashboard.</div>}
       {!data && !error && (
         <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-white rounded-xl border border-surface-200 animate-pulse" />)}
+        </div>
+      )}
+
+      {error && application === null && <NoSellerAccount />}
+
+      {error && application !== null && (
+        <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800 flex items-center gap-2.5">
+          <svg className="w-4 h-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+          Failed to load dashboard.
         </div>
       )}
 
@@ -194,6 +202,28 @@ function ApplicationPending({ application }: { application: ApplicationState }) 
             {application.status === 'PENDING' ? 'Continue application' : 'Reapply'}
           </a>
         )}
+      </div>
+    </VendorShell>
+  );
+}
+
+function NoSellerAccount() {
+  return (
+    <VendorShell>
+      <PageHeader title="Become a seller" subtitle="Your account is not linked to a seller profile" />
+      <div className="bg-white rounded-2xl border border-surface-200 shadow-xs p-8 text-center max-w-xl mx-auto mt-6" data-testid="no-seller-account">
+        <span aria-hidden="true" className="inline-grid place-items-center w-12 h-12 rounded-full bg-amber-100 text-amber-700 text-xl font-bold">?</span>
+        <h2 className="text-base font-extrabold text-surface-900 mt-4">No seller profile yet</h2>
+        <p className="text-sm text-surface-500 mt-2 leading-relaxed">
+          Your sign-in is valid, but this account is not yet linked to a seller profile. Submit an application to activate the
+          vendor portal and start selling.
+        </p>
+        <a
+          href={`${process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3000'}/vendor/apply`}
+          className="inline-block mt-5 rounded-lg bg-surface-900 text-white text-xs font-bold px-5 py-2.5 hover:bg-surface-700 transition-colors"
+        >
+          Apply to sell
+        </a>
       </div>
     </VendorShell>
   );

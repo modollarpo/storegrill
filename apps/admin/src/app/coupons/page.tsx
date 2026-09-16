@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { AdminShell, PageHeader } from '@/components/AdminShell';
-import { DataTable, type Column, StatusBadge, Button, Badge, Field, Input, Select, Toolbar } from '@/components/ui';
+import { DataTable, type Column, StatusBadge, Button, Field, Input, Select, Toolbar } from '@/components/ui';
 
 interface AdminCoupon {
   id: string;

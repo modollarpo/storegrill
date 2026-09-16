@@ -182,8 +182,15 @@ function LoginForm() {
           )}
 
           {error && (
-            <div role="alert" className="mb-4 rounded-lg border px-4 py-3 text-xs font-medium flex gap-2.5 bg-red-50 border-red-200 text-red-800">
-              <svg className="w-4 h-4 shrink-0 mt-px text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <div
+              role="alert"
+              className={`mb-4 rounded-lg border px-4 py-3 text-xs font-medium flex gap-2.5 ${
+                errorType === 'rate-limit'
+                  ? 'bg-amber-50 border-amber-200 text-amber-800'
+                  : 'bg-red-50 border-red-200 text-red-800'
+              }`}
+            >
+              <svg className={`w-4 h-4 shrink-0 mt-px ${errorType === 'rate-limit' ? 'text-amber-400' : 'text-red-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>{error}</span>

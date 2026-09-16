@@ -109,23 +109,23 @@ export default function AdminDashboardPage() {
       )}
 
       {!data && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 md:gap-6">
-          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
         </div>
       )}
 
       {data && (
         <>
           {(data.pendingVendors > 0 || data.pendingProducts > 0) && (
-            <div className="mb-8 flex flex-wrap gap-3">
+            <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-3xl">
               {data.pendingVendors > 0 && (
-                <Link href="/vendors?status=PENDING" className="inline-flex items-center gap-2 text-sm font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 hover:bg-amber-100 hover:border-amber-300 transition-all shadow-xs">
+                <Link href="/vendors?status=PENDING" className="inline-flex items-center gap-2.5 text-sm font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 hover:bg-amber-100 hover:border-amber-300 transition-all shadow-xs">
                   <span className="flex h-2 w-2 rounded-full bg-amber-500"></span>
                   {data.pendingVendors} vendor{data.pendingVendors === 1 ? '' : 's'} awaiting approval
                 </Link>
               )}
               {data.pendingProducts > 0 && (
-                <Link href="/products?status=PENDING_REVIEW" className="inline-flex items-center gap-2 text-sm font-bold text-blue-800 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 hover:bg-blue-100 hover:border-blue-300 transition-all shadow-xs">
+                <Link href="/products?status=PENDING_REVIEW" className="inline-flex items-center gap-2.5 text-sm font-bold text-blue-800 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 hover:bg-blue-100 hover:border-blue-300 transition-all shadow-xs">
                   <span className="flex h-2 w-2 rounded-full bg-blue-500"></span>
                   {data.pendingProducts} product{data.pendingProducts === 1 ? '' : 's'} pending review
                 </Link>
@@ -133,22 +133,34 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 md:gap-5 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-8">
             <StatCard label="Total Orders" value={data.orderCount.toLocaleString()} href="/orders" icon={<TankIcon d={FALLBACK_ICONS.orders} />} />
             <StatCard label="Customers" value={data.userCount.toLocaleString()} href="/vendors" icon={<TankIcon d={FALLBACK_ICONS.users} />} />
             <StatCard label="Active Products" value={data.productCount.toLocaleString()} href="/products" icon={<TankIcon d={FALLBACK_ICONS.products} />} />
             <StatCard label="Active Vendors" value={data.vendorCount.toLocaleString()} href="/vendors" icon={<TankIcon d={FALLBACK_ICONS.vendors} />} />
-            <StatCard
-              accent
-              label="Delivered Revenue"
-              value={new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(data.totalRevenue / 100)}
-              href="/orders"
-              icon={
+          </div>
+
+          <div className="mb-8 rounded-xl bg-gradient-to-br from-surface-900 to-surface-950 text-white border border-surface-800 shadow-lg p-6 flex flex-wrap items-center gap-x-10 gap-y-4">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
-              }
-            />
+              </div>
+              <div>
+                <p className="text-3xl font-extrabold tabular-nums tracking-tight">
+                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(data.totalRevenue / 100)}
+                </p>
+                <p className="text-xs font-medium text-surface-300 mt-0.5">Delivered revenue</p>
+              </div>
+            </div>
+            <div className="hidden md:block h-10 w-px bg-white/10" aria-hidden="true" />
+            <p className="text-sm text-surface-400 leading-relaxed max-w-sm">
+              Lifetime revenue from orders on this pod. Settlements are split per vendor before payout.
+            </p>
+            <Link href="/orders" className="ml-auto inline-flex items-center gap-1.5 text-sm font-bold text-white bg-white/10 hover:bg-white/15 border border-white/15 rounded-lg px-4 py-2.5 transition-colors">
+              View orders →
+            </Link>
           </div>
 
           <Card padding={false}>

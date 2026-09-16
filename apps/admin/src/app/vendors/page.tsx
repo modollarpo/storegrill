@@ -177,20 +177,21 @@ function VendorsInner() {
 
           return (
             <article key={v.id} className="bg-white border border-surface-200 rounded-xl shadow-xs overflow-hidden">
-              <div className="p-5 flex flex-wrap items-center gap-x-8 gap-y-3">
-                <button type="button" onClick={() => toggleExpand(v)} className="min-w-[220px] text-left group" aria-expanded={expandedId === v.id}>
-                  <p className="text-sm font-bold text-surface-900 group-hover:text-brand-700 group-hover:underline">{v.storeName}</p>
-                  <p className="text-xs text-surface-500">{v.user?.email}</p>
-                  <p className="text-[10px] text-surface-400 mt-0.5">/{v.slug}{v.submittedAt ? ` · submitted ${new Date(v.submittedAt).toLocaleDateString()}` : ''}</p>
+              <div className="px-5 pt-5 pb-0 flex items-start justify-between gap-3">
+                <button type="button" onClick={() => toggleExpand(v)} className="min-w-0 text-left group flex-1" aria-expanded={expandedId === v.id}>
+                  <p className="text-sm font-bold text-surface-900 group-hover:text-brand-700 group-hover:underline truncate">{v.storeName}</p>
+                  <p className="text-xs text-surface-500 truncate mt-0.5">{v.user?.email}</p>
+                  <p className="text-[10px] text-surface-400 mt-1">/{v.slug}{v.submittedAt ? ` · submitted ${new Date(v.submittedAt).toLocaleDateString()}` : ''}</p>
                 </button>
+                <span title={`Account: ${v.status}`} className="shrink-0"><StatusBadge status={v.status} /></span>
+              </div>
 
-                <dl className="flex gap-6 text-xs">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-5 py-4 border-t border-surface-100 mt-4">
+                <dl className="flex gap-x-7 gap-y-1 flex-wrap text-xs">
                   <div><dt className="text-surface-400">Products</dt><dd className="font-semibold tabular-nums">{v.productCount ?? 0}</dd></div>
                   <div><dt className="text-surface-400">Rating</dt><dd className="font-semibold">{v.rating > 0 ? `★ ${v.rating.toFixed(1)}` : '—'}</dd></div>
                   <div><dt className="text-surface-400">Commission</dt><dd className="font-semibold tabular-nums">{Math.round((v.revenueSharePct ?? 0) * 10) / 10}%</dd></div>
                 </dl>
-
-                <span title={`Account: ${v.status}`}><StatusBadge status={v.status} /></span>
 
                 <div className="ml-auto flex gap-1.5 whitespace-nowrap">
                   {['UNDER_REVIEW', 'PENDING'].includes(v.status) && (
@@ -209,7 +210,7 @@ function VendorsInner() {
               </div>
 
               {rejectingId === v.id && (
-                <div className="border-t border-surface-100 bg-red-50/60 p-5" data-testid={`reject-panel-${v.slug}`}>
+                <div className="border-t border-surface-100 bg-surface-50 p-5" data-testid={`reject-panel-${v.slug}`}>
                   <label htmlFor={`notes-${v.id}`} className="block text-xs font-bold text-surface-700 mb-1.5">Rejection reason (sent to the applicant)</label>
                   <textarea
                     id={`notes-${v.id}`}
@@ -228,10 +229,10 @@ function VendorsInner() {
               )}
 
               {expandedId === v.id && (
-                <div className="border-t border-surface-100 bg-surface-50/70 p-5 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-xs" data-testid={`detail-${v.slug}`}>
+<div className="border-t border-surface-100 bg-surface-50/70 p-5 grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6 text-xs" data-testid={`detail-${v.slug}`}>
                   <section>
-                    <h3 className="font-bold text-surface-500 uppercase tracking-wide mb-2">Business</h3>
-                    <dl className="grid grid-cols-[130px_1fr] gap-y-1.5">
+                    <h3 className="text-[11px] font-bold text-surface-500 uppercase tracking-wider mb-3">Business</h3>
+                    <dl className="grid grid-cols-[160px_1fr] gap-y-2">
                       <dt className="text-surface-400">Legal name</dt><dd className="font-medium">{v.businessLegalName || '—'}</dd>
                       <dt className="text-surface-400">Type</dt><dd className="font-medium capitalize">{v.businessType || '—'}</dd>
                       <dt className="text-surface-400">Registration</dt><dd className="font-mono">{v.registrationNumber || '—'}</dd>
@@ -242,8 +243,8 @@ function VendorsInner() {
                   </section>
 
                   <section>
-                    <h3 className="font-bold text-surface-500 uppercase tracking-wide mb-2">Store & operations</h3>
-                    <dl className="grid grid-cols-[130px_1fr] gap-y-1.5">
+                    <h3 className="text-[11px] font-bold text-surface-500 uppercase tracking-wider mb-3">Store & operations</h3>
+                    <dl className="grid grid-cols-[160px_1fr] gap-y-2">
                       <dt className="text-surface-400">Support email</dt><dd>{v.supportEmail || '—'}</dd>
                       <dt className="text-surface-400">Support phone</dt><dd>{v.supportPhone || '—'}</dd>
                       <dt className="text-surface-400">Warehouse region</dt><dd>{v.warehouseRegionKey || 'US'}</dd>
@@ -253,8 +254,8 @@ function VendorsInner() {
                   </section>
 
                   <section>
-                    <h3 className="font-bold text-surface-500 uppercase tracking-wide mb-2">Payout</h3>
-                    <dl className="grid grid-cols-[130px_1fr] gap-y-1.5">
+                    <h3 className="text-[11px] font-bold text-surface-500 uppercase tracking-wider mb-3">Payout</h3>
+                    <dl className="grid grid-cols-[160px_1fr] gap-y-2">
                       <dt className="text-surface-400">Method</dt><dd className="font-medium capitalize">{String(payout.type ?? '—')}</dd>
                       {payout.type === 'bank' && (
                         <>
@@ -272,17 +273,17 @@ function VendorsInner() {
                   </section>
 
                   <section>
-                    <h3 className="font-bold text-surface-500 uppercase tracking-wide mb-2">Documents ({docs[v.id]?.length ?? 0})</h3>
+                    <h3 className="text-[11px] font-bold text-surface-500 uppercase tracking-wider mb-3">Documents ({docs[v.id]?.length ?? 0})</h3>
                     {docs[v.id] === undefined && <p className="text-surface-400 animate-pulse">Loading…</p>}
                     {docs[v.id]?.length === 0 && <p className="text-surface-400">No supporting documents uploaded.</p>}
-                    <ul className="space-y-1.5">
+                    <ul className="space-y-2">
                       {docs[v.id]?.map(d => (
-                        <li key={d.blob ?? d.name} className="flex items-center gap-2">
-                          <span className="w-7 h-7 rounded bg-white border border-surface-200 grid place-items-center text-[9px] font-bold text-surface-400 shrink-0">DOC</span>
+                        <li key={d.blob ?? d.name} className="flex items-center gap-2.5">
+                          <span className="w-8 h-8 rounded-lg bg-white border border-surface-200 grid place-items-center text-[9px] font-bold text-surface-400 shrink-0">DOC</span>
                           {d.url ? (
-                            <a href={d.url} target="_blank" rel="noreferrer noopener" className="font-medium text-brand-700 hover:underline truncate max-w-[240px]">{d.name}</a>
+                            <a href={d.url} target="_blank" rel="noreferrer noopener" className="font-medium text-brand-700 hover:underline truncate max-w-[220px]">{d.name}</a>
                           ) : (
-                            <span className="font-medium text-surface-600 truncate max-w-[240px]">{d.name}</span>
+                            <span className="font-medium text-surface-600 truncate max-w-[220px]">{d.name}</span>
                           )}
                           <span className="text-[10px] text-surface-400 ml-auto whitespace-nowrap">{formatBytes(d.size)}</span>
                         </li>
@@ -290,7 +291,7 @@ function VendorsInner() {
                     </ul>
                     {v.reviewedAt && (
                       <p className="mt-3 pt-3 border-t border-surface-200 text-surface-500">
-                        Last reviewed {new Date(v.reviewedAt).toLocaleString()}{v.reviewNotes ? ` — “${v.reviewNotes}”` : ''}
+                        Last reviewed {new Date(v.reviewedAt).toLocaleString()}{v.reviewNotes ? ` — "${v.reviewNotes}"` : ''}
                       </p>
                     )}
                   </section>

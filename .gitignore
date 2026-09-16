@@ -34,6 +34,7 @@ BUILD_PROMPT.md
 *.pem
 *.key
 *.p12
+import-ng-secrets.*
 apps/currys/
 apps/web/public/Screenshot*.png
 

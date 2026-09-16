@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { AdminShell, PageHeader } from '@/components/AdminShell';
+import { Card, CardHeader, CardTitle, CardDescription, StatCard } from '@/components/ui';
 
 interface Analytics {
   totals: { revenue: number; orders: number };
@@ -46,7 +47,7 @@ function AnalyticsInner() {
     return (
       <AdminShell>
         <PageHeader title="Analytics" subtitle="Sales performance across regions, vendors and catalog" />
-        <p role="alert" className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-800">{error}</div>
       </AdminShell>
     );
   }
@@ -59,92 +60,98 @@ function AnalyticsInner() {
     <AdminShell>
       <PageHeader title="Analytics" subtitle="Sales performance across regions, vendors and catalog" />
 
-      {!data && <div className="bg-surface-raised rounded-xl border border-slate-200 p-10 text-center text-sm text-slate-400" aria-busy="true">Loading…</div>}
+      {!data && (
+        <div className="bg-white border border-surface-200 rounded-xl shadow-xs p-10 text-center text-sm text-surface-400" aria-busy="true">
+          Loading…
+        </div>
+      )}
 
       {data && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div className="bg-surface-raised rounded-xl border border-slate-200 p-5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Delivered revenue</p>
-              <p className="text-2xl font-extrabold text-slate-900 mt-1 [font-variant-numeric:tabular-nums]">{money(data.totals.revenue)}</p>
-            </div>
-            <div className="bg-surface-raised rounded-xl border border-slate-200 p-5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Delivered orders</p>
-              <p className="text-2xl font-extrabold text-slate-900 mt-1 [font-variant-numeric:tabular-nums]">{data.totals.orders.toLocaleString()}</p>
-            </div>
+            <StatCard label="Delivered revenue" value={money(data.totals.revenue)} />
+            <StatCard label="Delivered orders" value={data.totals.orders.toLocaleString()} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <div className="bg-surface-raised rounded-xl border border-slate-200 p-5">
-              <h2 className="text-sm font-bold text-slate-900 mb-4">Conversion funnel</h2>
+            <Card>
+              <CardHeader>
+                <CardTitle>Conversion funnel</CardTitle>
+              </CardHeader>
               <ol className="space-y-3">
                 {data.funnel.map((s, i) => (
                   <li key={s.stage} className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                    <span className="w-8 h-8 rounded-full bg-brand-50 text-brand-700 text-xs font-bold flex items-center justify-center shrink-0">{i + 1}</span>
                     <div className="flex-1">
                       <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="font-semibold text-slate-700">{s.stage}</span>
-                        <span className="text-slate-500 [font-variant-numeric:tabular-nums]">{s.count.toLocaleString()} <span className="text-slate-400">({s.pct}%)</span></span>
+                        <span className="font-semibold text-surface-700">{s.stage}</span>
+                        <span className="text-surface-500 tabular-nums">{s.count.toLocaleString()} <span className="text-surface-400">({s.pct}%)</span></span>
                       </div>
-                      <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                        <div className="h-full rounded-full bg-indigo-500" style={{ width: `${s.pct}%` }} />
+                      <div className="h-2 rounded-full bg-surface-100 overflow-hidden">
+                        <div className="h-full rounded-full bg-brand-500" style={{ width: `${s.pct}%` }} />
                       </div>
                     </div>
                   </li>
                 ))}
               </ol>
-            </div>
+            </Card>
 
-            <div className="bg-surface-raised rounded-xl border border-slate-200 p-5">
-              <h2 className="text-sm font-bold text-slate-900 mb-4">Import jobs</h2>
+            <Card>
+              <CardHeader>
+                <CardTitle>Import jobs</CardTitle>
+              </CardHeader>
               <div className="grid grid-cols-2 gap-3">
                 {(['COMPLETED', 'RUNNING', 'PENDING', 'FAILED'] as const).map(status => (
-                  <div key={status} className="rounded-lg border border-slate-100 bg-slate-50/60 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{status}</p>
-                    <p className="text-xl font-extrabold text-slate-900 mt-1 [font-variant-numeric:tabular-nums]">{data.importStats.jobsByStatus[status] ?? 0}</p>
+                  <div key={status} className="rounded-lg border border-surface-100 bg-surface-50/70 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-surface-400">{status}</p>
+                    <p className="text-xl font-extrabold text-surface-900 mt-1 tabular-nums">{data.importStats.jobsByStatus[status] ?? 0}</p>
                   </div>
                 ))}
               </div>
               <div className="mt-4 flex items-center justify-between text-xs">
-                <span className="text-slate-500">Rows imported</span>
-                <span className="font-bold text-emerald-600 [font-variant-numeric:tabular-nums]">{data.importStats.successRows.toLocaleString()}</span>
+                <span className="text-surface-500">Rows imported</span>
+                <span className="font-bold text-emerald-600 tabular-nums">{data.importStats.successRows.toLocaleString()}</span>
               </div>
               <div className="mt-2 flex items-center justify-between text-xs">
-                <span className="text-slate-500">Rows failed</span>
-                <span className="font-bold text-rose-600 [font-variant-numeric:tabular-nums]">{data.importStats.errorRows.toLocaleString()}</span>
+                <span className="text-surface-500">Rows failed</span>
+                <span className="font-bold text-rose-600 tabular-nums">{data.importStats.errorRows.toLocaleString()}</span>
               </div>
-            </div>
+            </Card>
           </div>
 
-          <div className="bg-surface-raised rounded-xl border border-slate-200 p-5 mb-6">
-            <h2 className="text-sm font-bold text-slate-900 mb-4">Revenue — last 14 days</h2>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Revenue — last 14 days</CardTitle>
+            </CardHeader>
             <div className="flex items-end gap-1 h-40" role="img" aria-label="Revenue trend over the last 14 days">
               {data.revenueByDay.map(d => (
                 <div key={d.date} className="flex-1 flex flex-col items-center gap-1 group" title={`${d.date}: ${money(d.revenue)} (${d.orders} orders)`}>
-                  <div className="w-full rounded-t bg-indigo-200 group-hover:bg-indigo-400 transition-colors" style={{ height: `${Math.max(3, (d.revenue / maxDay) * 100)}%` }} />
+                  <div className="w-full rounded-t bg-brand-200 group-hover:bg-brand-400 transition-colors" style={{ height: `${Math.max(3, (d.revenue / maxDay) * 100)}%` }} />
                 </div>
               ))}
             </div>
-            <div className="mt-2 border-t border-slate-100 pt-2 flex justify-between text-[10px] text-slate-400">
+            <div className="mt-2 border-t border-surface-100 pt-2 flex justify-between text-[10px] text-surface-400">
               <span>{new Date(data.revenueByDay[0]?.date ?? Date.now()).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
               <span>{new Date(data.revenueByDay[data.revenueByDay.length - 1]?.date ?? Date.now()).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-surface-raised rounded-xl border border-slate-200 p-5 mb-6">
-            <h2 className="text-sm font-bold text-slate-900 mb-4">First-party event stream — last 14 days</h2>
-            <p className="text-xs text-slate-500 mb-4">Counts captured from the storefront API (same events as GA4). Use to sanity-check GA4 reports (page_view, view_item, add_to_cart, begin_checkout, purchase).</p>
-            {!events && <p className="text-xs text-slate-400">No events recorded yet in this window.</p>}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>First-party event stream — last 14 days</CardTitle>
+              <CardDescription>Counts captured from the storefront API (same events as GA4). Use to sanity-check GA4 reports (page_view, view_item, add_to_cart, begin_checkout, purchase).</CardDescription>
+            </CardHeader>
+            {!events && <p className="text-xs text-surface-400">No events recorded yet in this window.</p>}
             {events && (
               <>
                 <div className="grid grid-cols-2 gap-3 mb-5">
-                  <div className="rounded-lg border border-slate-100 bg-slate-50/60 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Events</p>
-                    <p className="text-xl font-extrabold text-slate-900 mt-1 [font-variant-numeric:tabular-nums]">{events.totals.count.toLocaleString()}</p>
+                  <div className="rounded-lg border border-surface-100 bg-surface-50/70 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-surface-400">Events</p>
+                    <p className="text-xl font-extrabold text-surface-900 mt-1 tabular-nums">{events.totals.count.toLocaleString()}</p>
                   </div>
-                  <div className="rounded-lg border border-slate-100 bg-slate-50/60 p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Event value</p>
-                    <p className="text-xl font-extrabold text-slate-900 mt-1 [font-variant-numeric:tabular-nums]">{money(events.totals.totalValue)}</p>
+                  <div className="rounded-lg border border-surface-100 bg-surface-50/70 p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-surface-400">Event value</p>
+                    <p className="text-xl font-extrabold text-surface-900 mt-1 tabular-nums">{money(events.totals.totalValue)}</p>
                   </div>
                 </div>
 
@@ -161,26 +168,26 @@ function AnalyticsInner() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div>
-                    <h3 className="text-xs font-bold text-slate-700 mb-2">By event type</h3>
+                    <h3 className="text-xs font-bold text-surface-700 mb-2">By event type</h3>
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
+                      <thead className="bg-surface-50 text-surface-500 uppercase text-[10px] tracking-wider">
                         <tr>
                           <th scope="col" className="px-3 py-2 font-semibold">Event</th>
                           <th scope="col" className="px-3 py-2 font-semibold text-right">Count</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-surface-100">
                         {events.byEventType.map(e => (
-                          <tr key={e.eventType} className="hover:bg-slate-50/70 transition-colors">
-                            <td className="px-3 py-2 font-semibold text-slate-800">{e.eventType}</td>
-                            <td className="px-3 py-2 text-right font-bold text-slate-900 [font-variant-numeric:tabular-nums]">{e.count.toLocaleString()}</td>
+                          <tr key={e.eventType} className="hover:bg-surface-50/70 transition-colors">
+                            <td className="px-3 py-2 font-semibold text-surface-800">{e.eventType}</td>
+                            <td className="px-3 py-2 text-right font-bold text-surface-900 tabular-nums">{e.count.toLocaleString()}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold text-slate-700 mb-2">By region</h3>
+                    <h3 className="text-xs font-bold text-surface-700 mb-2">By region</h3>
                     {(() => {
                       const maxRegionEvents = Math.max(1, ...events.byRegion.map(r => r.count));
                       return (
@@ -188,10 +195,10 @@ function AnalyticsInner() {
                           {events.byRegion.map(r => (
                             <li key={r.region}>
                               <div className="flex items-center justify-between text-xs mb-1">
-                                <span className="font-semibold text-slate-700">{r.region}</span>
-                                <span className="text-slate-500 [font-variant-numeric:tabular-nums]">{r.count.toLocaleString()}</span>
+                                <span className="font-semibold text-surface-700">{r.region}</span>
+                                <span className="text-surface-500 tabular-nums">{r.count.toLocaleString()}</span>
                               </div>
-                              <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                              <div className="h-2 rounded-full bg-surface-100 overflow-hidden">
                                 <div className="h-full rounded-full bg-amber-400" style={{ width: `${(r.count / maxRegionEvents) * 100}%` }} />
                               </div>
                             </li>
@@ -203,102 +210,110 @@ function AnalyticsInner() {
                 </div>
               </>
             )}
-          </div>
+          </Card>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <div className="bg-surface-raised rounded-xl border border-slate-200 p-5">
-              <h2 className="text-sm font-bold text-slate-900 mb-4">Revenue by region</h2>
-              {data.revenueByRegion.length === 0 && <p className="text-xs text-slate-400">No delivered sales yet.</p>}
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue by region</CardTitle>
+              </CardHeader>
+              {data.revenueByRegion.length === 0 && <p className="text-xs text-surface-400">No delivered sales yet.</p>}
               <ul className="space-y-3">
                 {data.revenueByRegion.map(r => (
                   <li key={r.regionKey}>
                     <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="font-semibold text-slate-700">{r.regionKey} <span className="text-slate-400 font-normal">({r.orders} orders)</span></span>
-                      <span className="font-bold text-slate-900 [font-variant-numeric:tabular-nums]">{money(r.revenue, r.currencyCode)}</span>
+                      <span className="font-semibold text-surface-700">{r.regionKey} <span className="text-surface-400 font-normal">({r.orders} orders)</span></span>
+                      <span className="font-bold text-surface-900 tabular-nums">{money(r.revenue, r.currencyCode)}</span>
                     </div>
-                    <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                      <div className="h-full rounded-full bg-indigo-500" style={{ width: `${(r.revenue / maxRegion) * 100}%` }} />
+                    <div className="h-2 rounded-full bg-surface-100 overflow-hidden">
+                      <div className="h-full rounded-full bg-brand-500" style={{ width: `${(r.revenue / maxRegion) * 100}%` }} />
                     </div>
                   </li>
                 ))}
               </ul>
-            </div>
+            </Card>
 
-            <div className="bg-surface-raised rounded-xl border border-slate-200 overflow-hidden">
-              <h2 className="text-sm font-bold text-slate-900 px-5 pt-5 pb-3 border-b border-slate-100">Top products</h2>
+            <Card>
+              <CardHeader>
+                <CardTitle>Top products</CardTitle>
+              </CardHeader>
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
+                <thead className="bg-surface-50 text-surface-500 uppercase text-[10px] tracking-wider">
                   <tr>
                     <th scope="col" className="px-5 py-2 font-semibold">Product</th>
                     <th scope="col" className="px-5 py-2 font-semibold">Category</th>
                     <th scope="col" className="px-5 py-2 font-semibold text-right">Revenue</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-surface-100">
                   {data.topProducts.length === 0 && (
-                    <tr><td colSpan={3} className="px-5 py-6 text-center text-slate-400">No delivered sales yet.</td></tr>
+                    <tr><td colSpan={3} className="px-5 py-6 text-center text-surface-400">No delivered sales yet.</td></tr>
                   )}
                   {data.topProducts.map(p => (
-                    <tr key={p.productId} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="px-5 py-2.5 font-semibold text-slate-800 max-w-[200px] truncate">{p.name}</td>
-                      <td className="px-5 py-2.5 text-slate-500">{p.category}</td>
-                      <td className="px-5 py-2.5 text-right font-bold text-slate-900 [font-variant-numeric:tabular-nums]">{money(p.revenue)}</td>
+                    <tr key={p.productId} className="hover:bg-surface-50/70 transition-colors">
+                      <td className="px-5 py-2.5 font-semibold text-surface-800 max-w-[200px] truncate">{p.name}</td>
+                      <td className="px-5 py-2.5 text-surface-500">{p.category}</td>
+                      <td className="px-5 py-2.5 text-right font-bold text-surface-900 tabular-nums">{money(p.revenue)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
+            </Card>
           </div>
 
-          <div className="bg-surface-raised rounded-xl border border-slate-200 overflow-hidden mb-6">
-            <h2 className="text-sm font-bold text-slate-900 px-5 pt-5 pb-3 border-b border-slate-100">Sales by vendor</h2>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Sales by vendor</CardTitle>
+            </CardHeader>
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
+              <thead className="bg-surface-50 text-surface-500 uppercase text-[10px] tracking-wider">
                 <tr>
                   <th scope="col" className="px-5 py-2 font-semibold">Store</th>
                   <th scope="col" className="px-5 py-2 font-semibold text-right">Units</th>
                   <th scope="col" className="px-5 py-2 font-semibold text-right">Revenue</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-surface-100">
                 {data.salesByVendor.length === 0 && (
-                  <tr><td colSpan={3} className="px-5 py-6 text-center text-slate-400">No delivered sales yet.</td></tr>
+                  <tr><td colSpan={3} className="px-5 py-6 text-center text-surface-400">No delivered sales yet.</td></tr>
                 )}
                 {data.salesByVendor.map(v => (
-                  <tr key={v.vendorId} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="px-5 py-2.5 font-semibold text-slate-800">{v.storeName}</td>
-                    <td className="px-5 py-2.5 text-right text-slate-600 [font-variant-numeric:tabular-nums]">{v.units.toLocaleString()}</td>
-                    <td className="px-5 py-2.5 text-right font-bold text-slate-900 [font-variant-numeric:tabular-nums]">{money(v.revenue)}</td>
+                  <tr key={v.vendorId} className="hover:bg-surface-50/70 transition-colors">
+                    <td className="px-5 py-2.5 font-semibold text-surface-800">{v.storeName}</td>
+                    <td className="px-5 py-2.5 text-right text-surface-600 tabular-nums">{v.units.toLocaleString()}</td>
+                    <td className="px-5 py-2.5 text-right font-bold text-surface-900 tabular-nums">{money(v.revenue)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </Card>
 
-          <div className="bg-surface-raised rounded-xl border border-slate-200 overflow-hidden">
-            <h2 className="text-sm font-bold text-slate-900 px-5 pt-5 pb-3 border-b border-slate-100">Sales by category</h2>
+          <Card>
+            <CardHeader>
+              <CardTitle>Sales by category</CardTitle>
+            </CardHeader>
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
+              <thead className="bg-surface-50 text-surface-500 uppercase text-[10px] tracking-wider">
                 <tr>
                   <th scope="col" className="px-5 py-2 font-semibold">Category</th>
                   <th scope="col" className="px-5 py-2 font-semibold text-right">Units</th>
                   <th scope="col" className="px-5 py-2 font-semibold text-right">Revenue</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-surface-100">
                 {data.salesByCategory.length === 0 && (
-                  <tr><td colSpan={3} className="px-5 py-6 text-center text-slate-400">No delivered sales yet.</td></tr>
+                  <tr><td colSpan={3} className="px-5 py-6 text-center text-surface-400">No delivered sales yet.</td></tr>
                 )}
                 {data.salesByCategory.map(c => (
-                  <tr key={c.categoryId} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="px-5 py-2.5 font-semibold text-slate-800">{c.name}</td>
-                    <td className="px-5 py-2.5 text-right text-slate-600 [font-variant-numeric:tabular-nums]">{c.units.toLocaleString()}</td>
-                    <td className="px-5 py-2.5 text-right font-bold text-slate-900 [font-variant-numeric:tabular-nums]">{money(c.revenue)}</td>
+                  <tr key={c.categoryId} className="hover:bg-surface-50/70 transition-colors">
+                    <td className="px-5 py-2.5 font-semibold text-surface-800">{c.name}</td>
+                    <td className="px-5 py-2.5 text-right text-surface-600 tabular-nums">{c.units.toLocaleString()}</td>
+                    <td className="px-5 py-2.5 text-right font-bold text-surface-900 tabular-nums">{money(c.revenue)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </Card>
         </>
       )}
     </AdminShell>

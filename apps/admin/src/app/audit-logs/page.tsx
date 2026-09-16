@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { AdminShell, PageHeader } from '@/components/AdminShell';
+import { DataTable, type Column, Toolbar, Button, Select } from '@/components/ui';
 
 interface AuditLog {
   id: string;
@@ -40,9 +41,9 @@ function Detail({ label, raw }: { label: string; raw: string | null | undefined 
   const text = safeJson(raw);
   if (!text) return null;
   return (
-    <details className="mt-2 bg-slate-900 rounded-md px-3 py-2">
+    <details className="mt-1.5 bg-surface-950 rounded-md px-3 py-2">
       <summary className="cursor-pointer text-[10px] uppercase tracking-wider text-brand-400 font-bold select-none">{label}</summary>
-      <pre className="mt-2 text-[9px] leading-relaxed text-emerald-300 whitespace-pre-wrap break-words max-h-40 overflow-auto">{text}</pre>
+      <pre className="mt-2 text-[9px] leading-relaxed text-emerald-400 whitespace-pre-wrap break-words max-h-40 overflow-auto">{text}</pre>
     </details>
   );
 }
@@ -58,98 +59,92 @@ export default function AdminAuditLogsPage() {
     const params = new URLSearchParams();
     if (entity) params.set('entity', entity);
     params.set('page', String(page));
-    setLogs(null);
     api<{ logs: AuditLog[]; pagination: AuditPagination }>(`/api/v1/admin/audit-logs?${params.toString()}`)
       .then(d => { setLogs(d.logs); setPagination(d.pagination); setError(null); })
       .catch(e => setError(e instanceof ApiError ? e.message : 'Load failed'));
   }, [entity, page]);
 
-  useEffect(load, [load]);
+  useEffect(() => { load(); }, [load]);
 
   function selectEntity(v: string) {
     setEntity(v);
     setPage(1);
   }
 
+  const columns: Column<AuditLog>[] = [
+    { key: 'when', header: 'When', render: l => <span className="text-surface-500 whitespace-nowrap text-xs">{new Date(l.createdAt).toLocaleString()}</span> },
+    { key: 'actor', header: 'Actor', render: l => <span className="font-mono text-surface-500">{l.userId ? l.userId.slice(0, 8) : 'system'}</span> },
+    { key: 'action', header: 'Action', render: l => <code className="rounded-md bg-surface-100 text-surface-700 px-1.5 py-0.5 text-[10px] font-bold">{l.action}</code> },
+    {
+      key: 'entity',
+      header: 'Entity',
+      render: l => (
+        <span className="text-surface-700 font-semibold text-xs">
+          {l.entity}
+          {l.entityId && <span className="text-surface-400 font-mono text-[10px]"> · {l.entityId.slice(0, 8)}</span>}
+        </span>
+      ),
+    },
+    { key: 'ip', header: 'IP', render: l => <span className="font-mono text-surface-500 text-xs">{l.ip ?? '—'}</span> },
+    {
+      key: 'changes',
+      header: 'Changes',
+      render: l =>
+        l.before ?? l.after ? (
+          <>
+            <Detail label="Before" raw={l.before} />
+            <Detail label="After" raw={l.after} />
+          </>
+        ) : (
+          <span className="text-surface-400">—</span>
+        ),
+    },
+  ];
+
   return (
     <AdminShell>
       <PageHeader title="Audit Logs" subtitle="Immutable trail of administrative actions across the platform" />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <label htmlFor="entity-filter" className="text-xs font-semibold text-slate-600">Entity:</label>
-        <select id="entity-filter" value={entity} onChange={e => selectEntity(e.target.value)} className="h-8 rounded-md border border-slate-300 text-xs px-2 bg-surface-raised">
-          <option value="">All</option>
+      <Toolbar className="mb-4">
+        <Select
+          id="entity-filter"
+          value={entity}
+          onChange={e => selectEntity(e.target.value)}
+          className="h-8 text-xs w-44"
+          aria-label="Filter by entity"
+        >
+          <option value="">All entities</option>
           {ENTITIES.map(ent => <option key={ent} value={ent}>{ent}</option>)}
-        </select>
-        <span className="ml-auto text-xs text-slate-400">{pagination ? `${pagination.total} events` : ''}</span>
-      </div>
+        </Select>
+        <span className="text-xs text-surface-400 font-medium tabular-nums">
+          {pagination ? `${pagination.total} events` : ''}
+        </span>
+      </Toolbar>
 
-      {error && <p role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+      {error && (
+        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-800">
+          {error}
+        </div>
+      )}
 
-      <div className="bg-surface-raised rounded-xl border border-slate-200 overflow-x-auto">
-        <table className="w-full text-left text-xs min-w-[820px]">
-          <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
-            <tr>
-              <th scope="col" className="px-5 py-2.5 font-semibold">When</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Actor</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Action</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Entity</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">IP</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Changes</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {logs === null && (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-400" aria-busy="true">Loading…</td></tr>
-            )}
-            {logs?.length === 0 && (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-400">No audit events match this filter.</td></tr>
-            )}
-            {logs?.map(l => (
-              <tr key={l.id} className="hover:bg-slate-50 align-top">
-                <td className="px-5 py-3 whitespace-nowrap text-slate-500">{new Date(l.createdAt).toLocaleString()}</td>
-                <td className="px-5 py-3 font-mono text-slate-500">{l.userId ? l.userId.slice(0, 8) : 'system'}</td>
-                <td className="px-5 py-3"><code className="rounded bg-slate-100 text-slate-700 px-1.5 py-0.5 text-[10px] font-bold">{l.action}</code></td>
-                <td className="px-5 py-3">
-                  <span className="font-semibold text-slate-700">{l.entity}</span>
-                  {l.entityId && <span className="text-slate-400 font-mono text-[10px]"> · {l.entityId.slice(0, 8)}</span>}
-                </td>
-                <td className="px-5 py-3 font-mono text-slate-500">{l.ip ?? '—'}</td>
-                <td className="px-5 py-3">
-                  {l.before ?? l.after ? (
-                    <>
-                      <Detail label="Before" raw={l.before} />
-                      <Detail label="After" raw={l.after} />
-                    </>
-                  ) : (
-                    <span className="text-slate-400">—</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={columns}
+        rows={logs}
+        rowKey={l => l.id}
+        minWidth={860}
+        emptyTitle="No audit events match this filter"
+        loadingRows={6}
+      />
 
       {pagination && pagination.totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between text-xs">
-          <button
-            type="button"
-            disabled={page <= 1}
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            className="rounded-md border border-slate-300 text-slate-600 font-semibold px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
+        <div className="mt-4 flex items-center justify-between text-xs text-surface-600">
+          <Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
             ← Prev
-          </button>
-          <span className="text-slate-500">Page {pagination.page} of {pagination.totalPages}</span>
-          <button
-            type="button"
-            disabled={page >= pagination.totalPages}
-            onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
-            className="rounded-md border border-slate-300 text-slate-600 font-semibold px-3 py-1.5 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
+          </Button>
+          <span className="font-medium tabular-nums">{pagination.page} of {pagination.totalPages}</span>
+          <Button size="sm" variant="secondary" disabled={page >= pagination.totalPages} onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}>
             Next →
-          </button>
+          </Button>
         </div>
       )}
     </AdminShell>

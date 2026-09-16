@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { AdminShell, PageHeader } from '@/components/AdminShell';
+import { Card, Button, Badge, Skeleton } from '@/components/ui';
 
 interface AdminReview {
   id: string;
@@ -44,32 +45,52 @@ export default function AdminReviewsPage() {
     <AdminShell>
       <PageHeader title="Review Moderation" subtitle="Pending reviews awaiting a decision" />
 
-      {error && <p role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+      {error && (
+        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-800">
+          {error}
+        </div>
+      )}
 
-      <div className="grid gap-3">
-        {reviews === null && <div className="h-24 rounded-xl bg-slate-200 animate-pulse" />}
+      <div className="grid gap-4">
+        {reviews === null && (
+          <>
+            <Skeleton className="h-24 rounded-xl" />
+            <Skeleton className="h-24 rounded-xl" />
+          </>
+        )}
         {reviews?.length === 0 && (
-          <div className="bg-surface-raised rounded-xl border border-slate-200 p-10 text-center text-sm text-slate-400">
-            ✓ Moderation queue is clear.
-          </div>
+          <Card className="py-12">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mb-3">
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </div>
+              <p className="text-sm font-bold text-surface-800">Moderation queue is clear</p>
+              <p className="text-xs text-surface-500 mt-1">No reviews are waiting for a decision.</p>
+            </div>
+          </Card>
         )}
         {reviews?.map(r => (
-          <article key={r.id} className="bg-surface-raised rounded-xl border border-slate-200 p-5">
+          <Card key={r.id}>
             <header className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
               <span className="text-amber-500 text-xs tracking-tight" aria-label={`${r.rating} out of 5 stars`}>
-                {'★'.repeat(r.rating)}<span className="text-slate-300">{'★'.repeat(5 - r.rating)}</span>
+                {'★'.repeat(r.rating)}<span className="text-surface-300">{'★'.repeat(5 - r.rating)}</span>
               </span>
-              {r.title && <h2 className="text-sm font-bold text-slate-900">{r.title}</h2>}
-              <span className="text-[10px] text-slate-400 ml-auto">
-                on <strong className="text-slate-600">{r.product?.name ?? 'product'}</strong> · by {r.user?.name ?? 'user'} · {new Date(r.createdAt).toLocaleDateString()}
+              {r.title && <h2 className="text-sm font-bold text-surface-900">{r.title}</h2>}
+              <Badge status="PENDING_REVIEW">Pending</Badge>
+              <span className="text-[11px] text-surface-400 ml-auto">
+                on <strong className="text-surface-600">{r.product?.name ?? 'product'}</strong> · by {r.user?.name ?? 'user'} · {new Date(r.createdAt).toLocaleDateString()}
               </span>
             </header>
-            {r.body && <p className="text-xs text-slate-600 leading-relaxed line-clamp-3 mb-3">{r.body}</p>}
-            <div className="flex gap-1.5">
-              <button type="button" disabled={busyId === r.id} onClick={() => moderate(r.id, 'APPROVED')} className="rounded-md bg-emerald-600 text-white text-[10px] font-bold px-3 py-1.5 hover:bg-emerald-500 disabled:opacity-50">Approve & publish</button>
-              <button type="button" disabled={busyId === r.id} onClick={() => moderate(r.id, 'REJECTED')} className="rounded-md border border-red-300 text-red-700 text-[10px] font-bold px-3 py-1.5 hover:bg-red-50 disabled:opacity-50">Reject</button>
+            {r.body && <p className="text-xs text-surface-600 leading-relaxed line-clamp-3 mb-4">{r.body}</p>}
+            <div className="flex gap-2">
+              <Button size="sm" variant="success" loading={busyId === r.id} onClick={() => moderate(r.id, 'APPROVED')}>
+                Approve & publish
+              </Button>
+              <Button size="sm" variant="dangerOutline" loading={busyId === r.id} onClick={() => moderate(r.id, 'REJECTED')}>
+                Reject
+              </Button>
             </div>
-          </article>
+          </Card>
         ))}
       </div>
     </AdminShell>

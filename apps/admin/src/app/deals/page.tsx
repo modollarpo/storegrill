@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
-import { AdminShell, PageHeader, StatusBadge } from '@/components/AdminShell';
+import { AdminShell, PageHeader } from '@/components/AdminShell';
+import { StatusBadge, Button, Field, Input, Select, Checkbox } from '@/components/ui';
 
 interface AdminDealVariantProduct {
   id: string;
@@ -195,95 +196,83 @@ export default function AdminDealsPage() {
   const valueLabel = (d: AdminDeal) =>
     d.type === 'PERCENTAGE_OFF' ? `${d.value}%` : new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(d.value / 100);
 
-  const input = 'rounded-md border border-slate-300 text-xs px-3 py-2 w-full bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500/40';
-
   return (
     <AdminShell>
-      <PageHeader title="Deals" subtitle="Create and moderate promotions across regions and vendors" />
-
-      <div className="mb-4 flex items-center justify-between">
-        <span className="text-xs text-slate-400">{deals ? `${deals.length} deals` : ''}</span>
-        <button type="button" onClick={() => setShowForm(s => !s)} className="rounded-md bg-slate-900 text-white text-xs font-bold px-3 py-2 hover:bg-slate-700 transition-colors">
-          {showForm ? 'Cancel' : '+ New deal'}
-        </button>
-      </div>
+      <PageHeader
+        title="Deals"
+        subtitle="Create and moderate promotions across regions and vendors"
+        actions={
+          <Button variant={showForm ? 'secondary' : 'primary'} onClick={() => setShowForm(s => !s)}>
+            {showForm ? 'Cancel' : '+ New deal'}
+          </Button>
+        }
+      />
 
       {showForm && (
-        <form onSubmit={createDeal} className="bg-surface-raised rounded-xl border border-slate-200 p-5 mb-6 grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <label htmlFor="d-name" className="block text-xs font-semibold text-slate-600 mb-1">Name</label>
-            <input id="d-name" required value={form.name} onChange={e => set('name', e.target.value)} placeholder="Summer Grill Sale" className={input} />
-          </div>
-          <div className="sm:col-span-2">
-            <label htmlFor="d-desc" className="block text-xs font-semibold text-slate-600 mb-1">Description</label>
-            <input id="d-desc" value={form.description} onChange={e => set('description', e.target.value)} placeholder="Optional" className={input} />
-          </div>
-          <div>
-            <label htmlFor="d-type" className="block text-xs font-semibold text-slate-600 mb-1">Type</label>
-            <select id="d-type" value={form.type} onChange={e => set('type', e.target.value)} className={input}>
+        <form onSubmit={createDeal} className="bg-white border border-surface-200 rounded-xl shadow-xs p-5 mb-6 grid gap-4 sm:grid-cols-2">
+          <Field label="Name" required className="sm:col-span-2">
+            <Input id="d-name" required value={form.name} onChange={e => set('name', e.target.value)} placeholder="Summer Grill Sale" />
+          </Field>
+          <Field label="Description" className="sm:col-span-2">
+            <Input id="d-desc" value={form.description} onChange={e => set('description', e.target.value)} placeholder="Optional" />
+          </Field>
+          <Field label="Type">
+            <Select id="d-type" value={form.type} onChange={e => set('type', e.target.value)}>
               {DEAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="d-value" className="block text-xs font-semibold text-slate-600 mb-1">Value <span className="text-slate-400">(minor units)</span></label>
-            <input id="d-value" required type="number" min="0" step="any" value={form.value} onChange={e => set('value', e.target.value)} className={input} />
-          </div>
-          <div>
-            <label htmlFor="d-min" className="block text-xs font-semibold text-slate-600 mb-1">Min order</label>
-            <input id="d-min" type="number" min="0" value={form.minOrderAmount} onChange={e => set('minOrderAmount', e.target.value)} className={input} />
-          </div>
-          <div>
-            <label htmlFor="d-maxdiscount" className="block text-xs font-semibold text-slate-600 mb-1">Max discount</label>
-            <input id="d-maxdiscount" type="number" min="0" value={form.maxDiscount} onChange={e => set('maxDiscount', e.target.value)} className={input} />
-          </div>
-          <div>
-            <label htmlFor="d-maxuses" className="block text-xs font-semibold text-slate-600 mb-1">Max uses / customer</label>
-            <input id="d-maxuses" type="number" min="1" value={form.maxUsesPerCustomer} onChange={e => set('maxUsesPerCustomer', e.target.value)} className={input} />
-          </div>
-          <div>
-            <label htmlFor="d-totaluses" className="block text-xs font-semibold text-slate-600 mb-1">Total uses cap</label>
-            <input id="d-totaluses" type="number" min="1" value={form.totalUses} onChange={e => set('totalUses', e.target.value)} className={input} />
-          </div>
-          <div>
-            <label htmlFor="d-start" className="block text-xs font-semibold text-slate-600 mb-1">Starts</label>
-            <input id="d-start" type="datetime-local" value={form.startsAt} onChange={e => set('startsAt', e.target.value)} className={input} />
-          </div>
-          <div>
-            <label htmlFor="d-end" className="block text-xs font-semibold text-slate-600 mb-1">Ends</label>
-            <input id="d-end" type="datetime-local" value={form.endsAt} onChange={e => set('endsAt', e.target.value)} className={input} />
-          </div>
-          <div>
-            <label htmlFor="d-region" className="block text-xs font-semibold text-slate-600 mb-1">Region</label>
-            <select id="d-region" value={form.regionKey} onChange={e => set('regionKey', e.target.value)} className={input}>
+            </Select>
+          </Field>
+          <Field label="Value (minor units)" required>
+            <Input id="d-value" required type="number" min="0" step="any" value={form.value} onChange={e => set('value', e.target.value)} />
+          </Field>
+          <Field label="Min order">
+            <Input id="d-min" type="number" min="0" value={form.minOrderAmount} onChange={e => set('minOrderAmount', e.target.value)} />
+          </Field>
+          <Field label="Max discount">
+            <Input id="d-maxdiscount" type="number" min="0" value={form.maxDiscount} onChange={e => set('maxDiscount', e.target.value)} />
+          </Field>
+          <Field label="Max uses / customer">
+            <Input id="d-maxuses" type="number" min="1" value={form.maxUsesPerCustomer} onChange={e => set('maxUsesPerCustomer', e.target.value)} />
+          </Field>
+          <Field label="Total uses cap">
+            <Input id="d-totaluses" type="number" min="1" value={form.totalUses} onChange={e => set('totalUses', e.target.value)} />
+          </Field>
+          <Field label="Starts">
+            <Input id="d-start" type="datetime-local" value={form.startsAt} onChange={e => set('startsAt', e.target.value)} />
+          </Field>
+          <Field label="Ends">
+            <Input id="d-end" type="datetime-local" value={form.endsAt} onChange={e => set('endsAt', e.target.value)} />
+          </Field>
+          <Field label="Region">
+            <Select id="d-region" value={form.regionKey} onChange={e => set('regionKey', e.target.value)}>
               <option value="">All regions</option>
               {regions.map(r => <option key={r.key} value={r.key}>{r.key} — {r.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Products on deal</label>
-            <div className="max-h-32 overflow-auto rounded-md border border-slate-200 bg-surface-raised p-2 space-y-1">
+            </Select>
+          </Field>
+          <Field label="Products on deal" className="sm:col-span-2">
+            <div className="max-h-32 overflow-auto rounded-lg border border-surface-200 bg-surface-50/60 p-2 space-y-1">
               {products.map(p => (
-                <label key={p.id} className="flex items-center gap-2 text-xs text-slate-700">
-                  <input type="checkbox" checked={form.productIds.includes(p.id)} onChange={() => toggleProduct(p.id)} />
-                  <span className="truncate">{p.name}</span>
-                </label>
+                <Checkbox key={p.id} checked={form.productIds.includes(p.id)} onChange={() => toggleProduct(p.id)} label={p.name} className="w-full" />
               ))}
-              {products.length === 0 && <p className="text-slate-400 text-xs">No active products.</p>}
+              {products.length === 0 && <p className="text-surface-400 text-xs">No active products.</p>}
             </div>
-          </div>
+          </Field>
           <div className="sm:col-span-2 flex justify-end">
-            <button type="submit" disabled={submitting} className="rounded-md bg-emerald-600 text-white text-xs font-bold px-4 py-2 hover:bg-emerald-500 transition-colors disabled:opacity-50">
+            <Button type="submit" variant="success" loading={submitting}>
               {submitting ? 'Creating…' : 'Create deal'}
-            </button>
+            </Button>
           </div>
         </form>
       )}
 
-      {error && <p role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+      {error && (
+        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-800">
+          {error}
+        </div>
+      )}
 
-      <div className="bg-surface-raised rounded-xl border border-slate-200 overflow-x-auto">
+      <div className="bg-white border border-surface-200 rounded-xl shadow-xs overflow-x-auto">
         <table className="w-full text-left text-xs min-w-[900px]">
-          <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
+          <thead className="bg-surface-50 text-surface-500 uppercase text-[10px] tracking-wider">
             <tr>
               <th scope="col" className="px-5 py-2.5 font-semibold">Deal</th>
               <th scope="col" className="px-5 py-2.5 font-semibold">Value</th>
@@ -295,30 +284,30 @@ export default function AdminDealsPage() {
               <th scope="col" className="px-5 py-2.5 font-semibold text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-surface-100">
             {deals === null && (
-              <tr><td colSpan={8} className="px-5 py-8 text-center text-slate-400" aria-busy="true">Loading…</td></tr>
+              <tr><td colSpan={8} className="px-5 py-8 text-center text-surface-400" aria-busy="true">Loading…</td></tr>
             )}
             {deals?.length === 0 && (
-              <tr><td colSpan={8} className="px-5 py-8 text-center text-slate-400">No deals yet. Create one to start promoting.</td></tr>
+              <tr><td colSpan={8} className="px-5 py-8 text-center text-surface-400">No deals yet. Create one to start promoting.</td></tr>
             )}
             {deals?.map(d => (
-              <tr key={d.id} className="hover:bg-slate-50 align-top">
+              <tr key={d.id} className="hover:bg-surface-50/60 align-top">
                 <td className="px-5 py-3">
-                  <p className="font-semibold text-slate-800">{d.name}</p>
-                  <p className="text-slate-400 text-[10px]">{d.type} · {d.slug}</p>
-                  {d.vendor && <p className="text-slate-500 text-[10px]">by {d.vendor.storeName || d.vendor.slug}</p>}
+                  <p className="font-semibold text-surface-800">{d.name}</p>
+                  <p className="text-surface-400 text-[10px]">{d.type} · {d.slug}</p>
+                  {d.vendor && <p className="text-surface-500 text-[10px]">by {d.vendor.storeName || d.vendor.slug}</p>}
                 </td>
                 <td className="px-5 py-3 font-semibold tabular-nums">{valueLabel(d)}</td>
-                <td className="px-5 py-3 whitespace-nowrap text-slate-500">
+                <td className="px-5 py-3 whitespace-nowrap text-surface-500">
                   {new Date(d.startsAt).toLocaleDateString()} → {new Date(d.endsAt).toLocaleDateString()}
-                  <p className="text-slate-400 text-[10px]">{d.usedCount} uses</p>
+                  <p className="text-surface-400 text-[10px]">{d.usedCount} uses</p>
                 </td>
                 <td className="px-5 py-3">{d.region?.key ?? 'All'}</td>
                 <td className="px-5 py-3">
                   <ul className="space-y-1">
                     {d.variants.map(v => (
-                      <li key={v.id} className="flex items-center gap-1 text-[10px] text-slate-600">
+                      <li key={v.id} className="flex items-center gap-1 text-[10px] text-surface-600">
                         <span className="truncate max-w-[180px]">{v.product.name}</span>
                         <button
                           type="button"
@@ -333,7 +322,7 @@ export default function AdminDealsPage() {
                     aria-label={`Add product to ${d.name}`}
                     value=""
                     onChange={e => addProduct(d, e.target.value)}
-                    className="mt-1 text-[10px] rounded border border-slate-300 bg-surface-raised px-1 py-0.5"
+                    className="mt-1 text-[10px] rounded border border-surface-300 bg-white px-1 py-0.5"
                   >
                     <option value="">+ add product</option>
                     {products.filter(p => !d.variants.some(v => v.productId === p.id)).map(p => (
@@ -344,32 +333,27 @@ export default function AdminDealsPage() {
                 <td className="px-5 py-3 tabular-nums">{d._count?.coupons ?? 0}</td>
                 <td className="px-5 py-3"><StatusBadge status={d.enabled ? 'ACTIVE' : 'INACTIVE'} /></td>
                 <td className="px-5 py-3 text-right whitespace-nowrap">
-                  <button
-                    type="button"
-                    disabled={busyId === d.id || copyBusyId === d.id}
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    loading={copyBusyId === d.id}
+                    disabled={busyId === d.id}
                     onClick={() => generateCopy(d)}
-                    title="Generate AI deal copy"
-                    className="rounded-md border border-indigo-200 text-indigo-600 text-[10px] font-bold px-2.5 py-1.5 hover:bg-indigo-50 disabled:opacity-50 mr-1.5 transition-colors"
+                    className="mr-1.5"
                   >
                     {copyBusyId === d.id ? 'Generating…' : 'AI copy'}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busyId === d.id}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={d.enabled ? 'dangerOutline' : 'success'}
+                    loading={busyId === d.id}
+                    disabled={copyBusyId === d.id}
                     onClick={() => toggleEnabled(d)}
-                    className={
-                      (d.enabled ? 'bg-amber-600 hover:bg-amber-500' : 'bg-emerald-600 hover:bg-emerald-500') +
-                      ' text-white text-[10px] font-bold px-2.5 py-1.5 rounded-md transition-colors disabled:opacity-50 mr-1.5'
-                    }
+                    className="mr-1.5"
                   >
                     {d.enabled ? 'Disable' : 'Enable'}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busyId === d.id}
-                    onClick={() => removeDeal(d)}
-                    className="rounded-md border border-red-300 text-red-700 text-[10px] font-bold px-2.5 py-1.5 hover:bg-red-50 disabled:opacity-50"
-                  >Delete</button>
+                  </Button>
+                  <Button size="sm" variant="dangerOutline" disabled={copyBusyId === d.id} loading={busyId === d.id} onClick={() => removeDeal(d)}>Delete</Button>
                 </td>
               </tr>
             ))}
@@ -378,43 +362,43 @@ export default function AdminDealsPage() {
       </div>
 
       {copyResult && (
-        <div className="mt-4 bg-surface-raised rounded-xl border border-slate-200 p-5">
+        <div className="mt-4 bg-white border border-surface-200 rounded-xl shadow-xs p-5">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-slate-800">AI Deal Copy</h3>
-            <button type="button" onClick={() => setCopyResult(null)} className="text-xs font-semibold text-slate-400 hover:text-slate-600 transition-colors">Close</button>
+            <h3 className="text-sm font-bold text-surface-800">AI Deal Copy</h3>
+            <Button size="sm" variant="ghost" onClick={() => setCopyResult(null)}>Close</Button>
           </div>
           <dl className="grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
-              <dt className="font-semibold text-slate-500 mb-1">Headline</dt>
-              <dd className="font-bold text-slate-800">{copyResult.headline}</dd>
+            <div className="rounded-lg border border-surface-200 p-3 bg-surface-50/60">
+              <dt className="font-semibold text-surface-500 mb-1">Headline</dt>
+              <dd className="font-bold text-surface-800">{copyResult.headline}</dd>
             </div>
-            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
-              <dt className="font-semibold text-slate-500 mb-1">Subheadline</dt>
-              <dd className="text-slate-700">{copyResult.subheadline}</dd>
+            <div className="rounded-lg border border-surface-200 p-3 bg-surface-50/60">
+              <dt className="font-semibold text-surface-500 mb-1">Subheadline</dt>
+              <dd className="text-surface-700">{copyResult.subheadline}</dd>
             </div>
-            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
-              <dt className="font-semibold text-slate-500 mb-1">Hook</dt>
-              <dd className="text-slate-700">{copyResult.hook}</dd>
+            <div className="rounded-lg border border-surface-200 p-3 bg-surface-50/60">
+              <dt className="font-semibold text-surface-500 mb-1">Hook</dt>
+              <dd className="text-surface-700">{copyResult.hook}</dd>
             </div>
-            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
-              <dt className="font-semibold text-slate-500 mb-1">Urgency</dt>
-              <dd className="text-slate-700">{copyResult.urgency}</dd>
+            <div className="rounded-lg border border-surface-200 p-3 bg-surface-50/60">
+              <dt className="font-semibold text-surface-500 mb-1">Urgency</dt>
+              <dd className="text-surface-700">{copyResult.urgency}</dd>
             </div>
-            <div className="rounded-lg border border-slate-200 p-3 bg-slate-50">
-              <dt className="font-semibold text-slate-500 mb-1">CTA</dt>
-              <dd className="font-bold text-indigo-700">{copyResult.cta}</dd>
+            <div className="rounded-lg border border-surface-200 p-3 bg-surface-50/60">
+              <dt className="font-semibold text-surface-500 mb-1">CTA</dt>
+              <dd className="font-bold text-brand-700">{copyResult.cta}</dd>
             </div>
           </dl>
           <div className="mt-3 flex gap-2 flex-wrap">
             {([['headline', copyResult.headline], ['subheadline', copyResult.subheadline], ['hook', copyResult.hook], ['urgency', copyResult.urgency], ['CTA', copyResult.cta]] as const).map(([label, value]) => (
-              <button
+              <Button
                 key={label}
-                type="button"
+                size="sm"
+                variant="secondary"
                 onClick={() => navigator.clipboard.writeText(value).catch(() => {})}
-                className="text-[10px] font-bold px-2.5 py-1.5 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors"
               >
                 Copy {label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
-import { AdminShell, PageHeader, StatusBadge } from '@/components/AdminShell';
+import { AdminShell, PageHeader } from '@/components/AdminShell';
+import { DataTable, type Column, StatusBadge, Button, Toolbar, Field, Input } from '@/components/ui';
 
 interface AdminRegion {
   key: string;
@@ -81,107 +82,99 @@ export default function AdminRegionsPage() {
     }
   }
 
-  const field = 'rounded-md border border-slate-300 text-xs px-3 py-2 w-full bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500/40';
+  const columns: Column<AdminRegion>[] = [
+    { key: 'key', header: 'Key', render: r => <span className="font-mono font-bold text-surface-700">{r.key}</span> },
+    { key: 'name', header: 'Name', render: r => <span className="font-semibold text-surface-800">{r.name}</span> },
+    {
+      key: 'languages',
+      header: 'Languages',
+      render: r => (
+        <span className="text-xs">
+          {parseList(r.languages).join(', ')}
+          <span className="text-surface-400"> · default {r.defaultLanguage}</span>
+        </span>
+      ),
+    },
+    {
+      key: 'currencies',
+      header: 'Currencies',
+      render: r => (
+        <span className="text-xs">
+          {parseList(r.currencies).join(', ')}
+          <span className="text-surface-400"> · default {r.defaultCurrency}</span>
+        </span>
+      ),
+    },
+    { key: 'timezone', header: 'Timezone', render: r => <span className="text-surface-500 text-xs">{r.defaultTimezone}</span> },
+    { key: 'products', header: 'Products', align: 'right', render: r => <span className="tabular-nums">{r._count?.products ?? 0}</span> },
+    { key: 'status', header: 'Status', render: r => <StatusBadge status={r.enabled ? 'ACTIVE' : 'INACTIVE'} /> },
+  ];
 
   return (
     <AdminShell>
-      <PageHeader title="Regions" subtitle="Localized markets — currency, language, tax and shipping configuration is data, not code" />
-
-      <div className="mb-4 flex items-center justify-between">
-        <span className="text-xs text-slate-400">{regions ? `${regions.length} regions` : ''}</span>
-        <button
-          type="button"
-          onClick={() => setShowForm(s => !s)}
-          className="rounded-md bg-slate-900 text-white text-xs font-bold px-3 py-2 hover:bg-slate-700 transition-colors"
-        >
-          {showForm ? 'Cancel' : '+ New region'}
-        </button>
-      </div>
+      <PageHeader
+        title="Regions"
+        subtitle="Localized markets — currency, language, tax and shipping configuration is data, not code"
+        actions={
+          <Button variant={showForm ? 'secondary' : 'primary'} onClick={() => setShowForm(s => !s)}>
+            {showForm ? 'Cancel' : '+ New region'}
+          </Button>
+        }
+      />
 
       {showForm && (
-        <form onSubmit={createRegion} className="bg-surface-raised rounded-xl border border-slate-200 p-5 mb-6 grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="r-key" className="block text-xs font-semibold text-slate-600 mb-1">Key</label>
-            <input id="r-key" required value={form.key} onChange={e => set('key', e.target.value)} placeholder="US" className={field} />
-          </div>
-          <div>
-            <label htmlFor="r-name" className="block text-xs font-semibold text-slate-600 mb-1">Name</label>
-            <input id="r-name" required value={form.name} onChange={e => set('name', e.target.value)} placeholder="United States" className={field} />
-          </div>
-          <div>
-            <label htmlFor="r-languages" className="block text-xs font-semibold text-slate-600 mb-1">Languages <span className="text-slate-400">(comma-separated)</span></label>
-            <input id="r-languages" required value={form.languages} onChange={e => set('languages', e.target.value)} placeholder="en, es" className={field} />
-          </div>
-          <div>
-            <label htmlFor="r-default-language" className="block text-xs font-semibold text-slate-600 mb-1">Default language</label>
-            <input id="r-default-language" required value={form.defaultLanguage} onChange={e => set('defaultLanguage', e.target.value)} placeholder="en" className={field} />
-          </div>
-          <div>
-            <label htmlFor="r-currencies" className="block text-xs font-semibold text-slate-600 mb-1">Currencies <span className="text-slate-400">(comma-separated)</span></label>
-            <input id="r-currencies" required value={form.currencies} onChange={e => set('currencies', e.target.value)} placeholder="USD, MXN" className={field} />
-          </div>
-          <div>
-            <label htmlFor="r-default-currency" className="block text-xs font-semibold text-slate-600 mb-1">Default currency</label>
-            <input id="r-default-currency" required maxLength={3} value={form.defaultCurrency} onChange={e => set('defaultCurrency', e.target.value)} placeholder="USD" className={field} />
-          </div>
-          <div className="sm:col-span-2">
-            <label htmlFor="r-timezone" className="block text-xs font-semibold text-slate-600 mb-1">Default timezone</label>
-            <input id="r-timezone" required value={form.defaultTimezone} onChange={e => set('defaultTimezone', e.target.value)} placeholder="America/New_York" className={field} />
-          </div>
-          <div className="sm:col-span-2 flex justify-end">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-md bg-emerald-600 text-white text-xs font-bold px-4 py-2 hover:bg-emerald-500 transition-colors disabled:opacity-50"
-            >
-              {submitting ? 'Creating…' : 'Create region'}
-            </button>
+        <form onSubmit={createRegion} className="bg-white border border-surface-200 rounded-xl p-6 mb-6 shadow-xs">
+          <h3 className="text-[15px] font-bold text-surface-900 mb-4">New region</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Key" required>
+              <Input id="r-key" required value={form.key} onChange={e => set('key', e.target.value)} placeholder="US" className="font-mono uppercase" />
+            </Field>
+            <Field label="Name" required>
+              <Input id="r-name" required value={form.name} onChange={e => set('name', e.target.value)} placeholder="United States" />
+            </Field>
+            <Field label="Languages (comma-separated)" required>
+              <Input id="r-languages" required value={form.languages} onChange={e => set('languages', e.target.value)} placeholder="en, es" />
+            </Field>
+            <Field label="Default language" required>
+              <Input id="r-default-language" required value={form.defaultLanguage} onChange={e => set('defaultLanguage', e.target.value)} placeholder="en" />
+            </Field>
+            <Field label="Currencies (comma-separated)" required>
+              <Input id="r-currencies" required value={form.currencies} onChange={e => set('currencies', e.target.value)} placeholder="USD, MXN" />
+            </Field>
+            <Field label="Default currency" required>
+              <Input id="r-default-currency" required maxLength={3} value={form.defaultCurrency} onChange={e => set('defaultCurrency', e.target.value)} placeholder="USD" className="font-mono uppercase" />
+            </Field>
+            <Field label="Default timezone" required className="sm:col-span-2">
+              <Input id="r-timezone" required value={form.defaultTimezone} onChange={e => set('defaultTimezone', e.target.value)} placeholder="America/New_York" />
+            </Field>
+            <div className="sm:col-span-2 flex justify-end">
+              <Button type="submit" variant="success" loading={submitting}>
+                {submitting ? 'Creating…' : 'Create region'}
+              </Button>
+            </div>
           </div>
         </form>
       )}
 
-      {error && <p role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+      {error && (
+        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-800">
+          {error}
+        </div>
+      )}
 
-      <div className="bg-surface-raised rounded-xl border border-slate-200 overflow-x-auto">
-        <table className="w-full text-left text-xs min-w-[820px]">
-          <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
-            <tr>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Key</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Name</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Languages</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Currencies</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Timezone</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold text-right">Products</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {regions === null && (
-              <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-400" aria-busy="true">Loading…</td></tr>
-            )}
-            {regions?.length === 0 && (
-              <tr><td colSpan={7} className="px-5 py-8 text-center text-slate-400">No regions yet. Create one to configure a market.</td></tr>
-            )}
-            {regions?.map(r => (
-              <tr key={r.key} className="hover:bg-slate-50">
-                <td className="px-5 py-3 font-mono font-bold text-slate-700">{r.key}</td>
-                <td className="px-5 py-3 font-semibold text-slate-800">{r.name}</td>
-                <td className="px-5 py-3">
-                  {parseList(r.languages).join(', ')}
-                  <span className="text-slate-400"> · default {r.defaultLanguage}</span>
-                </td>
-                <td className="px-5 py-3">
-                  {parseList(r.currencies).join(', ')}
-                  <span className="text-slate-400"> · default {r.defaultCurrency}</span>
-                </td>
-                <td className="px-5 py-3 text-slate-500">{r.defaultTimezone}</td>
-                <td className="px-5 py-3 text-right tabular-nums">{r._count?.products ?? 0}</td>
-                <td className="px-5 py-3"><StatusBadge status={r.enabled ? 'ACTIVE' : 'INACTIVE'} /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Toolbar className="mb-4">
+        <span className="text-xs text-surface-400 font-medium tabular-nums">{regions ? `${regions.length} regions` : ''}</span>
+      </Toolbar>
+
+      <DataTable
+        columns={columns}
+        rows={regions}
+        rowKey={r => r.key}
+        minWidth={880}
+        emptyTitle="No regions yet"
+        emptyBody="Create one to configure a market."
+        loadingRows={6}
+      />
     </AdminShell>
   );
 }

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { AdminShell, PageHeader } from '@/components/AdminShell';
 import { ContentForm } from '@/components/ContentForm';
+import { Card, Skeleton } from '@/components/ui';
 
 interface ContentPage {
   id: string;
@@ -31,8 +32,12 @@ function EditContentInner() {
   return (
     <AdminShell>
       <PageHeader title="Edit Content Page" subtitle="Update page content and visibility" />
-      {error && <p role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
-      {!page && !error && <div className="bg-surface-raised rounded-xl border border-slate-200 p-10 text-center text-sm text-slate-400">Loading…</div>}
+      {error && (
+        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-800">
+          {error}
+        </div>
+      )}
+      {!page && !error && <Card><Skeleton className="h-10 rounded-lg" /></Card>}
       {page && <ContentForm mode="edit" initial={page} />}
     </AdminShell>
   );

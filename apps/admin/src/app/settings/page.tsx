@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { AdminShell, PageHeader } from '@/components/AdminShell';
+import { Card, Field, Input, Button, Skeleton } from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 interface SiteSetting {
   id: string;
@@ -63,46 +65,56 @@ function SettingsInner() {
     }
   }
 
-  const inputClass = 'w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-surface-raised';
   const groups = ['general', 'contact', 'seo', 'checkout'];
 
   return (
     <AdminShell>
       <PageHeader title="Settings" subtitle="Global site configuration" />
 
-      {error && <p role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+      {error && (
+        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-800">
+          {error}
+        </div>
+      )}
 
-      {!settings && <div className="bg-surface-raised rounded-xl border border-slate-200 p-10 text-center text-sm text-slate-400" aria-busy="true">Loading…</div>}
+      {!settings && (
+        <Card>
+          <div className="space-y-6">
+            <Skeleton className="h-4 w-32" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Skeleton className="h-10 rounded-lg" />
+              <Skeleton className="h-10 rounded-lg" />
+            </div>
+          </div>
+        </Card>
+      )}
 
       {settings && (
-        <div className="bg-surface-raised rounded-xl border border-slate-200 p-5">
-          {groups.map(group => (
-            <div key={group} className={group !== groups[groups.length - 1] ? 'border-b border-slate-100 pb-5 mb-5' : ''}>
-              <h2 className="text-sm font-bold text-slate-900 mb-3 capitalize">{group}</h2>
+        <Card>
+          {groups.map((group, gi) => (
+            <div key={group} className={cn(gi < groups.length - 1 && 'border-b border-surface-100 pb-6 mb-6')}>
+              <h2 className="text-[15px] font-bold text-surface-900 mb-4 capitalize">{group}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {DEFAULT_KEYS.filter(k => k.group === group).map(k => (
-                  <div key={k.key}>
-                    <label htmlFor={`set-${k.key}`} className="block text-xs font-semibold text-slate-600 mb-1">{k.label}</label>
-                    <input
+                  <Field key={k.key} label={k.label}>
+                    <Input
                       id={`set-${k.key}`}
                       value={draft[k.key] ?? ''}
                       onChange={e => setDraft({ ...draft, [k.key]: e.target.value })}
-                      className={inputClass}
                       placeholder={k.placeholder}
                     />
-                  </div>
+                  </Field>
                 ))}
               </div>
             </div>
           ))}
 
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={save} disabled={busy}
-              className="rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 transition-colors disabled:opacity-50">
+          <div className="flex items-center gap-2 pt-2">
+            <Button onClick={save} loading={busy}>
               {busy ? 'Saving…' : 'Save settings'}
-            </button>
+            </Button>
           </div>
-        </div>
+        </Card>
       )}
     </AdminShell>
   );

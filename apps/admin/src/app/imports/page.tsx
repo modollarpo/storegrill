@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
-import { AdminShell, PageHeader, StatusBadge } from '@/components/AdminShell';
+import { AdminShell, PageHeader } from '@/components/AdminShell';
+import { DataTable, type Column, StatusBadge, Toolbar, Select, Button } from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 interface AdminImportJob {
   id: string;
@@ -50,82 +52,95 @@ function ImportsInner() {
     return Math.round((j.processedRows / j.totalRows) * 100);
   };
 
+  function ProgressBar({ j }: { j: AdminImportJob }) {
+    const pct = progress(j);
+    const pctClass = j.status === 'FAILED' ? 'bg-red-500' : pct >= 100 ? 'bg-emerald-500' : 'bg-brand-600';
+    return (
+      <div>
+        <div className="flex items-center gap-2">
+          <div className="w-24 h-1.5 rounded-full bg-surface-200 overflow-hidden">
+            <div className={cn('h-full transition-all', pctClass)} style={{ width: `${pct}%` }} />
+          </div>
+          <span className="text-surface-500 tabular-nums">{pct}%</span>
+        </div>
+        {j.phase && <span className="block text-[10px] text-surface-400 mt-0.5">{(j.phase ?? '').replace(/_/g, ' ')}</span>}
+      </div>
+    );
+  }
+
+  const columns: Column<AdminImportJob>[] = [
+    { key: 'vendor', header: 'Vendor', render: j => <span className="font-semibold text-surface-800">{j.vendorName}</span> },
+    {
+      key: 'type',
+      header: 'Type',
+      render: j => (
+        <span className="text-surface-600">
+          {j.type.replace(/_/g, ' ')}
+          {j.mode && j.mode !== 'APPLY' && <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200/60">{j.mode}</span>}
+        </span>
+      ),
+    },
+    { key: 'status', header: 'Status', render: j => <StatusBadge status={j.status} /> },
+    { key: 'progress', header: 'Progress', render: j => <ProgressBar j={j} /> },
+    {
+      key: 'rows',
+      header: 'Rows',
+      align: 'right',
+      render: j => (
+        <div>
+          <span className="font-semibold text-surface-800">{j.successRows}</span> ok <span className="text-surface-400">·</span> <span className={j.errorRows > 0 ? 'text-red-600 font-semibold' : ''}>{j.errorRows}</span> err
+          <span className="block text-[10px] text-surface-400 tabular-nums">/ {j.totalRows} total</span>
+        </div>
+      ),
+    },
+    { key: 'scheduled', header: 'Scheduled', render: j => <span className="text-surface-600">{j.scheduleName ?? '—'}</span> },
+    { key: 'started', header: 'Started', render: j => <span className="text-surface-600">{formatWhen(j.createdAt)}</span> },
+    { key: 'finished', header: 'Finished', render: j => <span className="text-surface-600">{formatWhen(j.completedAt)}</span> },
+  ];
+
   return (
     <AdminShell>
       <PageHeader title="Imports" subtitle="Vendor bulk-import jobs across the platform" />
 
-      <div className="mb-4 flex items-center gap-2">
-        <label htmlFor="import-status" className="text-xs font-semibold text-slate-600">Status:</label>
-        <select id="import-status" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }} className="h-8 rounded-md border border-slate-300 text-xs px-2 bg-surface-raised">
+      {error && (
+        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-800">
+          {error}
+        </div>
+      )}
+
+      <Toolbar className="mb-4">
+        <Select
+          id="import-status"
+          value={statusFilter}
+          onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
+          className="h-8 text-xs w-40"
+          aria-label="Filter by import status"
+        >
           {STATUS_OPTIONS.map(s => (
-            <option key={s} value={s}>{s === '' ? 'All' : s.replace(/_/g, ' ')}</option>
+            <option key={s} value={s}>{s === '' ? 'All statuses' : s.replace(/_/g, ' ')}</option>
           ))}
-        </select>
-      </div>
+        </Select>
+        <span className="text-xs text-surface-400 font-medium tabular-nums">{jobs ? `${jobs.length} shown` : ''}</span>
+      </Toolbar>
 
-      {error && <p role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
-
-      <div className="bg-surface-raised rounded-xl border border-slate-200 overflow-x-auto">
-        <table className="w-full text-left text-xs min-w-[900px]">
-          <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
-            <tr>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Vendor</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Type</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Status</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Progress</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold text-right">Rows</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Scheduled</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Started</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Finished</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {jobs === null && (
-              <tr><td colSpan={8} className="px-5 py-8 text-center text-slate-400" aria-busy="true">Loading…</td></tr>
-            )}
-            {jobs?.length === 0 && (
-              <tr><td colSpan={8} className="px-5 py-8 text-center text-slate-400">No import jobs found.</td></tr>
-            )}
-            {jobs?.map(j => {
-              const pct = progress(j);
-              const pctColor = j.status === 'FAILED' ? 'bg-red-500' : pct >= 100 ? 'bg-emerald-500' : 'bg-indigo-500';
-              return (
-                <tr key={j.id} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="px-5 py-3 font-semibold text-slate-800">{j.vendorName}</td>
-                  <td className="px-5 py-3 text-slate-600">{j.type.replace(/_/g, ' ')}{j.mode && j.mode !== 'APPLY' && <span className="ml-1.5 text-amber-600 font-semibold">{j.mode}</span>}</td>
-                  <td className="px-5 py-3"><StatusBadge status={j.status} /></td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-24 h-1.5 rounded-full bg-slate-200 overflow-hidden">
-                        <div className={`h-full ${pctColor} transition-all`} style={{ width: `${pct}%` }} />
-                      </div>
-                      <span className="text-slate-500">{pct}%</span>
-                    </div>
-                    {j.phase && <span className="block text-[10px] text-slate-400 mt-0.5">{j.phase.replace(/_/g, ' ')}</span>}
-                  </td>
-                  <td className="px-5 py-3 text-right text-slate-600">
-                    <span className="font-semibold text-slate-800">{j.successRows}</span> ok · {j.errorRows} err
-                    <span className="block text-[10px] text-slate-400">/ {j.totalRows} total</span>
-                  </td>
-                  <td className="px-5 py-3 text-slate-600">{j.scheduleName ?? '—'}</td>
-                  <td className="px-5 py-3 text-slate-600">{formatWhen(j.createdAt)}</td>
-                  <td className="px-5 py-3 text-slate-600">{formatWhen(j.completedAt)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={columns}
+        rows={jobs}
+        rowKey={j => j.id}
+        minWidth={980}
+        emptyTitle="No import jobs found"
+        loadingRows={6}
+      />
 
       {totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-between text-xs text-slate-600">
-          <button type="button" disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="rounded border border-slate-300 px-3 py-1.5 font-medium hover:border-indigo-400 disabled:opacity-40">
+        <div className="mt-4 flex items-center justify-between text-xs text-surface-600">
+          <Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
             Prev
-          </button>
-          <span>Page {page} / {totalPages}</span>
-          <button type="button" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="rounded border border-slate-300 px-3 py-1.5 font-medium hover:border-indigo-400 disabled:opacity-40">
+          </Button>
+          <span className="font-medium tabular-nums">Page {page} / {totalPages}</span>
+          <Button size="sm" variant="secondary" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
             Next
-          </button>
+          </Button>
         </div>
       )}
     </AdminShell>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
 import { AdminShell, PageHeader } from '@/components/AdminShell';
+import { DataTable, type Column, StatCard, Badge } from '@/components/ui';
 
 interface FeedLog {
   regionKey: string;
@@ -25,26 +26,10 @@ function relativeTime(iso: string): string {
   return `${days}d ago`;
 }
 
-function FeedStatusBadge({ status, itemCount }: { status: string; itemCount: number }) {
-  if (status === 'FAILED') {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider border bg-red-100/80 text-red-700 border-red-200">
-        Failed
-      </span>
-    );
-  }
-  if (itemCount === 0) {
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider border bg-amber-100/80 text-amber-700 border-amber-200">
-        Empty
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider border bg-emerald-100/80 text-emerald-700 border-emerald-200">
-      OK
-    </span>
-  );
+function FeedStatus({ status, itemCount }: { status: string; itemCount: number }) {
+  if (status === 'FAILED') return <Badge status="ERROR">Failed</Badge>;
+  if (itemCount === 0) return <Badge status="WARNING">Empty</Badge>;
+  return <Badge status="SUCCESS">OK</Badge>;
 }
 
 function FeedsInner() {
@@ -64,67 +49,46 @@ function FeedsInner() {
   const failedCount = feeds?.filter(f => f.status === 'FAILED').length ?? 0;
   const emptyCount = successful?.filter(f => f.itemCount === 0).length ?? 0;
 
+  const columns: Column<FeedLog>[] = [
+    { key: 'region', header: 'Region', render: f => <span className="font-bold text-surface-900">{f.regionKey}</span> },
+    { key: 'channel', header: 'Channel', render: f => f.channel },
+    { key: 'status', header: 'Status', render: f => <FeedStatus status={f.status} itemCount={f.itemCount} /> },
+    { key: 'items', header: 'Items', align: 'right', render: f => <span className="font-semibold tabular-nums">{f.itemCount.toLocaleString()}</span> },
+    { key: 'duration', header: 'Duration', align: 'right', render: f => <span className="tabular-nums">{f.durationMs.toLocaleString()} ms</span> },
+    { key: 'built', header: 'Built', align: 'right', render: f => <span className="text-surface-500">{relativeTime(f.createdAt)}</span> },
+  ];
+
   return (
     <AdminShell>
       <PageHeader title="Feeds" subtitle="Product feed build health across regions and channels" />
 
-      {error && <p role="alert" className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
-
-      {!feeds && !error && (
-        <div className="bg-surface-raised rounded-xl border border-slate-200 p-10 text-center text-sm text-slate-400" aria-busy="true">Loading…</div>
+      {error && (
+        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-800">
+          {error}
+        </div>
       )}
 
       {feeds && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-surface-raised rounded-xl border border-slate-200 p-5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Feeds generated</p>
-              <p className="text-2xl font-extrabold text-slate-900 mt-1 [font-variant-numeric:tabular-nums]">{feeds.length.toLocaleString()}</p>
-            </div>
-            <div className="bg-surface-raised rounded-xl border border-slate-200 p-5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Items in latest builds</p>
-              <p className="text-2xl font-extrabold text-slate-900 mt-1 [font-variant-numeric:tabular-nums]">{totalItems.toLocaleString()}</p>
-            </div>
-            <div className="bg-surface-raised rounded-xl border border-slate-200 p-5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Empty feeds</p>
-              <p className="text-2xl font-extrabold text-slate-900 mt-1 [font-variant-numeric:tabular-nums]">{emptyCount}</p>
-            </div>
-            <div className="bg-surface-raised rounded-xl border border-slate-200 p-5">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Failed builds</p>
-              <p className="text-2xl font-extrabold text-slate-900 mt-1 [font-variant-numeric:tabular-nums]">{failedCount}</p>
-            </div>
+            <StatCard label="Feeds generated" value={feeds.length.toLocaleString()} icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>} />
+            <StatCard label="Items in latest builds" value={totalItems.toLocaleString()} icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>} />
+            <StatCard label="Empty feeds" value={emptyCount.toLocaleString()} icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
+            <StatCard label="Failed builds" value={failedCount.toLocaleString()} icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>} />
           </div>
 
-          <div className="bg-surface-raised rounded-xl border border-slate-200 overflow-hidden">
-            <h2 className="text-sm font-bold text-slate-900 px-5 pt-5 pb-3 border-b border-slate-100">Latest build per region × channel</h2>
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
-                <tr>
-                  <th scope="col" className="px-5 py-2 font-semibold">Region</th>
-                  <th scope="col" className="px-5 py-2 font-semibold">Channel</th>
-                  <th scope="col" className="px-5 py-2 font-semibold">Status</th>
-                  <th scope="col" className="px-5 py-2 font-semibold text-right">Items</th>
-                  <th scope="col" className="px-5 py-2 font-semibold text-right">Duration</th>
-                  <th scope="col" className="px-5 py-2 font-semibold text-right">Built</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {feeds.length === 0 && (
-                  <tr><td colSpan={6} className="px-5 py-6 text-center text-slate-400">No feed builds recorded yet. Feeds are logged the first time each channel is requested.</td></tr>
-                )}
-                {feeds.map(f => (
-                  <tr key={`${f.regionKey}:${f.channel}`} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="px-5 py-2.5 font-bold text-slate-900">{f.regionKey}</td>
-                    <td className="px-5 py-2.5 text-slate-700">{f.channel}</td>
-                    <td className="px-5 py-2.5"><FeedStatusBadge status={f.status} itemCount={f.itemCount} /></td>
-                    <td className="px-5 py-2.5 text-right font-semibold text-slate-800 [font-variant-numeric:tabular-nums]">{f.itemCount.toLocaleString()}</td>
-                    <td className="px-5 py-2.5 text-right text-slate-600 [font-variant-numeric:tabular-nums]">{f.durationMs.toLocaleString()} ms</td>
-                    <td className="px-5 py-2.5 text-right text-slate-500">{relativeTime(f.createdAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="mb-2">
+            <h2 className="text-[15px] font-bold text-surface-900 tracking-tight">Latest build per region × channel</h2>
+            <p className="text-xs text-surface-500 font-medium mt-0.5">Feeds are logged the first time each channel is requested.</p>
           </div>
+          <DataTable
+            columns={columns}
+            rows={feeds}
+            rowKey={f => `${f.regionKey}:${f.channel}`}
+            minWidth={760}
+            emptyTitle="No feed builds recorded yet"
+            loadingRows={5}
+          />
         </>
       )}
     </AdminShell>

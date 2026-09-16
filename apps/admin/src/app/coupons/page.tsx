@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '@/lib/api';
-import { AdminShell, PageHeader, StatusBadge } from '@/components/AdminShell';
+import { AdminShell, PageHeader } from '@/components/AdminShell';
+import { DataTable, type Column, StatusBadge, Button, Badge, Field, Input, Select, Toolbar } from '@/components/ui';
 
 interface AdminCoupon {
   id: string;
@@ -102,107 +103,107 @@ export default function AdminCouponsPage() {
     }
   }
 
-  const input = 'rounded-md border border-slate-300 text-xs px-3 py-2 w-full bg-surface-raised focus:outline-none focus:ring-2 focus:ring-brand-500/40';
+  const columns: Column<AdminCoupon>[] = [
+    {
+      key: 'code',
+      header: 'Code',
+      render: c => (
+        <code className="rounded-md bg-surface-100 px-1.5 py-0.5 font-mono font-bold text-surface-800 text-xs">{c.code}</code>
+      ),
+    },
+    {
+      key: 'deal',
+      header: 'Deal',
+      render: c => (
+        <div>
+          <span className="font-semibold text-surface-800">{c.deal?.name || c.dealId.slice(0, 8)}</span>
+          {c.deal && <span className="text-surface-400 text-[11px]"> · {c.deal.type}</span>}
+        </div>
+      ),
+    },
+    { key: 'usage', header: 'Usage', render: c => <span className="tabular-nums">{c.usedCount}{c.maxUses ? ` / ${c.maxUses}` : ''}</span> },
+    { key: 'expires', header: 'Expires', render: c => <span className="text-surface-500">{c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : 'Never'}</span> },
+    { key: 'status', header: 'Status', render: c => <StatusBadge status={c.enabled ? 'ACTIVE' : 'INACTIVE'} /> },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      render: c => (
+        <div className="flex justify-end gap-1.5">
+          <Button size="sm" variant={c.enabled ? 'dangerOutline' : 'success'} loading={busyId === c.id} onClick={() => toggleEnabled(c)}>
+            {c.enabled ? 'Disable' : 'Enable'}
+          </Button>
+          <Button size="sm" variant="dangerOutline" loading={busyId === c.id} onClick={() => removeCoupon(c)}>
+            Delete
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <AdminShell>
-      <PageHeader title="Coupons" subtitle="Discount codes tied to deals. Validity is enforced server-side at checkout" />
-
-      <div className="mb-4 flex items-center justify-between">
-        <span className="text-xs text-slate-400">{coupons ? `${coupons.length} coupons` : ''}</span>
-        <button type="button" onClick={() => setShowForm(s => !s)} className="rounded-md bg-slate-900 text-white text-xs font-bold px-3 py-2 hover:bg-slate-700 transition-colors">
-          {showForm ? 'Cancel' : '+ New coupon'}
-        </button>
-      </div>
+      <PageHeader
+        title="Coupons"
+        subtitle="Discount codes tied to deals. Validity is enforced server-side at checkout"
+        actions={
+          <Button variant={showForm ? 'secondary' : 'primary'} onClick={() => setShowForm(s => !s)}>
+            {showForm ? 'Cancel' : '+ New coupon'}
+          </Button>
+        }
+      />
 
       {showForm && (
-        <form onSubmit={createCoupon} className="bg-surface-raised rounded-xl border border-slate-200 p-5 mb-6 grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="c-deal" className="block text-xs font-semibold text-slate-600 mb-1">Deal</label>
-            <select id="c-deal" required value={form.dealId} onChange={e => set('dealId', e.target.value)} className={input}>
-              <option value="">Select a deal…</option>
-              {deals.map(d => <option key={d.id} value={d.id}>{d.name} ({d.type}){d.enabled ? '' : ' — disabled'}</option>)}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="c-code" className="block text-xs font-semibold text-slate-600 mb-1">Code</label>
-            <input id="c-code" required minLength={3} maxLength={50} value={form.code} onChange={e => set('code', e.target.value)} placeholder="GRILL20" className={input} />
-          </div>
-          <div>
-            <label htmlFor="c-maxuses" className="block text-xs font-semibold text-slate-600 mb-1">Max uses</label>
-            <input id="c-maxuses" type="number" min="1" value={form.maxUses} onChange={e => set('maxUses', e.target.value)} className={input} />
-          </div>
-          <div>
-            <label htmlFor="c-expires" className="block text-xs font-semibold text-slate-600 mb-1">Expires</label>
-            <input id="c-expires" type="datetime-local" value={form.expiresAt} onChange={e => set('expiresAt', e.target.value)} className={input} />
-          </div>
-          <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 sm:col-span-2">
-            <input type="checkbox" checked={form.enabled} onChange={e => set('enabled', e.target.checked)} className="h-4 w-4" />
-            Enabled immediately
-          </label>
-          <div className="sm:col-span-2 flex justify-end">
-            <button type="submit" disabled={submitting} className="rounded-md bg-emerald-600 text-white text-xs font-bold px-4 py-2 hover:bg-emerald-500 transition-colors disabled:opacity-50">
-              {submitting ? 'Creating…' : 'Create coupon'}
-            </button>
+        <form onSubmit={createCoupon} className="bg-white border border-surface-200 rounded-xl p-6 mb-6 shadow-xs">
+          <h3 className="text-[15px] font-bold text-surface-900 mb-4">New coupon</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Deal" required>
+              <Select id="c-deal" required value={form.dealId} onChange={e => set('dealId', e.target.value)}>
+                <option value="">Select a deal…</option>
+                {deals.map(d => <option key={d.id} value={d.id}>{d.name} ({d.type}){d.enabled ? '' : ' — disabled'}</option>)}
+              </Select>
+            </Field>
+            <Field label="Code" required>
+              <Input id="c-code" required minLength={3} maxLength={50} value={form.code} onChange={e => set('code', e.target.value)} placeholder="GRILL20" className="font-mono uppercase" />
+            </Field>
+            <Field label="Max uses">
+              <Input id="c-maxuses" type="number" min="1" value={form.maxUses} onChange={e => set('maxUses', e.target.value)} />
+            </Field>
+            <Field label="Expires">
+              <Input id="c-expires" type="datetime-local" value={form.expiresAt} onChange={e => set('expiresAt', e.target.value)} />
+            </Field>
+            <label className="inline-flex items-center gap-2 text-sm font-medium text-surface-700 sm:col-span-2">
+              <input type="checkbox" checked={form.enabled} onChange={e => set('enabled', e.target.checked)} className="w-4 h-4 rounded border-surface-300 text-brand-600 focus:ring-brand-500" />
+              Enabled immediately
+            </label>
+            <div className="sm:col-span-2 flex justify-end">
+              <Button type="submit" variant="success" loading={submitting}>
+                {submitting ? 'Creating…' : 'Create coupon'}
+              </Button>
+            </div>
           </div>
         </form>
       )}
 
-      {error && <p role="alert" className="mb-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-3 py-2">{error}</p>}
+      {error && (
+        <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-800">
+          {error}
+        </div>
+      )}
 
-      <div className="bg-surface-raised rounded-xl border border-slate-200 overflow-x-auto">
-        <table className="w-full text-left text-xs min-w-[720px]">
-          <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider">
-            <tr>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Code</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Deal</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Usage</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Expires</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold">Status</th>
-              <th scope="col" className="px-5 py-2.5 font-semibold text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {coupons === null && (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-400" aria-busy="true">Loading…</td></tr>
-            )}
-            {coupons?.length === 0 && (
-              <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-400">No coupons yet. Create a deal first, then attach coupon codes.</td></tr>
-            )}
-            {coupons?.map(c => (
-              <tr key={c.id} className="hover:bg-slate-50 align-top">
-                <td className="px-5 py-3"><code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono font-bold text-slate-800">{c.code}</code></td>
-                <td className="px-5 py-3">
-                  <span className="font-semibold text-slate-700">{c.deal?.name || c.dealId.slice(0, 8)}</span>
-                  {c.deal && <span className="text-slate-400 text-[10px]"> · {c.deal.type}</span>}
-                </td>
-                <td className="px-5 py-3 tabular-nums">{c.usedCount}{c.maxUses ? ` / ${c.maxUses}` : ''}</td>
-                <td className="px-5 py-3 text-slate-500">{c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : 'Never'}</td>
-                <td className="px-5 py-3"><StatusBadge status={c.enabled ? 'ACTIVE' : 'INACTIVE'} /></td>
-                <td className="px-5 py-3 text-right whitespace-nowrap">
-                  <button
-                    type="button"
-                    disabled={busyId === c.id}
-                    onClick={() => toggleEnabled(c)}
-                    className={
-                      (c.enabled ? 'bg-amber-600 hover:bg-amber-500' : 'bg-emerald-600 hover:bg-emerald-500') +
-                      ' text-white text-[10px] font-bold px-2.5 py-1.5 rounded-md transition-colors disabled:opacity-50 mr-1.5'
-                    }
-                  >
-                    {c.enabled ? 'Disable' : 'Enable'}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={busyId === c.id}
-                    onClick={() => removeCoupon(c)}
-                    className="rounded-md border border-red-300 text-red-700 text-[10px] font-bold px-2.5 py-1.5 hover:bg-red-50 disabled:opacity-50"
-                  >Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Toolbar className="mb-4">
+        <span className="text-xs text-surface-400 font-medium tabular-nums">{coupons ? `${coupons.length} coupons` : ''}</span>
+      </Toolbar>
+
+      <DataTable
+        columns={columns}
+        rows={coupons}
+        rowKey={c => c.id}
+        minWidth={820}
+        emptyTitle="No coupons yet"
+        emptyBody="Create a deal first, then attach coupon codes."
+        loadingRows={6}
+      />
     </AdminShell>
   );
 }

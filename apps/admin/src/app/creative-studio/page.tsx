@@ -32,7 +32,7 @@ interface HomepageBanner {
 const BANNER_TYPES: { value: BannerType; label: string; description: string; defaultSize: ImageSize }[] = [
   { value: 'HERO_BANNER', label: 'Hero Banner', description: 'Main homepage hero', defaultSize: '1792x1024' },
   { value: 'DEAL_BANNER', label: 'Deal Banner', description: 'Flash-sale / discount banner', defaultSize: '1792x1024' },
-  { value: 'CATEGORY_BANNER', label: 'Category Banner', description: 'Category hero card', defaultSize: '1792x1024' },
+  { value: 'CATEGORY_BANNER', label: 'Category Banner', description: 'Category hero card', defaultSize: '1024x1024' },
   { value: 'AD_BANNER', label: 'Ad Banner', description: 'Digital advertising creative', defaultSize: '1792x1024' },
   { value: 'SOCIAL_MEDIA', label: 'Social Media', description: 'Instagram/Facebook post', defaultSize: '1024x1024' },
   { value: 'PRODUCT_HERO', label: 'Product Hero', description: 'Product showcase image', defaultSize: '1024x1024' },
@@ -58,10 +58,28 @@ const STYLE_PRESETS: Record<BannerType, string[]> = {
     'Coupon style, torn-edge effect, promotional feel',
   ],
   CATEGORY_BANNER: [
-    'Category lifestyle shot, products in natural setting, aspirational',
-    'Flat lay arrangement, category products, clean composition',
-    'Gradient overlay with category name, professional photography',
-    'Split design, lifestyle on one side, products on other',
+    // 1. Furniture (displayOrder: 1)
+    'A professional e-commerce product photography composition on a clean white background. Three pieces of modern furniture arranged in a lifestyle grouping: a mid-century modern bed with neutral bedding, a wooden dining table with four chairs, and a contemporary sofa in light gray fabric. Soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. High-end furniture catalog aesthetic. Square format, 1:1 aspect ratio.',
+    // 2. Outdoor (displayOrder: 2)
+    'A professional e-commerce product photography composition on a clean white background. Outdoor living products arranged in a grouping: a stainless steel gas grill, a rattan patio furniture set with cushions, a large patio umbrella, and garden planters. Soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. Outdoor living catalog aesthetic. Square format, 1:1 aspect ratio.',
+    // 3. Toys & Hobbies (displayOrder: 3)
+    'A professional e-commerce product photography composition on a clean white background. Children\'s toys and hobbies arranged in a playful grouping: a colorful trampoline, a ride-on electric car for kids, building blocks set, and an art easel. Soft studio lighting, vibrant colors, subtle shadows, no text, no people. Amazon hero carousel card style. Kids toy catalog aesthetic. Square format, 1:1 aspect ratio.',
+    // 4. Baby & Kids (displayOrder: 4)
+    'A professional e-commerce product photography composition on a clean white background. Baby and nursery products arranged in a gentle grouping: a wooden crib with white bedding, a baby stroller in modern design, a high chair, and a baby rocker. Soft pastel tones, soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. Baby nursery catalog aesthetic. Square format, 1:1 aspect ratio.',
+    // 5. Decor (displayOrder: 5)
+    'A professional e-commerce product photography composition on a clean white background. Home decor accents arranged in an elegant grouping: a large decorative wall mirror, a modern floor lamp, a stylish area rug, and faux potted plants. Soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. Home decor catalog aesthetic. Square format, 1:1 aspect ratio.',
+    // 6. Pets (displayOrder: 6)
+    'A professional e-commerce product photography composition on a clean white background. Pet supplies arranged in a friendly grouping: a modern dog bed, a cat tree tower, pet food bowls on a stand, and a small animal cage. Soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. Pet supplies catalog aesthetic. Square format, 1:1 aspect ratio.',
+    // 7. Sports (displayOrder: 7)
+    'A professional e-commerce product photography composition on a clean white background. Fitness and sports equipment arranged in an active grouping: a compact treadmill, an exercise bike, a set of dumbbells on a rack, and a yoga mat with blocks. Soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. Sports equipment catalog aesthetic. Square format, 1:1 aspect ratio.',
+    // 8. Bath (displayOrder: 8)
+    'A professional e-commerce product photography composition on a clean white background. Bathroom organization products arranged in a clean grouping: a wall-mounted bathroom cabinet, a towel rack, a laundry basket, and an over-the-toilet storage shelf. Soft studio lighting, clean aesthetic, subtle shadows, no text, no people. Amazon hero carousel card style. Bathroom storage catalog aesthetic. Square format, 1:1 aspect ratio.',
+    // 9. Appliances (displayOrder: 9)
+    'A professional e-commerce product photography composition on a clean white background. Home appliances arranged in a modern grouping: a compact air purifier, a mini fridge, a standing fan, and a small kitchen appliance like a blender. Soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. Home appliance catalog aesthetic. Square format, 1:1 aspect ratio.',
+    // 10. Kitchen (displayOrder: 10)
+    'A professional e-commerce product photography composition on a clean white background. Kitchen products arranged in a functional grouping: a cookware set with pots and pans, a dish drying rack, a kitchen trash can, and a wine rack. Soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. Kitchen products catalog aesthetic. Square format, 1:1 aspect ratio.',
+    // 11. Health & Beauty (displayOrder: 11)
+    'A professional e-commerce product photography composition on a clean white background. Health and wellness products arranged in a relaxing grouping: a massage chair, a foot massager, a spa salon stool, and wellness accessories. Soft studio lighting, calming tones, subtle shadows, no text, no people. Amazon hero carousel card style. Health and beauty catalog aesthetic. Square format, 1:1 aspect ratio.',
   ],
   AD_BANNER: [
     'Google Display ad style, clear CTA, product focused',

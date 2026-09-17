@@ -3,6 +3,7 @@ import { translateBatch } from './server-translate';
 import { t } from '@/i18n';
 import { FALLBACK_HERO_DEALS } from './home-hero-fallback';
 import {
+  buildCategoryBannerSlides,
   buildCategoryCards,
   buildCuratedCards,
   buildFeaturedSection,
@@ -136,7 +137,8 @@ export async function loadHomeContent(regionKey: string, language: string): Prom
   ]);
 
   const hasBanners = banners.length > 0;
-  let slides: HomeHeroSlide[] = hasBanners ? banners : buildHeroSlides(deals, language);
+  const categorySlides = buildCategoryBannerSlides();
+  let slides: HomeHeroSlide[] = hasBanners ? banners : [...categorySlides, ...buildHeroSlides(deals, language)];
   if (slides.length === 0) {
     slides = FALLBACK_HERO_DEALS.map(slide => ({ ...slide }));
   }

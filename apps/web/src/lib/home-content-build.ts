@@ -145,7 +145,34 @@ export function endLabel(endsAt: string | undefined, language: string): string {
   }
 }
 
-export const HERO_MAX_SLIDES = 14;
+export const HERO_MAX_SLIDES = 20;
+
+const CATEGORY_BANNERS: Array<{ slug: string; tagline: string; image: string }> = [
+  { slug: 'furniture', tagline: 'Beds, desks, dining and living pieces for every room in the house.', image: '/banners/category/furniture.png' },
+  { slug: 'outdoor', tagline: 'Grills, patio furniture and garden gear made for the outdoors.', image: '/banners/category/outdoor.png' },
+  { slug: 'toys-hobbies', tagline: 'Play, learning and creative hobbies for kids of all ages.', image: '/banners/category/toys-hobbies.png' },
+  { slug: 'baby-kids', tagline: 'Nurseries, toys and everyday essentials for growing families.', image: '/banners/category/baby-kids.png' },
+  { slug: 'decor', tagline: 'Mirrors, lighting and accents that give every room its character.', image: '/banners/category/decor.png' },
+  { slug: 'pets', tagline: 'Beds, feeders and supplies your cat, dog or small pet will love.', image: '/banners/category/pets.png' },
+  { slug: 'sports', tagline: 'Exercise machines, yoga and gear for every kind of active day.', image: '/banners/category/sports.png' },
+  { slug: 'bath', tagline: 'Cabinets, storage and fixtures to keep every washroom organised.', image: '/banners/category/bath.png' },
+  { slug: 'appliances', tagline: 'Upgrade your home with the essentials that actually do the work.', image: '/banners/category/appliances.png' },
+  { slug: 'kitchen', tagline: 'Cookware, organisers and storage for a kitchen that works.', image: '/banners/category/kitchen.png' },
+  { slug: 'health-beauty', tagline: 'Wellness, massage and self-care for home and on the go.', image: '/banners/category/health-beauty.png' },
+];
+
+export function buildCategoryBannerSlides(): HomeHeroSlide[] {
+  return CATEGORY_BANNERS.map(b => ({
+    title: b.slug
+      .split('-')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' '),
+    subtitle: b.tagline,
+    image: b.image,
+    href: `/categories/${b.slug}`,
+    imageFit: 'cover' as const,
+  }));
+}
 
 export function buildHeroSlides(deals: DealRow[], language: string): HomeHeroSlide[] {
   const slides: HomeHeroSlide[] = [];

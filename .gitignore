@@ -37,6 +37,7 @@ BUILD_PROMPT.md
 import-ng-secrets.*
 apps/currys/
 apps/web/public/Screenshot*.png
+/public/
 
 # Terraform state, plans, and local secrets — never commit
 *.tfstate

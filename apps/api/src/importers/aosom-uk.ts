@@ -90,7 +90,8 @@ export interface AosomUkMergedRow {
   categoryTwo: string;
   colour: string;
   stock: number;
-  sellPriceMinorUnits: number;
+    sellPriceMinorUnits: number;
+  listPriceMinorUnits?: number;
 }
 
 const PRODUCT_COLS = 11;
@@ -242,8 +243,8 @@ export function mergeAosomUkFeeds(
   for (const p of products) {
     const stock = stockBySku.get(p.SKU.trim());
     if (!stock) continue;
-    const wholesale = parseGbpPrice(stock['2B-S']);
-    if (wholesale == null) continue;
+    const sellPrice = parseGbpPrice(stock['2B-S']);
+    if (sellPrice == null) continue;
     const stockCount = Number.parseInt(stock.Stock, 10) || 0;
     merged.push({
       sku: p.SKU.trim(),
@@ -257,7 +258,8 @@ export function mergeAosomUkFeeds(
       categoryTwo: p['Category Two'],
       colour: p.Colour,
       stock: stockCount,
-      sellPriceMinorUnits: wholesale,
+      sellPriceMinorUnits: sellPrice,
+      listPriceMinorUnits: parseGbpPrice(stock['2B Product Price']) ?? undefined,
     });
   }
   return merged;
@@ -270,6 +272,7 @@ function toVariant(row: AosomUkMergedRow, suffix: string | null): NormalizedVari
     variantSuffix: suffix,
     feedPriceMinorUnits: row.sellPriceMinorUnits,
     priceMinorUnits: row.sellPriceMinorUnits,
+    listPriceMinorUnits: row.listPriceMinorUnits,
     supplierStock: row.stock,
     stock: row.stock,
     images: normalizeAosomUkImages(row.baseImage, row.images),

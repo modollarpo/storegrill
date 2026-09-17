@@ -178,6 +178,7 @@ function toVariant(row: AosomFeedRow, suffix: string | null): NormalizedVariant 
     variantSuffix: suffix,
     feedPriceMinorUnits: special,
     priceMinorUnits: special,
+    listPriceMinorUnits: parseEurPrice(row.Price) ?? undefined,
     supplierStock,
     stock: supplierStock > 0 ? 20 : 0,
     images: normalizeAosomImages(row['Base image'], row.Image),

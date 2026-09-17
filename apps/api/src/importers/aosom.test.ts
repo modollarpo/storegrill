@@ -136,11 +136,11 @@ describe('adaptAosomRows', () => {
     expect(salon!.variants.every(v => v.priceMinorUnits === v.feedPriceMinorUnits)).toBe(true);
   });
 
-  it('imports prices at the raw feed price with no compare-at', () => {
+  it('imports the special price as the selling price and the regular price as compare-at', () => {
     const cleaning = result.products.find(p => p.baseName.includes('Cleaning'));
     const variant = cleaning!.variants[0];
     expect(variant.priceMinorUnits).toBe(variant.feedPriceMinorUnits);
-    expect(variant.listPriceMinorUnits).toBeUndefined();
+    expect(variant.listPriceMinorUnits).toBe(13999);
   });
 
   it('dedupes images and rewrites http to https', () => {

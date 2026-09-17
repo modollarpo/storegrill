@@ -201,6 +201,7 @@ function toVariant(row: CostwayFeedRow, suffix: string | null): NormalizedVarian
     variantSuffix: suffix,
     feedPriceMinorUnits,
     priceMinorUnits: feedPriceMinorUnits,
+    listPriceMinorUnits: feedPriceMinorUnits,
     supplierStock,
     stock: supplierStock >= OUT_OF_STOCK_THRESHOLD ? supplierStock : 0,
     images: normalizeImages(row),

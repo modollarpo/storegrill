@@ -146,12 +146,9 @@ it('imports prices at the raw feed price with no markup or compare-at', () => {
   const bySku = new Map(
     adapted.products.flatMap(p => p.variants.map(v => [v.sku, v])),
   );
-  expect(bySku.get('CLR1')!).toMatchObject({ priceMinorUnits: feed });
-  expect(bySku.get('FS1')!).toMatchObject({ priceMinorUnits: feed });
-  expect(bySku.get('REG1')!).toMatchObject({ priceMinorUnits: feed });
-  expect(bySku.get('CLR1')!.listPriceMinorUnits).toBeUndefined();
-  expect(bySku.get('FS1')!.listPriceMinorUnits).toBeUndefined();
-  expect(bySku.get('REG1')!.listPriceMinorUnits).toBeUndefined();
+  expect(bySku.get('CLR1')!).toMatchObject({ priceMinorUnits: feed, listPriceMinorUnits: feed });
+  expect(bySku.get('FS1')!).toMatchObject({ priceMinorUnits: feed, listPriceMinorUnits: feed });
+  expect(bySku.get('REG1')!).toMatchObject({ priceMinorUnits: feed, listPriceMinorUnits: feed });
 });
 
   it('adapts every fixture row without errors', () => {
@@ -177,11 +174,11 @@ it('imports prices at the raw feed price with no markup or compare-at', () => {
     expect(skeleton!.variants[0].sku).toBe('AP2181');
   });
 
-  it('imports prices at raw feed values and rewrites image schemes', () => {
+  it('imports prices at raw feed values with the regular price as compare-at', () => {
     for (const product of result.products) {
       for (const variant of product.variants) {
         expect(variant.priceMinorUnits).toBe(variant.feedPriceMinorUnits);
-        expect(variant.listPriceMinorUnits).toBeUndefined();
+        expect(variant.listPriceMinorUnits).toBe(variant.feedPriceMinorUnits);
         for (const image of variant.images) {
           expect(image.startsWith('https://')).toBe(true);
         }

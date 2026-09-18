@@ -17,9 +17,27 @@ import type {
   HomeModule,
 } from '@Storegrill/shared';
 
+const HERO_AUTOPLAY_MS = 6000;
+
 function HeroImage({ src, alt }: { src?: string; alt: string }) {
   if (!src) return null;
   return <Image src={src} alt={alt} fill className="object-cover" />;
+}
+
+function Duotone({ tone }: { tone: 'ember' | 'deep' }) {
+  return (
+    <span
+      aria-hidden
+      className="pointer-events-none absolute inset-0"
+      style={{
+        background:
+          tone === 'ember'
+            ? 'linear-gradient(155deg, rgba(235,64,52,.38) 0%, rgba(235,64,52,.10) 45%, rgba(18,14,12,.72) 100%)'
+            : 'linear-gradient(155deg, rgba(18,14,12,.62) 0%, rgba(18,14,12,.24) 48%, rgba(235,64,52,.45) 100%)',
+        mixBlendMode: 'multiply',
+      }}
+    />
+  );
 }
 
 function Hero({ slides, regionKey }: { slides: HomeHeroSlide[]; regionKey: string }) {
@@ -31,7 +49,7 @@ function Hero({ slides, regionKey }: { slides: HomeHeroSlide[]; regionKey: strin
     if (slides.length <= 1) return;
     const timer = window.setInterval(() => {
       setIndex(i => (i + 1) % slides.length);
-    }, 6000);
+    }, HERO_AUTOPLAY_MS);
     return () => window.clearInterval(timer);
   }, [slides.length, regionKey]);
 
@@ -51,7 +69,8 @@ function Hero({ slides, regionKey }: { slides: HomeHeroSlide[]; regionKey: strin
       {slide.variant === 'deal' ? (
         <div className="absolute inset-0 bg-smoke-150">
           <HeroImage src={slide.image} alt="" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/25 to-transparent" />
+          <Duotone tone="ember" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
         </div>
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-ember via-ember-dark to-deep" />
@@ -60,7 +79,7 @@ function Hero({ slides, regionKey }: { slides: HomeHeroSlide[]; regionKey: strin
       <div
         className={cn(
           'absolute inset-0 flex flex-col justify-center gap-3 p-6 md:p-12',
-          slide.variant === 'deal' ? 'max-w-[64%] items-start text-white' : 'items-center text-center',
+          slide.variant === 'deal' ? 'max-w-[62%] items-start text-white' : 'items-center text-center',
         )}
       >
         {slide.variant === 'deal' && slide.discountPercent ? (
@@ -84,23 +103,23 @@ function Hero({ slides, regionKey }: { slides: HomeHeroSlide[]; regionKey: strin
         <h2
           className={cn(
             'text-balance text-2xl font-bold leading-tight drop-shadow-sm md:text-4xl',
-            slide.variant === 'brand' ? 'text-white' : 'text-white',
+            slide.variant === 'deal' ? 'text-white' : 'text-white',
           )}
         >
           {slide.titleIsKey ? t(slide.title) : slide.title}
         </h2>
 
-        {slide.variant === 'brand' ? (
-          <p className="max-w-xl text-balance text-sm font-medium text-white/80 md:text-base">
-            {t('homeHeroBrandSubtitle')}
-          </p>
-        ) : null}
+          {slide.variant === 'deal' && slide.endsAt ? (
+            <p className="max-w-md text-balance text-sm font-medium text-white/80 md:text-base">
+              {slide.cap ? ' · ' : ''}
+            </p>
+          ) : null}
 
         <Link
           href={slide.ctaHref}
           className={cn(
-            'btn mt-2 h-10 rounded-pill px-5 text-[0.875rem] font-bold transition-transform duration-200 hover:scale-[1.03]',
-            slide.variant === 'brand' ? 'bg-white text-ember' : 'bg-white text-charcoal',
+            'mt-2 inline-flex h-11 w-fit items-center rounded-full bg-white px-6 text-[0.875rem] font-bold text-ember-dark transition-transform duration-200 hover:scale-[1.03]',
+            slide.variant === 'deal' ? 'bg-white text-ember-dark' : 'bg-white text-ember-dark',
           )}
         >
           {t(slide.ctaKey)}
@@ -163,8 +182,16 @@ function CategoryCardView({ module }: { module: Extract<HomeModule, { kind: 'cat
               aria-label={tile.name}
               className="block overflow-hidden rounded-md bg-smoke-100 transition-transform duration-300 hover:-translate-y-0.5"
             >
-              <span className="block aspect-square w-full relative">
-                {tile.image ? <Image src={tile.image} alt={tile.name || ''} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover" /> : null}
+              <span className="relative block aspect-square w-full">
+                {tile.image ? (
+                  <Image
+                    src={tile.image}
+                    alt={tile.name || ''}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    className="object-cover"
+                  />
+                ) : null}
               </span>
             </Link>
           </li>
@@ -194,7 +221,15 @@ function DealsRailView({ module }: { module: Extract<HomeModule, { kind: 'deals'
           <li key={item.dealId}>
             <Link href={`/deals/${item.dealSlug}`} className="block w-40">
               <span className="relative block aspect-square w-full overflow-hidden rounded-md bg-smoke-100">
-                {item.image ? <Image src={item.image} alt={item.name || ''} fill sizes="160px" className="object-cover" /> : null}
+                {item.image ? (
+                  <Image
+                    src={item.image}
+                    alt={item.name || ''}
+                    fill
+                    sizes="160px"
+                    className="object-cover"
+                  />
+                ) : null}
                 <span className="absolute bottom-1.5 left-1.5 z-10 rounded bg-white/95 px-1.5 py-0.5 text-xs font-bold leading-none text-sale shadow-sm">
                   {item.cap ? t('homePercentOffUpTo', item.discountPercent) : t('homePercentOff', item.discountPercent)}
                 </span>
@@ -211,7 +246,7 @@ function DealsRailView({ module }: { module: Extract<HomeModule, { kind: 'deals'
   );
 }
 
-function CreativeBannerView({ module }: { module: HomeCreativeModule }) {
+function CreativeBannerView({ module }: { module: Extract<HomeModule, { kind: 'creative' }> }) {
   const t = useTranslations();
   const dark = module.theme === 'dark';
   return (
@@ -237,7 +272,7 @@ function CreativeBannerView({ module }: { module: HomeCreativeModule }) {
       </span>
       <span
         className={cn(
-          'btn shrink-0 h-9 rounded-pill px-4 text-[0.8125rem] font-bold',
+          'btn h-9 shrink-0 rounded-pill px-4 text-[0.8125rem] font-bold',
           dark ? 'bg-white text-ember' : 'bg-ember text-white group-hover:bg-ember-dark',
         )}
       >
@@ -255,8 +290,8 @@ function ModuleView({ module }: { module: HomeModule }) {
       return <DealsRailView module={module} />;
     case 'creative':
       return <CreativeBannerView module={module} />;
-    case 'recently':
-      return <RecentlyViewed />;
+    default:
+      return null;
   }
 }
 
@@ -275,7 +310,7 @@ function FeedSkeleton() {
 
 export function HomeFeed({ initial, regionKey }: { initial: HomeFeed | null; regionKey: string }) {
   const t = useTranslations();
-  const [hero] = useState<HomeHeroSlide[]>(initial?.hero ?? []);
+  const [hero, setHero] = useState<HomeHeroSlide[]>(initial?.hero ?? []);
   const [modules, setModules] = useState<HomeModule[]>(initial?.modules ?? []);
   const [page, setPage] = useState(initial?.page ?? 0);
   const [more, setMore] = useState(initial?.more ?? false);
@@ -325,21 +360,15 @@ export function HomeFeed({ initial, regionKey }: { initial: HomeFeed | null; reg
       <div className="container-site py-6 md:py-8">
         <div className="space-y-6">
           {hero.length > 0 ? <Hero slides={hero} regionKey={regionKey} /> : null}
-          {modules.map((module, i) => {
-            const key =
-              module.kind === 'category' || module.kind === 'creative' ? module.id : `${module.kind}-${i}`;
-            return (
-              <div key={key} className="animate-fade-in">
-                <ModuleView module={module} />
-              </div>
-            );
-          })}
+          {modules.map((module, i) => (
+            <div key={module.kind === 'category' ? module.id : `${module.kind}-${i}`}>
+              <ModuleView module={module} />
+            </div>
+          ))}
         </div>
 
         <div ref={sentinelRef} aria-hidden="true" />
-        {loading ? (
-          <p className="py-8 text-center text-sm text-text-tertiary">{t('homeLoading')}</p>
-        ) : null}
+        {loading ? <p className="py-8 text-center text-sm text-text-tertiary">{t('homeLoading')}</p> : null}
         {failed ? <p className="py-8 text-center text-sm text-text-tertiary">{t('homeError')}</p> : null}
       </div>
     </div>

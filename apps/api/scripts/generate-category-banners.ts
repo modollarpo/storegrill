@@ -161,6 +161,7 @@ async function main() {
     const localPath = join(outputDir, filename);
     
     // Skip if already generated
+    let skipped = false;
     try {
       const stat = await import('node:fs').then(fs => fs.statSync(localPath));
       if (stat.size > 0) {
@@ -171,9 +172,12 @@ async function main() {
           url: '',
           localPath: `public/banners/category/${filename}`,
         });
-        continue;
+        skipped = true;
       }
-    } catch {}
+    } catch {
+      skipped = false;
+    }
+    if (skipped) continue;
     
     process.stdout.write(`[${cat.displayOrder}/11] ${cat.category}... `);
 

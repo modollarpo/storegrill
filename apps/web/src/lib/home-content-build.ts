@@ -72,6 +72,7 @@ export interface HomeHeroSlide {
   discountPercent?: number;
   overlayTint?: string;
   imageFit?: 'contain' | 'cover';
+  backgroundColor?: string;
 }
 
 export interface DealVariantRow {
@@ -174,9 +175,12 @@ export function buildCategoryBannerSlides(): HomeHeroSlide[] {
   }));
 }
 
+const HERO_CARD_COLORS = ['#ff9900', '#2051a3', '#b9a5d6', '#3b4856', '#78b28e', '#cc0c39'];
+
 export function buildHeroSlides(deals: DealRow[], language: string): HomeHeroSlide[] {
   const slides: HomeHeroSlide[] = [];
   const seen = new Set<string>();
+  let colorIdx = 0;
   for (const deal of deals) {
     for (const variant of deal.variants ?? []) {
       if (slides.length >= HERO_MAX_SLIDES) break;
@@ -198,7 +202,9 @@ export function buildHeroSlides(deals: DealRow[], language: string): HomeHeroSli
         currencyCode: 'GBP',
         listPriceMinorUnits: variant.listPriceMinorUnits ?? undefined,
         discountPercent: percent,
+        backgroundColor: HERO_CARD_COLORS[colorIdx % HERO_CARD_COLORS.length],
       });
+      colorIdx++;
     }
     if (slides.length >= HERO_MAX_SLIDES) break;
   }

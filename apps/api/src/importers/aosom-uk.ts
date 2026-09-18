@@ -243,7 +243,7 @@ export function mergeAosomUkFeeds(
   for (const p of products) {
     const stock = stockBySku.get(p.SKU.trim());
     if (!stock) continue;
-    const sellPrice = parseGbpPrice(stock['2B-S']);
+    const sellPrice = parseGbpPrice(stock['2B Product Price']);
     if (sellPrice == null) continue;
     const stockCount = Number.parseInt(stock.Stock, 10) || 0;
     merged.push({
@@ -259,7 +259,6 @@ export function mergeAosomUkFeeds(
       colour: p.Colour,
       stock: stockCount,
       sellPriceMinorUnits: sellPrice,
-      listPriceMinorUnits: parseGbpPrice(stock['2B Product Price']) ?? undefined,
     });
   }
   return merged;

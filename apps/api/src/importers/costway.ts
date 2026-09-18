@@ -13,6 +13,7 @@ export interface CostwayFeedRow {
   'item number': string;
   'Item Name': string;
   Price: string;
+  'Special Price': string;
   Specification: string;
   Description: string;
   Category: string;
@@ -192,8 +193,10 @@ export function parseSpec(spec: string): { weightGrams?: number; dimensions?: { 
 }
 
 function toVariant(row: CostwayFeedRow, suffix: string | null): NormalizedVariant | null {
-  const feedPriceMinorUnits = parsePriceToMinor(row.Price);
-  if (feedPriceMinorUnits == null) return null;
+  const regular = parsePriceToMinor(row.Price);
+  if (regular == null) return null;
+  const special = parsePriceToMinor(row['Special Price']);
+  const feedPriceMinorUnits = special ?? regular;
   const supplierStock = Number.parseInt(row.Stock, 10) || 0;
   return {
     sku: row.SKU.trim(),
@@ -201,7 +204,7 @@ function toVariant(row: CostwayFeedRow, suffix: string | null): NormalizedVarian
     variantSuffix: suffix,
     feedPriceMinorUnits,
     priceMinorUnits: feedPriceMinorUnits,
-    listPriceMinorUnits: feedPriceMinorUnits,
+    listPriceMinorUnits: regular,
     supplierStock,
     stock: supplierStock >= OUT_OF_STOCK_THRESHOLD ? supplierStock : 0,
     images: normalizeImages(row),

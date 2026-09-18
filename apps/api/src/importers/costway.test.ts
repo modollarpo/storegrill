@@ -136,20 +136,32 @@ expect(bySku.get('OK1')).toMatchObject({ stock: 21, supplierStock: 21 });
 expect(bySku.get('GARBAGE')).toMatchObject({ stock: 0, supplierStock: 0 });
 });
 
-it('imports prices at the raw feed price with no markup or compare-at', () => {
-  const feed = parsePriceToMinor(String(rows[0].Price))!;
-  const adapted = adaptCostwayRows([
-    { ...rows[0], SKU: 'CLR1', item_group_id: 'CLR1', 'Is it clearance': '1', 'Is it flash-sale': '0' },
-    { ...rows[0], SKU: 'FS1', item_group_id: 'FS1', 'Is it clearance': '0', 'Is it flash-sale': '1' },
-    { ...rows[0], SKU: 'REG1', item_group_id: 'REG1', 'Is it clearance': '0', 'Is it flash-sale': '0' },
-  ] as CostwayFeedRow[]);
-  const bySku = new Map(
-    adapted.products.flatMap(p => p.variants.map(v => [v.sku, v])),
-  );
-  expect(bySku.get('CLR1')!).toMatchObject({ priceMinorUnits: feed, listPriceMinorUnits: feed });
-  expect(bySku.get('FS1')!).toMatchObject({ priceMinorUnits: feed, listPriceMinorUnits: feed });
-  expect(bySku.get('REG1')!).toMatchObject({ priceMinorUnits: feed, listPriceMinorUnits: feed });
-});
+  it('imports prices at the raw feed price with no markup or compare-at', () => {
+    const feed = parsePriceToMinor(String(rows[0].Price))!;
+    const adapted = adaptCostwayRows([
+      { ...rows[0], SKU: 'CLR1', item_group_id: 'CLR1', 'Is it clearance': '1', 'Is it flash-sale': '0' },
+      { ...rows[0], SKU: 'FS1', item_group_id: 'FS1', 'Is it clearance': '0', 'Is it flash-sale': '1' },
+      { ...rows[0], SKU: 'REG1', item_group_id: 'REG1', 'Is it clearance': '0', 'Is it flash-sale': '0' },
+    ] as CostwayFeedRow[]);
+    const bySku = new Map(
+      adapted.products.flatMap(p => p.variants.map(v => [v.sku, v])),
+    );
+    expect(bySku.get('CLR1')!).toMatchObject({ priceMinorUnits: feed, listPriceMinorUnits: feed });
+    expect(bySku.get('FS1')!).toMatchObject({ priceMinorUnits: feed, listPriceMinorUnits: feed });
+    expect(bySku.get('REG1')!).toMatchObject({ priceMinorUnits: feed, listPriceMinorUnits: feed });
+  });
+
+  it('uses Special Price as the sell price and Price as the regular/compare-at price', () => {
+    const feed = parsePriceToMinor(String(rows[0].Price))!;
+    const special = Math.floor(feed * 0.8);
+    const adapted = adaptCostwayRows([
+      { ...rows[0], SKU: 'DISC1', item_group_id: 'DISC1', 'Special Price': `${(special / 100).toFixed(2)}` },
+    ] as CostwayFeedRow[]);
+    const variant = adapted.products[0].variants[0];
+    expect(variant.priceMinorUnits).toBe(special);
+    expect(variant.listPriceMinorUnits).toBe(feed);
+    expect(variant.feedPriceMinorUnits).toBe(special);
+  });
 
   it('adapts every fixture row without errors', () => {
     expect(rows.length).toBeGreaterThan(10);

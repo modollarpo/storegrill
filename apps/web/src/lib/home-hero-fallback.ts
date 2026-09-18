@@ -16,6 +16,7 @@ export const FALLBACK_HERO_DEALS: HomeHeroSlide[] = [
     listPriceMinorUnits: 11499,
     discountPercent: 22,
     overlayTint: 'bg-rose-900/15',
+    backgroundColor: '#ff9900',
   },
   {
     title: 'Bright mornings',
@@ -27,6 +28,7 @@ export const FALLBACK_HERO_DEALS: HomeHeroSlide[] = [
     listPriceMinorUnits: 6999,
     discountPercent: 22,
     overlayTint: 'bg-amber-900/15',
+    backgroundColor: '#2051a3',
   },
   {
     title: 'Everyday carry',
@@ -38,6 +40,7 @@ export const FALLBACK_HERO_DEALS: HomeHeroSlide[] = [
     listPriceMinorUnits: 17499,
     discountPercent: 26,
     overlayTint: 'bg-sky-900/15',
+    backgroundColor: '#b9a5d6',
   },
   {
     title: 'Smart home picks',
@@ -49,6 +52,7 @@ export const FALLBACK_HERO_DEALS: HomeHeroSlide[] = [
     listPriceMinorUnits: 24900,
     discountPercent: 20,
     overlayTint: 'bg-indigo-900/15',
+    backgroundColor: '#3b4856',
   },
   {
     title: 'Cosy corner edits',
@@ -60,6 +64,7 @@ export const FALLBACK_HERO_DEALS: HomeHeroSlide[] = [
     listPriceMinorUnits: 5999,
     discountPercent: 29,
     overlayTint: 'bg-emerald-900/15',
+    backgroundColor: '#78b28e',
   },
   {
     title: 'Kitchen confidence',
@@ -71,5 +76,6 @@ export const FALLBACK_HERO_DEALS: HomeHeroSlide[] = [
     listPriceMinorUnits: 39900,
     discountPercent: 21,
     overlayTint: 'bg-slate-900/15',
+    backgroundColor: '#cc0c39',
   },
 ];

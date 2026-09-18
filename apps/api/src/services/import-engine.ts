@@ -90,6 +90,7 @@ type ExistingVariant = {
   name: string;
   basePriceMinorUnits: number;
   stock: number;
+  attributes: string;
 };
 
 type ExistingProduct = {
@@ -345,6 +346,7 @@ async function planChanges(vendorId: string, products: NormalizedProduct[], prof
         name: v.name,
         basePriceMinorUnits: v.basePriceMinorUnits,
         stock: v.stock,
+        attributes: v.attributes,
       })),
     });
   }
@@ -394,7 +396,7 @@ function signatureOf(product: NormalizedProduct, existing: ExistingProduct, cate
   const desired = JSON.stringify({
     name: product.baseName,
     description: product.description,
-    variants: product.variants.map(v => [v.sku, v.variantSuffix, v.priceMinorUnits, v.stock]).sort(),
+    variants: product.variants.map(v => [v.sku, v.variantSuffix, v.priceMinorUnits, (v.listPriceMinorUnits != null && v.listPriceMinorUnits > v.priceMinorUnits) ? v.listPriceMinorUnits : null, v.stock]).sort(),
     images: product.variants[0]?.images ?? [],
     tags: [...product.tags].sort(),
     attributes: product.attributes.preorder ? { preorder: true } : {},
@@ -409,6 +411,7 @@ function signatureOf(product: NormalizedProduct, existing: ExistingProduct, cate
         v.sku,
         suffixFromName(existing.name, v.name),
         v.basePriceMinorUnits,
+        compareAtFromAttributes(v.attributes),
         v.stock,
       ])
       .sort(),
@@ -437,6 +440,12 @@ function attributesToMap(attributes: Array<{ name: string; value: string }>): Re
   return Object.fromEntries(
     attributes.filter(a => a.name.toLowerCase() !== 'specification').map(a => [a.name.toLowerCase(), a.value]),
   );
+}
+
+function compareAtFromAttributes(attributesJson: string): number | null {
+  const attrs = safeJson<Array<{ name: string; value: string }>>(attributesJson);
+  const raw = attrs.find(a => a.name.toLowerCase() === 'compare at price')?.value;
+  return raw ? Number(raw) : null;
 }
 
 function sourceDomainOf(url: string | null | undefined): string | null {
@@ -567,7 +576,12 @@ async function executePlan(
           images: JSON.stringify(variant.images),
           stock: variant.stock,
           weightGrams: null,
-          attributes: JSON.stringify([{ name: 'Supplier stock', value: String(variant.supplierStock) }]),
+          attributes: JSON.stringify([
+            { name: 'Supplier stock', value: String(variant.supplierStock) },
+            ...(variant.listPriceMinorUnits != null && variant.listPriceMinorUnits > variant.priceMinorUnits
+              ? [{ name: 'Compare at price', value: String(variant.listPriceMinorUnits) }]
+              : []),
+          ]),
         };
         await prisma.productVariant.upsert({ where: { sku: variant.sku }, update: variantData, create: variantData });
       }
@@ -700,6 +714,9 @@ async function applyOne(
   for (const variant of product.variants) {
     const variantAttributes = [
       { name: 'Supplier stock', value: String(variant.supplierStock) },
+      ...(variant.listPriceMinorUnits != null && variant.listPriceMinorUnits > variant.priceMinorUnits
+        ? [{ name: 'Compare at price', value: String(variant.listPriceMinorUnits) }]
+        : []),
     ];
     const variantData = {
       productId,

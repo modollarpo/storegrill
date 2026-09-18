@@ -17,6 +17,59 @@ interface AmazonHomeGridProps {
   language?: string;
 }
 
+function currencySymbol(code?: string): string {
+  if (code === 'GBP') return '£';
+  if (code === 'EUR') return '€';
+  return '$';
+}
+
+function HeroCard({ slide }: { slide: HomeHeroSlide }) {
+  const bg = slide.backgroundColor || '#3b4856';
+  return (
+    <Link
+      href={slide.href}
+      className="w-[280px] sm:w-[300px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-md shadow-sm group/card flex flex-col"
+      style={{ backgroundColor: bg }}
+    >
+      {/* Discount badge */}
+      {slide.discountPercent ? (
+        <div className="absolute top-4 left-4 z-20">
+          <span className="inline-block bg-white/95 text-[11px] font-extrabold px-2.5 py-1 rounded shadow-sm" style={{ color: bg }}>
+            {slide.discountPercent}% OFF
+          </span>
+        </div>
+      ) : null}
+
+      {/* Product image — contained, centered in top half, blend white bg away */}
+      <div className="relative w-full h-[200px] flex items-center justify-center p-4 pt-12">
+        <Image
+          src={slide.image}
+          alt={slide.title}
+          fill
+          sizes="300px"
+          className="object-contain mix-blend-multiply group-hover/card:scale-105 transition-transform duration-500"
+        />
+      </div>
+
+      {/* Text content — bottom half */}
+      <div className="flex-1 flex flex-col justify-end p-5 gap-2">
+        <p className="text-sm font-bold text-white/95 line-clamp-1 drop-shadow-sm">{slide.subtitle}</p>
+        <div className="flex items-center justify-between gap-2">
+          {slide.priceMinorUnits !== undefined ? (
+            <span className="text-2xl font-black text-white drop-shadow-sm">
+              {currencySymbol(slide.currencyCode)}
+              {(slide.priceMinorUnits / 100).toFixed(2)}
+            </span>
+          ) : null}
+          <span className="shrink-0 inline-flex items-center gap-1 bg-white/20 hover:bg-white/30 text-white text-xs font-extrabold px-3 py-1.5 rounded transition-colors">
+            Shop deal →
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, language }: AmazonHomeGridProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -57,57 +110,17 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
             ›
           </button>
 
-          {/* Horizontal Cards Scrollable Strip (Accurate Amazon card dimensions ~316px width x 420px height) */}
+          {/* Horizontal Cards Scrollable Strip (Amazon editorial card dimensions) */}
           <div
             ref={scrollRef}
-            className="flex items-stretch gap-4 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-4 pt-1 px-1"
+            className="flex items-stretch gap-3 overflow-x-auto scrollbar-none snap-x snap-mandatory pb-4 pt-1 px-1"
           >
             {heroSlides.map((slide, idx) => (
-              <div
-                key={idx}
-                className="w-[300px] sm:w-[316px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-xs shadow-sm bg-white group/slide"
-              >
-                <div className="absolute inset-0 bg-white" aria-hidden="true" />
-                <Image
-                  src={slide.image}
-                  alt={slide.title}
-                  fill
-                  sizes="316px"
-                  className={`${slide.imageFit === 'cover' ? 'object-cover' : 'object-contain'} group-hover/slide:scale-105 transition-transform duration-700`}
-                />
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[40%] bg-gradient-to-t from-black/50 via-black/25 to-transparent"
-                />
-                <div className="absolute inset-x-0 top-0 z-20 p-5 flex justify-between items-start">
-                  {slide.discountPercent ? (
-                    <span className="inline-block bg-[var(--color-amazon-deal)] text-white text-[10px] font-extrabold px-2 py-1 rounded-xs tracking-wide shadow-sm">
-                      {slide.discountPercent}% OFF
-                    </span>
-                  ) : null}
-                </div>
-                <div className="absolute inset-x-0 bottom-0 z-20 p-5 flex flex-col gap-2">
-                  <p className="text-sm font-bold text-white/95 line-clamp-1 drop-shadow-sm">{slide.subtitle}</p>
-                  <div className="flex items-center justify-between gap-2">
-                    {slide.priceMinorUnits !== undefined ? (
-                      <span className="text-2xl font-black text-white drop-shadow-sm">
-                        {slide.currencyCode === 'GBP' ? '£' : slide.currencyCode === 'EUR' ? '€' : '$'}
-                        {(slide.priceMinorUnits / 100).toFixed(2)}
-                      </span>
-                    ) : null}
-                    <Link
-                      href={slide.href}
-                      className="shrink-0 inline-flex items-center gap-1 bg-[var(--color-ember)] text-white text-xs font-extrabold px-3 py-1.5 rounded-xs hover:bg-[var(--color-ember-dark)] transition-colors shadow-sm"
-                    >
-                      Shop deal →
-                    </Link>
-                  </div>
-                </div>
-              </div>
+              <HeroCard key={idx} slide={slide} />
             ))}
             <Link
               href="/deals"
-              className="w-[300px] sm:w-[316px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-xs shadow-sm bg-gradient-to-br from-midnight via-ember-deep to-ember flex flex-col items-center justify-center gap-5 p-8 text-center group/cta"
+              className="w-[280px] sm:w-[300px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-md shadow-sm bg-gradient-to-br from-midnight via-ember-deep to-ember flex flex-col items-center justify-center gap-5 p-8 text-center group/cta"
             >
               <div
                 aria-hidden="true"

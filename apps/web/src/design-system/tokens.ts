@@ -160,6 +160,10 @@ export const heroPalette = {
   berry: '#e63946',
   sand: '#e3d5ca',
   mint: '#d8f3dc',
+  navy: '#2051a3',
+  lavender: '#b9a5d6',
+  charcoal: '#3b4856',
+  sage: '#78b28e',
 } as const;
 
 export const zIndexLayers = {

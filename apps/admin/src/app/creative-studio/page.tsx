@@ -46,58 +46,38 @@ const SIZE_OPTIONS: { value: ImageSize; label: string }[] = [
 
 const STYLE_PRESETS: Record<BannerType, string[]> = {
   HERO_BANNER: [
-    'Modern minimalist e-commerce hero, gradient background, clean typography',
-    'Lifestyle photography, happy customer using product, warm lighting',
-    'Bold geometric shapes, brand colors, attention-grabbing',
-    'Seasonal theme, festive atmosphere, limited time offer feel',
+    'Wide campaign hero. Signature subject on the right two-thirds, calm negative space on the left for the headline and button overlay. Deep charcoal and warm cream palette with one ember-oxide accent, directional light, shallow depth of field, cinematic color grade. No text.',
+    'Editorial storefront card. One hero product styled as a design showcase on a soft cream backdrop, gentle cross-light, generous quiet margin for overlay copy. Premium matte finish, no text, no logos.',
+    'Seasonal retail hero. Rich charcoal stage with sculptural product lighting and a warm ember under-glow, open space at the left for the offer overlay. Restrained and premium, no starbursts, no text.',
   ],
   DEAL_BANNER: [
-    'Flash sale countdown, red and yellow urgency colors, bold discount percentage',
-    'Black Friday style, dark background, neon accents, massive savings',
-    'Clean sale banner, price slash, modern retail design',
-    'Coupon style, torn-edge effect, promotional feel',
+    'Promotion hero. One hero product lit sculpturally against a quiet charcoal backdrop with a soft ember glow, calm space on the left for the price and offer overlay. Premium discount campaign, no clutter, no text.',
+    'Dark luxury sale scene. Deep charcoal surfaces, a single warmly lit hero object, subtle ember accent light, and uncluttered negative space for overlay copy. High-end retail, no countdown clipart, no text.',
   ],
   CATEGORY_BANNER: [
-    // 1. Furniture (displayOrder: 1)
     'A professional e-commerce product photography composition on a clean white background. Three pieces of modern furniture arranged in a lifestyle grouping: a mid-century modern bed with neutral bedding, a wooden dining table with four chairs, and a contemporary sofa in light gray fabric. Soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. High-end furniture catalog aesthetic. Square format, 1:1 aspect ratio.',
-    // 2. Outdoor (displayOrder: 2)
     'A professional e-commerce product photography composition on a clean white background. Outdoor living products arranged in a grouping: a stainless steel gas grill, a rattan patio furniture set with cushions, a large patio umbrella, and garden planters. Soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. Outdoor living catalog aesthetic. Square format, 1:1 aspect ratio.',
-    // 3. Toys & Hobbies (displayOrder: 3)
     'A professional e-commerce product photography composition on a clean white background. Children\'s toys and hobbies arranged in a playful grouping: a colorful trampoline, a ride-on electric car for kids, building blocks set, and an art easel. Soft studio lighting, vibrant colors, subtle shadows, no text, no people. Amazon hero carousel card style. Kids toy catalog aesthetic. Square format, 1:1 aspect ratio.',
-    // 4. Baby & Kids (displayOrder: 4)
     'A professional e-commerce product photography composition on a clean white background. Baby and nursery products arranged in a gentle grouping: a wooden crib with white bedding, a baby stroller in modern design, a high chair, and a baby rocker. Soft pastel tones, soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. Baby nursery catalog aesthetic. Square format, 1:1 aspect ratio.',
-    // 5. Decor (displayOrder: 5)
     'A professional e-commerce product photography composition on a clean white background. Home decor accents arranged in an elegant grouping: a large decorative wall mirror, a modern floor lamp, a stylish area rug, and faux potted plants. Soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. Home decor catalog aesthetic. Square format, 1:1 aspect ratio.',
-    // 6. Pets (displayOrder: 6)
     'A professional e-commerce product photography composition on a clean white background. Pet supplies arranged in a friendly grouping: a modern dog bed, a cat tree tower, pet food bowls on a stand, and a small animal cage. Soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. Pet supplies catalog aesthetic. Square format, 1:1 aspect ratio.',
-    // 7. Sports (displayOrder: 7)
     'A professional e-commerce product photography composition on a clean white background. Fitness and sports equipment arranged in an active grouping: a compact treadmill, an exercise bike, a set of dumbbells on a rack, and a yoga mat with blocks. Soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. Sports equipment catalog aesthetic. Square format, 1:1 aspect ratio.',
-    // 8. Bath (displayOrder: 8)
     'A professional e-commerce product photography composition on a clean white background. Bathroom organization products arranged in a clean grouping: a wall-mounted bathroom cabinet, a towel rack, a laundry basket, and an over-the-toilet storage shelf. Soft studio lighting, clean aesthetic, subtle shadows, no text, no people. Amazon hero carousel card style. Bathroom storage catalog aesthetic. Square format, 1:1 aspect ratio.',
-    // 9. Appliances (displayOrder: 9)
     'A professional e-commerce product photography composition on a clean white background. Home appliances arranged in a modern grouping: a compact air purifier, a mini fridge, a standing fan, and a small kitchen appliance like a blender. Soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. Home appliance catalog aesthetic. Square format, 1:1 aspect ratio.',
-    // 10. Kitchen (displayOrder: 10)
     'A professional e-commerce product photography composition on a clean white background. Kitchen products arranged in a functional grouping: a cookware set with pots and pans, a dish drying rack, a kitchen trash can, and a wine rack. Soft studio lighting, subtle shadows, no text, no people. Amazon hero carousel card style. Kitchen products catalog aesthetic. Square format, 1:1 aspect ratio.',
-    // 11. Health & Beauty (displayOrder: 11)
     'A professional e-commerce product photography composition on a clean white background. Health and wellness products arranged in a relaxing grouping: a massage chair, a foot massager, a spa salon stool, and wellness accessories. Soft studio lighting, calming tones, subtle shadows, no text, no people. Amazon hero carousel card style. Health and beauty catalog aesthetic. Square format, 1:1 aspect ratio.',
   ],
   AD_BANNER: [
-    'Google Display ad style, clear CTA, product focused',
-    'Facebook ad creative, social proof elements, engaging',
-    'Retargeting banner, product showcase, limited offer',
-    'Brand awareness, lifestyle imagery, emotional connection',
+    'Square display creative. Single dominant subject, bold confident silhouette, strong tonal contrast, open upper copy zone. Deep charcoal, warm cream and ember accent, matte premium finish. No text.',
+    'Brand awareness frame. Editorial lifestyle moment with natural window light, considered styling, calm negative space for overlay. 50mm look, intentional focus fall-off. No text, no logos.',
   ],
   SOCIAL_MEDIA: [
-    'Instagram post style, square format, trendy aesthetic',
-    'Story format, vertical, swipe-up call to action',
-    'User-generated content style, authentic feel',
-    'Product flat lay, aesthetic arrangement, hashtag ready',
+    'Square editorial lifestyle frame. Authentic premium lifestyle moment, natural light, calm negative space for overlay copy. Shot on 50mm with intentional focus fall-off, warm charcoal-and-cream grade. No text.',
+    'Minimal brand post. Single beautifully lit object on a seamless warm-cream backdrop, soft reflection, sharp detail with gentle fall-off. Quiet composition, ember accent detail. No text.',
   ],
   PRODUCT_HERO: [
-    'Studio shot, white background, professional lighting',
-    'Lifestyle context, product in use, natural setting',
-    'Close-up detail shot, texture focus, premium feel',
-    'Multiple angles, product variety, comparison',
+    'Studio hero. Sculptural rim-lighting on a seamless warm-grey backdrop, soft reflection, sharp detail, gentle fall-off into shadow. Single product, premium matte finish. No text.',
+    'Lifestyle context. Product used in a real, styled setting with natural light and considered props, calm negative space, shallow depth of field. Editorial and aspirational. No text.',
   ],
 };
 

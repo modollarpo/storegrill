@@ -17,13 +17,16 @@ export interface GenerateImageResult {
   cached?: boolean;
 }
 
+const ART_DIRECTION_BASE =
+  'Master-level print advertising art direction. Editorial composition with a clear visual hierarchy, generous negative space, directional lighting, and a restrained premium palette of deep charcoal, warm cream, and a single ember-oxide accent. No text, no logos, no watermarks, no icons, no captions, no barcodes — copy and buttons are overlaid separately by the storefront. Studio-grade commercial photography, subtle film grain, high-end retail campaign quality.';
+
 const STYLE_PROMPTS: Record<string, string> = {
-  'HERO_BANNER': 'Professional e-commerce hero banner, clean modern design, vibrant colors, marketing photography style, high-end commercial look',
-  'DEAL_BANNER': 'Eye-catching sale banner, bold typography, discount/promotion style, urgent call-to-action, retail marketing design',
-  'CATEGORY_BANNER': 'Category showcase banner, lifestyle photography, aspirational imagery, clean composition, brand-focused',
-  'AD_BANNER': 'Digital advertising banner, click-worthy design, modern marketing aesthetics, professional grade',
-  'SOCIAL_MEDIA': 'Social media marketing graphic, engaging visual, shareable content style, brand-consistent',
-  'PRODUCT_HERO': 'Product hero shot, studio lighting, premium feel, e-commerce product photography',
+  'HERO_BANNER': `${ART_DIRECTION_BASE} Wide 16:9 campaign hero. Signature subject positioned on the right two-thirds, uncluttered calm space reserved on the left third for headline and call-to-action overlay. Medium-format camera look, shallow depth of field, cinematic color grading.`,
+  'DEAL_BANNER': `${ART_DIRECTION_BASE} Wide 16:9 promotion hero. One hero product lit sculpturally against a quiet charcoal backdrop with a soft ember under-glow, calm negative space on the left for price and offer overlay. Premium discount campaign, no clutter, no starbursts.`,
+  'CATEGORY_BANNER': `${ART_DIRECTION_BASE} Square category card. Curated 3-4 piece product arrangement styled as a designer showroom vignette on a soft cream backdrop, gentle cross-lighting and short shadows, generous quiet margin around the group for overlay copy.`,
+  'AD_BANNER': `${ART_DIRECTION_BASE} Square digital display creative. Single dominant subject with a bold, confident silhouette, strong tonal contrast, and an open upper copy zone. High-impact yet restrained, brand matte finish.`,
+  'SOCIAL_MEDIA': `${ART_DIRECTION_BASE} Editorial lifestyle frame. Authentic premium lifestyle moment with natural window light, considered styling, and calm negative space for overlay text. Shot on 50mm, intentional focus fall-off.`,
+  'PRODUCT_HERO': `${ART_DIRECTION_BASE} Studio product hero. Sculptural rim-lighting on a seamless warm-grey or cream backdrop, soft reflection, sharp detail on the product with gentle fall-off into shadow.`,
 };
 
 export async function generateBannerImage(

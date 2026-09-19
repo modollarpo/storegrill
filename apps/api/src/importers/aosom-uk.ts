@@ -9,6 +9,9 @@ import { resolveAosomCategory } from './category-taxonomy.js';
 
 const LOCAL_STOCK_THRESHOLD = OUT_OF_STOCK_THRESHOLD === undefined ? 20 : OUT_OF_STOCK_THRESHOLD;
 
+const UK_RETAIL_MARKUP = 1.5;
+const UK_RRP_MARKUP = 2.0;
+
 export const AOSOM_UK_PRODUCT_FEED_URL =
   'https://pop-eu-prod.s3.eu-central-1.amazonaws.com/390/200_feed/0/0/51/056920.txt';
 
@@ -243,9 +246,11 @@ export function mergeAosomUkFeeds(
   for (const p of products) {
     const stock = stockBySku.get(p.SKU.trim());
     if (!stock) continue;
-    const sellPrice = parseGbpPrice(stock['2B Product Price']);
-    if (sellPrice == null) continue;
+    const wholesalePrice = parseGbpPrice(stock['2B Product Price']);
+    if (wholesalePrice == null) continue;
     const stockCount = Number.parseInt(stock.Stock, 10) || 0;
+    const sellPriceMinorUnits = Math.round(wholesalePrice * UK_RETAIL_MARKUP);
+    const listPriceMinorUnits = Math.round(wholesalePrice * UK_RRP_MARKUP);
     merged.push({
       sku: p.SKU.trim(),
       title: p.Title,
@@ -258,7 +263,8 @@ export function mergeAosomUkFeeds(
       categoryTwo: p['Category Two'],
       colour: p.Colour,
       stock: stockCount,
-      sellPriceMinorUnits: sellPrice,
+      sellPriceMinorUnits,
+      listPriceMinorUnits,
     });
   }
   return merged;

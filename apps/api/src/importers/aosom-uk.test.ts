@@ -92,14 +92,15 @@ describe('parseAosomUkProductTsv / stock', () => {
 });
 
 describe('mergeAosomUkFeeds', () => {
-  it('joins product and stock on SKU, using 2B Product Price as the retail sell price and numeric stock', () => {
+  it('joins product and stock on SKU, applying retail markup to wholesale 2B Product Price', () => {
     const products = [productRow('AAA'), productRow('BBB')];
     const stock = [stockRow('AAA'), stockRow('BBB', { Stock: '5' })];
     const merged = mergeAosomUkFeeds(products, stock);
     expect(merged).toHaveLength(2);
     const aaa = merged.find(m => m.sku === 'AAA')!;
     expect(aaa.stock).toBe(30);
-    expect(aaa.sellPriceMinorUnits).toBe(9900);
+    expect(aaa.sellPriceMinorUnits).toBe(14850);
+    expect(aaa.listPriceMinorUnits).toBe(19800);
   });
 
   it('drops products with no matching stock row', () => {
@@ -149,15 +150,15 @@ describe('deduceAosomBrand', () => {
 });
 
 describe('adaptAosomUkRows', () => {
-    it('sets the selling price to 2B Product Price (retail) with no compare-at in the UK feed', () => {
+    it('applies retail markup: sell = wholesale × 1.5, list = wholesale × 2.0', () => {
       const products = [productRow('AAA')];
       const stock = [stockRow('AAA')];
       const merged = mergeAosomUkFeeds(products, stock);
       const result = adaptAosomUkRows(merged);
       const variant = result.products[0].variants[0];
-      expect(variant.feedPriceMinorUnits).toBe(9900);
-      expect(variant.priceMinorUnits).toBe(9900);
-      expect(variant.listPriceMinorUnits).toBeUndefined();
+      expect(variant.feedPriceMinorUnits).toBe(14850);
+      expect(variant.priceMinorUnits).toBe(14850);
+      expect(variant.listPriceMinorUnits).toBe(19800);
     });
 
   it('strips HOMCOM from the base name and tags as uk', () => {

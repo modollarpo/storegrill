@@ -73,6 +73,13 @@ export interface HomeHeroSlide {
   overlayTint?: string;
   imageFit?: 'contain' | 'cover';
   backgroundColor?: string;
+  eyebrow?: string;
+  ctaText?: string;
+  accentColor?: string;
+  textColor?: string;
+  badgeText?: string;
+  badgeBg?: string;
+  badgeTextColor?: string;
 }
 
 export interface DealVariantRow {
@@ -209,6 +216,36 @@ export function buildHeroSlides(deals: DealRow[], language: string): HomeHeroSli
     if (slides.length >= HERO_MAX_SLIDES) break;
   }
   return slides.sort((a, b) => (b.discountPercent ?? 0) - (a.discountPercent ?? 0));
+}
+
+export function mapCategorySlidesToHero(
+  categorySlides: Array<{
+    id: string;
+    eyebrow: string;
+    title: string;
+    description: string;
+    cta: string;
+    href: string;
+    image: string;
+    badge?: string;
+    theme: { bg: string; text: string; accent: string; badgeBg?: string; badgeText?: string };
+  }>,
+): HomeHeroSlide[] {
+  return categorySlides.map(s => ({
+    title: s.title,
+    subtitle: s.description,
+    image: s.image,
+    href: s.href,
+    backgroundColor: s.theme.bg,
+    eyebrow: s.eyebrow,
+    ctaText: s.cta,
+    accentColor: s.theme.accent,
+    textColor: s.theme.text,
+    badgeText: s.badge,
+    badgeBg: s.theme.badgeBg,
+    badgeTextColor: s.theme.badgeText,
+    imageFit: 'contain' as const,
+  }));
 }
 
 export interface HomeBannerSlide {

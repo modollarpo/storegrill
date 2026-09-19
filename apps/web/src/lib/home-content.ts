@@ -3,14 +3,13 @@ import { translateBatch } from './server-translate';
 import { t } from '@/i18n';
 import { FALLBACK_HERO_DEALS } from './home-hero-fallback';
 import {
-  buildCategoryBannerSlides,
   buildCategoryCards,
   buildCuratedCards,
   buildFeaturedSection,
-  buildHeroSlides,
   buildPromos,
   buildRows,
   mapBannerSlides,
+  mapCategorySlidesToHero,
   rowsFromCards,
   type CategoryRow,
   type CuratedProductRow,
@@ -20,6 +19,7 @@ import {
   type HomeHeroSlide,
   type HomeSectionItem,
 } from './home-content-build';
+import { HERO_CATEGORY_SLIDES } from '@/components/home/hero-category-data';
 
 async function fetchJson(url: string, revalidate: number): Promise<unknown> {
   try {
@@ -137,8 +137,8 @@ export async function loadHomeContent(regionKey: string, language: string): Prom
   ]);
 
   const hasBanners = banners.length > 0;
-  const categorySlides = buildCategoryBannerSlides();
-  let slides: HomeHeroSlide[] = hasBanners ? banners : [...categorySlides, ...buildHeroSlides(deals, language)];
+  const categorySlides = mapCategorySlidesToHero(HERO_CATEGORY_SLIDES);
+  let slides: HomeHeroSlide[] = hasBanners ? banners : categorySlides;
   if (slides.length === 0) {
     slides = FALLBACK_HERO_DEALS.map(slide => ({ ...slide }));
   }

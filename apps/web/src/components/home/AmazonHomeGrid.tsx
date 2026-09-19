@@ -7,7 +7,6 @@ import { t } from '@/i18n';
 import { RecentlyViewed } from '@/components/commerce/RecentlyViewed';
 import { CategoryRowGrid } from '@/components/commerce/grid';
 import { RecentlyAddedFeed } from '@/components/home/RecentlyAddedFeed';
-import { HeroCategoryCarousel } from '@/components/home/HeroCategoryCarousel';
 import type { HomeHeroSlide, HomeRecentFeed, HomeSectionItem } from '@/lib/home-content-build';
 import { heroPalette } from '@/design-system/tokens';
 
@@ -27,13 +26,78 @@ function currencySymbol(code?: string): string {
 
 function HeroCard({ slide }: { slide: HomeHeroSlide }) {
   const bg = slide.backgroundColor || heroPalette.charcoal;
+  const isCategory = !!slide.eyebrow;
+
+  if (isCategory) {
+    return (
+      <Link
+        href={slide.href}
+        className="w-[280px] sm:w-[300px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-2xl shadow-sm group/card flex flex-col justify-between"
+        style={{ backgroundColor: bg, color: slide.textColor || 'white' }}
+      >
+        {slide.badgeText ? (
+          <div className="absolute top-5 left-5 z-20">
+            <span
+              className="inline-block text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full"
+              style={{
+                backgroundColor: slide.badgeBg || slide.accentColor,
+                color: slide.badgeTextColor || bg,
+              }}
+            >
+              {slide.badgeText}
+            </span>
+          </div>
+        ) : null}
+
+        <div className="relative z-10 flex flex-col gap-2 px-6 pt-6">
+          <span className="text-[11px] font-bold uppercase tracking-[0.14em] opacity-70">
+            {slide.eyebrow}
+          </span>
+          <h2 className="text-[26px] sm:text-[30px] font-extrabold leading-[1.08] tracking-tight max-w-[240px]">
+            {slide.title}
+          </h2>
+          <p className="text-[13px] leading-relaxed opacity-75 max-w-[220px] mt-1">
+            {slide.subtitle}
+          </p>
+        </div>
+
+        <div className="relative z-10 px-6 pb-6">
+          <span
+            className="inline-flex items-center gap-2 text-[13px] font-semibold group-hover/card:gap-3 transition-all duration-200"
+            style={{ color: slide.accentColor }}
+          >
+            {slide.ctaText}
+            <svg className="w-4 h-4 transition-transform duration-200 group-hover/card:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        </div>
+
+        <div className="absolute bottom-0 right-0 w-[55%] h-[65%] pointer-events-none z-0">
+          <Image
+            src={slide.image}
+            alt={slide.title}
+            fill
+            sizes="300px"
+            className="object-contain object-bottom-right mix-blend-multiply opacity-90 group-hover/card:scale-[1.03] transition-transform duration-500 ease-out"
+          />
+        </div>
+
+        <div
+          className="absolute -bottom-20 -right-20 w-60 h-60 rounded-full opacity-10 pointer-events-none"
+          style={{ backgroundColor: slide.accentColor }}
+          aria-hidden="true"
+        />
+      </Link>
+    );
+  }
+
   return (
     <Link
       href={slide.href}
       className="w-[280px] sm:w-[300px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-md shadow-sm group/card flex flex-col"
       style={{ backgroundColor: bg }}
     >
-      {/* Discount badge */}
       {slide.discountPercent ? (
         <div className="absolute top-4 left-4 z-20">
           <span className="inline-block bg-white/95 text-[11px] font-extrabold px-2.5 py-1 rounded shadow-sm" style={{ color: bg }}>
@@ -42,7 +106,6 @@ function HeroCard({ slide }: { slide: HomeHeroSlide }) {
         </div>
       ) : null}
 
-      {/* Product image — contained, centered in top half, blend white bg away */}
       <div className="relative w-full h-[200px] flex items-center justify-center p-4 pt-12">
         <Image
           src={slide.image}
@@ -53,7 +116,6 @@ function HeroCard({ slide }: { slide: HomeHeroSlide }) {
         />
       </div>
 
-      {/* Text content — bottom half */}
       <div className="flex-1 flex flex-col justify-end p-5 gap-2">
         <p className="text-sm font-bold text-white/95 line-clamp-1 drop-shadow-sm">{slide.subtitle}</p>
         <div className="flex items-center justify-between gap-2">
@@ -120,29 +182,8 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
             {heroSlides.map((slide, idx) => (
               <HeroCard key={idx} slide={slide} />
             ))}
-            <Link
-              href="/deals"
-              className="w-[280px] sm:w-[300px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-md shadow-sm bg-gradient-to-br from-midnight via-ember-deep to-ember flex flex-col items-center justify-center gap-5 p-8 text-center group/cta"
-            >
-              <div
-                aria-hidden="true"
-                className="grid place-items-center w-16 h-16 rounded-full bg-white/10 text-white text-2xl font-black shadow-inner"
-              >
-                %
-              </div>
-              <h3 className="text-2xl font-black text-white leading-snug">{t(language ?? 'en', 'seeAllDeals')}</h3>
-              <p className="text-sm font-semibold text-white/85">{t(language ?? 'en', 'homeDealsHeading')}</p>
-              <span className="mt-1 inline-flex items-center gap-1.5 bg-[var(--color-ember)] text-white text-sm font-extrabold px-5 py-2.5 rounded-full shadow-md">
-                {t(language ?? 'en', 'shopNow')} →
-              </span>
-            </Link>
           </div>
         </div>
-      </div>
-
-      {/* Hero Category Carousel — editorial category tiles */}
-      <div className="max-w-[1500px] mx-auto px-4 pt-8 relative z-10">
-        <HeroCategoryCarousel />
       </div>
 
       {/* Overlapping / Stacked 4-Column Card Grid */}

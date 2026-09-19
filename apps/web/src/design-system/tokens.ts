@@ -166,6 +166,22 @@ export const heroPalette = {
   sage: '#78b28e',
 } as const;
 
+// Storegrill hero category carousel palette (premium editorial surfaces).
+export const heroCategoryPalette = {
+  navy:      '#0A1E3C',
+  teal:      '#0FB5A6',
+  gold:      '#E8B44C',
+  white:     '#FFFFFF',
+  offWhite:  '#F8F6F3',
+  cream:     '#F5F0E8',
+  charcoal:  '#1C1C1C',
+  slate:     '#2D3748',
+  mint:      '#E6F7F5',
+  blush:     '#FDF2F0',
+  sky:       '#EBF5FF',
+  lavender:  '#F3EEFF',
+} as const;
+
 export const zIndexLayers = {
   header: 40,
   tooltip: 50,

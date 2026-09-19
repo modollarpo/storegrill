@@ -7,6 +7,7 @@ import { t } from '@/i18n';
 import { RecentlyViewed } from '@/components/commerce/RecentlyViewed';
 import { CategoryRowGrid } from '@/components/commerce/grid';
 import { RecentlyAddedFeed } from '@/components/home/RecentlyAddedFeed';
+import { HeroCategoryCarousel } from '@/components/home/HeroCategoryCarousel';
 import type { HomeHeroSlide, HomeRecentFeed, HomeSectionItem } from '@/lib/home-content-build';
 
 interface AmazonHomeGridProps {
@@ -136,6 +137,11 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
             </Link>
           </div>
         </div>
+      </div>
+
+      {/* Hero Category Carousel — editorial category tiles */}
+      <div className="max-w-[1500px] mx-auto px-4 pt-8 relative z-10">
+        <HeroCategoryCarousel />
       </div>
 
       {/* Overlapping / Stacked 4-Column Card Grid */}

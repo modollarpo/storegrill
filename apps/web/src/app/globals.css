@@ -51,6 +51,18 @@
   --color-amazon-charcoal: #3b4856;
   --color-amazon-sage: #78b28e;
 
+  /* Storegrill hero category carousel palette */
+  --hc-navy: #0A1E3C;
+  --hc-teal: #0FB5A6;
+  --hc-gold: #E8B44C;
+  --hc-off-white: #F8F6F3;
+  --hc-cream: #F5F0E8;
+  --hc-slate: #2D3748;
+  --hc-mint: #E6F7F5;
+  --hc-blush: #FDF2F0;
+  --hc-sky: #EBF5FF;
+  --hc-lavender: #F3EEFF;
+
   /* Borders */
   --color-border: #e0e0e0;
   --color-border-strong: #c9c9c9;

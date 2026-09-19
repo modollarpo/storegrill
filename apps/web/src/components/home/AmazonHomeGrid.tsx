@@ -50,13 +50,13 @@ function HeroCard({ slide }: { slide: HomeHeroSlide }) {
         ) : null}
 
         <div className="relative z-10 flex flex-col gap-2 px-6 pt-6">
-          <span className="text-[11px] font-bold uppercase tracking-[0.14em] opacity-70">
+          <span className="text-[11px] font-bold uppercase tracking-[0.14em] opacity-70" style={{ color: slide.textColor || 'white' }}>
             {slide.eyebrow}
           </span>
-          <h2 className="text-[26px] sm:text-[30px] font-extrabold leading-[1.08] tracking-tight max-w-[240px]">
+          <h2 className="text-[26px] sm:text-[30px] font-extrabold leading-[1.08] tracking-tight max-w-[240px]" style={{ color: slide.textColor || 'white' }}>
             {slide.title}
           </h2>
-          <p className="text-[13px] leading-relaxed opacity-75 max-w-[220px] mt-1">
+          <p className="text-[13px] leading-relaxed opacity-75 max-w-[220px] mt-1" style={{ color: slide.textColor || 'white' }}>
             {slide.subtitle}
           </p>
         </div>

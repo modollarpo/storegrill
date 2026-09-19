@@ -9,6 +9,7 @@ import { CategoryRowGrid } from '@/components/commerce/grid';
 import { RecentlyAddedFeed } from '@/components/home/RecentlyAddedFeed';
 import { HeroCategoryCarousel } from '@/components/home/HeroCategoryCarousel';
 import type { HomeHeroSlide, HomeRecentFeed, HomeSectionItem } from '@/lib/home-content-build';
+import { heroPalette } from '@/design-system/tokens';
 
 interface AmazonHomeGridProps {
   sections: HomeSectionItem[][];
@@ -25,7 +26,7 @@ function currencySymbol(code?: string): string {
 }
 
 function HeroCard({ slide }: { slide: HomeHeroSlide }) {
-  const bg = slide.backgroundColor || '#3b4856';
+  const bg = slide.backgroundColor || heroPalette.charcoal;
   return (
     <Link
       href={slide.href}

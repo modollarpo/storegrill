@@ -93,8 +93,9 @@ export interface AosomUkMergedRow {
   categoryTwo: string;
   colour: string;
   stock: number;
-    sellPriceMinorUnits: number;
+  sellPriceMinorUnits: number;
   listPriceMinorUnits?: number;
+  shippingFeeMinorUnits?: number;
 }
 
 const PRODUCT_COLS = 11;
@@ -251,6 +252,7 @@ export function mergeAosomUkFeeds(
     const stockCount = Number.parseInt(stock.Stock, 10) || 0;
     const sellPriceMinorUnits = Math.round(wholesalePrice * UK_RETAIL_MARKUP);
     const listPriceMinorUnits = Math.round(wholesalePrice * UK_RRP_MARKUP);
+    const shippingFeeMinorUnits = parseGbpPrice(stock.shiping_fee) ?? undefined;
     merged.push({
       sku: p.SKU.trim(),
       title: p.Title,
@@ -265,6 +267,7 @@ export function mergeAosomUkFeeds(
       stock: stockCount,
       sellPriceMinorUnits,
       listPriceMinorUnits,
+      shippingFeeMinorUnits,
     });
   }
   return merged;
@@ -337,7 +340,7 @@ export function adaptAosomUkRows(merged: AosomUkMergedRow[]): AdaptResult {
       specification: '',
       categoryPath: deduceAosomUkCategory(first.category, first.categoryOne, first.categoryTwo, first.title, first.shortDescription),
       tags: ['aosom', 'uk'],
-      attributes: {},
+      attributes: first.shippingFeeMinorUnits != null ? { 'Shipping Fee': String(first.shippingFeeMinorUnits) } : {},
       sourceUrl: sourceUrl(first.sku),
       brandName: deduceAosomBrand(first.title),
       variants,

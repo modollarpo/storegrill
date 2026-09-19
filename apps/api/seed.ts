@@ -444,7 +444,7 @@ async function main() {
   ]);
 
   await Promise.all([
-    prisma.shippingZone.create({ data: { regionKey: 'UK', name: 'UK Standard', countries: 'GB', baseRateMinorUnits: 399, currencyCode: 'GBP', perKgRateMinorUnits: 99, freeShippingThresholdMinorUnits: 3500, estimatedDaysMin: 1, estimatedDaysMax: 4, carriers: 'Royal Mail,Evri,DHL' } }),
+    prisma.shippingZone.create({ data: { regionKey: 'UK', name: 'UK Standard', countries: 'GB', baseRateMinorUnits: 1000, currencyCode: 'GBP', perKgRateMinorUnits: 99, freeShippingThresholdMinorUnits: 3500, estimatedDaysMin: 1, estimatedDaysMax: 7, carriers: 'Royal Mail,Evri,DHL' } }),
     prisma.shippingZone.create({ data: { regionKey: 'US', name: 'US Standard', countries: 'US', baseRateMinorUnits: 599, currencyCode: 'USD', perKgRateMinorUnits: 100, freeShippingThresholdMinorUnits: 3500, estimatedDaysMin: 3, estimatedDaysMax: 7, carriers: 'UPS,FedEx,USPS' } }),
     prisma.shippingZone.create({ data: { regionKey: 'EU', name: 'EU Standard', countries: 'DE,FR,ES,IT,NL', baseRateMinorUnits: 499, currencyCode: 'EUR', perKgRateMinorUnits: 120, freeShippingThresholdMinorUnits: 4000, estimatedDaysMin: 2, estimatedDaysMax: 5, carriers: 'DHL,DPD' } }),
     prisma.shippingZone.create({ data: { regionKey: 'IN', name: 'India International', countries: 'IN', baseRateMinorUnits: 49500, currencyCode: 'INR', perKgRateMinorUnits: 9000, estimatedDaysMin: 7, estimatedDaysMax: 14, carriers: 'Delhivery,DHL' } }),
@@ -547,7 +547,7 @@ async function main() {
       isHouseVendor: true,
       autoPublishImports: true,
       shippingMode: 'FLAT',
-      shippingFlatMinorUnits: 999,
+      shippingFlatMinorUnits: 1000,
       shippingCountries: JSON.stringify(['GB']),
     },
   });

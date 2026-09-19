@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Newsletter } from '../home/Newsletter';
 import { supportEmailFor } from '@/lib/region-content';
 import { Accordion } from '@/components/ui/Accordion';
+import { GoogleReviewsBadge } from '@/components/commerce/trust/GoogleReviewsBadge';
 
 function PaymentLogos() {
   return (
@@ -190,6 +191,7 @@ export function Footer() {
           </div>
         </div>
       </div>
+      <GoogleReviewsBadge />
     </footer>
   );
 }

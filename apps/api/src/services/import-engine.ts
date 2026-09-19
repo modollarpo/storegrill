@@ -318,37 +318,46 @@ async function parseCsvRows(
 }
 
 async function planChanges(vendorId: string, products: NormalizedProduct[], profile: AdapterProfile): Promise<PlannedAction[]> {
-  const existingRows = await prisma.product.findMany({
-    where: { vendorId },
-    include: { variants: true },
-  });
+  const BATCH_SIZE = 1000;
   const existingBySku = new Map<string, ExistingProduct>();
-  for (const row of existingRows) {
-    existingBySku.set(row.sku, {
-      id: row.id,
-      name: row.name,
-      slug: row.slug,
-      description: row.description,
-      shortDescription: row.shortDescription,
-      sku: row.sku,
-      categoryId: row.categoryId,
-      brandId: row.brandId,
-      images: row.images,
-      thumbnail: row.thumbnail,
-      basePriceMinorUnits: row.basePriceMinorUnits,
-      status: row.status,
-      tags: row.tags,
-      attributes: row.attributes,
-      sourceUrl: row.sourceUrl,
-      variants: row.variants.map((v: any) => ({
-        id: v.id,
-        sku: v.sku,
-        name: v.name,
-        basePriceMinorUnits: v.basePriceMinorUnits,
-        stock: v.stock,
-        attributes: v.attributes,
-      })),
+  let offset = 0;
+  for (;;) {
+    const batch = await prisma.product.findMany({
+      where: { vendorId },
+      include: { variants: true },
+      skip: offset,
+      take: BATCH_SIZE,
+      orderBy: { createdAt: 'asc' },
     });
+    for (const row of batch) {
+      existingBySku.set(row.sku, {
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        description: row.description,
+        shortDescription: row.shortDescription,
+        sku: row.sku,
+        categoryId: row.categoryId,
+        brandId: row.brandId,
+        images: row.images,
+        thumbnail: row.thumbnail,
+        basePriceMinorUnits: row.basePriceMinorUnits,
+        status: row.status,
+        tags: row.tags,
+        attributes: row.attributes,
+        sourceUrl: row.sourceUrl,
+        variants: row.variants.map((v: any) => ({
+          id: v.id,
+          sku: v.sku,
+          name: v.name,
+          basePriceMinorUnits: v.basePriceMinorUnits,
+          stock: v.stock,
+          attributes: v.attributes,
+        })),
+      });
+    }
+    if (batch.length < BATCH_SIZE) break;
+    offset += BATCH_SIZE;
   }
 
   // Never import products cheaper than 50 minor-currency units (GBP 50 / USD 50 / EUR 50)

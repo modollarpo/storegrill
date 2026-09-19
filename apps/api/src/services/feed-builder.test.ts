@@ -15,6 +15,7 @@ function sampleItem(overrides: Partial<FeedItem> = {}): FeedItem {
     description: 'A kitchen set with "quotes" & <brackets>',
     link: 'https://uk.Storegrill.net/products/kids-kitchen-set',
     imageLink: 'https://cdn.example/img.jpg',
+    additionalImageLinks: ['https://cdn.example/img2.jpg', 'https://cdn.example/img3.jpg'],
     priceMinorUnits: 2450,
     currencyCode: 'GBP',
     listPriceMinorUnits: 3499,
@@ -45,6 +46,8 @@ describe('renderGoogleMerchant', () => {
     expect(xml).toContain('<g:google_product_category>Home &amp; Garden &gt; Kitchen &amp; Dining</g:google_product_category>');
     expect(xml).toContain('<g:shipping><g:country>GB</g:country><g:price>3.99 GBP</g:price></g:shipping>');
     expect(xml).toContain('https://uk.Storegrill.net/products/kids-kitchen-set');
+    expect(xml).toContain('<g:additional_image_link>https://cdn.example/img2.jpg</g:additional_image_link>');
+    expect(xml).toContain('<g:additional_image_link>https://cdn.example/img3.jpg</g:additional_image_link>');
   });
 
   it('escapes XML special characters in title/description', () => {
@@ -61,6 +64,13 @@ describe('renderGoogleMerchant', () => {
     expect(xml).not.toContain('<g:sale_price>');
     expect(xml).not.toContain('<g:shipping>');
     expect(xml).toContain('<g:price>24.50 GBP</g:price>');
+    expect(xml).toContain('<g:additional_image_link>');
+  });
+
+  it('omits additional_image_link when no extra images', () => {
+    const item = sampleItem({ additionalImageLinks: [] });
+    const xml = renderGoogleMerchant([item], 'UK', 'United Kingdom');
+    expect(xml).not.toContain('<g:additional_image_link>');
   });
 });
 
@@ -69,7 +79,7 @@ describe('renderTikTokCsv', () => {
     const csv = renderTikTokCsv([sampleItem()]);
     const lines = csv.split('\n');
     expect(lines[0]).toBe(
-      'id,title,description,availability,condition,price,link,image_link,brand,gtin,mpn,google_product_category,item_group_id',
+      'id,title,description,availability,condition,price,link,image_link,additional_image_link,brand,gtin,mpn,google_product_category,item_group_id',
     );
     expect(lines[1]).toContain('SKU-1');
     expect(lines[1]).toContain('"A kitchen set with ""quotes"" & <brackets>"');
@@ -80,7 +90,7 @@ describe('renderTikTokCsv', () => {
 describe('renderPinterestCsv', () => {
   it('renders Pinterest headers and row with price', () => {
     const csv = renderPinterestCsv([sampleItem()]);
-    expect(csv.split('\n')[0]).toContain('id,title,description,link,image_link,price,availability');
+    expect(csv.split('\n')[0]).toContain('id,title,description,link,image_link,additional_image_link,price,availability');
     expect(csv.split('\n')[1]).toContain('24.50 GBP');
   });
 });

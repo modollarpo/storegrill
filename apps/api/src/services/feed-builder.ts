@@ -16,6 +16,7 @@ export interface FeedItem {
   description: string;
   link: string;
   imageLink: string;
+  additionalImageLinks: string[];
   priceMinorUnits: number;
   currencyCode: string;
   listPriceMinorUnits?: number;
@@ -149,6 +150,7 @@ function buildItem(
     description: (product.shortDescription || product.description || '').slice(0, 5000),
     link,
     imageLink: images[0] || product.thumbnail || '',
+    additionalImageLinks: images.slice(1),
     priceMinorUnits: pricing.price,
     currencyCode,
     listPriceMinorUnits: pricing.listPriceMinorUnits,
@@ -272,6 +274,7 @@ export function renderGoogleMerchant(items: FeedItem[], regionKey: string, regio
       `<g:description>${escapeXml(item.description)}</g:description>`,
       `<g:link>${escapeXml(item.link)}</g:link>`,
       `<g:image_link>${escapeXml(item.imageLink)}</g:image_link>`,
+      ...item.additionalImageLinks.map(url => `<g:additional_image_link>${escapeXml(url)}</g:additional_image_link>`),
       `<g:availability>${item.availability}</g:availability>`,
       `<g:condition>${item.condition}</g:condition>`,
       priceTag,
@@ -319,6 +322,7 @@ const TIKTOK_HEADER = [
   'price',
   'link',
   'image_link',
+  'additional_image_link',
   'brand',
   'gtin',
   'mpn',
@@ -336,6 +340,7 @@ export function renderTikTokCsv(items: FeedItem[]): string {
     `${(Number(item.priceMinorUnits) / 100).toFixed(2)} ${item.currencyCode}`,
     item.link,
     item.imageLink,
+    item.additionalImageLinks.join(','),
     item.brand,
     item.gtin || '',
     item.mpn || '',
@@ -351,6 +356,7 @@ const PINTEREST_HEADER = [
   'description',
   'link',
   'image_link',
+  'additional_image_link',
   'price',
   'availability',
   'condition',
@@ -368,6 +374,7 @@ export function renderPinterestCsv(items: FeedItem[]): string {
     item.description,
     item.link,
     item.imageLink,
+    item.additionalImageLinks.join(','),
     `${(Number(item.priceMinorUnits) / 100).toFixed(2)} ${item.currencyCode}`,
     item.availability,
     item.condition,
@@ -389,6 +396,7 @@ const FACEBOOK_HEADER = [
   'price',
   'link',
   'image_link',
+  'additional_image_link',
   'brand',
   'gtin',
   'mpn',
@@ -407,6 +415,7 @@ export function renderFacebookCsv(items: FeedItem[]): string {
     `${(Number(item.priceMinorUnits) / 100).toFixed(2)} ${item.currencyCode}`,
     item.link,
     item.imageLink,
+    item.additionalImageLinks.join(','),
     item.brand,
     item.gtin || '',
     item.mpn || '',

@@ -95,7 +95,7 @@ jobs:
           docker push ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.WEB_TAG }}
 
       - name: Trivy scan - API image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: '${{ env.ACR }}/api:${{ env.API_TAG }}'
           format: 'table'
@@ -105,7 +105,7 @@ jobs:
         continue-on-error: true
 
       - name: Trivy scan - Web image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: '${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.WEB_TAG }}'
           format: 'table'

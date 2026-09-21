@@ -250,10 +250,10 @@ export async function applyTrackingEvents(
       await tx.order.update({ where: { id: orderId }, data: { status: orderStatusAfter } });
     }
 
-    if (notificationEvents.length > 0) {
+    if (notificationEvents.length > 0 && order.userId) {
       await tx.notification.createMany({
         data: notificationEvents.map(event => ({
-          userId: order.userId,
+          userId: order.userId!,
           type: 'ORDER_SHIPMENT',
           title: statusLabel(event.status),
           body: `${order.orderNumber} — ${statusLabel(event.status)}${event.location ? ` at ${event.location}` : ''}. Delivered by ${agencyLabel}.`,

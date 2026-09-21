@@ -1,24 +1,54 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma.js';
-import { authenticate, AuthRequest } from '../middleware/auth.js';
+import { dualAuth, type DualAuthRequest } from '../middleware/dual-auth.js';
 import { evaluateDeals, type CartItem } from '../services/deal-engine.js';
 import { loadActiveDeals } from '../services/deal-eval.js';
 
 const router = Router();
 
-router.use(authenticate);
+router.use(dualAuth);
 
-router.get('/', async (req: AuthRequest, res: Response) => {
-  const cart = await prisma.cart.findUnique({
-    where: { userId: req.user!.id },
+async function findCart(req: DualAuthRequest) {
+  if (req.user) {
+    return prisma.cart.findUnique({ where: { userId: req.user.id } });
+  }
+  if (req.guestSessionId) {
+    return prisma.cart.findUnique({ where: { sessionId: req.guestSessionId } });
+  }
+  return null;
+}
+
+async function upsertCart(req: DualAuthRequest) {
+  if (req.user) {
+    const existing = await prisma.cart.findUnique({ where: { userId: req.user.id } });
+    if (existing) return existing;
+    return prisma.cart.create({ data: { userId: req.user.id } });
+  }
+  if (req.guestSessionId) {
+    const existing = await prisma.cart.findUnique({ where: { sessionId: req.guestSessionId } });
+    if (existing) return existing;
+    return prisma.cart.create({ data: { sessionId: req.guestSessionId } });
+  }
+  throw new Error('No identity available for cart');
+}
+
+router.get('/', async (req: DualAuthRequest, res: Response) => {
+  const cart = await findCart(req);
+
+  if (!cart) {
+    return res.json({ cart: { items: [], totalItems: 0 } });
+  }
+
+  const fullCart = await prisma.cart.findUnique({
+    where: { id: cart.id },
     include: {
       items: {
         include: {
           product: {
             select: {
               id: true, name: true, slug: true, thumbnail: true,
-              basePriceMinorUnits: true, currencyCode: true, categoryId: true,
+              basePriceMinorUnits: true, currencyCode: true, categoryId: true, vendorId: true,
               vendor: { select: { id: true, storeName: true } },
             },
           },
@@ -33,11 +63,11 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     },
   });
 
-  if (!cart) {
+  if (!fullCart) {
     return res.json({ cart: { items: [], totalItems: 0 } });
   }
 
-  const items = cart.items.map((item: any) => ({
+  const items = fullCart.items.map((item: any) => ({
     id: item.id,
     productId: item.productId,
     variantId: item.variantId,
@@ -56,18 +86,18 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     lineTotalMinorUnits: (item.variant
       ? Number(item.variant.basePriceMinorUnits)
       : Number(item.product.basePriceMinorUnits)) * item.quantity,
-    vendorId: item.product.vendor.id,
+    vendorId: item.product.vendorId,
     vendorName: item.product.vendor.storeName,
     inStock: item.variant ? item.variant.stock >= item.quantity : true,
     currencyCode: item.product.currencyCode,
   }));
 
-  const subtotal = items.reduce((sum: any, item: any) => sum + item.lineTotalMinorUnits, 0);
+  const subtotal = items.reduce((sum: number, item: any) => sum + item.lineTotalMinorUnits, 0);
 
   const cartItems: CartItem[] = items.map((item: any) => ({
     productId: item.productId,
-    categoryId: item.product?.categoryId ?? null,
-    vendorId: item.product?.vendorId ?? null,
+    categoryId: null,
+    vendorId: item.vendorId,
     quantity: item.quantity,
     unitMinorUnits: item.unitPriceMinorUnits,
     currencyCode: item.currencyCode,
@@ -82,9 +112,9 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 
   res.json({
     cart: {
-      id: cart.id,
+      id: fullCart.id,
       items,
-      totalItems: items.reduce((sum: any, item: any) => sum + item.quantity, 0),
+      totalItems: items.reduce((sum: number, item: any) => sum + item.quantity, 0),
       subtotalMinorUnits: subtotal,
       dealDiscountMinorUnits: totalDiscountMinorUnits,
       totalMinorUnits,
@@ -93,7 +123,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   });
 });
 
-router.post('/items', async (req: AuthRequest, res: Response) => {
+router.post('/items', async (req: DualAuthRequest, res: Response) => {
   const body = z.object({
     productId: z.string(),
     variantId: z.string().optional(),
@@ -130,10 +160,7 @@ router.post('/items', async (req: AuthRequest, res: Response) => {
     }
   }
 
-  let cart = await prisma.cart.findUnique({ where: { userId: req.user!.id } });
-  if (!cart) {
-    cart = await prisma.cart.create({ data: { userId: req.user!.id } });
-  }
+  const cart = await upsertCart(req);
 
   const existingItem = await prisma.cartItem.findFirst({
     where: {
@@ -162,11 +189,11 @@ router.post('/items', async (req: AuthRequest, res: Response) => {
   res.status(201).json({ message: 'Item added to cart' });
 });
 
-router.put('/items/:itemId', async (req: AuthRequest, res: Response) => {
+router.put('/items/:itemId', async (req: DualAuthRequest, res: Response) => {
   const { itemId } = req.params;
   const body = z.object({ quantity: z.number().int().positive() }).parse(req.body);
 
-  const cart = await prisma.cart.findUnique({ where: { userId: req.user!.id } });
+  const cart = await findCart(req);
   if (!cart) {
     return res.status(404).json({
       error: { code: 'CART_NOT_FOUND', message: 'Cart not found' },
@@ -191,10 +218,10 @@ router.put('/items/:itemId', async (req: AuthRequest, res: Response) => {
   res.json({ message: 'Cart updated' });
 });
 
-router.delete('/items/:itemId', async (req: AuthRequest, res: Response) => {
+router.delete('/items/:itemId', async (req: DualAuthRequest, res: Response) => {
   const { itemId } = req.params;
 
-  const cart = await prisma.cart.findUnique({ where: { userId: req.user!.id } });
+  const cart = await findCart(req);
   if (!cart) {
     return res.status(404).json({
       error: { code: 'CART_NOT_FOUND', message: 'Cart not found' },
@@ -215,8 +242,8 @@ router.delete('/items/:itemId', async (req: AuthRequest, res: Response) => {
   res.status(204).send();
 });
 
-router.delete('/', async (req: AuthRequest, res: Response) => {
-  const cart = await prisma.cart.findUnique({ where: { userId: req.user!.id } });
+router.delete('/', async (req: DualAuthRequest, res: Response) => {
+  const cart = await findCart(req);
   if (cart) {
     await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
   }

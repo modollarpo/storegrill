@@ -2,6 +2,8 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma.js';
 import { authenticate, authorize, AuthRequest, requireVerifiedEmail } from '../middleware/auth.js';
+import { dualAuth, type DualAuthRequest } from '../middleware/dual-auth.js';
+import { generateTokens } from '../middleware/auth.js';
 import { CheckoutSchema, DEFAULT_REGIONS } from '@Storegrill/shared';
 import { calculateTax, TaxRule } from '@Storegrill/shared';
 import { ShippingZone, VendorShippingPolicy, calculateGroupedShipping, planFulfillment } from '@Storegrill/shared';
@@ -15,7 +17,7 @@ import { recordOrderSale, recordOrderRefund } from '../services/ledger-entries.j
 
 const router = Router();
 
-router.use(authenticate);
+router.use(dualAuth);
 
 router.get('/', async (req: AuthRequest, res: Response) => {
   const query = z.object({
@@ -81,6 +83,7 @@ router.get('/gcr-optin/:orderNumber', async (req: AuthRequest, res: Response) =>
       regionKey: true,
       createdAt: true,
       shippingAddress: true,
+      guestEmail: true,
       user: { select: { email: true } },
     },
   });
@@ -107,9 +110,60 @@ router.get('/gcr-optin/:orderNumber', async (req: AuthRequest, res: Response) =>
   res.json({
     order: {
       orderNumber: order.orderNumber,
-      email: order.user.email,
+      email: order.user?.email || order.guestEmail || '',
       deliveryCountry,
       estimatedDeliveryDate,
+    },
+  });
+});
+
+router.get('/guest/lookup', async (req: DualAuthRequest, res: Response) => {
+  const query = z.object({
+    orderNumber: z.string().min(1),
+    email: z.string().email(),
+  }).parse(req.query);
+
+  const order = await prisma.order.findFirst({
+    where: {
+      orderNumber: query.orderNumber,
+      OR: [
+        { guestEmail: query.email.toLowerCase() },
+        { user: { email: query.email.toLowerCase() } },
+      ],
+    },
+    include: {
+      items: {
+        include: {
+          product: { select: { thumbnail: true, slug: true } },
+          vendor: { select: { storeName: true, slug: true } },
+        },
+      },
+      shipments: {
+        include: { events: { orderBy: { timestamp: 'desc' } } },
+      },
+      payments: true,
+    },
+  });
+
+  if (!order) {
+    return res.status(404).json({
+      error: { code: 'NOT_FOUND', message: 'Order not found. Check your order number and email.' },
+    });
+  }
+
+  res.json({
+    order: {
+      ...order,
+      subtotalMinorUnits: Number(order.subtotalMinorUnits),
+      taxMinorUnits: Number(order.taxMinorUnits),
+      shippingMinorUnits: Number(order.shippingMinorUnits),
+      discountMinorUnits: Number(order.discountMinorUnits),
+      totalMinorUnits: Number(order.totalMinorUnits),
+      items: order.items.map((i: any) => ({
+        ...i,
+        unitPriceMinorUnits: Number(i.unitPriceMinorUnits),
+        totalMinorUnits: Number(i.totalMinorUnits),
+      })),
     },
   });
 });
@@ -157,11 +211,37 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
   });
 });
 
-router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Response) => {
-  const body = CheckoutSchema.parse(req.body);
+router.post('/checkout', async (req: DualAuthRequest, res: Response) => {
+  const GuestCheckoutSchema = CheckoutSchema.extend({
+    email: z.string().email(),
+    createAccount: z.boolean().default(false),
+    password: z.string().min(8).optional(),
+    name: z.string().min(1).max(100).optional(),
+  });
+
+  let body: any;
+  if (req.user) {
+    body = CheckoutSchema.parse(req.body);
+  } else {
+    body = GuestCheckoutSchema.parse(req.body);
+    if (!body.email) {
+      return res.status(400).json({
+        error: { code: 'EMAIL_REQUIRED', message: 'Email is required for guest checkout' },
+      });
+    }
+    if (body.createAccount && (!body.password || !body.name)) {
+      return res.status(400).json({
+        error: { code: 'ACCOUNT_FIELDS_REQUIRED', message: 'Name and password are required to create an account' },
+      });
+    }
+  }
+
+  const cartWhere: any = req.user
+    ? { userId: req.user.id }
+    : { sessionId: req.guestSessionId };
 
   const cart = await prisma.cart.findUnique({
-    where: { userId: req.user!.id },
+    where: cartWhere,
     include: {
       items: {
         include: {
@@ -425,10 +505,40 @@ router.post('/checkout', requireVerifiedEmail, async (req: AuthRequest, res: Res
       : 'CAPTURED';
 
   const order = await prisma.$transaction(async (tx: any) => {
+    let newUserId: string | undefined;
+
+    if (!req.user && body.createAccount && body.password && body.name) {
+      const bcrypt = await import('bcryptjs');
+      const hashedPassword = await bcrypt.hash(body.password, 12);
+      const newUser = await tx.user.create({
+        data: {
+          email: body.email.toLowerCase(),
+          password: hashedPassword,
+          name: body.name,
+          role: 'BUYER',
+        },
+      });
+      newUserId = newUser.id;
+
+      if (req.guestSessionId) {
+        const guestCart = await tx.cart.findUnique({ where: { sessionId: req.guestSessionId } });
+        if (guestCart) {
+          await tx.cart.update({
+            where: { id: guestCart.id },
+            data: { userId: newUser.id, sessionId: null },
+          });
+        }
+      }
+    }
+
+    const orderUserId = req.user?.id || newUserId || null;
+    const guestEmail = !req.user ? body.email : undefined;
+
     const created = await tx.order.create({
       data: {
         orderNumber,
-        userId: req.user!.id,
+        userId: orderUserId,
+        guestEmail,
         status: orderStatus,
         regionKey: regionConfig.key,
         currencyCode: currencyCode,

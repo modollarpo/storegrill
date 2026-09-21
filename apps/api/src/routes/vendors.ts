@@ -710,15 +710,16 @@ router.post('/me/orders/:id/ship', authenticate, authorize('VENDOR'), async (req
     },
   });
 
-  await prisma.notification.create({
-    data: {
-      userId: order.userId,
-      type: 'ORDER_SHIPMENT',
-      title: 'Parcel handed to the carrier',
-      body: `${order.orderNumber} — your parcel from ${vendor.storeName} is on its way${body.trackingNumber ? ' (tracking available)' : ''}.`,
-      data: JSON.stringify({
-        orderId: order.id,
-        orderNumber: order.orderNumber,
+  if (order.userId) {
+    await prisma.notification.create({
+      data: {
+        userId: order.userId,
+        type: 'ORDER_SHIPMENT',
+        title: 'Parcel handed to the carrier',
+        body: `${order.orderNumber} — your parcel from ${vendor.storeName} is on its way${body.trackingNumber ? ' (tracking available)' : ''}.`,
+        data: JSON.stringify({
+          orderId: order.id,
+          orderNumber: order.orderNumber,
         shipmentId: shipment.id,
         trackingStatus: CarrierShipmentStatus.SHIPPED,
         carrier,
@@ -726,6 +727,7 @@ router.post('/me/orders/:id/ship', authenticate, authorize('VENDOR'), async (req
       }),
     },
   });
+  }
 
   res.json({
     shipment: {

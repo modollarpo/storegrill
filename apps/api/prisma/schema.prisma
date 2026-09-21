@@ -363,10 +363,13 @@ model ShippingZone {
 
 model Cart {
   id        String     @id @default(cuid())
-  userId    String     @unique
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String?    @unique
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String?    @unique
   items     CartItem[]
   updatedAt DateTime   @updatedAt
+
+  @@index([sessionId])
 }
 
 model CartItem {
@@ -384,8 +387,9 @@ model CartItem {
 model Order {
   id                 String    @id @default(cuid())
   orderNumber        String    @unique
-  userId             String
-  user               User      @relation(fields: [userId], references: [id])
+  userId             String?
+  user               User?     @relation(fields: [userId], references: [id])
+  guestEmail         String?
   status             String    @default("PENDING")
   regionKey          String
   currencyCode       String
@@ -412,6 +416,8 @@ model Order {
   disputes              Dispute[]
   marketingAttributions MarketingAttribution[]
   voucherRedemptions    VoucherRedemption[]
+
+  @@index([guestEmail])
 }
 
 model OrderItem {

@@ -31,6 +31,7 @@ interface TrackResponse {
 
 export function TrackForm() {
   const [orderNo, setOrderNo] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<TrackResponse | null>(null);
@@ -42,21 +43,37 @@ export function TrackForm() {
       setError('Please enter an order number.');
       return;
     }
+    if (!email.trim()) {
+      setError('Please enter the email used for this order.');
+      return;
+    }
     setError(null);
     setLoading(true);
     setData(null);
 
     try {
       const apiHost = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const lookupRes = await fetch(`${apiHost}/api/v1/orders/guest/lookup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderNumber: v, email: email.trim().toLowerCase() }),
+        credentials: 'omit',
+      });
+      if (!lookupRes.ok) {
+        if (lookupRes.status === 404) {
+          setError('Order not found. Please check your order number and email.');
+        } else {
+          setError('Unable to look up your order. Please try again later.');
+        }
+        return;
+      }
+      const lookupData = (await lookupRes.json()) as { orderId: string };
+
       const res = await fetch(`${apiHost}/api/v1/tracking/by-order/${encodeURIComponent(v)}`, {
         credentials: 'omit',
       });
       if (!res.ok) {
-        if (res.status === 404) {
-          setError('Order not found. Please check your order number.');
-        } else {
-          setError('Unable to fetch tracking info. Please try again later.');
-        }
+        setError('Unable to fetch tracking info. Please try again later.');
         return;
       }
       const json = (await res.json()) as TrackResponse;
@@ -74,14 +91,26 @@ export function TrackForm() {
         <label htmlFor="track-order" className="block text-sm font-bold text-charcoal mb-2">
           Order number
         </label>
+        <input
+          id="track-order"
+          value={orderNo}
+          onChange={e => setOrderNo(e.target.value)}
+          placeholder="e.g. SG-12345"
+          autoComplete="off"
+          className="input w-full h-12 font-mono text-base px-4 rounded-xl border border-border mb-3"
+        />
+        <label htmlFor="track-email" className="block text-sm font-bold text-charcoal mb-2">
+          Email used at checkout
+        </label>
         <div className="flex gap-3">
           <input
-            id="track-order"
-            value={orderNo}
-            onChange={e => setOrderNo(e.target.value)}
-            placeholder="e.g. SG-12345"
-            autoComplete="off"
-            className="input flex-1 h-12 font-mono text-base px-4 rounded-xl border border-border"
+            id="track-email"
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            autoComplete="email"
+            className="input flex-1 h-12 text-base px-4 rounded-xl border border-border"
           />
           <button type="submit" disabled={loading} className="btn btn-primary h-12 px-8 rounded-xl font-bold shrink-0">
             {loading ? 'Searching...' : 'Track'}

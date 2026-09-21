@@ -152,6 +152,7 @@ function queryOrderForEmail(orderId: string) {
       discountMinorUnits: true,
       totalMinorUnits: true,
       shippingAddress: true,
+      guestEmail: true,
       user: { select: { name: true, email: true } },
       items: {
         select: {
@@ -178,7 +179,7 @@ function snapshotFromOrder(order: NonNullable<Awaited<ReturnType<typeof queryOrd
   return {
     orderNumber: order.orderNumber,
     customerName: order.user?.name || 'valued customer',
-    customerEmail: order.user?.email || '',
+    customerEmail: order.user?.email || order.guestEmail || '',
     currencyCode: order.currencyCode,
     items: order.items.map(item => ({
       name: item.name,

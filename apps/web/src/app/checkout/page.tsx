@@ -49,6 +49,9 @@ export default function CheckoutPage() {
 
   const [step, setStep] = useState<Step>(1);
   const [email, setEmail] = useState('');
+  const [createAccount, setCreateAccount] = useState(false);
+  const [accountName, setAccountName] = useState('');
+  const [accountPassword, setAccountPassword] = useState('');
   const [address, setAddress] = useState<AddressForm>(EMPTY_ADDRESS);
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [notes, setNotes] = useState('');
@@ -91,10 +94,16 @@ export default function CheckoutPage() {
   }, []);
 
   const stepValid = useMemo(() => {
-    if (step === 1) return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) && address.street.length > 2 && address.city.length > 1 && address.zip.length > 2;
+    if (step === 1) {
+      const emailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+      const addressValid = address.street.length > 2 && address.city.length > 1 && address.zip.length > 2;
+      if (!emailValid || !addressValid) return false;
+      if (createAccount && (!accountName || accountPassword.length < 8)) return false;
+      return true;
+    }
     if (step === 2) return Boolean(activePayment);
     return true;
-  }, [step, email, address, activePayment]);
+  }, [step, email, address, activePayment, createAccount, accountName, accountPassword]);
 
   async function applyCoupon(code: string) {
     try {
@@ -160,6 +169,9 @@ export default function CheckoutPage() {
           regionKey,
           couponCode: cart.appliedCoupon?.code,
           email,
+          createAccount: createAccount || undefined,
+          name: accountName || undefined,
+          password: accountPassword || undefined,
           notes: `language=${language};displayMethod=${activePayment};notes=${notes}`,
         }),
       });
@@ -190,9 +202,7 @@ export default function CheckoutPage() {
       cart.clear();
       router.push(`/checkout/confirmation?order=${encodeURIComponent(orderNumber)}`);
     } catch (e) {
-      if (e instanceof ApiError && e.status === 401) {
-        setError('Please sign in to complete your order.');
-      } else if (e instanceof ApiError) {
+      if (e instanceof ApiError) {
         setError(mapPaymentError(e.code, e.message));
       } else {
         setError('Something went wrong placing your order. Please try again.');
@@ -232,6 +242,50 @@ export default function CheckoutPage() {
                   className="input"
                 />
               </label>
+
+              <div className="mt-3 p-3 bg-surface-subtle rounded-lg border border-border-default">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={createAccount}
+                    onChange={e => setCreateAccount(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-border-default text-primary focus:ring-primary"
+                  />
+                  <div>
+                    <span className="text-sm font-semibold text-text-primary">Create an account for faster checkout next time</span>
+                    <p className="text-xs text-text-secondary mt-0.5">Save your details to track orders and manage returns easily.</p>
+                  </div>
+                </label>
+                {createAccount && (
+                  <div className="mt-3 space-y-2.5 pl-6">
+                    <label className="block">
+                      <span className="block text-xs font-semibold mb-1 text-text-primary">Full name</span>
+                      <input
+                        type="text"
+                        required
+                        autoComplete="name"
+                        value={accountName}
+                        onChange={e => setAccountName(e.target.value)}
+                        placeholder="Your full name"
+                        className="input"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="block text-xs font-semibold mb-1 text-text-primary">Password</span>
+                      <input
+                        type="password"
+                        required
+                        autoComplete="new-password"
+                        minLength={8}
+                        value={accountPassword}
+                        onChange={e => setAccountPassword(e.target.value)}
+                        placeholder="At least 8 characters"
+                        className="input"
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
 
               <fieldset className="space-y-3">
                 <legend className="text-xs font-semibold mb-1.5 text-text-primary">Shipping address</legend>

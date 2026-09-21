@@ -391,15 +391,23 @@ function Header({ categories }: HeaderProps) {
 
               {/* Center: category links */}
               <div className="flex items-center justify-center gap-4 xl:gap-6 flex-1 overflow-x-auto scrollbar-none">
-                {filteredCategories.map(cat => (
-                  <a
-                    key={cat.slug}
-                    href={`/categories/${cat.slug}`}
-                    className="text-[15px] xl:text-[16px] font-semibold whitespace-nowrap hover:opacity-80 transition-opacity"
-                  >
-                    {cat.name}
-                  </a>
-                ))}
+                {filteredCategories.map(cat => {
+                  const href = `/categories/${cat.slug}`;
+                  const isActive = pathname === href || pathname.startsWith(href + '/');
+                  return (
+                    <a
+                      key={cat.slug}
+                      href={href}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={cn(
+                        'text-[15px] xl:text-[16px] font-semibold whitespace-nowrap hover:opacity-80 transition-opacity',
+                        isActive && 'underline underline-offset-4 decoration-2'
+                      )}
+                    >
+                      {cat.name}
+                    </a>
+                  );
+                })}
               </div>
 
               {/* Right: deals dropdown with chevron */}

@@ -105,12 +105,28 @@ export default async function CategoryPage({
   );
 
   return (
-    <ProductListing
-      searchParams={searchParams}
-      forceCategory={slug}
-      basePath={`/categories/${slug}`}
-      breadcrumbItems={[{ name: 'Categories', path: '/categories' }, { name, path: '' }]}
-      hero={hero}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: '/' },
+              { '@type': 'ListItem', position: 2, name: 'Categories', item: '/categories' },
+              { '@type': 'ListItem', position: 3, name, item: `/categories/${slug}` },
+            ],
+          }),
+        }}
+      />
+      <ProductListing
+        searchParams={searchParams}
+        forceCategory={slug}
+        basePath={`/categories/${slug}`}
+        breadcrumbItems={[{ name: 'Categories', path: '/categories' }, { name, path: '' }]}
+        hero={hero}
+      />
+    </>
   );
 }

@@ -182,7 +182,7 @@ resource "azurerm_postgresql_flexible_server_database" "dbs" {
 }
 
 resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure_services" {
-  name             = "AllowAllAzureIps"
+  name             = "AllowContainerApps"
   server_id        = azurerm_postgresql_flexible_server.db.id
   start_ip_address = "0.0.0.0"
   end_ip_address   = "0.0.0.0"
@@ -209,8 +209,8 @@ resource "azurerm_key_vault" "vault" {
   sku_name                      = "standard"
   enable_rbac_authorization     = false
   soft_delete_retention_days    = 7
-  purge_protection_enabled      = false
-  public_network_access_enabled = true
+  purge_protection_enabled      = true
+  public_network_access_enabled = false
 
   tags = azurerm_resource_group.pod.tags
 }
@@ -692,6 +692,73 @@ resource "azurerm_container_app_custom_domain" "web_extra" {
   container_app_id                         = azurerm_container_app.next_apps["web"].id
   certificate_binding_type                 = "SniEnabled"
   container_app_environment_certificate_id = local.custom_domain_certificate_id
+}
+
+resource "azurerm_monitor_action_group" "pod" {
+  name                = "ag-storegrill-${lower(var.region_key)}-${lower(var.environment)}"
+  resource_group_name = azurerm_resource_group.pod.name
+  short_name          = substr("sg-${lower(var.region_key)}", 0, 12)
+
+  email_receiver {
+    name          = "ops-alerts"
+    email_address = var.alert_email
+    use_common_alert_schema = true
+  }
+}
+
+resource "azurerm_monitor_metric_alert" "api_5xx" {
+  name                = "alert-${lower(var.region_key)}-api-5xx"
+  resource_group_name = azurerm_resource_group.pod.name
+  scopes              = [azurerm_container_app.api.id]
+  description         = "API 5xx error rate exceeds 5% for 5 minutes"
+  frequency           = "PT1M"
+  window_size         = "PT5M"
+  severity            = 1
+
+  criteria {
+    metric_namespace = "Microsoft.App/containerApps"
+    metric_name      = "Requests"
+    aggregation      = "Total"
+    operator         = "GreaterThan"
+    threshold        = 0
+
+    dimension {
+      name     = "ResultCode"
+      operator = "Include"
+      values   = ["5xx"]
+    }
+  }
+
+  action {
+    action_group_id = azurerm_monitor_action_group.pod.id
+  }
+}
+
+resource "azurerm_monitor_metric_alert" "api_latency" {
+  name                = "alert-${lower(var.region_key)}-api-latency"
+  resource_group_name = azurerm_resource_group.pod.name
+  scopes              = [azurerm_container_app.api.id]
+  description         = "API p95 latency exceeds 3 seconds for 5 minutes"
+  frequency           = "PT1M"
+  window_size         = "PT5M"
+  severity            = 2
+
+  criteria {
+    metric_namespace = "Microsoft.App/containerApps"
+    metric_name      = "ResponseTime"
+    aggregation      = "Average"
+    operator         = "GreaterThan"
+    threshold        = 3000
+  }
+
+  action {
+    action_group_id = azurerm_monitor_action_group.pod.id
+  }
+}
+
+variable "alert_email" {
+  description = "Email address for operational alert notifications"
+  type        = string
 }
 
 output "resource_group_name" {

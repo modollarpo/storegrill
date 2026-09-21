@@ -58,9 +58,18 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
 
 router.patch('/:id/status', authenticate, async (req: AuthRequest, res: Response) => {
   const body = UpdateReturnSchema.parse(req.body);
-  const existing = await prisma.returnRequest.findUnique({ where: { id: req.params.id } });
+  const existing = await prisma.returnRequest.findUnique({
+    where: { id: req.params.id },
+    select: { id: true, resolution: true, order: { select: { userId: true } } },
+  });
   if (!existing) {
     return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Return request not found' } });
+  }
+
+  const isAdmin = req.user!.role === 'ADMIN';
+  const isOwner = existing.order?.userId === req.user!.id;
+  if (!isAdmin && !isOwner) {
+    return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Insufficient permissions' } });
   }
 
   const updated = await prisma.returnRequest.update({

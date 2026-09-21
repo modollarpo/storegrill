@@ -100,9 +100,8 @@ jobs:
           image-ref: '${{ env.ACR }}/api:${{ env.API_TAG }}'
           format: 'table'
           exit-code: '1'
-          severity: 'CRITICAL,HIGH'
+          severity: 'CRITICAL'
           ignore-unfixed: true
-        continue-on-error: true
 
       - name: Trivy scan - Web image
         uses: aquasecurity/trivy-action@v0.36.0
@@ -110,9 +109,8 @@ jobs:
           image-ref: '${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.WEB_TAG }}'
           format: 'table'
           exit-code: '1'
-          severity: 'CRITICAL,HIGH'
+          severity: 'CRITICAL'
           ignore-unfixed: true
-        continue-on-error: true
 
   deploy:
     name: Deploy ${{ matrix.region }}

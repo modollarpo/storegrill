@@ -4,30 +4,40 @@
 
 ```mermaid
 graph TB
-  User([Customer / Vendor / Admin]) -->|HTTPS| FD[Azure Front Door<br/>storegrill.net]
-  FD --> APP[App Service F1<br/>Web + REST API /api/v1]
-  FD --> FN[Functions Consumption<br/>import workers, jobs, notifications]
+  User([Customer / Vendor / Admin]) -->|HTTPS| CDN[Cloudflare CDN<br/>storegrill.net]
+  CDN --> CAE[Container App Environment<br/>per-region pod]
+  CAE --> API[Container App: API<br/>Express REST /api/v1]
+  CAE --> WEB[Container App: Web<br/>Next.js storefront]
+  CAE --> ADMIN[Container App: Admin<br/>Next.js admin]
+  CAE --> VENDOR[Container App: Vendor<br/>Next.js vendor portal]
 
-  APP --> SQL[(Azure SQL Free<br/>relational core)]
-  FN --> SQL
-  APP --> BLOB[Blob Storage<br/>product images, CSV, FTP inbox]
-  FN --> BLOB
-  APP --> KV[Key Vault<br/>Stripe, ACS keys, FTP creds, JWT secret]
-  KV -.->|SystemAssigned identity| APP
-  KV -.->|SystemAssigned identity| FN
-  APP --> AI[Application Insights<br/>traces, metrics, logs]
-  FN --> AI
-  APP -.->|optional| REDIS[(Redis Basic<br/>cache, rate limits)]
-  APP --> MAIL[ACS Email<br/>transactional email]
+  API --> PG[(PostgreSQL Flexible<br/>relational core)]
+  WEB --> API
+  ADMIN --> API
+  VENDOR --> API
+  API --> BLOB[Blob Storage<br/>product images, CSV, FTP inbox]
+  API --> KV[Key Vault<br/>Stripe, ACS keys, JWT secret]
+  KV -.->|Managed Identity| API
+  API --> AI[Application Insights<br/>traces, metrics, logs]
+  API --> REDIS[(Redis Basic<br/>cache, rate limits)]
+  API --> MAIL[ACS Email<br/>transactional email]
+  API --> TRANSLATOR[Container App: Translator<br/>Azure Translator fallback]
 ```
 
 ## Component responsibilities
 
 | Component | Responsibility |
 |---|---|
-| **App Service (web + api)** | Customer storefront SSR/SPA, admin, vendor portal, REST API, server-side cart/tax/shipping/deal calculations |
-| **Functions** | Background jobs: scheduled import pulls, FTP watcher, feed re-import, notifications, payout processing, data cleanup |
-| **SQL Database** | Single source of truth; region, product, order, vendor, deal, payout tables |
+| **Container App: API** | Express REST API — product catalog, cart, checkout, orders, payments, vendors, deals, search, translations, imports |
+| **Container App: Web** | Next.js customer storefront — SSR product pages, SEO, region-aware routing, RTL support |
+| **Container App: Admin** | Next.js admin dashboard — order management, vendor approvals, analytics, content moderation |
+| **Container App: Vendor** | Next.js vendor portal — product CRUD, order fulfillment, returns, payouts |
+| **Container App: Translator** | Azure Translator fallback for i18n when LibreTranslate is unavailable |
+| **PostgreSQL Flexible** | Single source of truth — region, product, order, vendor, deal, payout, cart, review tables |
+| **Blob Storage** | Product images, CSV imports, FTP inbox |
+| **Key Vault** | Secrets: Stripe keys, ACS connection string, JWT secret, PayPal credentials |
+| **Redis Basic** | In-memory cache, rate limiting, session store |
+| **Application Insights** | Distributed tracing, custom metrics, structured logs |
 | **Blob Storage** | `products/` (images), `imports/` (CSV, feeds, staged files), `ftp-inbox/` (SFTP landing share) |
 | **Key Vault** | All secrets; encrypted vendor FTP credentials with managed-identity access |
 | **Front Door** | Global entry for storegrill.net, region → nearest origin, caching, TLS |

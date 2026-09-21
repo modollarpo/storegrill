@@ -43,8 +43,7 @@ jobs:
         run: npm ci
 
       - name: Security Audit
-        run: npm audit --audit-level=moderate --omit=dev
-        continue-on-error: true
+        run: npm audit --audit-level=critical --omit=dev
 
       - name: Build Shared Package
         run: npm run build -w packages/shared
@@ -58,6 +57,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Build All Apps
+        run: npm run build
+
       - name: UI Hygiene Gates
         run: npm run gate:ui
 
@@ -66,3 +68,8 @@ jobs:
 
       - name: Unit & Integration Tests
         run: npx vitest run --reporter=basic
+
+      - name: E2E Tests
+        run: npx playwright test --reporter=list
+        env:
+          DATABASE_URL: postgresql://local:local@localhost:5432/storegrill

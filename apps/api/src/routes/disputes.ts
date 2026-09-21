@@ -64,9 +64,18 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
 
 router.post('/:id/evidence', authenticate, async (req: AuthRequest, res: Response) => {
   const body = EvidenceSchema.parse(req.body);
-  const dispute = await prisma.dispute.findUnique({ where: { id: req.params.id } });
+  const dispute = await prisma.dispute.findUnique({
+    where: { id: req.params.id },
+    select: { id: true, customerId: true },
+  });
   if (!dispute) {
     return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Dispute not found' } });
+  }
+
+  const isAdmin = req.user!.role === 'ADMIN';
+  const isOwner = dispute.customerId === req.user!.id;
+  if (!isAdmin && !isOwner) {
+    return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Insufficient permissions' } });
   }
 
   const evidence = await prisma.disputeEvidence.create({
@@ -84,9 +93,19 @@ router.post('/:id/evidence', authenticate, async (req: AuthRequest, res: Respons
 
 router.patch('/:id/status', authenticate, async (req: AuthRequest, res: Response) => {
   const body = UpdateDisputeSchema.parse(req.body);
-  const existing = await prisma.dispute.findUnique({ where: { id: req.params.id } });
+  const existing = await prisma.dispute.findUnique({
+    where: { id: req.params.id },
+    select: { id: true, customerId: true, vendorId: true, resolution: true },
+  });
   if (!existing) {
     return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Dispute not found' } });
+  }
+
+  const isAdmin = req.user!.role === 'ADMIN';
+  const isOwner = existing.customerId === req.user!.id;
+  const isVendor = existing.vendorId && (req as any).merchant?.vendorId === existing.vendorId;
+  if (!isAdmin && !isOwner && !isVendor) {
+    return res.status(403).json({ error: { code: 'FORBIDDEN', message: 'Insufficient permissions' } });
   }
 
   const updated = await prisma.dispute.update({

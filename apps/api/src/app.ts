@@ -44,6 +44,7 @@ import { bannersRouter } from './routes/banners.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { csrfProtection } from './middleware/csrf.js';
 import { requestLogger } from './middleware/request-logger.js';
+import { correlationId } from './middleware/correlation-id.js';
 
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
   .split(',')
@@ -53,7 +54,22 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
 const app = express();
 const isProd = process.env.NODE_ENV === 'production';
 
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'", 'https://*.storegrill.net'],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+  hsts: { maxAge: 31536000, includeSubDomains: true, preload: true },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+}));
 app.use(cors({
   origin(origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
@@ -65,6 +81,7 @@ app.use(cors({
 app.use('/api/v1/payments/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
+app.use(correlationId);
 app.use(requestLogger);
 app.use(csrfProtection);
 
@@ -81,11 +98,14 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-app.use('/api/', limiter);
-
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+const checkoutLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isProd ? 5 : 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { code: 'RATE_LIMITED', message: 'Too many checkout attempts. Please try again later.' } },
 });
+app.use('/api/', limiter);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -98,7 +118,7 @@ app.use('/api/v1/categories', categoriesRouter);
 app.use('/api/v1/home', homeRouter);
 app.use('/api/v1/brands', brandsRouter);
 app.use('/api/v1/cart', cartRouter);
-app.use('/api/v1/orders', ordersRouter);
+app.use('/api/v1/orders', checkoutLimiter, ordersRouter);
 app.use('/api/v1/vendors', vendorsRouter);
 app.use('/api/v1/deals', dealsRouter);
 app.use('/api/v1/regions', regionsRouter);

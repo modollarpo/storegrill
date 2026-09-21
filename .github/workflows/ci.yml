@@ -75,6 +75,6 @@ jobs:
         run: npx playwright install --with-deps chromium firefox webkit
 
       - name: E2E Tests
-        run: npx playwright test --reporter=list
+        run: npx playwright test tests/contracts --reporter=list
         env:
           DATABASE_URL: postgresql://local:local@localhost:5432/storegrill

@@ -71,6 +71,9 @@ jobs:
       - name: Unit & Integration Tests
         run: npx vitest run --reporter=basic
 
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
       - name: E2E Tests
         run: npx playwright test --reporter=list
         env:

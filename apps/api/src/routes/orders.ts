@@ -71,6 +71,49 @@ router.get('/', async (req: AuthRequest, res: Response) => {
   });
 });
 
+router.get('/gcr-optin/:orderNumber', async (req: AuthRequest, res: Response) => {
+  const { orderNumber } = req.params;
+
+  const order = await prisma.order.findFirst({
+    where: { orderNumber, userId: req.user!.id },
+    select: {
+      orderNumber: true,
+      regionKey: true,
+      createdAt: true,
+      shippingAddress: true,
+      user: { select: { email: true } },
+    },
+  });
+
+  if (!order) {
+    return res.status(404).json({
+      error: { code: 'NOT_FOUND', message: 'Order not found' },
+    });
+  }
+
+  let deliveryCountry = '';
+  try {
+    const address = JSON.parse(order.shippingAddress) as { country?: string };
+    deliveryCountry = (address.country || '').slice(0, 2).toUpperCase();
+  } catch {
+    deliveryCountry = '';
+  }
+
+  const region = DEFAULT_REGIONS.find((r) => r.key === order.regionKey);
+  const daysMax = region?.shippingZones?.[0]?.estimatedDaysMax ?? 7;
+  const estimatedDate = new Date(order.createdAt.getTime() + daysMax * 86400000);
+  const estimatedDeliveryDate = estimatedDate.toISOString().slice(0, 10);
+
+  res.json({
+    order: {
+      orderNumber: order.orderNumber,
+      email: order.user.email,
+      deliveryCountry,
+      estimatedDeliveryDate,
+    },
+  });
+});
+
 router.get('/:id', async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
 

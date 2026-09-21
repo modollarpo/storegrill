@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getRequestContext } from '@/lib/server-context';
 import { buildMetadata } from '@/lib/seo';
 import { PaymentStatus } from './PaymentStatus';
+import { GoogleCustomerReviewsOptIn } from '@/components/commerce/trust/GoogleCustomerReviewsOptIn';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { regionKey } = await getRequestContext();
@@ -31,6 +32,7 @@ export default async function ConfirmationPage({
         {pendingPayment ? 'Almost there — order received!' : 'Thank you — your order is placed!'}
       </h1>
       <PaymentStatus sessionId={sp.session_id} paypalOrderId={sp.token} />
+      {orderNumber && <GoogleCustomerReviewsOptIn orderNumber={orderNumber} />}
       <p className="text-sm text-smoke-500 mt-2">
         We&apos;ve sent a confirmation{sp.email ? ` to ${sp.email}` : ' to your email'}.
       </p>

@@ -12,6 +12,13 @@ export default defineConfig({
     environmentMatchGlobs: [
       ['apps/web/**/*.test.tsx', 'jsdom'],
     ],
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        maxForks: 4,
+        minForks: 1,
+      },
+    },
     include: [
       'packages/shared/src/**/*.test.ts',
       'apps/api/src/**/*.test.ts',

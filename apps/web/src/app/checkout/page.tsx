@@ -243,13 +243,13 @@ export default function CheckoutPage() {
                 />
               </label>
 
-              <div className="mt-3 p-3 bg-surface-subtle rounded-lg border border-border-default">
+              <div className="mt-3 p-3 bg-surface-raised rounded-lg border border-border">
                 <label className="flex items-start gap-2.5 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={createAccount}
                     onChange={e => setCreateAccount(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-border-default text-primary focus:ring-primary"
+                    className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
                   />
                   <div>
                     <span className="text-sm font-semibold text-text-primary">Create an account for faster checkout next time</span>

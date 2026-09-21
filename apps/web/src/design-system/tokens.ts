@@ -17,7 +17,7 @@ export const colors = {
 
 export const semantic = {
   // Surface hierarchy
-  surfacePage:    '#f3f3f3',   // Currys grey canvas
+  surfacePage:    '#ffffff',   // White page canvas
   surface:        '#FFFFFF',
   surfaceRaised:  '#FFFFFF',
   surfaceSunken:  '#EDEDED',

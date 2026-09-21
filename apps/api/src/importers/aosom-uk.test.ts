@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   adaptAosomUkRows,
   mergeAosomUkFeeds,
+  normalizeAosomUkImages,
   parseAosomUkProductTsv,
   parseAosomUkStockTsv,
   parseGbpPrice,
@@ -187,6 +188,36 @@ describe('adaptAosomUkRows', () => {
     const ok = result.products.find(p => p.variants[0].sku === 'OK');
     expect(low).toBeDefined();
     expect(ok).toBeDefined();
+  });
+});
+
+describe('normalizeAosomUkImages', () => {
+  it('splits comma-separated base images and deduplicates across base + images', () => {
+    const result = normalizeAosomUkImages(
+      'https://img.aosomcdn.com/a.jpg,https://img.aosomcdn.com/b.jpg',
+      'https://img.aosomcdn.com/b.jpg,https://img.aosomcdn.com/c.jpg',
+    );
+    expect(result).toEqual([
+      'https://img.aosomcdn.com/a.jpg',
+      'https://img.aosomcdn.com/b.jpg',
+      'https://img.aosomcdn.com/c.jpg',
+    ]);
+  });
+
+  it('rewrites http to https and skips empty entries', () => {
+    const result = normalizeAosomUkImages(
+      'http://img.aosomcdn.com/base.jpg',
+      ',http://img.aosomcdn.com/add1.jpg,,http://img.aosomcdn.com/add2.jpg,',
+    );
+    expect(result).toEqual([
+      'https://img.aosomcdn.com/base.jpg',
+      'https://img.aosomcdn.com/add1.jpg',
+      'https://img.aosomcdn.com/add2.jpg',
+    ]);
+  });
+
+  it('returns empty array when both inputs are empty', () => {
+    expect(normalizeAosomUkImages('', '')).toEqual([]);
   });
 });
 

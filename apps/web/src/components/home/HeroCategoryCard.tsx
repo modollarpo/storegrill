@@ -18,7 +18,7 @@ export function HeroCategoryCard({ slide, className }: HeroCategoryCardProps) {
       href={slide.href}
       className={cn(
         'group relative flex flex-col justify-between h-[380px] md:h-[410px] lg:h-[430px]',
-        'rounded-2xl overflow-hidden cursor-pointer',
+        'rounded-2xl overflow-hidden cursor-pointer border border-black/5',
         'transition-shadow duration-300 hover:shadow-xl',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         className,

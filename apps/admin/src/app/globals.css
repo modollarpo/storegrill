@@ -4,7 +4,7 @@
 
 @layer base {
   * { @apply border-surface-200; }
-  body { @apply bg-surface-50 text-surface-900 antialiased; }
+  body { @apply bg-white text-surface-900 antialiased; }
 }
 
 @layer components {

@@ -90,7 +90,7 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
   const [showQuickView, setShowQuickView] = useState(false);
 
   return (
-    <article aria-label={product.name} className="group h-full flex flex-col">
+    <article aria-label={product.name} className="group h-full flex flex-col border border-border rounded-lg">
       <ProductCardImage product={product} images={images} href={href} />
       
       <ProductCardInfo product={product} href={href} locale={locale} />
@@ -107,7 +107,7 @@ function ListCard({ product, images, href, locale }: { product: ProductCardData;
   const discountPct = savingMinorUnits > 0 && product.listPrice ? Math.round((savingMinorUnits / product.listPrice) * 100) : 0;
 
   return (
-    <article aria-label={product.name} className="group flex flex-col sm:flex-row gap-5 p-4 rounded-lg bg-surface shadow-card hover:shadow-md transition-shadow">
+    <article aria-label={product.name} className="group flex flex-col sm:flex-row gap-5 p-4 rounded-lg bg-surface border border-border shadow-card hover:shadow-md transition-shadow">
       <Link href={href} tabIndex={-1} aria-label={product.name} className="shrink-0">
         <div className="relative w-full h-[180px] sm:w-[180px] sm:h-[180px] overflow-hidden rounded-lg bg-surface-sunken">
           {images[0] ? (

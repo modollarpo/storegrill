@@ -13,7 +13,7 @@ export const BRAND = {
   ink: '#20162e',
   muted: '#6b5e83',
   border: '#eee8f5',
-  bodyBg: '#f5f2fa',
+  bodyBg: '#ffffff',
   cardBg: '#ffffff',
   success: '#16a34a',
   warning: '#d97706',

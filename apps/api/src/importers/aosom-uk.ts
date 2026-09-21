@@ -201,7 +201,7 @@ export function normalizeAosomUkImages(base: string, images: string): string[] {
     seen.add(rewritten);
     out.push(rewritten);
   };
-  push(base);
+  for (const url of (base ?? '').split(',')) push(url);
   for (const url of (images ?? '').split(',')) push(url);
   return out;
 }

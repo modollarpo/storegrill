@@ -318,24 +318,33 @@ async function parseCsvRows(
 }
 
 async function planChanges(vendorId: string, products: NormalizedProduct[], profile: AdapterProfile): Promise<PlannedAction[]> {
-  const BATCH_SIZE = 1000;
+  const BATCH_SIZE = 200;
   const existingBySku = new Map<string, ExistingProduct>();
-  let offset = 0;
+  let cursorId: string | undefined;
   for (;;) {
-    const batch = await prisma.product.findMany({
-      where: { vendorId },
-      include: { variants: true },
-      skip: offset,
-      take: BATCH_SIZE,
-      orderBy: { createdAt: 'asc' },
-    });
+    let batch: any[] = [];
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      try {
+        batch = await prisma.product.findMany({
+          where: { vendorId, ...(cursorId ? { id: { gt: cursorId } } : {}) },
+          include: { variants: true },
+          take: BATCH_SIZE,
+          orderBy: { id: 'asc' },
+        });
+        break;
+      } catch (e) {
+        console.log(`[planChanges] batch attempt ${attempt} failed: ${(e as Error).message.slice(0, 120)}`);
+        if (attempt === 5) throw e;
+        await new Promise(r => setTimeout(r, 5000 * attempt));
+      }
+    }
     for (const row of batch) {
       existingBySku.set(row.sku, {
         id: row.id,
         name: row.name,
         slug: row.slug,
         description: row.description,
-        shortDescription: row.shortDescription,
+        shortDescription: row.shortDescription ?? '',
         sku: row.sku,
         categoryId: row.categoryId,
         brandId: row.brandId,
@@ -356,8 +365,9 @@ async function planChanges(vendorId: string, products: NormalizedProduct[], prof
         })),
       });
     }
+    console.log(`[planChanges] loaded ${existingBySku.size} existing products (batch=${batch.length})`);
     if (batch.length < BATCH_SIZE) break;
-    offset += BATCH_SIZE;
+    cursorId = batch[batch.length - 1].id;
   }
 
   // Never import products cheaper than 50 minor-currency units (GBP 50 / USD 50 / EUR 50)
@@ -528,12 +538,20 @@ async function executePlan(
         const batch = chunk.slice(j, j + APPLY_CONCURRENCY);
         const results = await Promise.all(
           batch.map(async (item) => {
-            try {
-              const result = await applyOne(vendorId, item, { categoryCache, brandCache, profile });
-              return { ok: true as const, item, result };
-            } catch (error) {
-              return { ok: false as const, item, error };
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              try {
+                const result = await applyOne(vendorId, item, { categoryCache, brandCache, profile });
+                return { ok: true as const, item, result };
+              } catch (error) {
+                const msg = error instanceof Error ? error.message : String(error);
+                if (attempt < 3 && (msg.includes('connection') || msg.includes('ECONNRESET') || msg.includes('closed'))) {
+                  await new Promise(r => setTimeout(r, 3000 * attempt));
+                  continue;
+                }
+                return { ok: false as const, item, error };
+              }
             }
+            return { ok: false as const, item, error: new Error('unreachable') };
           }),
         );
         for (const r of results) {

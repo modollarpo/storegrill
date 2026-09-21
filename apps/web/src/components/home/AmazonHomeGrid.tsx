@@ -32,7 +32,7 @@ function HeroCard({ slide }: { slide: HomeHeroSlide }) {
     return (
       <Link
         href={slide.href}
-        className="w-[280px] sm:w-[300px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-2xl shadow-sm group/card flex flex-col justify-between"
+        className="w-[280px] sm:w-[300px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-2xl shadow-sm border border-black/5 group/card flex flex-col justify-between"
         style={{ backgroundColor: bg, color: slide.textColor || 'white' }}
       >
         {slide.badgeText ? (
@@ -95,7 +95,7 @@ function HeroCard({ slide }: { slide: HomeHeroSlide }) {
   return (
     <Link
       href={slide.href}
-      className="w-[280px] sm:w-[300px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-md shadow-sm group/card flex flex-col"
+      className="w-[280px] sm:w-[300px] shrink-0 snap-start h-[420px] relative overflow-hidden rounded-md shadow-sm border border-black/5 group/card flex flex-col"
       style={{ backgroundColor: bg }}
     >
       {slide.discountPercent ? (

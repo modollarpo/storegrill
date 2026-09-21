@@ -150,7 +150,7 @@ export function AmazonHomeGrid({ sections, heroSlides, recent, regionKey, langua
   };
 
   return (
-    <div className="bg-[var(--color-canvas)] min-h-screen text-text-primary relative overflow-hidden pb-16">
+    <div className="bg-surface-page min-h-screen text-text-primary relative overflow-hidden pb-16">
       {/* Amazon Desktop Hero Multi-Card Carousel Strip */}
       <div className="max-w-[1500px] mx-auto px-4 pt-3 relative z-10">
         <div className="relative group">

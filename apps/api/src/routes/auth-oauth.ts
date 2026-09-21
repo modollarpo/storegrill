@@ -1,9 +1,10 @@
-﻿import { Router, Request, Response } from 'express';
+import { Router, Request, Response } from 'express';
 import { randomBytes } from 'node:crypto';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { generateTokens } from '../middleware/auth.js';
 import { PROVIDER_CONFIGS, buildAuthorizeUrl, fetchToken, fetchProfile } from '../auth/oauth/config.js';
 import { setAuthCookies, COOKIE_DOMAIN } from '../lib/auth-cookies.js';
+import { setCsrfCookie } from '../middleware/csrf.js';
 
 const router = Router();
 
@@ -71,7 +72,7 @@ router.get('/:provider/callback', async (req: Request, res: Response) => {
 
   console.log(
     `oauth callback: provider=${provider} codeLen=${code?.length ?? 0} ` +
-      `code=${code ? `${code.slice(0, 4)}…` : 'missing'} ` +
+      `code=${code ? `${code.slice(0, 4)}�` : 'missing'} ` +
       `state=${state ? (expectedState && state === expectedState ? 'match' : 'mismatch') : 'missing'} ` +
       `host=${req.get('host')}`
   );
@@ -139,6 +140,7 @@ router.get('/:provider/callback', async (req: Request, res: Response) => {
     });
 
     setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
+    setCsrfCookie(req, res);
 
     return res.redirect(302, `${WEB_BASE_URL}${req.cookies?.['sg_oauth_next'] || '/'}`);
   } catch (err) {

@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { authenticate, AuthRequest, optionalAuth } from '../middleware/auth.js';
 import { sendPushBroadcast, sendPushToRegion, sendPushToUser, pushConfigured } from '../services/push.js';
 

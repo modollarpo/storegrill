@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { statusLabel } from '../services/carriers.js';
 import { carrierDisplayName, normalizeCarrierProvider, type CarrierShipmentStatusValue } from '@Storegrill/shared';
 

@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { authenticate, authorize, requireVerifiedEmail, AuthRequest } from '../middleware/auth.js';
 import { requireMerchantPermission } from '../services/merchant-rbac.js';
 import { UpdateVendorSchema, VendorApplicationPatchSchema, CarrierShipmentStatus, normalizeCarrierProvider, MerchantPermission } from '@Storegrill/shared';

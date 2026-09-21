@@ -1,11 +1,14 @@
 import { Router, Response, Request } from 'express';
 import { z } from 'zod';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { resolveProductPricing } from '../utils/pricing.js';
 import { loadActiveDeals } from '../services/deal-eval.js';
 import { isSearchConfigured, searchProducts, reindexProducts, ensureSearchIndex } from '../services/ai-search.js';
 import { enqueueReindexTask } from '../services/reindex-queue.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
+import { createChildLogger } from '../lib/logger.js';
+
+const log = createChildLogger('search');
 
 const router = Router();
 
@@ -81,6 +84,32 @@ async function keywordSearch(regionKey: string, q: string, limit: number) {
   return { products, total };
 }
 
+async function trigramSearch(regionKey: string, q: string, limit: number) {
+  const terms = q.trim().split(/\s+/);
+  const orConditions = terms.map((term: string) => ({
+    OR: [
+      { name: { contains: term, mode: 'insensitive' as const } },
+      { tags: { contains: term, mode: 'insensitive' as const } },
+    ],
+  }));
+
+  const where = {
+    status: 'ACTIVE' as const,
+    AND: orConditions,
+  };
+
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      take: limit,
+      include: PRODUCT_INCLUDE,
+    }),
+    prisma.product.count({ where }),
+  ]);
+
+  return { products, total };
+}
+
 async function reply(res: Response, products: any[], total: number, regionKey: string) {
   const activeDeals = await loadActiveDeals(prisma);
   const facets = buildFacets(products);
@@ -111,6 +140,8 @@ router.get('/', async (req: Request, res: Response) => {
   let products: any[] = [];
   let total = 0;
   let usedAcs = false;
+  let usedTrigram = false;
+  const start = Date.now();
 
   if (isSearchConfigured()) {
     try {
@@ -130,7 +161,7 @@ router.get('/', async (req: Request, res: Response) => {
       total = result.total;
       usedAcs = true;
     } catch (error) {
-      console.error('[search] Azure AI Search failed, falling back to SQL:', error instanceof Error ? error.message : error);
+      log.error({ err: error }, 'Azure AI Search failed, falling back to SQL');
       products = [];
       total = 0;
       usedAcs = false;
@@ -141,7 +172,22 @@ router.get('/', async (req: Request, res: Response) => {
     const fallback = await keywordSearch(query.regionKey, query.q, query.limit);
     products = fallback.products;
     total = fallback.total;
+    if (total === 0) {
+      const triResult = await trigramSearch(query.regionKey, query.q, query.limit);
+      products = triResult.products;
+      total = triResult.total;
+      usedTrigram = true;
+    }
   }
+
+  log.info({
+    query: query.q,
+    region: query.regionKey,
+    mode: query.mode,
+    backend: usedAcs ? 'azure-ai' : usedTrigram ? 'trigram' : 'keyword',
+    total,
+    duration: Date.now() - start,
+  }, `search: "${query.q}" -> ${total} results`);
 
   await reply(res, products, total, query.regionKey);
 });

@@ -1,6 +1,6 @@
-﻿import { Router, Response } from 'express';
+import { Router, Response } from 'express';
 import { z } from 'zod';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import { slugify } from '../utils/slugify.js';
 import { generatePayouts } from '../services/payouts.js';
@@ -333,7 +333,7 @@ async function notifyVendorDecision(userId: string, storeName: string, approved:
       await sendMail({
         to: user.email,
         subject: 'Your Storegrill store is live',
-        text: `Congratulations â€” "${storeName}" is approved and your storefronts are live. You can now list products in the vendor portal.`,
+        text: `Congratulations — "${storeName}" is approved and your storefronts are live. You can now list products in the vendor portal.`,
       });
     } else {
       await sendMail({
@@ -698,7 +698,7 @@ router.get('/analytics', async (_req: AuthRequest, res: Response) => {
 
     const prodAgg = byProductId.get(item.productId) ?? {
       name: item.product.name,
-      category: item.product.category?.name ?? '—',
+      category: item.product.category?.name ?? '�',
       revenue: 0,
       units: 0,
     };

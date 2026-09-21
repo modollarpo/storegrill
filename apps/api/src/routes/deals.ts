@@ -1,6 +1,6 @@
-﻿import { Router, Response } from 'express';
+import { Router, Response } from 'express';
 import { z } from 'zod';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { optionalAuth, authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import { CreateDealSchema, CreateCouponSchema, ApplyCouponSchema, DEFAULT_REGIONS } from '@Storegrill/shared';
 import { slugify } from '../utils/slugify.js';

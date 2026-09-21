@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;

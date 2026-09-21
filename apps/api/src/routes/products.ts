@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { authenticate, optionalAuth, authorize, AuthRequest } from '../middleware/auth.js';
 import { cache, TTL } from '../lib/cache.js';
 import { ProductFilterSchema } from '@Storegrill/shared';

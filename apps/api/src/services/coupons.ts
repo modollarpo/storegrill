@@ -1,4 +1,4 @@
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { computeCouponDiscount } from './coupon-discount.js';
 import { evaluateDeals, type DealInput } from './deal-engine.js';
 import { DealTypeEnum } from '@Storegrill/shared';

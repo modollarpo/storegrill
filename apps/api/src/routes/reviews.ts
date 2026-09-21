@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import { z } from 'zod';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { authenticate, optionalAuth, authorize, AuthRequest, requireVerifiedEmail } from '../middleware/auth.js';
 import { CreateReviewSchema } from '@Storegrill/shared';
 

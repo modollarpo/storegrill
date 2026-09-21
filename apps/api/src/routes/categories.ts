@@ -1,5 +1,5 @@
 import { Router, Response, Request } from 'express';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { getCategoryTree, getRecentCategoryPage, buildTree, CategoryNode } from '../services/categories.js';
 import { cache, TTL } from '../lib/cache.js';
 

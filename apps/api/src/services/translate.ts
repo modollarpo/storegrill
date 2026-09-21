@@ -1,8 +1,13 @@
 import { createHash } from 'crypto';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
+import { createChildLogger } from '../lib/logger.js';
+
+const log = createChildLogger('i18n');
 
 const LIBRETRANSLATE_URL = process.env.LIBRETRANSLATE_URL || 'http://localhost:5001';
 const LIBRETRANSLATE_API_KEY = process.env.LIBRETRANSLATE_API_KEY || '';
+const AZURE_TRANSLATOR_KEY = process.env.AZURE_TRANSLATOR_KEY || '';
+const AZURE_TRANSLATOR_REGION = process.env.AZURE_TRANSLATOR_REGION || '';
 const BATCH_SIZE = 40;
 const MAX_TEXT_LENGTH = 5000;
 const REQUEST_TIMEOUT_MS = 15000;
@@ -50,6 +55,33 @@ async function callLibreTranslate(texts: string[], source: string, target: strin
   }
 }
 
+async function callAzureTranslator(texts: string[], source: string, target: string): Promise<string[]> {
+  if (!AZURE_TRANSLATOR_KEY) throw new Error('Azure Translator not configured');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const body = texts.map(text => ({ Text: text }));
+    const url = `https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&from=${source}&to=${target}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Ocp-Apim-Subscription-Key': AZURE_TRANSLATOR_KEY,
+        'Ocp-Apim-Subscription-Region': AZURE_TRANSLATOR_REGION,
+      },
+      signal: controller.signal,
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      throw new Error(`Azure Translator responded ${res.status}`);
+    }
+    const data: any = await res.json();
+    return data.map((item: any) => item.translations[0].text);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export interface TranslationResult {
   translations: string[];
   cachedCount: number;
@@ -86,7 +118,13 @@ export async function translateBatch(
     try {
       for (let i = 0; i < misses.length; i += BATCH_SIZE) {
         const batch = misses.slice(i, i + BATCH_SIZE).map(t => t.slice(0, MAX_TEXT_LENGTH));
-        const translated = await callLibreTranslate(batch, sourceLang, targetLang);
+        let translated: string[];
+        try {
+          translated = await callLibreTranslate(batch, sourceLang, targetLang);
+        } catch (ltError) {
+          log.warn({ err: ltError }, 'LibreTranslate failed, trying Azure Translator');
+          translated = await callAzureTranslator(batch, sourceLang, targetLang);
+        }
         providerUsed = true;
         await prisma.$transaction(
           batch.map((original, idx) =>
@@ -108,7 +146,7 @@ export async function translateBatch(
         });
       }
     } catch (error) {
-      console.error('[i18n] LibreTranslate unavailable, serving originals:', error instanceof Error ? error.message : error);
+      log.error({ err: error }, 'All translation providers unavailable, serving originals');
       for (const text of misses) {
         byHash.set(hashText(text.slice(0, MAX_TEXT_LENGTH), sourceLang, targetLang), text);
       }

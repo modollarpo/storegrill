@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { getCategoryTree } from '../services/categories.js';
 import { dealPriceFor, resolveListPrice } from '../services/deal-pricing.js';
 

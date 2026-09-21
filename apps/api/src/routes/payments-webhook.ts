@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import {
   verifyStripeSignature,
   retrieveStripeSession,

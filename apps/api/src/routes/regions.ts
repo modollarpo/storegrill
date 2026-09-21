@@ -1,5 +1,5 @@
-﻿import { Router, Response } from 'express';
-import { prisma } from '../index.js';
+import { Router, Response } from 'express';
+import { prisma } from '../db/prisma.js';
 import { optionalAuth, AuthRequest } from '../middleware/auth.js';
 import { DEFAULT_REGIONS, parseStringList } from '@Storegrill/shared';
 

@@ -1,5 +1,5 @@
 import webpush from 'web-push';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { PushPayload, payloadToJson } from './push-format.js';
 
 const SUBJECT = process.env.VAPID_SUBJECT ?? 'mailto:alerts@storegrill.net';

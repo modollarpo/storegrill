@@ -1,6 +1,6 @@
 import { Router, Response, Request } from 'express';
 import { z } from 'zod';
-import { prisma } from '../index.js';
+import { prisma } from '../db/prisma.js';
 import { calculateGroupedShipping, VendorShippingPolicy, ShippingZone } from '@Storegrill/shared';
 import { DEFAULT_REGIONS } from '@Storegrill/shared';
 

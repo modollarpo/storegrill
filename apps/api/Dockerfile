@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Debian-based image: Prisma 5.x ships openSSL 3 binaries for glibc reliably.
-FROM node:20-slim AS base
+FROM node:24-slim AS base
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 
@@ -23,7 +23,7 @@ RUN npm run build -w packages/shared
 RUN npm run build -w apps/api
 
 # Runner stage: minimal runtime using the hoisted root node_modules.
-FROM node:20-slim AS runner
+FROM node:24-slim AS runner
 ENV NODE_ENV=production PORT=80
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends openssl curl && rm -rf /var/lib/apt/lists/*

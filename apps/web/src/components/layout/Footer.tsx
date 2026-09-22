@@ -74,11 +74,11 @@ export function Footer() {
                   id: 'footer-categories',
                   title: <span className="text-white font-bold text-sm uppercase tracking-wider">Categories</span>,
                   children: (
-                    <ul className="space-y-3.5 text-sm font-medium text-white/80 pb-3">
-                      <li><Link href="/products?sort=newest" className="inline-flex items-center py-1 hover:opacity-70 transition-opacity">New arrivals</Link></li>
-                      <li><Link href="/products?sort=popular" className="inline-flex items-center py-1 hover:opacity-70 transition-opacity">Best Sellers</Link></li>
-                      <li><Link href="/deals" className="inline-flex items-center py-1 hover:opacity-70 transition-opacity">Sale items</Link></li>
-                      <li><Link href="/blog" className="inline-flex items-center py-1 hover:opacity-70 transition-opacity">Blog</Link></li>
+                    <ul className="space-y-1.5 text-sm font-medium text-white/80 pb-3">
+                      <li><Link href="/products?sort=newest" className="inline-flex items-center hover:opacity-70 transition-opacity">New arrivals</Link></li>
+                      <li><Link href="/products?sort=popular" className="inline-flex items-center hover:opacity-70 transition-opacity">Best Sellers</Link></li>
+                      <li><Link href="/deals" className="inline-flex items-center hover:opacity-70 transition-opacity">Sale items</Link></li>
+                      <li><Link href="/blog" className="inline-flex items-center hover:opacity-70 transition-opacity">Blog</Link></li>
                     </ul>
                   ),
                 },
@@ -86,11 +86,11 @@ export function Footer() {
                   id: 'footer-features',
                   title: <span className="text-white font-bold text-sm uppercase tracking-wider">Features</span>,
                   children: (
-                    <ul className="space-y-3.5 text-sm font-medium text-white/80 pb-3">
-                      <li><Link href="/deals" className="inline-flex items-center py-1 hover:opacity-70 transition-opacity">Today&apos;s Deal</Link></li>
-                      <li><Link href="/vendors" className="inline-flex items-center py-1 hover:opacity-70 transition-opacity">Vendors</Link></li>
-                      <li><Link href="/regions" className="inline-flex items-center py-1 hover:opacity-70 transition-opacity">Regions</Link></li>
-                      <li><Link href="/vendor/apply" className="inline-flex items-center py-1 hover:opacity-70 transition-opacity">Sell on Storegrill</Link></li>
+                    <ul className="space-y-1.5 text-sm font-medium text-white/80 pb-3">
+                      <li><Link href="/deals" className="inline-flex items-center hover:opacity-70 transition-opacity">Today&apos;s Deal</Link></li>
+                      <li><Link href="/vendors" className="inline-flex items-center hover:opacity-70 transition-opacity">Vendors</Link></li>
+                      <li><Link href="/regions" className="inline-flex items-center hover:opacity-70 transition-opacity">Regions</Link></li>
+                      <li><Link href="/vendor/apply" className="inline-flex items-center hover:opacity-70 transition-opacity">Sell on Storegrill</Link></li>
                     </ul>
                   ),
                 },
@@ -98,14 +98,15 @@ export function Footer() {
                   id: 'footer-customer-services',
                   title: <span className="text-white font-bold text-sm uppercase tracking-wider">Customer Services</span>,
                   children: (
-                    <div className="pb-3 space-y-4">
-                      <ul className="space-y-3.5 text-sm font-medium text-white/80">
-                        <li><Link href="/help" className="inline-flex items-center py-1 hover:opacity-70 transition-opacity">Help Centre</Link></li>
-                        <li><Link href="/track" className="inline-flex items-center py-1 hover:opacity-70 transition-opacity">Track Order</Link></li>
-                        <li><Link href="/returns" className="inline-flex items-center py-1 hover:opacity-70 transition-opacity">Returns &amp; Refunds</Link></li>
-                        <li><Link href="/shipping" className="inline-flex items-center py-1 hover:opacity-70 transition-opacity">Delivery Information</Link></li>
+                    <div className="pb-3 space-y-3">
+                      <ul className="space-y-1.5 text-sm font-medium text-white/80">
+                        <li><Link href="/help" className="inline-flex items-center hover:opacity-70 transition-opacity">Help Centre</Link></li>
+                        <li><Link href="/guides" className="inline-flex items-center hover:opacity-70 transition-opacity">Guides</Link></li>
+                        <li><Link href="/track" className="inline-flex items-center hover:opacity-70 transition-opacity">Track Order</Link></li>
+                        <li><Link href="/returns" className="inline-flex items-center hover:opacity-70 transition-opacity">Returns &amp; Refunds</Link></li>
+                        <li><Link href="/shipping" className="inline-flex items-center hover:opacity-70 transition-opacity">Delivery Information</Link></li>
                       </ul>
-                      <div className="pt-2">
+                      <div className="pt-1">
                         <Newsletter />
                       </div>
                     </div>
@@ -139,34 +140,35 @@ export function Footer() {
 
             {/* Column 2: Categories */}
             <div>
-              <h3 className="text-[14px] font-bold mb-5 text-white">Categories</h3>
-              <ul className="space-y-3.5 text-[15px] font-medium">
-                <li><Link href="/products?sort=newest" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">New arrivals</Link></li>
-                <li><Link href="/products?sort=popular" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Best Sellers</Link></li>
-                <li><Link href="/deals" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Sale items</Link></li>
-                <li><Link href="/blog" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Blog</Link></li>
+              <h3 className="text-[14px] font-bold mb-3 text-white">Categories</h3>
+              <ul className="space-y-1.5 text-[15px] font-medium">
+                <li><Link href="/products?sort=newest" className="inline-flex items-center hover:opacity-70 transition-opacity">New arrivals</Link></li>
+                <li><Link href="/products?sort=popular" className="inline-flex items-center hover:opacity-70 transition-opacity">Best Sellers</Link></li>
+                <li><Link href="/deals" className="inline-flex items-center hover:opacity-70 transition-opacity">Sale items</Link></li>
+                <li><Link href="/blog" className="inline-flex items-center hover:opacity-70 transition-opacity">Blog</Link></li>
               </ul>
             </div>
 
             {/* Column 3: Features */}
             <div>
-              <h3 className="text-[14px] font-bold mb-5 text-white">Features</h3>
-              <ul className="space-y-3.5 text-[15px] font-medium">
-                <li><Link href="/deals" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Today&apos;s Deal</Link></li>
-                <li><Link href="/vendors" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Vendors</Link></li>
-                <li><Link href="/regions" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Regions</Link></li>
-                <li><Link href="/vendor/apply" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Sell on Storegrill</Link></li>
+              <h3 className="text-[14px] font-bold mb-3 text-white">Features</h3>
+              <ul className="space-y-1.5 text-[15px] font-medium">
+                <li><Link href="/deals" className="inline-flex items-center hover:opacity-70 transition-opacity">Today&apos;s Deal</Link></li>
+                <li><Link href="/vendors" className="inline-flex items-center hover:opacity-70 transition-opacity">Vendors</Link></li>
+                <li><Link href="/regions" className="inline-flex items-center hover:opacity-70 transition-opacity">Regions</Link></li>
+                <li><Link href="/vendor/apply" className="inline-flex items-center hover:opacity-70 transition-opacity">Sell on Storegrill</Link></li>
               </ul>
             </div>
 
             {/* Column 4: Customer Services + Newsletter */}
             <div>
-              <h3 className="text-[14px] font-bold mb-5 text-white">Customer Services</h3>
-              <ul className="space-y-3.5 text-[15px] font-medium mb-6">
-                <li><Link href="/help" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Help Centre</Link></li>
-                <li><Link href="/track" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Track Order</Link></li>
-                <li><Link href="/returns" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Returns &amp; Refunds</Link></li>
-                <li><Link href="/shipping" className="inline-flex items-center py-1 min-h-[44px] hover:opacity-70 transition-opacity">Delivery Information</Link></li>
+              <h3 className="text-[14px] font-bold mb-3 text-white">Customer Services</h3>
+              <ul className="space-y-1.5 text-[15px] font-medium mb-5">
+                <li><Link href="/help" className="inline-flex items-center hover:opacity-70 transition-opacity">Help Centre</Link></li>
+                <li><Link href="/guides" className="inline-flex items-center hover:opacity-70 transition-opacity">Guides</Link></li>
+                <li><Link href="/track" className="inline-flex items-center hover:opacity-70 transition-opacity">Track Order</Link></li>
+                <li><Link href="/returns" className="inline-flex items-center hover:opacity-70 transition-opacity">Returns &amp; Refunds</Link></li>
+                <li><Link href="/shipping" className="inline-flex items-center hover:opacity-70 transition-opacity">Delivery Information</Link></li>
               </ul>
 
               <Newsletter />

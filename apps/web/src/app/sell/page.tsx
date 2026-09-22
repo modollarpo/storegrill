@@ -82,7 +82,10 @@ export default async function SellPage() {
           </div>
         </div>
         <p className="mt-4 text-2xs text-smoke-400">
-          Support: {supportEmailFor(regionKey)}
+          Support: {supportEmailFor(regionKey)} ·{' '}
+          <Link href="/sell/guides" className="text-ember hover:text-ember-deep font-semibold">
+            Seller guides
+          </Link>
         </p>
       </div>
     </div>

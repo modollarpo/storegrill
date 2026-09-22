@@ -12,6 +12,7 @@ const TOPICS = [
   { href: '/track', title: 'Track an order', desc: 'Follow a parcel with your order number — no sign-in needed.' },
   { href: '/account/orders', title: 'Your orders', desc: 'Invoices, delivery status and returns for signed-in shoppers.' },
   { href: '/contact', title: 'Contact us', desc: 'Reach the support team for your country by email or form.' },
+  { href: '/help/guides', title: 'Step-by-step guides', desc: 'Walkthroughs for ordering, tracking, returns, payments and security.' },
 ] as const;
 
 export async function generateMetadata(): Promise<Metadata> {

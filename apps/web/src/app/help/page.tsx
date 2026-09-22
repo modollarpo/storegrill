@@ -39,10 +39,10 @@ export default async function HelpPage() {
           <p className="mt-4 text-smoke-600 text-lg">Select a topic below or contact our regional support team.</p>
         </header>
 
-        <ul className="grid grid-cols-1 md:grid-cols-2 gap-5" role="list">
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3" role="list">
           {TOPICS.map(t => (
             <li key={t.href}>
-              <Link href={t.href} className="group flex flex-col h-full bg-surface-raised border border-border rounded-2xl p-8 hover:border-ember hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+              <Link href={t.href} className="group flex flex-col h-full bg-surface-raised border border-border rounded-xl p-5 hover:border-ember hover:shadow-md transition-all duration-300">
                 <div className="w-12 h-12 rounded-full bg-ember/10 flex items-center justify-center text-ember mb-5 group-hover:scale-110 transition-transform">
                   <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </div>

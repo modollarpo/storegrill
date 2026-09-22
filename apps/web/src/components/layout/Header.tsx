@@ -438,7 +438,7 @@ function Header({ categories }: HeaderProps) {
                           <span className="text-sm font-bold text-text-primary uppercase tracking-wider">Today&apos;s Featured Deals</span>
                           <span className="bg-ember text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full">Deal Slider</span>
                         </div>
-                        <a href="/deals" className="text-xs font-bold text-ember hover:underline">View all deals →</a>
+                        <Link href="/deals" className="text-xs font-bold text-ember hover:underline">View all deals →</Link>
                       </div>
 
                       <div className="flex items-center gap-4 overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-neutral-300">

@@ -141,14 +141,15 @@ function PostCard({ post }: { post: any }) {
 export default async function BlogPage({
   searchParams,
 }: {
-  searchParams: { page?: string; category?: string; search?: string };
+  searchParams: Promise<{ page?: string; category?: string; search?: string }>;
 }) {
+  const sp = await searchParams;
   const [data, categories] = await Promise.all([
-    getPosts(searchParams.page, searchParams.category, searchParams.search),
+    getPosts(sp.page, sp.category, sp.search),
     getCategories(),
   ]);
 
-  const currentPage = Number(searchParams.page) || 1;
+  const currentPage = Number(sp.page) || 1;
   const [featured, ...rest] = data.posts;
 
   return (
@@ -170,7 +171,7 @@ export default async function BlogPage({
           <form method="GET" action="/blog" className="max-w-xl mx-auto flex gap-2">
             <input
               name="search"
-              defaultValue={searchParams.search}
+              defaultValue={sp.search}
               placeholder="Search articles..."
               className="flex-1 px-5 py-3.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder:text-white/40 text-sm font-semibold focus:outline-none focus:border-ember focus:bg-white/15 backdrop-blur-sm transition-all"
             />
@@ -183,11 +184,11 @@ export default async function BlogPage({
 
       <div className="container-fluid -mt-10 relative z-10 pb-20">
         <div className="flex flex-wrap gap-2 mb-10 justify-center">
-          <Link href="/blog" className={`px-5 py-2 rounded-full text-sm font-bold transition-all shadow-sm ${!searchParams.category ? "bg-ember text-white shadow-ember/30" : "bg-surface border border-border text-text-secondary hover:text-ember hover:border-ember"}`}>
+          <Link href="/blog" className={`px-5 py-2 rounded-full text-sm font-bold transition-all shadow-sm ${!sp.category ? "bg-ember text-white shadow-ember/30" : "bg-surface border border-border text-text-secondary hover:text-ember hover:border-ember"}`}>
             All Posts
           </Link>
           {categories.map((c: any) => (
-            <Link key={c.id} href={`/blog?category=${c.slug}`} className={`px-5 py-2 rounded-full text-sm font-bold transition-all shadow-sm ${searchParams.category === c.slug ? "bg-ember text-white shadow-ember/30" : "bg-surface border border-border text-text-secondary hover:text-ember hover:border-ember"}`}>
+            <Link key={c.id} href={`/blog?category=${c.slug}`} className={`px-5 py-2 rounded-full text-sm font-bold transition-all shadow-sm ${sp.category === c.slug ? "bg-ember text-white shadow-ember/30" : "bg-surface border border-border text-text-secondary hover:text-ember hover:border-ember"}`}>
               {c.name} <span className="opacity-50 text-xs ml-0.5">{c._count.posts}</span>
             </Link>
           ))}
@@ -201,14 +202,14 @@ export default async function BlogPage({
               </svg>
             </div>
             <h3 className="text-xl font-extrabold text-text-primary mb-2">No articles found</h3>
-            <p className="text-text-secondary mb-6">{searchParams.search ? `No results for "${searchParams.search}"` : "Nothing published in this category yet."}</p>
+            <p className="text-text-secondary mb-6">{sp.search ? `No results for "${sp.search}"` : "Nothing published in this category yet."}</p>
             <Link href="/blog" className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-ember text-white font-bold text-sm hover:bg-ember/90 transition-colors shadow-lg shadow-ember/30">
               Clear filter
             </Link>
           </div>
         ) : (
           <>
-            {featured && !searchParams.category && !searchParams.search && currentPage === 1 && (
+            {featured && !sp.category && !sp.search && currentPage === 1 && (
               <div className="mb-10">
                 <FeaturedCard post={featured} />
               </div>
@@ -217,12 +218,12 @@ export default async function BlogPage({
               <>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-extrabold text-text-primary">
-                    {searchParams.search ? `Results for "${searchParams.search}"` : searchParams.category ? "Category Articles" : "Latest Articles"}
+                    {sp.search ? `Results for "${sp.search}"` : sp.category ? "Category Articles" : "Latest Articles"}
                     <span className="ml-2 text-sm font-semibold text-text-tertiary">({data.total} total)</span>
                   </h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-                  {(featured && !searchParams.category && !searchParams.search && currentPage === 1 ? rest : data.posts).map((post: any) => (
+                  {(featured && !sp.category && !sp.search && currentPage === 1 ? rest : data.posts).map((post: any) => (
                     <PostCard key={post.id} post={post} />
                   ))}
                 </div>
@@ -231,18 +232,18 @@ export default async function BlogPage({
             {data.pages > 1 && (
               <div className="flex items-center justify-center gap-2 mb-16">
                 {currentPage > 1 && (
-                  <Link href={`/blog?page=${currentPage - 1}${searchParams.category ? `&category=${searchParams.category}` : ""}`} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface border border-border text-sm font-bold text-text-secondary hover:text-ember hover:border-ember transition-all">
+                  <Link href={`/blog?page=${currentPage - 1}${sp.category ? `&category=${sp.category}` : ""}`} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface border border-border text-sm font-bold text-text-secondary hover:text-ember hover:border-ember transition-all">
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
                     Prev
                   </Link>
                 )}
                 {Array.from({ length: data.pages }, (_, i) => i + 1).map(p => (
-                  <Link key={p} href={`/blog?page=${p}${searchParams.category ? `&category=${searchParams.category}` : ""}`} className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${p === currentPage ? "bg-ember text-white shadow-lg shadow-ember/30" : "bg-surface border border-border text-text-secondary hover:text-ember hover:border-ember"}`}>
+                  <Link key={p} href={`/blog?page=${p}${sp.category ? `&category=${sp.category}` : ""}`} className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${p === currentPage ? "bg-ember text-white shadow-lg shadow-ember/30" : "bg-surface border border-border text-text-secondary hover:text-ember hover:border-ember"}`}>
                     {p}
                   </Link>
                 ))}
                 {currentPage < data.pages && (
-                  <Link href={`/blog?page=${currentPage + 1}${searchParams.category ? `&category=${searchParams.category}` : ""}`} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface border border-border text-sm font-bold text-text-secondary hover:text-ember hover:border-ember transition-all">
+                  <Link href={`/blog?page=${currentPage + 1}${sp.category ? `&category=${sp.category}` : ""}`} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-surface border border-border text-sm font-bold text-text-secondary hover:text-ember hover:border-ember transition-all">
                     Next
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                   </Link>

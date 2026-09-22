@@ -34,9 +34,9 @@ export function resolveRegionFromHost(hostHeader: string): string | null {
 }
 
 export async function getRequestContext(): Promise<RequestContext> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const raw = cookieStore.get('sg_prefs')?.value;
-  const headerStore = headers();
+  const headerStore = await headers();
   const country =
     headerStore.get('x-vercel-ip-country') ||
     headerStore.get('cf-ipcountry') ||

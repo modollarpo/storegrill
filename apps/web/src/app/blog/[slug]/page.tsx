@@ -18,21 +18,23 @@ async function getPost(slug: string) {
   }
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const post = await getPost(params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPost(slug);
   const { regionKey } = await getRequestContext();
-  if (!post) return buildMetadata({ title: 'Not Found', description: '', path: `/blog/${params.slug}`, regionKey, noIndex: true });
+  if (!post) return buildMetadata({ title: 'Not Found', description: '', path: `/blog/${slug}`, regionKey, noIndex: true });
   return buildMetadata({
     title: post.title,
     description: post.excerpt || post.title,
-    path: `/blog/${params.slug}`,
+    path: `/blog/${slug}`,
     regionKey,
     ogImage: post.coverImage || undefined,
   });
 }
 
-export default async function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = await getPost(params.slug);
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const post = await getPost(slug);
   if (!post) notFound();
 
   const jsonLd = articleJsonLd({

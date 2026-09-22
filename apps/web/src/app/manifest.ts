@@ -3,8 +3,8 @@ import type { MetadataRoute } from 'next';
 import { detectRegionAndLanguage } from '@Storegrill/shared';
 import { regionByKey } from '../lib/regions';
 
-function resolveLanguage(): { lang: string; dir: 'ltr' | 'rtl' } {
-  const cookieStore = cookies();
+async function resolveLanguage(): Promise<{ lang: string; dir: 'ltr' | 'rtl' }> {
+  const cookieStore = await cookies();
   const raw = cookieStore.get('sg_prefs')?.value;
   let language = '';
 
@@ -23,17 +23,18 @@ function resolveLanguage(): { lang: string; dir: 'ltr' | 'rtl' } {
   }
 
   if (!language) {
+    const headerStore = await headers();
     const country =
-      headers().get('cf-ipcountry') || headers().get('x-azure-geo-country') || undefined;
-    const detected = detectRegionAndLanguage(headers().get('accept-language'), country);
+      headerStore.get('cf-ipcountry') || headerStore.get('x-azure-geo-country') || undefined;
+    const detected = detectRegionAndLanguage(headerStore.get('accept-language'), country);
     language = detected.language || 'en';
   }
 
   return { lang: language, dir: language === 'ar' ? 'rtl' : 'ltr' };
 }
 
-export default function manifest(): MetadataRoute.Manifest {
-  const { lang, dir } = resolveLanguage();
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const { lang, dir } = await resolveLanguage();
   return {
     name: 'Storegrill — Online Shopping Marketplace',
     short_name: 'Storegrill',

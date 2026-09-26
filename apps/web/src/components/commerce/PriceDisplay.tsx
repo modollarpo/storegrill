@@ -1,5 +1,7 @@
 import { cn } from '@/lib/utils';
-import { splitPrice } from '@/lib/format';
+import { currencyDecimals, isRenderableAmount, splitPrice } from '@/lib/format';
+
+export const PRICE_UNAVAILABLE = '—';
 
 export interface PriceDisplayProps {
   amountMinorUnits: number;
@@ -19,7 +21,7 @@ const SIZE_CLASSES = {
 };
 
 function priceAriaLabel(amountMinorUnits: number, currencyCode: string, locale: string): string {
-  const decimals = currencyCode === 'JPY' || currencyCode === 'KRW' ? 0 : 2;
+  const decimals = currencyDecimals(currencyCode);
   try {
     const formatted = new Intl.NumberFormat(locale, {
       style: 'currency',
@@ -44,6 +46,11 @@ export function PriceDisplay({
   className,
 }: PriceDisplayProps) {
   const sizes = SIZE_CLASSES[size];
+
+  if (!isRenderableAmount(amountMinorUnits)) {
+    return <span className={cn('text-text-tertiary', className)}>{PRICE_UNAVAILABLE}</span>;
+  }
+
   const { symbol, whole, fraction } = splitPrice(amountMinorUnits, currencyCode);
   const hasDiscount = !!listMinorUnits && listMinorUnits > amountMinorUnits;
 

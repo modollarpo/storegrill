@@ -6,6 +6,7 @@ import { buildMetadata, organizationJsonLd } from '@/lib/seo';
 import { API_BASE } from '@/lib/api';
 import { Breadcrumb } from '@/components/navigation/Breadcrumb';
 import { ProductCard } from '@/components/commerce/ProductCard';
+import { toProductCards, type VendorStorefrontProduct } from '@/lib/vendor-storefront';
 
 export const revalidate = 120;
 
@@ -13,9 +14,11 @@ interface VendorPageProps {
   params: Promise<{ slug: string }>;
 }
 
-async function fetchVendor(slug: string) {
+async function fetchVendor(slug: string, regionKey: string) {
   try {
-    const res = await fetch(`${API_BASE}/api/v1/vendors/${slug}`, { next: { revalidate: 120 } });
+    const res = await fetch(`${API_BASE}/api/v1/vendors/${slug}?regionKey=${regionKey}`, {
+      next: { revalidate: 120 },
+    });
     if (res.status === 404) return null;
     if (!res.ok) throw new Error();
     return await res.json();
@@ -27,7 +30,7 @@ async function fetchVendor(slug: string) {
 export async function generateMetadata({ params }: VendorPageProps): Promise<Metadata> {
   const { slug } = await params;
   const { regionKey } = await getRequestContext();
-  const data = await fetchVendor(slug);
+  const data = await fetchVendor(slug, regionKey);
   if (!data?.vendor) {
     return buildMetadata({ title: 'Vendor not found', description: 'This vendor storefront is unavailable.', path: `/vendors/${slug}`, regionKey, noIndex: true });
   }
@@ -44,12 +47,12 @@ export async function generateMetadata({ params }: VendorPageProps): Promise<Met
 export default async function VendorStorefront({ params }: VendorPageProps) {
   const { slug } = await params;
   const { regionKey, language } = await getRequestContext();
-  const data = await fetchVendor(slug);
+  const data = await fetchVendor(slug, regionKey);
   if (!data?.vendor) notFound();
 
   const vendor = data.vendor;
-  let products = Array.isArray(data.vendor?.products) ? data.vendor.products : Array.isArray(data.products) ? data.products : [];
-  products = await localizeProducts(products.slice(0, 24), language);
+  const raw: VendorStorefrontProduct[] = Array.isArray(vendor.products) ? vendor.products : [];
+  const products = await localizeProducts(toProductCards(raw.slice(0, 24)), language);
 
   return (
     <div className="container-site py-6">
@@ -92,8 +95,8 @@ export default async function VendorStorefront({ params }: VendorPageProps) {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
-          {products.map((p: Record<string, unknown>) => (
-            <ProductCard key={String(p.id)} product={p as never} locale={language} />
+          {products.map(p => (
+            <ProductCard key={p.id} product={p} locale={language} />
           ))}
         </div>
       )}

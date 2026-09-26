@@ -54,4 +54,14 @@ describe('PriceDisplay', () => {
     expect(textOf(<PriceDisplay amountMinorUnits={1050} currencyCode="SEK" />)).toContain('10');
     expect(textOf(<PriceDisplay amountMinorUnits={2050} currencyCode="GBP" />)).toContain('20');
   });
+
+  it('never renders NaN when the amount is missing or non-finite', () => {
+    for (const amount of [Number.NaN, undefined, null, Number.POSITIVE_INFINITY]) {
+      const text = textOf(
+        <PriceDisplay amountMinorUnits={amount as unknown as number} currencyCode="GBP" />,
+      );
+      expect(text).not.toMatch(/NaN|Infinity|undefined/);
+      expect(text).toContain('—');
+    }
+  });
 });

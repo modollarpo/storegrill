@@ -46,4 +46,11 @@ describe('ProductCardInfo pricing', () => {
     expect(text).not.toContain('$49.99');
     expect(text).not.toMatch(/%/);
   });
+
+  it('renders a placeholder rather than NaN when the card price is missing', () => {
+    const missing = { ...base, price: undefined as unknown as number, listPrice: undefined };
+    const text = prices(<ProductCardInfo product={missing} href="/products/wireless-headphones" locale="en-US" />);
+    expect(text).not.toMatch(/NaN/);
+    expect(text).toContain('—');
+  });
 });

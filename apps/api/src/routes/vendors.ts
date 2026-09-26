@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
 import { authenticate, authorize, requireVerifiedEmail, AuthRequest } from '../middleware/auth.js';
 import { requireMerchantPermission } from '../services/merchant-rbac.js';
+import { getVendorStorefront } from '../services/vendor-storefront.js';
 import { UpdateVendorSchema, VendorApplicationPatchSchema, CarrierShipmentStatus, normalizeCarrierProvider, MerchantPermission } from '@Storegrill/shared';
 import { slugify } from '../utils/slugify.js';
 
@@ -814,29 +815,9 @@ router.get('/me/dashboard', authenticate, authorize('VENDOR'), async (req: AuthR
 });
 
 router.get('/:slug', async (req: AuthRequest, res: Response) => {
-  const { slug } = req.params;
+  const query = z.object({ regionKey: z.string().trim().min(2).max(3).optional() }).parse(req.query);
 
-  const vendor = await prisma.vendorProfile.findUnique({
-    where: { slug },
-    select: {
-      id: true, storeName: true, slug: true, logo: true, banner: true,
-      description: true, returnPolicy: true, shippingPolicy: true,
-      supportEmail: true, supportPhone: true, rating: true, reviewCount: true,
-      status: true, kycStatus: true,
-      createdAt: true,
-      user: { select: { name: true } },
-      products: {
-        where: { status: 'ACTIVE' },
-        take: 20,
-        orderBy: { totalSales: 'desc' },
-        select: {
-          id: true, name: true, slug: true, thumbnail: true,
-          basePriceMinorUnits: true, currencyCode: true, rating: true,
-          reviewCount: true,
-        },
-      },
-    },
-  });
+  const vendor = await getVendorStorefront(prisma, req.params.slug, query.regionKey || 'UK');
 
   if (!vendor) {
     return res.status(404).json({
@@ -844,17 +825,7 @@ router.get('/:slug', async (req: AuthRequest, res: Response) => {
     });
   }
 
-  res.json({
-    vendor: {
-      ...vendor,
-      rating: Number(vendor.rating),
-      products: vendor.products.map((p: any) => ({
-        ...p,
-        basePriceMinorUnits: Number(p.basePriceMinorUnits),
-        rating: Number(p.rating),
-      })),
-    },
-  });
+  res.json({ vendor });
 });
 
 router.get('/me/deals', authenticate, authorize('VENDOR'), requireMerchantPermission(MerchantPermission.DEAL_CREATE), async (req: AuthRequest, res: Response) => {

@@ -19,8 +19,15 @@ export function toDecimal(amountMinorUnits: number, currencyCode: string): numbe
   return amountMinorUnits / 10 ** currencyDecimals(currencyCode);
 }
 
+export const NO_PRICE = '—';
+
+export function isRenderableAmount(amountMinorUnits: number): boolean {
+  return typeof amountMinorUnits === 'number' && Number.isFinite(amountMinorUnits);
+}
+
 export function formatPrice(amountMinorUnits: number, currencyCode: string, _locale?: string): string {
   void _locale;
+  if (!isRenderableAmount(amountMinorUnits)) return NO_PRICE;
   try {
     return new Intl.NumberFormat(currencyLocale(currencyCode), {
       style: 'currency',
@@ -34,6 +41,7 @@ export function formatPrice(amountMinorUnits: number, currencyCode: string, _loc
 }
 
 export function splitPrice(amountMinorUnits: number, currencyCode: string): { symbol: string; whole: string; fraction: string } {
+  if (!isRenderableAmount(amountMinorUnits)) return { symbol: '', whole: '', fraction: '' };
   const decimals = currencyDecimals(currencyCode);
   try {
     const parts = new Intl.NumberFormat(currencyLocale(currencyCode), {

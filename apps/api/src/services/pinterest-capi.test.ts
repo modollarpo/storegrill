@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { PinterestCapiEvent } from './pinterest-capi.js';
 
 const AD_ACCOUNT_ID = '549765436316';
 const ACCESS_TOKEN = 'pina_test_token';
@@ -8,7 +9,7 @@ async function loadSender() {
   vi.stubEnv('PINTEREST_AD_ACCOUNT_ID', AD_ACCOUNT_ID);
   vi.stubEnv('PINTEREST_ACCESS_TOKEN', ACCESS_TOKEN);
   const mod = await import('./pinterest-capi.js');
-  return mod.sendPinterestCapiEvent as (input: Record<string, unknown>) => Promise<void>;
+  return mod.sendPinterestCapiEvent as (input: PinterestCapiEvent) => Promise<void>;
 }
 
 function mockFetch() {

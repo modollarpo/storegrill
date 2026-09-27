@@ -185,3 +185,53 @@ Because every GA4 event is mirrored to the `AnalyticsEvent` table in the pod DB,
 - Raw endpoint: `GET /api/v1/admin/analytics/events?days=14[&eventType=PURCHASE][&region=UK]` (admin auth). `days` caps at 90; the window is the last N full days (excludes the current, still-filling day so totals match GA4's daily aggregation).
 
 Expect the first-party `page_view` count to be **lower** than GA4's — the API watcher only records SPA navigations on bundle load, while GA4 also fires on full page loads that never hydrate. Volume trends, funnel shape and purchase counts should track closely.
+
+---
+
+## 4. Pinterest Conversions API (CAPI)
+
+Pinterest CAPI sends conversion events server-to-server from the API to Pinterest, complementing the browser pixel. It is the same event stream the pixel fires, so the two must be deduplicated.
+
+### Setup
+
+| Env var                        | Required | Description                          |
+|--------------------------------|----------|--------------------------------------|
+| `PINTEREST_AD_ACCOUNT_ID`     | Yes      | Pinterest ad account ID              |
+| `PINTEREST_ACCESS_TOKEN`      | Yes      | OAuth conversion access token        |
+
+`PINTEREST_AD_ACCOUNT_ID` is set in the deploy workflow env block. `PINTEREST_ACCESS_TOKEN` is a secret — it is passed via `--set-env-vars PINTEREST_ACCESS_TOKEN=${{ secrets.PINTEREST_ACCESS_TOKEN }}` from GitHub Secrets, never committed. Locally it lives in `.env` (gitignored).
+
+### How it works
+
+The web client generates a unique `eventId` per event and sends it to both the pixel and the internal analytics endpoint. The API stores the event, then forwards it to Pinterest CAPI using that same `event_id`. Pinterest matches the pixel and CAPI calls by `event_id` and deduplicates, so each conversion is counted once.
+
+The CAPI call is fire-and-forget — it never blocks the analytics response or checkout. Network errors and non-2xx responses are logged and swallowed.
+
+### Events forwarded
+
+| Internal event         | Pinterest CAPI `event_name` |
+|------------------------|------------------------------|
+| `page_view`            | `page_visit`                 |
+| `searchhit`            | `search`                     |
+| `detail` / `view_item` | `view_content`               |
+| `add_to_cart`          | `add_to_cart`                |
+| `begin_checkout`       | `check_out`                  |
+| `purchase`             | `check_out`                  |
+
+### Payload
+
+Each event sends `user_data` (`client_ip_address`, `client_user_agent`, `external_id` = sessionId) and `custom_data` (`currency`, `value`, `contents`, `content_ids`, `num_items`, `order_id`, `search_string`). The analytics endpoint is anonymous — no email/phone is collected — so matching relies on IP, user agent and the external session ID.
+
+### Pixel + CAPI deduplication
+
+The pixel fires `event_id` alongside each standard event. The CAPI sender forwards the same `event_id`. Pinterest's dedup logic requires this shared ID; without it the same conversion would be counted twice (once from the pixel, once from CAPI).
+
+### Product feed vs CAPI
+
+CAPI covers on-site behaviour. Product catalogue data for Pinterest Shopping is served separately:
+
+```
+GET /api/v1/feeds/pinterest?regionKey=UK
+```
+
+Register that URL in **Pinterest Business → Data Feeds** as a scheduled feed. Using CAPI alongside the feed lets Pinterest match on-site events back to catalogue items via the same `content_ids`.

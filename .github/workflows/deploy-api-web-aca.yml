@@ -36,6 +36,7 @@ env:
   ADS_ID: AW-16735390613
   ADS_CONVERSION_LABEL: SdK6CNqF5vccEJWXh6w-
   FB_PIXEL_ID: '1143986500227216'
+  PINTEREST_AD_ACCOUNT_ID: '549765436316'
 
 jobs:
   build:
@@ -170,6 +171,7 @@ jobs:
             --resource-group ${{ matrix.rg }} \
             --name ${{ matrix.api_app }} \
             --image ${{ env.ACR }}/api:${{ env.API_TAG }} \
+            --set-env-vars PINTEREST_AD_ACCOUNT_ID=${{ env.PINTEREST_AD_ACCOUNT_ID }} PINTEREST_ACCESS_TOKEN=${{ secrets.PINTEREST_ACCESS_TOKEN }} \
             --output none
 
       - name: Deploy Web to Container App

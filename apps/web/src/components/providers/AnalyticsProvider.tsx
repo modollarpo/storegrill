@@ -27,6 +27,7 @@ export interface DataLayerEvent {
   transaction_id?: string;
   items?: EcommerceItem[];
   ecommerce?: any;
+  eventId?: string;
 }
 
 type GtagArgs = [string, ...unknown[]];
@@ -202,7 +203,7 @@ function toGtagEvent(event: DataLayerEvent): { name: string; params: Record<stri
   }
 }
 
-function toInternalEvent(event: DataLayerEvent) {
+function toInternalEvent(event: DataLayerEvent, eventId: string) {
   const metadata: Record<string, unknown> = {};
   if (event.transaction_id) metadata.orderNumber = event.transaction_id;
   if (event.items?.length) {
@@ -218,6 +219,9 @@ function toInternalEvent(event: DataLayerEvent) {
     entityId: event.event === 'detail' ? event.product_id : (event.product_id || event.items?.[0]?.item_id),
     value: event.value,
     metadata,
+    eventId,
+    currency: event.currency,
+    searchTerm: event.search_term,
   };
 }
 
@@ -257,6 +261,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined') return;
     window.dataLayer = window.dataLayer || [];
 
+    const eventId = event.eventId ?? crypto.randomUUID();
     const mapped = toGtagEvent(event);
     window.dataLayer.push(event);
 
@@ -295,7 +300,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
 
     if (fbqEnabled && window.fbq && marketingGranted(readConsent())) {
       const fbqEvent = toFbqEvent(event);
-      if (fbqEvent) window.fbq(fbqEvent.name, fbqEvent.params);
+      if (fbqEvent) window.fbq(fbqEvent.name, { ...fbqEvent.params, event_id: eventId });
     }
 
     const EVENT_TYPES_TO_INTERNAL = new Set(['page_view', 'searchhit', 'detail', 'view_item', 'add_to_cart', 'begin_checkout', 'purchase']);
@@ -303,7 +308,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       fetch(`${API_BASE}/api/v1/analytics/event`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(toInternalEvent(event)),
+        body: JSON.stringify(toInternalEvent(event, eventId)),
         keepalive: true,
       }).catch(() => {});
     }

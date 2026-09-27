@@ -2,39 +2,63 @@ import { Router, Response } from 'express';
 import { z } from 'zod';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import { trackEvent, trackBatch, getSummary, getTopEntities, getUserEvents } from '../services/analytics.js';
+import { sendPinterestCapiEvent } from '../services/pinterest-capi.js';
 
 const router = Router();
 
+const eventSchema = z.object({
+  eventType: z.string().min(1),
+  sessionId: z.string().optional(),
+  entityType: z.string().optional(),
+  entityId: z.string().optional(),
+  value: z.number().optional(),
+  metadata: z.record(z.unknown()).optional(),
+  region: z.string().optional(),
+  eventId: z.string().optional(),
+  currency: z.string().optional(),
+  searchTerm: z.string().optional(),
+});
+
 router.post('/event', async (req: AuthRequest, res: Response) => {
-  const body = z.object({
-    eventType: z.string().min(1),
-    sessionId: z.string().optional(),
-    entityType: z.string().optional(),
-    entityId: z.string().optional(),
-    value: z.number().optional(),
-    metadata: z.record(z.unknown()).optional(),
-    region: z.string().optional(),
-  }).parse(req.body);
+  const body = eventSchema.parse(req.body);
 
   const { prisma } = await import('../index.js');
   const event = await trackEvent({
     ...body,
     userId: req.user?.id,
   }, prisma);
+
+  const metadata = body.metadata ?? {};
+  const items = Array.isArray(metadata.items)
+    ? (metadata.items as Array<{ id?: unknown; name?: unknown; qty?: unknown; price?: unknown }>)
+        .filter(i => typeof i.id === 'string')
+        .map(i => ({
+          id: i.id as string,
+          name: typeof i.name === 'string' ? i.name : undefined,
+          qty: typeof i.qty === 'number' ? i.qty : undefined,
+          price: typeof i.price === 'number' ? i.price : undefined,
+        }))
+    : undefined;
+
+  sendPinterestCapiEvent({
+    eventId: body.eventId ?? event.id,
+    eventType: body.eventType,
+    value: body.value,
+    currency: body.currency,
+    searchTerm: body.searchTerm,
+    orderId: typeof metadata.orderNumber === 'string' ? metadata.orderNumber : undefined,
+    items,
+    sessionId: body.sessionId,
+    clientIp: req.ip,
+    clientUserAgent: req.headers['user-agent'],
+  }).catch(() => {});
+
   res.status(201).json({ event });
 });
 
 router.post('/batch', async (req: AuthRequest, res: Response) => {
   const body = z.object({
-    events: z.array(z.object({
-      eventType: z.string().min(1),
-      sessionId: z.string().optional(),
-      entityType: z.string().optional(),
-      entityId: z.string().optional(),
-      value: z.number().optional(),
-      metadata: z.record(z.unknown()).optional(),
-      region: z.string().optional(),
-    })).min(1).max(100),
+    events: z.array(eventSchema).min(1).max(100),
   }).parse(req.body);
 
   const { prisma } = await import('../index.js');

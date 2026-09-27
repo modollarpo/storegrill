@@ -135,6 +135,48 @@ All ecommerce events include an `items` array per GA4 spec:
 
 All GA4 events (`page_view`, `searchhit`, `detail`, `view_item`, `add_to_cart`, `begin_checkout`, `purchase`) are also POSTed to the backend at `/api/v1/analytics/event` (fire-and-forget, `keepalive: true`). This backs the admin analytics dashboard without requiring a separate integration.
 
+---
+
+## 3. Meta (Facebook) Pixel
+
+The Meta Pixel is loaded via `fbevents.js`, config-driven, and mirrors the GA4 integration in `AnalyticsProvider` — one `track()` call fans out to gtag, the pixel, and the internal API.
+
+### Setup
+
+| Env var                        | Required | Description                              |
+|--------------------------------|----------|------------------------------------------|
+| `NEXT_PUBLIC_FACEBOOK_PIXEL_ID` | No     | Meta Pixel ID (15-16 digits)             |
+
+Set it as a Docker build arg in the deploy workflows (`FB_PIXEL_ID` in `deploy-api-web-aca.yml` and `deploy-web-aca.yml`). The same ID is currently used for every region; give each region its own ID by making `FB_PIXEL_ID` matrix-scoped if you split the dataset.
+
+### Consent
+
+The pixel is gated on `marketing: true` in the `sg_consent` cookie, consistent with Google Ads — Meta is an advertising destination, so analytics consent alone is not enough. The `fbevents.js` script is only injected after consent is granted. If a visitor grants marketing consent mid-session, the pixel initialises and a `PageView` is fired for the current route so the landing page is not lost from the attribution window.
+
+### Events fired
+
+| Internal event    | Meta standard event |
+|-------------------|---------------------|
+| `page_view`       | `PageView`          |
+| `searchhit`       | `Search`            |
+| `detail` / `view_item` | `ViewContent`  |
+| `add_to_cart`     | `AddToCart`         |
+| `begin_checkout`  | `InitiateCheckout`  |
+| `purchase`        | `Purchase`          |
+
+Meta receives `contents` (`id`, `quantity`, `item_price`), `value`, `currency`, plus `order_id` on `Purchase` and `content_ids` on `ViewContent`.
+
+### Product feed vs pixel
+
+The pixel covers on-site behaviour only. Product catalogue data for Facebook Shops and Advantage+ Catalogue is served separately from the feed endpoint:
+
+```
+GET /api/v1/feeds/facebook?regionKey=UK
+```
+
+Register that URL in **Meta Commerce Manager → Data Feeds** as a scheduled feed. Using the pixel alongside the feed lets Meta match on-site events (`ViewContent`, `AddToCart`, `Purchase`) back to catalogue items via the same `content_ids` used in the feed's `id` / `item_id` column.
+
+
 ### Verifying GA4 vs first-party data
 
 Because every GA4 event is mirrored to the `AnalyticsEvent` table in the pod DB, you can sanity-check GA4's numbers against your own data:

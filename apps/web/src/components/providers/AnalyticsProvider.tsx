@@ -31,11 +31,22 @@ export interface DataLayerEvent {
 
 type GtagArgs = [string, ...unknown[]];
 type DataLayerEntry = GtagArgs | DataLayerEvent;
+type FbqArgs = [string, ...unknown[]];
+
+interface FbqFn {
+  (...args: FbqArgs): void;
+  q: FbqArgs[];
+  push: (args: FbqArgs) => void;
+  loaded?: boolean;
+  version?: string;
+}
 
 declare global {
   interface Window {
     dataLayer: DataLayerEntry[];
     gtag?: (...args: GtagArgs) => void;
+    fbq?: FbqFn;
+    _fbq?: FbqFn;
   }
 }
 
@@ -54,7 +65,9 @@ export function useAnalytics() {
 const GA4_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID;
 const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
 const ADS_CONVERSION_LABEL = process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL;
+const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID;
 const gtagEnabled = Boolean(GA4_ID || ADS_ID);
+const fbqEnabled = Boolean(FB_PIXEL_ID);
 
 function consentState(consent: CookieConsent | null) {
   return {
@@ -88,6 +101,78 @@ function loadGtag() {
     addConsentDefault(readConsent());
     if (GA4_ID) window.dataLayer.push(['config', GA4_ID]);
     if (ADS_ID) window.dataLayer.push(['config', ADS_ID]);
+  }
+}
+
+function marketingGranted(consent: CookieConsent | null) {
+  return Boolean(consent?.marketing);
+}
+
+function loadFbq() {
+  if (typeof window === 'undefined' || !FB_PIXEL_ID || window.fbq) return;
+  const queue: FbqArgs[] = [];
+  const fbq = ((...args: FbqArgs) => { queue.push(args); }) as FbqFn;
+  fbq.q = queue;
+  fbq.push = (args) => { queue.push(args); };
+  fbq.loaded = true;
+  fbq.version = '2.0';
+  window.fbq = fbq;
+  window._fbq = fbq;
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://connect.facebook.net/en_US/fbevents.js';
+  document.head.appendChild(script);
+}
+
+function initFbq() {
+  if (!FB_PIXEL_ID || !marketingGranted(readConsent())) return;
+  loadFbq();
+  window.fbq?.('init', FB_PIXEL_ID);
+}
+
+function toFbqEvent(event: DataLayerEvent): { name: string; params: Record<string, unknown> } | null {
+  const contents = event.items?.map(i => ({
+    id: i.item_id,
+    quantity: i.quantity ?? 1,
+    item_price: i.price,
+  }));
+  switch (event.event) {
+    case 'page_view':
+      return { name: 'PageView', params: {} };
+    case 'searchhit':
+      return { name: 'Search', params: { search_string: event.search_term || '' } };
+    case 'detail':
+    case 'view_item':
+      return {
+        name: 'ViewContent',
+        params: {
+          content_ids: [event.product_id],
+          content_name: event.product_name,
+          content_type: 'product',
+          currency: event.currency,
+          value: event.value,
+        },
+      };
+    case 'add_to_cart':
+      return { name: 'AddToCart', params: { contents, currency: event.currency, value: event.value } };
+    case 'begin_checkout':
+      return {
+        name: 'InitiateCheckout',
+        params: { contents, currency: event.currency, value: event.value, num_items: contents?.length },
+      };
+    case 'purchase':
+      return {
+        name: 'Purchase',
+        params: {
+          contents,
+          content_type: 'product',
+          currency: event.currency,
+          value: event.value,
+          order_id: event.transaction_id,
+        },
+      };
+    default:
+      return null;
   }
 }
 
@@ -140,13 +225,30 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const gtagInitialized = useRef(false);
+  const fbqInitialized = useRef(false);
+  const lastPathname = useRef<string | null>(null);
 
   useEffect(() => {
     window.dataLayer = window.dataLayer || [];
-    if (!gtagEnabled || gtagInitialized.current) return;
-    gtagInitialized.current = true;
-    loadGtag();
-    const onConsentChanged = () => updateConsent(readConsent());
+    if (!gtagEnabled && !fbqEnabled) return;
+
+    if (gtagEnabled && !gtagInitialized.current) {
+      gtagInitialized.current = true;
+      loadGtag();
+    }
+    if (fbqEnabled && !fbqInitialized.current) initFbq();
+
+    const onConsentChanged = () => {
+      const consent = readConsent();
+      if (gtagEnabled) updateConsent(consent);
+      if (fbqEnabled && !fbqInitialized.current) {
+        initFbq();
+        if (window.fbq && marketingGranted(consent)) {
+          fbqInitialized.current = true;
+          window.fbq('track', 'PageView');
+        }
+      }
+    };
     window.addEventListener('storegrill:consent-changed', onConsentChanged);
     return () => window.removeEventListener('storegrill:consent-changed', onConsentChanged);
   }, []);
@@ -191,6 +293,11 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       });
     }
 
+    if (fbqEnabled && window.fbq && marketingGranted(readConsent())) {
+      const fbqEvent = toFbqEvent(event);
+      if (fbqEvent) window.fbq(fbqEvent.name, fbqEvent.params);
+    }
+
     const EVENT_TYPES_TO_INTERNAL = new Set(['page_view', 'searchhit', 'detail', 'view_item', 'add_to_cart', 'begin_checkout', 'purchase']);
     if (EVENT_TYPES_TO_INTERNAL.has(event.event)) {
       fetch(`${API_BASE}/api/v1/analytics/event`, {
@@ -209,6 +316,7 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   // Track page views
   useEffect(() => {
     if (pathname) {
+      lastPathname.current = pathname;
       const pageType = pathname === '/' ? 'homepage' 
         : pathname.startsWith('/products/') ? 'product_detail'
         : pathname.startsWith('/products') ? 'category_list'

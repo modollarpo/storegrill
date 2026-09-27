@@ -36,6 +36,7 @@ env:
   ADS_ID: AW-16735390613
   ADS_CONVERSION_LABEL: SdK6CNqF5vccEJWXh6w-
   FB_PIXEL_ID: '1143986500227216'
+  PINTEREST_PIXEL_ID: '2613190259169'
   PINTEREST_AD_ACCOUNT_ID: '549765436316'
 
 jobs:
@@ -93,6 +94,7 @@ jobs:
             --build-arg NEXT_PUBLIC_GOOGLE_ADS_ID=${{ env.ADS_ID }} \
             --build-arg NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL=${{ env.ADS_CONVERSION_LABEL }} \
             --build-arg NEXT_PUBLIC_FACEBOOK_PIXEL_ID=${{ env.FB_PIXEL_ID }} \
+            --build-arg NEXT_PUBLIC_PINTEREST_PIXEL_ID=${{ env.PINTEREST_PIXEL_ID }} \
             -t ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.WEB_TAG }} \
             -f apps/web/Dockerfile .
           docker push ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.WEB_TAG }}

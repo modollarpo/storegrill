@@ -33,11 +33,20 @@ export interface DataLayerEvent {
 type GtagArgs = [string, ...unknown[]];
 type DataLayerEntry = GtagArgs | DataLayerEvent;
 type FbqArgs = [string, ...unknown[]];
+type PintrkArgs = [string, ...unknown[]];
 
 interface FbqFn {
   (...args: FbqArgs): void;
   q: FbqArgs[];
   push: (args: FbqArgs) => void;
+  loaded?: boolean;
+  version?: string;
+}
+
+interface PintrkFn {
+  (...args: PintrkArgs): void;
+  q: PintrkArgs[];
+  push: (args: PintrkArgs) => void;
   loaded?: boolean;
   version?: string;
 }
@@ -48,6 +57,8 @@ declare global {
     gtag?: (...args: GtagArgs) => void;
     fbq?: FbqFn;
     _fbq?: FbqFn;
+    pintrk?: PintrkFn;
+    _pintrk?: PintrkFn;
   }
 }
 
@@ -67,8 +78,10 @@ const GA4_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID;
 const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
 const ADS_CONVERSION_LABEL = process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL;
 const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID;
+const PINTEREST_PIXEL_ID = process.env.NEXT_PUBLIC_PINTEREST_PIXEL_ID;
 const gtagEnabled = Boolean(GA4_ID || ADS_ID);
 const fbqEnabled = Boolean(FB_PIXEL_ID);
+const pintrkEnabled = Boolean(PINTEREST_PIXEL_ID);
 
 function consentState(consent: CookieConsent | null) {
   return {
@@ -129,6 +142,74 @@ function initFbq() {
   if (!FB_PIXEL_ID || !marketingGranted(readConsent())) return;
   loadFbq();
   window.fbq?.('init', FB_PIXEL_ID);
+}
+
+function loadPintrk() {
+  if (typeof window === 'undefined' || !PINTEREST_PIXEL_ID || window.pintrk) return;
+  const queue: PintrkArgs[] = [];
+  const pintrk = ((...args: PintrkArgs) => { queue.push(args); }) as PintrkFn;
+  pintrk.q = queue;
+  pintrk.push = (args) => { queue.push(args); };
+  pintrk.loaded = true;
+  pintrk.version = '3.0';
+  window.pintrk = pintrk;
+  window._pintrk = pintrk;
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://s.pinimg.com/ct/core.js';
+  document.head.appendChild(script);
+}
+
+function initPintrk() {
+  if (!PINTEREST_PIXEL_ID || !marketingGranted(readConsent())) return;
+  loadPintrk();
+  window.pintrk?.('load', PINTEREST_PIXEL_ID);
+}
+
+function toPintrkEvent(event: DataLayerEvent): { name: string; params: Record<string, unknown> } | null {
+  const contents = event.items?.map(i => ({
+    id: i.item_id,
+    quantity: i.quantity ?? 1,
+    item_price: i.price,
+  }));
+  switch (event.event) {
+    case 'page_view':
+      return { name: 'page_visit', params: {} };
+    case 'searchhit':
+      return { name: 'search', params: { search_string: event.search_term || '' } };
+    case 'detail':
+    case 'view_item':
+      return {
+        name: 'view_content',
+        params: {
+          content_ids: [event.product_id],
+          content_name: event.product_name,
+          content_type: 'product',
+          currency: event.currency,
+          value: event.value,
+        },
+      };
+    case 'add_to_cart':
+      return { name: 'add_to_cart', params: { contents, currency: event.currency, value: event.value } };
+    case 'begin_checkout':
+      return {
+        name: 'check_out',
+        params: { contents, currency: event.currency, value: event.value, num_items: contents?.length },
+      };
+    case 'purchase':
+      return {
+        name: 'check_out',
+        params: {
+          contents,
+          content_type: 'product',
+          currency: event.currency,
+          value: event.value,
+          order_id: event.transaction_id,
+        },
+      };
+    default:
+      return null;
+  }
 }
 
 function toFbqEvent(event: DataLayerEvent): { name: string; params: Record<string, unknown> } | null {
@@ -230,17 +311,19 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const gtagInitialized = useRef(false);
   const fbqInitialized = useRef(false);
+  const pintrkInitialized = useRef(false);
   const lastPathname = useRef<string | null>(null);
 
   useEffect(() => {
     window.dataLayer = window.dataLayer || [];
-    if (!gtagEnabled && !fbqEnabled) return;
+    if (!gtagEnabled && !fbqEnabled && !pintrkEnabled) return;
 
     if (gtagEnabled && !gtagInitialized.current) {
       gtagInitialized.current = true;
       loadGtag();
     }
     if (fbqEnabled && !fbqInitialized.current) initFbq();
+    if (pintrkEnabled && !pintrkInitialized.current) initPintrk();
 
     const onConsentChanged = () => {
       const consent = readConsent();
@@ -250,6 +333,13 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
         if (window.fbq && marketingGranted(consent)) {
           fbqInitialized.current = true;
           window.fbq('track', 'PageView');
+        }
+      }
+      if (pintrkEnabled && !pintrkInitialized.current) {
+        initPintrk();
+        if (window.pintrk && marketingGranted(consent)) {
+          pintrkInitialized.current = true;
+          window.pintrk('track', 'page_visit');
         }
       }
     };
@@ -301,6 +391,11 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
     if (fbqEnabled && window.fbq && marketingGranted(readConsent())) {
       const fbqEvent = toFbqEvent(event);
       if (fbqEvent) window.fbq(fbqEvent.name, { ...fbqEvent.params, event_id: eventId });
+    }
+
+    if (pintrkEnabled && window.pintrk && marketingGranted(readConsent())) {
+      const pintrkEvent = toPintrkEvent(event);
+      if (pintrkEvent) window.pintrk('track', pintrkEvent.name, { ...pintrkEvent.params, event_id: eventId });
     }
 
     const EVENT_TYPES_TO_INTERNAL = new Set(['page_view', 'searchhit', 'detail', 'view_item', 'add_to_cart', 'begin_checkout', 'purchase']);

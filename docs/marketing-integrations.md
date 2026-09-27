@@ -235,3 +235,42 @@ GET /api/v1/feeds/pinterest?regionKey=UK
 ```
 
 Register that URL in **Pinterest Business → Data Feeds** as a scheduled feed. Using CAPI alongside the feed lets Pinterest match on-site events back to catalogue items via the same `content_ids`.
+
+---
+
+## 5. Pinterest Tag (browser pixel)
+
+The Pinterest Tag is loaded via `s.pinimg.com/ct/core.js`, config-driven, and mirrors the Meta Pixel integration in `AnalyticsProvider` — one `track()` call fans out to gtag, the Meta pixel, the Pinterest Tag, and the internal API.
+
+### Setup
+
+| Env var                        | Required | Description                              |
+|--------------------------------|----------|------------------------------------------|
+| `NEXT_PUBLIC_PINTEREST_PIXEL_ID` | No     | Pinterest Tag ID (15-18 digits)         |
+
+Set it as a Docker build arg in the deploy workflows (`PINTEREST_PIXEL_ID` in `deploy-api-web-aca.yml` and `deploy-web-aca.yml`). The same ID is currently used for every region; give each region its own ID by making `PINTEREST_PIXEL_ID` matrix-scoped if you split the dataset.
+
+### Consent
+
+The Pinterest Tag is gated on `marketing: true` in the `sg_consent` cookie, consistent with Meta and Google Ads — Pinterest is an advertising destination, so analytics consent alone is not enough. The `core.js` script is only injected after consent is granted. If a visitor grants marketing consent mid-session, the tag initialises and a `page_visit` is fired for the current route so the landing page is not lost from the attribution window.
+
+### Events fired
+
+| Internal event         | Pinterest standard event |
+|------------------------|--------------------------|
+| `page_view`            | `page_visit`             |
+| `searchhit`            | `search`                 |
+| `detail` / `view_item` | `view_content`           |
+| `add_to_cart`          | `add_to_cart`            |
+| `begin_checkout`       | `check_out`              |
+| `purchase`             | `check_out`              |
+
+Pinterest receives `contents` (`id`, `quantity`, `item_price`), `value`, `currency`, plus `order_id` on `check_out` and `content_ids` on `view_content`.
+
+### Tag + CAPI deduplication
+
+The Tag fires `event_id` alongside each standard event. The CAPI sender (section 4) forwards the same `event_id`. Pinterest's dedup logic requires this shared ID; without it the same conversion would be counted twice (once from the Tag, once from CAPI).
+
+### Offline conversions
+
+For historical or offline purchases, upload a TSV via **Pinterest Business → Conversions → Offline Conversions**. The file uses 29 tab-separated columns — identity columns (`email`, `phone`, `fn`, `ln`, `dob`, `ct`, `st`, `zip`, `country`, `madid`) for matching, and event columns (`event_time`, `event_type`, `source_type`, `value`, `order_id`, `extern_id`, `quantity`, `product_id`, `currency`, `property`, `product_name`, `promo_code`, `product_category`, `product_sub_category`, `product_variant`, `product_brand`, `is_new_customer`) for the conversion itself. The `extern_id` column must match the `event_id` from CAPI/Tag for dedup.

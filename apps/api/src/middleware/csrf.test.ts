@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { Request, Response } from 'express';
-import { generateCsrfToken, validateCsrfToken, issueCsrfCookie, clearCsrfCookie } from './csrf.js';
+import { generateCsrfToken, validateCsrfToken, issueCsrfCookie, csrfProtection, clearCsrfCookie } from './csrf.js';
 
 describe('validateCsrfToken', () => {
   it('accepts a freshly generated token', () => {
@@ -43,10 +43,11 @@ describe('validateCsrfToken', () => {
 
 function fakeCookieExchange(cookies?: Record<string, string>) {
   const setCookie = vi.fn();
-  const req = { cookies: cookies ?? {} } as unknown as Request;
-  const res = { cookie: setCookie } as unknown as Response;
+  const clearCookie = vi.fn();
+  const req = { headers: {}, cookies: cookies ?? {} } as unknown as Request;
+  const res = { cookie: setCookie, clearCookie } as unknown as Response;
   const next = vi.fn();
-  return { req, res, next, setCookie };
+  return { req, res, next, setCookie, clearCookie };
 }
 
 describe('issueCsrfCookie', () => {
@@ -71,6 +72,24 @@ describe('issueCsrfCookie', () => {
 
     expect(setCookie).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears a stale host-only cookie when it has to reissue', () => {
+    const { req, res, next, setCookie, clearCookie } = fakeCookieExchange({ sg_csrf: 'stale.invalid' });
+
+    issueCsrfCookie(req, res, next);
+
+    expect(clearCookie).toHaveBeenCalledWith('sg_csrf', { path: '/' });
+    expect(setCookie).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves a valid token and its cookie alone', () => {
+    const { req, res, next, setCookie, clearCookie } = fakeCookieExchange({ sg_csrf: generateCsrfToken() });
+
+    issueCsrfCookie(req, res, next);
+
+    expect(setCookie).not.toHaveBeenCalled();
+    expect(clearCookie).not.toHaveBeenCalled();
   });
 
   it('does not overwrite a token the visitor already holds', () => {
@@ -120,6 +139,45 @@ describe('issueCsrfCookie', () => {
       else process.env.COOKIE_DOMAIN = prevDomain;
       vi.resetModules();
     }
+  });
+});
+
+describe('csrfProtection', () => {
+  function guarded(cookieHeader?: string, headerToken?: string) {
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn() } as unknown as Response;
+    const next = vi.fn();
+    const req = {
+      method: 'POST',
+      path: '/api/v1/orders/checkout',
+      headers: { ...(cookieHeader ? { cookie: cookieHeader } : {}), ...(headerToken ? { 'x-csrf-token': headerToken } : {}) },
+    } as unknown as Request;
+
+    csrfProtection(req, res, next);
+    const status = (res.status as unknown as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
+    return { status, next };
+  }
+
+  it('accepts the fresh token when a stale host-only duplicate precedes it', () => {
+    const good = generateCsrfToken();
+    const { status, next } = guarded(`sg_csrf=stale.invalid; sg_csrf=${good}`, good);
+
+    expect(status).toBeUndefined();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects when the header matches no cookie', () => {
+    const stale = generateCsrfToken();
+    const { status, next } = guarded(`sg_csrf=stale.invalid; sg_csrf=${stale}`, generateCsrfToken());
+
+    expect(status).toBe(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('still rejects a request with no token at all', () => {
+    const { status, next } = guarded(undefined, undefined);
+
+    expect(status).toBe(403);
+    expect(next).not.toHaveBeenCalled();
   });
 });
 

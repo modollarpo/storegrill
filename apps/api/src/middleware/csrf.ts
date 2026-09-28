@@ -32,21 +32,37 @@ export function validateCsrfToken(token: string): boolean {
   return crypto.timingSafeEqual(provided, expected);
 }
 
+function csrfCookieCandidates(req: Request): string[] {
+  const raw = req.headers?.cookie;
+  if (typeof raw === 'string' && raw.includes(`${CSRF_COOKIE}=`)) {
+    const parsed = raw
+      .split(';')
+      .map(part => part.trim())
+      .filter(part => part.startsWith(`${CSRF_COOKIE}=`))
+      .map(part => decodeURIComponent(part.slice(CSRF_COOKIE.length + 1)))
+      .filter(Boolean);
+    if (parsed.length) return parsed;
+  }
+  const parsedByMiddleware = req.cookies?.[CSRF_COOKIE];
+  return parsedByMiddleware ? [parsedByMiddleware] : [];
+}
+
 export function csrfProtection(req: Request, res: Response, next: NextFunction): void {
   if (SAFE_METHODS.has(req.method)) return next();
 
   const path = req.path;
   if (EXEMPT_PATHS.some(p => path.startsWith(p))) return next();
 
-  const cookieToken = req.cookies?.[CSRF_HEADER] || req.cookies?.[CSRF_COOKIE];
+  const candidates = csrfCookieCandidates(req);
   const headerToken = req.headers[CSRF_HEADER] as string | undefined;
 
-  if (!cookieToken || !headerToken) {
+  if (!candidates.length || !headerToken) {
     res.status(403).json({ error: 'Missing CSRF token' });
     return;
   }
 
-  if (!validateCsrfToken(cookieToken) || cookieToken !== headerToken) {
+  const matched = candidates.some(token => token === headerToken && validateCsrfToken(token));
+  if (!matched) {
     res.status(403).json({ error: 'Invalid CSRF token' });
     return;
   }
@@ -75,9 +91,12 @@ export function clearCsrfCookie(_req: Request, res: Response): void {
 }
 
 export function issueCsrfCookie(req: Request, res: Response, next: NextFunction): void {
-  const current = req.cookies?.[CSRF_COOKIE];
-  if (!current || !validateCsrfToken(current)) {
-    setCsrfCookie(req, res);
+  const candidates = csrfCookieCandidates(req);
+  if (candidates.some(validateCsrfToken)) {
+    next();
+    return;
   }
+  res.clearCookie(CSRF_COOKIE, { path: '/' });
+  setCsrfCookie(req, res);
   next();
 }

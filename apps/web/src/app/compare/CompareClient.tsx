@@ -49,7 +49,7 @@ export function CompareClient({ regionKey }: { regionKey: string }) {
 
       if (ids.length === 0) {
         setProducts([]);
-        setUnavailableIds[];
+        setUnavailableIds([]);
         setLoadState('ready');
         return;
       }

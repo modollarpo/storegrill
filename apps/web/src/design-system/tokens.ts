@@ -6,13 +6,27 @@ export const colors = {
     success: { DEFAULT: '#007B4B', bg: 'rgba(0,123,75,0.08)' },
     midnight: { DEFAULT: '#1c073d' },
   },
-  smoke: {
-    25: '#fafafa', 50: '#f7f7f7', 100: '#f2f2f2', 150: '#e0e0e0',
-    200: '#d4d4d4', 300: '#b8b8b8', 400: '#949494', 500: '#717171',
-    600: '#525252', 700: '#3d3d3d', 800: '#292929', 900: '#141414', 950: '#0a0a0a',
+  // Storegrill semantic color palette (CSS custom properties, 0–100 step 10)
+  // Primary – cool purple gradient, Secondary – deeper purple, Tertiary – muted rose
+  primary: {
+    0:  '#000000ff',  10: '#240a4cff', 20: '#3a2362ff', 25: '#452f6eff',
+    30: '#513a7aff', 40: '#6a5294ff', 50: '#836baff',  60: '#9d84caff',
+    70: '#b99fe7ff', 80: '#d4bbffff', 90: '#ebdcffff', 95: '#f7edffff',
+    99: '#fffbffff', 100: '#ffffffff',
   },
-  deal: { DEFAULT: '#E53E3E', hover: '#C53030', light: '#FFF5F5' },
-  footer: '#33434A',
+  secondary: {
+    0:  '#000000ff', 10: '#1f182aff', 12: '#231c2fff', 15: '#292335ff',
+    20: '#342d40ff', 25: '#3f384cff', 30: '#4b4358ff', 35: '#574f64ff',
+    40: '#635b70ff', 50: '#7c7389ff', 60: '#968da4ff', 70: '#b1a7bfff',
+    80: '#cdc2dbff', 90: '#eadef7ff', 95: '#f7edffff', 99: '#fffbffff',
+    100: '#ffffffff',
+  },
+  tertiary: {
+    0:  '#000000ff', 10: '#32101bff', 20: '#4a252fff', 30: '#643b46ff',
+    40: '#7f525dff', 50: '#9a6a75ff', 60: '#b6838fff', 70: '#d39da9ff',
+    80: '#f1b7c4ff', 90: '#ffd9e0ff', 95: '#ffecefff', 99: '#fffbffff',
+    100: '#ffffffff',
+  },
 } as const;
 
 export const semantic = {
@@ -72,7 +86,7 @@ export const semantic = {
 export const typography = {
   display2xl: '80px/86px -0.04em 800',
   displayXl: '62px/68px -0.03em 700',
-  displayLg: '50px/56px -0.025em 700',
+  displayLg: '50px/56px -0.025em 600',
   displayMd: '38px/44px -0.02em 600',
   displaySm: '30px/36px -0.015em 600',
   headingXl: '24px/30px 700',
@@ -115,7 +129,6 @@ export const motion = {
   durationInstant: '50ms',
   durationFast: '100ms',
   durationNormal: '200ms',
-  durationSlow: '350ms',
   durationSlower: '500ms',
   durationSlowest: '700ms',
   easeOut: 'cubic-bezier(0.00, 0.00, 0.20, 1.00)',
@@ -162,8 +175,7 @@ export const heroPalette = {
   mint: '#d8f3dc',
   navy: '#2051a3',
   lavender: '#b9a5d6',
-  charcoal: '#3b4856',
-  sage: '#78b28e',
+  charcoal: '#1C1C1C',
 } as const;
 
 // Storegrill hero category carousel palette (premium editorial surfaces).
@@ -174,7 +186,7 @@ export const heroCategoryPalette = {
   white:     '#FFFFFF',
   offWhite:  '#F8F6F3',
   cream:     '#F5F0E8',
-  charcoal:  '#1C1C1C',
+  charcoal: '#1C1C1C',
   slate:     '#2D3748',
   mint:      '#E6F7F5',
   blush:     '#FDF2F0',

@@ -42,7 +42,7 @@ import { analyticsRouter } from './routes/analytics.js';
 import { feedsRouter } from './routes/feeds.js';
 import { bannersRouter } from './routes/banners.js';
 import { errorHandler } from './middleware/errorHandler.js';
-import { csrfProtection } from './middleware/csrf.js';
+import { csrfProtection, issueCsrfCookie } from './middleware/csrf.js';
 import { requestLogger } from './middleware/request-logger.js';
 import { correlationId } from './middleware/correlation-id.js';
 
@@ -83,6 +83,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 app.use(correlationId);
 app.use(requestLogger);
+app.use(issueCsrfCookie);
 app.use(csrfProtection);
 
 const limiter = rateLimit({

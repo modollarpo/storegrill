@@ -104,25 +104,23 @@ export type Refund = z.infer<typeof RefundSchema>;
 export type OrderStatusEnum = z.infer<typeof OrderStatus>;
 export type PaymentStatusEnum = z.infer<typeof PaymentStatus>;
 
+export const CheckoutAddressSchema = z.object({
+  street: z.string().min(1).max(200),
+  line2: z.string().max(200).optional().default(''),
+  city: z.string().min(1).max(100),
+  state: z.string().max(100).optional().default(''),
+  zip: z.string().max(20).optional().default(''),
+  country: z.string().length(2).transform(c => c.toUpperCase()),
+});
+
 export const CheckoutSchema = z.object({
-  shippingAddress: z.object({
-    street: z.string().min(1).max(200),
-    city: z.string().min(1).max(100),
-    state: z.string().min(1).max(100),
-    zip: z.string().min(1).max(20),
-    country: z.string().length(2),
-  }),
-  billingAddress: z.object({
-    street: z.string().min(1).max(200),
-    city: z.string().min(1).max(100),
-    state: z.string().min(1).max(100),
-    zip: z.string().min(1).max(20),
-    country: z.string().length(2),
-  }).optional(),
+  shippingAddress: CheckoutAddressSchema,
+  billingAddress: CheckoutAddressSchema.optional(),
   paymentMethod: z.enum(PAYMENT_METHODS),
   regionKey: z.string().min(2).max(10).default('US'),
   shippingOptionId: z.string().optional(),
   notes: z.string().max(500).optional(),
   email: z.string().email().optional(),
+  saveAddress: z.boolean().default(false),
   couponCode: z.string().max(64).optional(),
 });

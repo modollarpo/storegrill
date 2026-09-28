@@ -36,9 +36,22 @@ export function formatPrice(amountMinorUnits: number, currencyCode: string): str
 export function formatAddress(json: string): string {
   try {
     const parsed = JSON.parse(json) as Record<string, unknown>;
-    const parts = [parsed.name, parsed.line1, parsed.line2, parsed.city, parsed.county, parsed.postcode, parsed.country]
-      .filter((part): part is string => typeof part === 'string' && part.trim() !== '' && part !== 'undefined')
-      .map(part => part.trim());
+    const pick = (...keys: string[]): string => {
+      for (const key of keys) {
+        const value = parsed[key];
+        if (typeof value === 'string' && value.trim() !== '') return value.trim();
+      }
+      return '';
+    };
+    const parts = [
+      pick('name', 'fullName'),
+      pick('street', 'line1', 'address1', 'street1'),
+      pick('line2', 'address2', 'street2'),
+      pick('city', 'town'),
+      pick('state', 'county', 'region', 'province'),
+      pick('zip', 'postcode', 'postalCode'),
+      pick('country'),
+    ].filter(part => part !== '');
     return parts.join(', ') || 'Address on account';
   } catch {
     return 'Address on account';

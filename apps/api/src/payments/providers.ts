@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { getCurrencyDecimals } from '@Storegrill/shared';
+import { getCurrencyDecimals, stripePaymentMethodType } from '@Storegrill/shared';
 
 export interface PaymentOrderContext {
   orderNumber: string;
@@ -7,6 +7,7 @@ export interface PaymentOrderContext {
   totalMinorUnits: number;
   items: Array<{ name: string; unitPriceMinorUnits: number; quantity: number }>;
   customerEmail?: string;
+  paymentMethod?: string;
 }
 
 export interface PaymentInitResult {
@@ -90,6 +91,11 @@ export function paypalUnitAmount(minorUnits: number, currencyCode: string): { cu
 }
 
 export async function initiateStripePayment(ctx: PaymentOrderContext): Promise<PaymentInitResult> {
+  const stripeType = stripePaymentMethodType(ctx.paymentMethod ?? 'card');
+  if (!stripeType) {
+    throw new Error(`Payment method "${ctx.paymentMethod}" is not supported by the card processor`);
+  }
+
   if (!process.env.STRIPE_SECRET_KEY) {
     return {
       provider: 'stripe',
@@ -103,7 +109,7 @@ export async function initiateStripePayment(ctx: PaymentOrderContext): Promise<P
     mode: 'payment',
     success_url: `${webBaseUrl()}/checkout/confirmation?order=${encodeURIComponent(ctx.orderNumber)}&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${webBaseUrl()}/checkout?cancelled=1`,
-    'payment_method_types[0]': 'card',
+    'payment_method_types[0]': stripeType,
     client_reference_id: ctx.orderNumber,
   };
   if (ctx.customerEmail) body.customer_email = ctx.customerEmail;

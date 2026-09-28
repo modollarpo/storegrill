@@ -49,6 +49,35 @@ export function providerFor(method: string): PaymentProvider {
   return PAYMENT_METHOD_PROVIDER[method as PaymentMethodId] || 'stripe';
 }
 
+/**
+ * Stripe's own payment-method type for a Storegrill method id, or null when
+ * Stripe cannot process it. Never fall back to 'card': silently charging a card
+ * for a method the shopper chose as Klarna/iDEAL/etc is both a UX lie and a
+ * payment-compliance problem, so unsupported methods must be hidden or rejected.
+ */
+const STRIPE_PAYMENT_METHOD_TYPE: Partial<Record<PaymentMethodId, string>> = {
+  card: 'card',
+  klarna: 'klarna',
+  afterpay: 'afterpay_clearpay',
+  sepa_debit: 'sepa_debit',
+  ideal: 'ideal',
+  bancontact: 'bancontact',
+  blik: 'blik',
+  swish: 'swish',
+};
+
+export function stripePaymentMethodType(method: string): string | null {
+  return STRIPE_PAYMENT_METHOD_TYPE[method as PaymentMethodId] ?? null;
+}
+
+/** True when the configured payment provider can actually process this method. */
+export function isPaymentMethodSupported(method: string): boolean {
+  const provider = providerFor(method);
+  if (provider === 'cod') return true;
+  if (provider === 'paypal') return method === 'paypal';
+  return stripePaymentMethodType(method) !== null;
+}
+
 export function paymentMethodLabel(method: PaymentMethodId): string {
   const labels: Record<PaymentMethodId, string> = {
     card: 'Credit / Debit Card',

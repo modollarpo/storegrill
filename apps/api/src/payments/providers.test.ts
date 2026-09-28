@@ -1,5 +1,22 @@
 import { describe, it, expect } from 'vitest';
-import { paypalMoney, paypalUnitAmount } from './providers.js';
+import { paypalMoney, paypalUnitAmount, initiateStripePayment } from './providers.js';
+
+describe('initiateStripePayment', () => {
+  it('rejects a method the card processor cannot handle instead of charging a card', async () => {
+    const base = {
+      orderNumber: 'SG-1',
+      currencyCode: 'EUR',
+      totalMinorUnits: 1000,
+      items: [{ name: 'Item', unitPriceMinorUnits: 1000, quantity: 1 }],
+    };
+    await expect(initiateStripePayment({ ...base, paymentMethod: 'twint' })).rejects.toThrow(
+      /not supported/
+    );
+    await expect(initiateStripePayment({ ...base, paymentMethod: 'bizum' })).rejects.toThrow(
+      /not supported/
+    );
+  });
+});
 
 describe('paypalMoney', () => {
   it('formats a two-decimal currency', () => {

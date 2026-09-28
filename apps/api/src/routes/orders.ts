@@ -4,13 +4,14 @@ import { prisma } from '../db/prisma.js';
 import { authenticate, authorize, AuthRequest, requireVerifiedEmail } from '../middleware/auth.js';
 import { dualAuth, type DualAuthRequest } from '../middleware/dual-auth.js';
 import { generateTokens } from '../middleware/auth.js';
-import { CheckoutSchema, DEFAULT_REGIONS } from '@Storegrill/shared';
+import { CheckoutSchema, DEFAULT_REGIONS, isPaymentMethodSupported, validateAddress } from '@Storegrill/shared';
 import { calculateTax, TaxRule } from '@Storegrill/shared';
 import { ShippingZone, VendorShippingPolicy, calculateGroupedShipping, planFulfillment } from '@Storegrill/shared';
 import { createMoney, convertMoney } from '@Storegrill/shared';
 import { v4 as uuid } from 'uuid';
 import { initiatePaypalPayment, initiateStripePayment, type PaymentOrderContext } from '../payments/providers.js';
 import { validateCoupon } from '../services/coupons.js';
+import { saveAddressForOrder } from '../lib/addresses.js';
 import { notifyOrderCancelled, notifyOrderConfirmed } from '../lib/emails.js';
 import { loadCommissionRules, resolveCommissionFromRules, snapshotToJson } from '../services/commission-snapshot.js';
 import { recordOrderSale, recordOrderRefund } from '../services/ledger-entries.js';
@@ -232,6 +233,29 @@ router.post('/checkout', async (req: DualAuthRequest, res: Response) => {
     if (body.createAccount && (!body.password || !body.name)) {
       return res.status(400).json({
         error: { code: 'ACCOUNT_FIELDS_REQUIRED', message: 'Name and password are required to create an account' },
+      });
+    }
+  }
+
+  const addressIssues = validateAddress(body.shippingAddress);
+  if (!addressIssues.ok) {
+    return res.status(400).json({
+      error: {
+        code: 'INVALID_ADDRESS',
+        message: 'Shipping address is not valid for the selected country',
+        issues: addressIssues.issues,
+      },
+    });
+  }
+  if (body.billingAddress) {
+    const billingIssues = validateAddress(body.billingAddress);
+    if (!billingIssues.ok) {
+      return res.status(400).json({
+        error: {
+          code: 'INVALID_ADDRESS',
+          message: 'Billing address is not valid for the selected country',
+          issues: billingIssues.issues,
+        },
       });
     }
   }
@@ -463,6 +487,15 @@ router.post('/checkout', async (req: DualAuthRequest, res: Response) => {
 
   const orderNumber = `SG-${Date.now().toString(36).toUpperCase()}-${uuid().slice(0, 4).toUpperCase()}`;
 
+  if (!isPaymentMethodSupported(body.paymentMethod)) {
+    return res.status(400).json({
+      error: {
+        code: 'PAYMENT_METHOD_UNAVAILABLE',
+        message: `${body.paymentMethod} is not available for this region yet`,
+      },
+    });
+  }
+
   const provider = body.paymentMethod === 'cod' ? 'cod' : body.paymentMethod === 'paypal' ? 'paypal' : 'stripe';
   const needsRedirectFlow = provider !== 'cod';
 
@@ -476,6 +509,7 @@ router.post('/checkout', async (req: DualAuthRequest, res: Response) => {
       quantity: item.quantity,
     })),
     customerEmail: typeof body.email === 'string' && body.email.includes('@') ? body.email : undefined,
+    paymentMethod: body.paymentMethod,
   };
 
   let initiated: Awaited<ReturnType<typeof initiateStripePayment>> | null = null;
@@ -528,6 +562,10 @@ router.post('/checkout', async (req: DualAuthRequest, res: Response) => {
             data: { userId: newUser.id, sessionId: null },
           });
         }
+      }
+
+      if (body.saveAddress) {
+        await saveAddressForOrder(tx, newUser.id, { ...body.shippingAddress, label: 'Home', isDefault: true });
       }
     }
 

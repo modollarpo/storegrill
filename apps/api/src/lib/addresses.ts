@@ -43,8 +43,16 @@ export function withDefaultFirst(list: SavedAddress[]): SavedAddress[] {
   return ordered.map((a, i) => ({ ...a, isDefault: i === 0 }));
 }
 
+type AddressStore = {
+  customerProfile: Pick<typeof prisma.customerProfile, 'findUnique' | 'upsert'>;
+};
+
 export async function loadAddresses(userId: string): Promise<SavedAddress[]> {
-  const profile = await prisma.customerProfile.findUnique({
+  return loadAddressesWith(prisma, userId);
+}
+
+export async function loadAddressesWith(db: AddressStore, userId: string): Promise<SavedAddress[]> {
+  const profile = await db.customerProfile.findUnique({
     where: { userId },
     select: { shippingAddresses: true },
   });
@@ -52,13 +60,36 @@ export async function loadAddresses(userId: string): Promise<SavedAddress[]> {
 }
 
 export async function persistAddresses(userId: string, list: SavedAddress[]): Promise<SavedAddress[]> {
+  return persistAddressesWith(prisma, userId, list);
+}
+
+export async function persistAddressesWith(
+  db: AddressStore,
+  userId: string,
+  list: SavedAddress[]
+): Promise<SavedAddress[]> {
   const normalized = withDefaultFirst(list);
-  await prisma.customerProfile.upsert({
+  await db.customerProfile.upsert({
     where: { userId },
     create: { userId, shippingAddresses: serializeAddresses(normalized) },
     update: { shippingAddresses: serializeAddresses(normalized) },
   });
   return normalized;
+}
+
+/**
+ * Saves the address used for an order. Runs inside the checkout transaction so a
+ * newly created account never loses the address it was created with, even
+ * though no login session exists yet at that point.
+ */
+export async function saveAddressForOrder(
+  db: AddressStore,
+  userId: string,
+  draft: AddressDraft
+): Promise<void> {
+  const existing = await loadAddressesWith(db, userId);
+  const { list } = upsertAddress(existing, draft);
+  await persistAddressesWith(db, userId, list);
 }
 
 export function assertValidAddress(draft: AddressDraft): void {

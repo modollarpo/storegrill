@@ -158,6 +158,16 @@ export function getCurrencyDecimals(currencyCode: string): number {
   return zeroDecimalCurrencies.has(currencyCode) ? 0 : 2;
 }
 
+/**
+ * Major-unit value for an integer minor-unit amount, for the few callers that
+ * need a plain number (analytics payloads). Derives the divisor from
+ * getCurrencyDecimals so zero-decimal region currencies stay correct and no
+ * caller has to hardcode a /100.
+ */
+export function minorToMajorUnits(amountMinorUnits: number, currencyCode: string): number {
+  return amountMinorUnits / 10 ** getCurrencyDecimals(currencyCode);
+}
+
 const NATIVE_ENGLISH_LOCALES: Record<string, string> = {
   USD: 'en-US',
   GBP: 'en-GB',

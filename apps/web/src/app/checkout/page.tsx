@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart, CartItemLine } from '@/components/providers/CartContext';
@@ -8,37 +8,38 @@ import { useRegion } from '@/components/providers/RegionContext';
 import { useAnalytics } from '@/components/providers/AnalyticsProvider';
 import { useToast } from '@/components/feedback/Toast';
 import { api, ApiError, API_BASE, csrfHeaders } from '@/lib/api';
-import { DEFAULT_REGIONS, PAYMENT_METHOD_PROVIDER, PaymentMethodId } from '@Storegrill/shared';
+import { t } from '@/i18n';
+import {
+  DEFAULT_REGIONS,
+  PAYMENT_METHOD_PROVIDER,
+  addressIssuesByField,
+  minorToMajorUnits,
+  isPaymentMethodSupported,
+  validateAddress,
+  type Address,
+  type AddressIssueCode,
+  type PaymentMethodId,
+  type SavedAddress,
+} from '@Storegrill/shared';
 import { cn } from '@/lib/utils';
 import { CheckoutOrderSummary } from '@/components/checkout/CheckoutOrderSummary';
 import { CheckoutCoupon } from '@/components/checkout/CheckoutCoupon';
 import { CheckoutShippingMethod } from '@/components/checkout/CheckoutShippingMethod';
-import { CheckoutPaymentMethod } from '@/components/checkout/CheckoutPaymentMethod';
+import { CheckoutPaymentMethod, buildPaymentOptions, paymentFlow } from '@/components/checkout/CheckoutPaymentMethod';
+import { CheckoutAddressFields, type AddressFormValue } from '@/components/checkout/CheckoutAddressFields';
 import { CheckoutNotes } from '@/components/checkout/CheckoutNotes';
 
 type Step = 1 | 2 | 3;
 
-interface AddressForm {
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
-  country: string;
-}
-
-const EMPTY_ADDRESS: AddressForm = { street: '', city: '', state: '', zip: '', country: 'GB' };
-
-const SHIPPING_COUNTRIES: string[] = Array.from(
-  new Set(DEFAULT_REGIONS.flatMap(region => region.shippingZones[0]?.countries ?? []))
-).sort();
-
-function countryName(code: string): string {
-  try {
-    return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) || code;
-  } catch {
-    return code;
-  }
-}
+const EMPTY_ADDRESS: AddressFormValue = {
+  label: 'Home',
+  street: '',
+  line2: '',
+  city: '',
+  state: '',
+  zip: '',
+  country: '',
+};
 
 export default function CheckoutPage() {
   const cart = useCart();
@@ -52,20 +53,33 @@ export default function CheckoutPage() {
   const [createAccount, setCreateAccount] = useState(false);
   const [accountName, setAccountName] = useState('');
   const [accountPassword, setAccountPassword] = useState('');
-  const [address, setAddress] = useState<AddressForm>(EMPTY_ADDRESS);
+  const [address, setAddress] = useState<AddressFormValue>(EMPTY_ADDRESS);
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [notes, setNotes] = useState('');
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [, setSandboxNotice] = useState(false);
+  const [sandbox, setSandbox] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
+  const [saveAddress, setSaveAddress] = useState(true);
+  const [accountEmail, setAccountEmail] = useState<string | null>(null);
+  const [accountNamePrefill, setAccountNamePrefill] = useState<string | null>(null);
+  const [showAddressIssues, setShowAddressIssues] = useState(false);
 
   const regionConfig = DEFAULT_REGIONS.find(r => r.key === regionKey) ?? DEFAULT_REGIONS[0];
   const zone = regionConfig.shippingZones[0];
   const currency = cart.currencyCode ?? regionConfig.defaultCurrency;
+  const regionCountries = useMemo(() => zone?.countries ?? [], [zone]);
 
-  const methods = regionConfig.paymentMethods;
-  const activePayment = paymentMethod || methods[0];
-
+  const options = useMemo(
+    () =>
+      buildPaymentOptions(regionConfig.paymentMethods, language).filter(o =>
+        isPaymentMethodSupported(o.id)
+      ),
+    [regionConfig, language]
+  );
+  const activePayment = paymentMethod && options.some(o => o.id === paymentMethod) ? paymentMethod : options[0]?.id ?? '';
+  
   const subtotal = cart.subtotalMinorUnits;
   const shippingCost =
     zone.freeShippingThresholdMinorUnits && subtotal >= zone.freeShippingThresholdMinorUnits
@@ -75,17 +89,78 @@ export default function CheckoutPage() {
   const discountedSubtotal = Math.max(0, subtotal - discount);
   const tax = Math.round(discountedSubtotal * (regionConfig.taxRules[0]?.rate ?? 0));
   const total = discountedSubtotal + shippingCost + tax;
+  const totalMajor = minorToMajorUnits(total, currency);
+
+  const addressDraft = useMemo<Address>(
+    () => ({
+      label: address.label || 'Home',
+      street: address.street.trim(),
+      line2: address.line2.trim(),
+      city: address.city.trim(),
+      state: address.state.trim(),
+      zip: address.zip.trim(),
+      country: address.country.toUpperCase(),
+      isDefault: false,
+    }),
+    [address]
+  );
+
+  const addressValidation = useMemo(() => validateAddress(addressDraft), [addressDraft]);
+  const addressIssueMap = useMemo(() => addressIssuesByField(addressValidation), [addressValidation]);
+  const visibleAddressIssues = showAddressIssues ? addressIssueMap : ({} as Partial<Record<keyof Address, AddressIssueCode>>);
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+  const applySavedAddress = useCallback((saved: SavedAddress) => {
+    setAddress({
+      label: saved.label || 'Home',
+      street: saved.street,
+      line2: saved.line2 ?? '',
+      city: saved.city,
+      state: saved.state ?? '',
+      zip: saved.zip ?? '',
+      country: saved.country,
+    });
+  }, []);
+
+  const loadAccount = useCallback(async () => {
+    try {
+      const me = await api<{ user?: { email?: string; name?: string } }>('/api/v1/auth/me');
+      const userEmail = me?.user?.email ?? null;
+      setAccountEmail(userEmail);
+      setAccountNamePrefill(me?.user?.name ?? null);
+      if (userEmail) setEmail(current => current || userEmail);
+      if (me?.user?.name) setAccountName(current => current || me.user!.name!);
+      const res = await api<{ addresses?: SavedAddress[] }>('/api/v1/users/me/addresses');
+      const list = res?.addresses ?? [];
+      setSavedAddresses(list);
+      if (list.length) {
+        setSelectedAddressId(list[0].id);
+        applySavedAddress(list[0]);
+      }
+    } catch {
+      setAccountEmail(null);
+    }
+  }, [applySavedAddress]);
+
+  useEffect(() => {
+    void loadAccount();
+  }, [loadAccount]);
+
+  useEffect(() => {
+    if (address.country) return;
+    setAddress(current => ({ ...current, country: regionCountries[0] ?? 'GB' }));
+  }, [address.country, regionCountries]);
 
   useEffect(() => {
     if (cart.items.length === 0) return;
     track({
       event: 'begin_checkout',
-      value: total / 100,
+      value: totalMajor,
       currency,
       items: cart.items.map(i => ({
         item_id: i.variantId || i.productId,
         item_name: i.name,
-        price: i.unitPriceMinorUnits / 100,
+        price: minorToMajorUnits(i.unitPriceMinorUnits, i.currencyCode),
         quantity: i.quantity,
         currency: i.currencyCode,
       })),
@@ -95,15 +170,24 @@ export default function CheckoutPage() {
 
   const stepValid = useMemo(() => {
     if (step === 1) {
-      const emailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
-      const addressValid = address.street.length > 2 && address.city.length > 1 && address.zip.length > 2;
-      if (!emailValid || !addressValid) return false;
+      if (!emailValid || !addressValidation.ok) return false;
       if (createAccount && (!accountName || accountPassword.length < 8)) return false;
       return true;
     }
     if (step === 2) return Boolean(activePayment);
     return true;
-  }, [step, email, address, activePayment, createAccount, accountName, accountPassword]);
+  }, [step, emailValid, addressValidation.ok, activePayment, createAccount, accountName, accountPassword]);
+
+  async function persistAddressToAccount(draft: Address) {
+    try {
+      await api('/api/v1/users/me/addresses', {
+        method: 'POST',
+        body: JSON.stringify({ ...draft, isDefault: false }),
+      });
+    } catch {
+      // A failed convenience save must never fail the order.
+    }
+  }
 
   async function applyCoupon(code: string) {
     try {
@@ -126,7 +210,7 @@ export default function CheckoutPage() {
       const data = await res.json();
       if (!res.ok) {
         cart.setAppliedCoupon(null);
-        toast({ variant: 'error', title: 'Invalid code', description: data?.error?.message });
+        toast({ variant: 'error', title: t(language, 'checkoutCouponInvalid'), description: data?.error?.message });
         return;
       }
       cart.setAppliedCoupon({
@@ -142,6 +226,12 @@ export default function CheckoutPage() {
   async function placeOrder() {
     setPlacing(true);
     setError(null);
+    setShowAddressIssues(true);
+    if (!addressValidation.ok) {
+      setStep(1);
+      setPlacing(false);
+      return;
+    }
     try {
       for (const line of cart.items as CartItemLine[]) {
         await api('/api/v1/cart/items', {
@@ -149,6 +239,10 @@ export default function CheckoutPage() {
           body: JSON.stringify({ productId: line.productId, variantId: line.variantId, quantity: line.quantity }),
         });
       }
+
+      const selected = options.find(o => o.id === activePayment);
+      const provider = PAYMENT_METHOD_PROVIDER[activePayment as PaymentMethodId] ?? 'stripe';
+      const flow = selected?.flow ?? paymentFlow(activePayment as PaymentMethodId);
 
       const result = await api<{
         order?: { id?: string; orderNumber?: string };
@@ -159,41 +253,53 @@ export default function CheckoutPage() {
         method: 'POST',
         body: JSON.stringify({
           shippingAddress: {
-            street: address.street,
-            city: address.city,
-            state: address.state || address.city,
-            zip: address.zip,
-            country: address.country.slice(0, 2).toUpperCase(),
+            street: addressDraft.street,
+            line2: addressDraft.line2,
+            city: addressDraft.city,
+            state: addressDraft.state,
+            zip: addressDraft.zip,
+            country: addressDraft.country,
           },
-          paymentMethod: activePayment === 'cod' ? 'cod' : PAYMENT_METHOD_PROVIDER[activePayment as PaymentMethodId] === 'paypal' ? 'paypal' : 'stripe',
+          paymentMethod: provider,
           regionKey,
           couponCode: cart.appliedCoupon?.code,
           email,
           createAccount: createAccount || undefined,
           name: accountName || undefined,
           password: accountPassword || undefined,
+          saveAddress: saveAddress || undefined,
           notes: `language=${language};displayMethod=${activePayment};notes=${notes}`,
         }),
       });
 
       if (result.payment?.redirectUrl) {
         cart.clear();
+        if (flow === 'inline') {
+          window.open(result.payment.redirectUrl, '_blank', 'noopener,noreferrer');
+          setPlacing(false);
+          return;
+        }
         window.location.assign(result.payment.redirectUrl);
         return;
       }
-      setSandboxNotice(result.payment?.mode === 'sandbox');
+      setSandbox(result.payment?.mode === 'sandbox');
 
       const orderNumber = result.order?.orderNumber || result.orderNumber || result.id || '';
+
+      if (accountEmail && saveAddress) {
+        await persistAddressToAccount(addressDraft);
+      }
+
       await new Promise<void>(resolve => {
         track({
           event: 'purchase',
           transaction_id: orderNumber,
-          value: total / 100,
+          value: totalMajor,
           currency,
           items: cart.items.map(i => ({
             item_id: i.variantId || i.productId,
             item_name: i.name,
-            price: i.unitPriceMinorUnits / 100,
+            price: minorToMajorUnits(i.unitPriceMinorUnits, i.currencyCode),
             quantity: i.quantity,
             currency: i.currencyCode,
           })),
@@ -203,11 +309,11 @@ export default function CheckoutPage() {
       router.push(`/checkout/confirmation?order=${encodeURIComponent(orderNumber)}`);
     } catch (e) {
       if (e instanceof ApiError) {
-        setError(mapPaymentError(e.code, e.message));
+        setError(mapPaymentError(language, e.code, e.message));
       } else {
-        setError('Something went wrong placing your order. Please try again.');
+        setError(t(language, 'checkoutGenericError'));
       }
-      toast({ variant: 'error', title: 'Order failed', description: error ?? undefined });
+        toast({ variant: 'error', title: t(language, 'checkoutReviewStep'), description: e instanceof ApiError ? e.message : t(language, 'checkoutGenericError') });
     } finally {
       setPlacing(false);
     }
@@ -216,22 +322,22 @@ export default function CheckoutPage() {
   if (cart.items.length === 0) {
     return (
       <div className="container-site py-16 text-center">
-        <h1 className="text-3xl font-extrabold text-text-primary">Nothing to check out</h1>
-        <Link href="/products" className="btn btn-primary mt-4">Browse products</Link>
+        <h1 className="text-3xl font-extrabold text-text-primary">{t(language, 'checkoutNothingToCheckOut')}</h1>
+        <Link href="/products" className="btn btn-primary mt-4">{t(language, 'checkoutBrowseProducts')}</Link>
       </div>
     );
   }
 
   return (
     <div className="container-site py-6 md:py-10" data-testid="checkout">
-      <h1 className="text-2xl font-extrabold text-text-primary mb-6">Checkout</h1>
+        <h1 className="text-2xl font-extrabold text-text-primary mb-6">{t(language, 'checkoutTitle')}</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-[30px] items-start">
         <div className="space-y-5">
-          <Section title="Contact & Delivery" step={1} currentStep={step} onEdit={() => setStep(1)}>
+          <Section title={t(language, 'checkoutContactDelivery')} step={1} currentStep={step} language={language} onEdit={() => setStep(1)}>
             <div className="space-y-3.5">
               <label className="block">
-                <span className="block text-xs font-semibold mb-1.5 text-text-primary">Email</span>
+                <span className="block text-xs font-semibold mb-1.5 text-text-primary">{t(language, 'checkoutEmail')}</span>
                 <input
                   type="email"
                   required
@@ -239,8 +345,14 @@ export default function CheckoutPage() {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="you@example.com"
+                  aria-invalid={showAddressIssues && !emailValid}
                   className="input"
                 />
+                {showAddressIssues && !emailValid && (
+                  <p role="alert" className="mt-1.5 text-xs font-medium text-red-600">
+                    {t(language, 'checkoutErrorEmail')}
+                  </p>
+                )}
               </label>
 
               <div className="mt-3 p-3 bg-surface-raised rounded-lg border border-border">
@@ -252,26 +364,26 @@ export default function CheckoutPage() {
                     className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
                   />
                   <div>
-                    <span className="text-sm font-semibold text-text-primary">Create an account for faster checkout next time</span>
-                    <p className="text-xs text-text-secondary mt-0.5">Save your details to track orders and manage returns easily.</p>
+                    <span className="text-sm font-semibold text-text-primary">{t(language, 'checkoutCreateAccount')}</span>
+                    <p className="text-xs text-text-secondary mt-0.5">{t(language, 'checkoutCreateAccountBody')}</p>
                   </div>
                 </label>
                 {createAccount && (
                   <div className="mt-3 space-y-2.5 pl-6">
                     <label className="block">
-                      <span className="block text-xs font-semibold mb-1 text-text-primary">Full name</span>
+                      <span className="block text-xs font-semibold mb-1 text-text-primary">{t(language, 'checkoutCreateAccountName')}</span>
                       <input
                         type="text"
                         required
                         autoComplete="name"
                         value={accountName}
                         onChange={e => setAccountName(e.target.value)}
-                        placeholder="Your full name"
+                        placeholder={accountNamePrefill ?? t(language, 'checkoutFullName')}
                         className="input"
                       />
                     </label>
                     <label className="block">
-                      <span className="block text-xs font-semibold mb-1 text-text-primary">Password</span>
+                      <span className="block text-xs font-semibold mb-1 text-text-primary">{t(language, 'checkoutCreateAccountPassword')}</span>
                       <input
                         type="password"
                         required
@@ -279,7 +391,7 @@ export default function CheckoutPage() {
                         minLength={8}
                         value={accountPassword}
                         onChange={e => setAccountPassword(e.target.value)}
-                        placeholder="At least 8 characters"
+                        placeholder={t(language, 'checkoutPasswordHint')}
                         className="input"
                       />
                     </label>
@@ -288,72 +400,99 @@ export default function CheckoutPage() {
               </div>
 
               <fieldset className="space-y-3">
-                <legend className="text-xs font-semibold mb-1.5 text-text-primary">Shipping address</legend>
-                <input
-                  required
-                  autoComplete="address-line1"
-                  value={address.street}
-                  onChange={e => setAddress(a => ({ ...a, street: e.target.value }))}
-                  placeholder="Street address"
-                  className="input"
+                <legend className="text-xs font-semibold mb-1.5 text-text-primary">
+                  {t(language, 'checkoutShippingAddress')}
+                </legend>
+
+                {accountEmail && savedAddresses.length > 0 && (
+                  <div className="space-y-2">
+                    <label className="block">
+                      <span className="block text-xs font-semibold mb-1.5 text-text-primary">
+                        {t(language, 'checkoutUseSavedAddress')}
+                      </span>
+                      <select
+                        value={selectedAddressId}
+                        onChange={e => {
+                          const id = e.target.value;
+                          setSelectedAddressId(id);
+                          const found = savedAddresses.find(a => a.id === id);
+                          if (found) applySavedAddress(found);
+                        }}
+                        className="input"
+                      >
+                        <option value="">{t(language, 'checkoutNewAddress')}</option>
+                        {savedAddresses.map(a => (
+                          <option key={a.id} value={a.id}>
+                            {a.label} — {a.street}, {a.city}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                )}
+
+                <CheckoutAddressFields
+                  locale={language}
+                  value={address}
+                  countries={regionCountries}
+                  issues={visibleAddressIssues}
+                  onChange={next => {
+                    setAddress(next);
+                    setSelectedAddressId('');
+                  }}
                 />
-                <input
-                  autoComplete="address-line2"
-                  value={address.state}
-                  onChange={e => setAddress(a => ({ ...a, state: e.target.value }))}
-                  placeholder="Apartment, suite (optional)"
-                  className="input"
-                />
-                <div className="grid grid-cols-3 gap-3">
-                  <input
-                    required
-                    autoComplete="address-level2"
-                    value={address.city}
-                    onChange={e => setAddress(a => ({ ...a, city: e.target.value }))}
-                    placeholder="City"
-                    className="input col-span-2"
-                  />
-                  <input
-                    required
-                    autoComplete="postal-code"
-                    value={address.zip}
-                    onChange={e => setAddress(a => ({ ...a, zip: e.target.value }))}
-                    placeholder="ZIP / Postcode"
-                    className="input"
-                  />
-                </div>
-                <select
-                  required
-                  autoComplete="country-name"
-                  aria-label="Country"
-                  value={address.country}
-                  onChange={e => setAddress(a => ({ ...a, country: e.target.value }))}
-                  className="input"
-                >
-                  {SHIPPING_COUNTRIES.map(code => (
-                    <option key={code} value={code}>{countryName(code)}</option>
-                  ))}
-                </select>
+
+                {accountEmail && (
+                  <label className="flex items-start gap-2.5 cursor-pointer pt-1">
+                    <input
+                      type="checkbox"
+                      checked={saveAddress}
+                      onChange={e => setSaveAddress(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                    />
+                    <span className="text-sm text-text-primary">
+                      {t(language, 'checkoutSaveAddress')}
+                    </span>
+                  </label>
+                )}
               </fieldset>
-              
+
               {step === 1 && (
-                <button type="button" disabled={!stepValid} onClick={() => setStep(2)} className="btn btn-primary w-full sm:w-auto">
-                  Continue to Payment
+                <button
+                  type="button"
+                  aria-disabled={!stepValid}
+                  onClick={() => {
+                    setShowAddressIssues(true);
+                    if (stepValid) setStep(2);
+                  }}
+                  className="btn btn-primary w-full sm:w-auto"
+                >
+                  {t(language, 'checkoutContinueToPayment')}
                 </button>
               )}
             </div>
           </Section>
 
-          <Section title="Payment" step={2} currentStep={step} onEdit={() => setStep(2)}>
-            <CheckoutPaymentMethod selectedId={activePayment} onSelect={setPaymentMethod} />
+          <Section title={t(language, 'checkoutPaymentStep')} step={2} currentStep={step} language={language} onEdit={() => setStep(2)}>
+            <CheckoutPaymentMethod
+              locale={language}
+              options={options}
+              selectedId={activePayment}
+              onSelect={setPaymentMethod}
+              amount={totalMajor}
+              currency={currency}
+            />
+            {sandbox && (
+              <p className="mt-3 text-xs text-text-secondary">{t(language, 'checkoutSandboxNotice')}</p>
+            )}
             {step === 2 && (
               <button type="button" onClick={() => setStep(3)} className="btn btn-primary w-full sm:w-auto mt-4">
-                Review Order
+                {t(language, 'checkoutReviewOrder')}
               </button>
             )}
           </Section>
 
-          <Section title="Review & Place Order" step={3} currentStep={step} onEdit={() => setStep(3)}>
+          <Section title={t(language, 'checkoutReviewStep')} step={3} currentStep={step} language={language} onEdit={() => setStep(3)}>
             <div aria-live="assertive">
               {error && (
                 <p role="alert" className="mb-3 rounded-md bg-red-50 border border-red-200 text-red-600 text-xs font-medium px-3 py-2.5">
@@ -368,7 +507,7 @@ export default function CheckoutPage() {
               data-testid="place-order"
               className="btn btn-primary w-full"
             >
-              {placing ? 'Placing your order…' : 'Place Order'}
+              {placing ? t(language, 'checkoutPlacing') : t(language, 'checkoutPlaceOrder')}
             </button>
           </Section>
         </div>
@@ -406,12 +545,14 @@ function Section({
   title,
   step,
   currentStep,
+  language,
   onEdit,
   children,
 }: {
   title: string;
   step: Step;
   currentStep: Step;
+  language: string;
   onEdit: () => void;
   children: React.ReactNode;
 }) {
@@ -421,7 +562,9 @@ function Section({
       <header className="flex items-center justify-between mb-3">
         <h2 className={cn('text-sm font-bold', isCurrent ? 'text-text-primary' : 'text-text-secondary')}>{title}</h2>
         {currentStep > step && (
-          <button type="button" onClick={onEdit} className="btn btn-link text-xs">Edit</button>
+          <button type="button" onClick={onEdit} className="btn btn-link text-xs">
+            {t(language, 'checkoutEdit')}
+          </button>
         )}
       </header>
       {isCurrent ? children : null}
@@ -429,13 +572,14 @@ function Section({
   );
 }
 
-function mapPaymentError(code: string, message: string): string {
+function mapPaymentError(locale: string, code: string, message: string): string {
   const map: Record<string, string> = {
-    CARD_DECLINED: 'Your card was declined. Try another payment method.',
-    INSUFFICIENT_FUNDS: 'Insufficient funds on the selected card.',
-    PAYMENT_PROVIDER_ERROR: 'The payment provider had an issue. Please retry.',
-    VALIDATION_ERROR: 'Some details need attention.',
-    OUT_OF_STOCK: 'An item just went out of stock.',
+    CARD_DECLINED: 'checkoutErrorCardDeclined',
+    INSUFFICIENT_FUNDS: 'checkoutErrorInsufficientFunds',
+    PAYMENT_PROVIDER_ERROR: 'checkoutErrorProvider',
+    VALIDATION_ERROR: 'checkoutErrorValidation',
+    OUT_OF_STOCK: 'checkoutErrorOutOfStock',
   };
-  return map[code] ?? message;
+  const key = map[code];
+  return key ? t(locale, key) : message;
 }

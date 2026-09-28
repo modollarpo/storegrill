@@ -1,5 +1,6 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction, CookieOptions } from 'express';
 import crypto from 'crypto';
+import { COOKIE_DOMAIN } from '../lib/auth-cookies.js';
 
 const CSRF_COOKIE = 'sg_csrf';
 const CSRF_HEADER = 'x-csrf-token';
@@ -53,15 +54,24 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
   next();
 }
 
-export function setCsrfCookie(_req: Request, res: Response): void {
-  const token = generateCsrfToken();
-  res.cookie(CSRF_COOKIE, token, {
+export function csrfCookieOptions(): CookieOptions {
+  const prod = process.env.NODE_ENV === 'production';
+  return {
     httpOnly: false,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: prod,
+    sameSite: prod ? ('none' as const) : ('lax' as const),
+    domain: COOKIE_DOMAIN,
     path: '/',
     maxAge: 60 * 60 * 1000,
-  });
+  };
+}
+
+export function setCsrfCookie(_req: Request, res: Response): void {
+  res.cookie(CSRF_COOKIE, generateCsrfToken(), csrfCookieOptions());
+}
+
+export function clearCsrfCookie(_req: Request, res: Response): void {
+  res.clearCookie(CSRF_COOKIE, { domain: COOKIE_DOMAIN, path: '/' });
 }
 
 export function issueCsrfCookie(req: Request, res: Response, next: NextFunction): void {

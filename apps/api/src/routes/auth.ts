@@ -8,7 +8,7 @@ import { generateTokens, authenticate, AuthRequest } from '../middleware/auth.js
 import { RegisterSchema, LoginSchema, ForgotPasswordSchema, ResetPasswordSchema } from '@Storegrill/shared';
 import { sendMail } from '../lib/mailer.js';
 import { setAuthCookies, setAccessCookie, clearAuthCookies } from '../lib/auth-cookies.js';
-import { setCsrfCookie } from '../middleware/csrf.js';
+import { setCsrfCookie, clearCsrfCookie } from '../middleware/csrf.js';
 
 const router = Router();
 
@@ -181,7 +181,7 @@ router.post('/logout', authenticate, async (req: AuthRequest, res: Response) => 
     data: { tokenVersion: { increment: 1 } },
   });
   clearAuthCookies(res);
-  res.clearCookie('sg_csrf', { path: '/' });
+  clearCsrfCookie(req, res);
   res.json({ message: 'Logged out successfully' });
 });
 

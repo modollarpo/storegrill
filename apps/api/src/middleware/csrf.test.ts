@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { Request, Response } from 'express';
-import { generateCsrfToken, validateCsrfToken, issueCsrfCookie } from './csrf.js';
+import { generateCsrfToken, validateCsrfToken, issueCsrfCookie, clearCsrfCookie } from './csrf.js';
 
 describe('validateCsrfToken', () => {
   it('accepts a freshly generated token', () => {
@@ -90,5 +90,53 @@ describe('issueCsrfCookie', () => {
 
     expect(setCookie).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('scopes the cookie to the shared parent domain so the storefront can read it', async () => {
+    const prevNodeEnv = process.env.NODE_ENV;
+    const prevDomain = process.env.COOKIE_DOMAIN;
+    process.env.NODE_ENV = 'production';
+    process.env.COOKIE_DOMAIN = '.storegrill.net';
+    vi.resetModules();
+
+    try {
+      const prod = await import('./csrf.js');
+      const { req, res, next, setCookie } = fakeCookieExchange();
+
+      prod.issueCsrfCookie(req, res, next);
+
+      const [, , options] = setCookie.mock.calls[0];
+      expect(options).toMatchObject({
+        httpOnly: false,
+        secure: true,
+        sameSite: 'none',
+        domain: '.storegrill.net',
+        path: '/',
+      });
+    } finally {
+      if (prevNodeEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = prevNodeEnv;
+      if (prevDomain === undefined) delete process.env.COOKIE_DOMAIN;
+      else process.env.COOKIE_DOMAIN = prevDomain;
+      vi.resetModules();
+    }
+  });
+});
+
+describe('clearCsrfCookie', () => {
+  it('clears using the same domain and path the cookie was issued with', () => {
+    const clearCookie = vi.fn();
+    const req = {} as unknown as Request;
+    const res = { clearCookie } as unknown as Response;
+
+    clearCsrfCookie(req, res);
+
+    expect(clearCookie).toHaveBeenCalledTimes(1);
+    const [name, options] = clearCookie.mock.calls[0];
+    expect(name).toBe('sg_csrf');
+    expect(options).toMatchObject({ path: '/' });
+    expect(options.domain).toBe(
+      process.env.COOKIE_DOMAIN || (process.env.NODE_ENV === 'production' ? '.storegrill.net' : undefined)
+    );
   });
 });

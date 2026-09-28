@@ -66,6 +66,7 @@ export function setCsrfCookie(_req: Request, res: Response): void {
 
 export function issueCsrfCookie(req: Request, res: Response, next: NextFunction): void {
   const current = req.cookies?.[CSRF_COOKIE];
+  console.log('DIAG-CSRF url', req.originalUrl, 'cookieHeader', JSON.stringify(req.headers.cookie), 'parsed', JSON.stringify(req.cookies), 'current', JSON.stringify(current));
   if (!current || !validateCsrfToken(current)) {
     setCsrfCookie(req, res);
   }

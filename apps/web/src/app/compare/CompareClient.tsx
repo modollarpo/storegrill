@@ -29,6 +29,11 @@ interface CompareProduct {
 
 type LoadState = 'loading' | 'ready' | 'partial';
 
+function normalizeProductIds(productIds: string[]): string[] {
+  const ids = new Set(productIds.map(id => String(id).trim()).filter(id => id.length > 0));
+  return Array.from(ids).slice(0, MAX_COMPARE);
+}
+
 export function CompareClient({ regionKey }: { regionKey: string }) {
   const { productIds, removeProduct, clearCompare } = useCompareStore();
   const { language } = useRegion();
@@ -40,16 +45,18 @@ export function CompareClient({ regionKey }: { regionKey: string }) {
     let cancelled = false;
 
     async function loadProducts() {
-      if (productIds.length === 0) {
+      const ids = normalizeProductIds(productIds);
+
+      if (ids.length === 0) {
         setProducts([]);
-        setUnavailableIds([]);
+        setUnavailableIds[];
         setLoadState('ready');
         return;
       }
 
       setLoadState('loading');
       const results = await Promise.all(
-        productIds.map(async id => {
+        ids.map(async id => {
           try {
             return await api<CompareProduct>(`/api/v1/products/${id}?regionKey=${regionKey}`);
           } catch (error) {
@@ -67,7 +74,7 @@ export function CompareClient({ regionKey }: { regionKey: string }) {
       const loaded = results.filter((product): product is CompareProduct => product !== null);
       setProducts(loaded);
       setUnavailableIds(productIds.filter((_, index) => results[index] === null));
-      setLoadState(loaded.length === productIds.length ? 'ready' : 'partial');
+      setLoadState(loaded.length === ids.length ? 'ready' : 'partial');
     }
 
     void loadProducts();

@@ -507,7 +507,7 @@ export default function CheckoutPage() {
               onClick={placeOrder}
               disabled={placing || !stepValid}
               data-testid="place-order"
-              className="btn btn-primary w-full"
+              className="btn btn-primary max-w-md"
             >
               {placing ? t(language, 'checkoutPlacing') : t(language, 'checkoutPlaceOrder')}
             </button>

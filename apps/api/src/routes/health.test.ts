@@ -39,6 +39,10 @@ function readIssuedToken(res: Response): string {
   return decodeURIComponent(match[1]);
 }
 
+function getNoKeepAlive(port: number, path: string): Promise<Response> {
+  return fetch(`http://localhost:${port}${path}`, { headers: { connection: 'close' } });
+}
+
 describe('Health endpoint', () => {
   it('GET /api/health returns ok', async () => {
     const { port, close } = await listen();
@@ -98,7 +102,7 @@ describe('CSRF protection', () => {
   it('issues an sg_csrf cookie to anonymous visitors so guest checkout can proceed', async () => {
     const { port, close } = await listen();
     try {
-      const res = await fetch(`http://localhost:${port}/api/health`);
+      const res = await getNoKeepAlive(port, '/api/health');
       expect(res.status).toBe(200);
       expect(res.headers.get('set-cookie')).not.toContain('HttpOnly');
       expect(validateCsrfToken(readIssuedToken(res))).toBe(true);
@@ -110,10 +114,10 @@ describe('CSRF protection', () => {
   it('accepts a mutating request that echoes the issued cookie as x-csrf-token', async () => {
     const { port, close } = await csrfServer();
     try {
-      const csrf = readIssuedToken(await fetch(`http://localhost:${port}/api/health`));
+      const csrf = readIssuedToken(await getNoKeepAlive(port, '/api/health'));
       const res = await fetch(`http://localhost:${port}/api/v1/cart/items`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf, cookie: `sg_csrf=${csrf}` },
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf, cookie: `sg_csrf=${csrf}`, connection: 'close' },
         body: JSON.stringify({ productId: 'test', quantity: 1 }),
       });
       expect(res.status).toBe(200);
@@ -125,10 +129,10 @@ describe('CSRF protection', () => {
   it('rejects a mutating request whose header does not match the cookie', async () => {
     const { port, close } = await csrfServer();
     try {
-      const csrf = readIssuedToken(await fetch(`http://localhost:${port}/api/health`));
+      const csrf = readIssuedToken(await getNoKeepAlive(port, '/api/health'));
       const res = await fetch(`http://localhost:${port}/api/v1/cart/items`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': generateCsrfToken(), cookie: `sg_csrf=${csrf}` },
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': generateCsrfToken(), cookie: `sg_csrf=${csrf}`, connection: 'close' },
         body: JSON.stringify({ productId: 'test', quantity: 1 }),
       });
       expect(res.status).toBe(403);

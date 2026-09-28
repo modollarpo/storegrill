@@ -65,7 +65,8 @@ export function setCsrfCookie(_req: Request, res: Response): void {
 }
 
 export function issueCsrfCookie(req: Request, res: Response, next: NextFunction): void {
-  if (!req.cookies?.[CSRF_COOKIE]) {
+  const current = req.cookies?.[CSRF_COOKIE];
+  if (!current || !validateCsrfToken(current)) {
     setCsrfCookie(req, res);
   }
   next();

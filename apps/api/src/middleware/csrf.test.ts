@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { generateCsrfToken, validateCsrfToken } from './csrf.js';
+import { describe, it, expect, vi } from 'vitest';
+import type { Request, Response } from 'express';
+import { generateCsrfToken, validateCsrfToken, issueCsrfCookie } from './csrf.js';
 
 describe('validateCsrfToken', () => {
   it('accepts a freshly generated token', () => {
@@ -37,5 +38,57 @@ describe('validateCsrfToken', () => {
       expect(() => validateCsrfToken(value)).not.toThrow();
       expect(validateCsrfToken(value)).toBe(false);
     }
+  });
+});
+
+function fakeCookieExchange(cookies?: Record<string, string>) {
+  const setCookie = vi.fn();
+  const req = { cookies: cookies ?? {} } as unknown as Request;
+  const res = { cookie: setCookie } as unknown as Response;
+  const next = vi.fn();
+  return { req, res, next, setCookie };
+}
+
+describe('issueCsrfCookie', () => {
+  it('issues a valid, JS-readable token to a visitor with no cookie', () => {
+    const { req, res, next, setCookie } = fakeCookieExchange();
+
+    issueCsrfCookie(req, res, next);
+
+    expect(setCookie).toHaveBeenCalledTimes(1);
+    const [name, token, options] = setCookie.mock.calls[0];
+    expect(name).toBe('sg_csrf');
+    expect(validateCsrfToken(token)).toBe(true);
+    expect(options).toMatchObject({ httpOnly: false, path: '/' });
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('issues a token even when cookie parsing produced no cookies at all', () => {
+    const { req, res, next, setCookie } = fakeCookieExchange();
+    (req as unknown as { cookies: undefined }).cookies = undefined;
+
+    issueCsrfCookie(req, res, next);
+
+    expect(setCookie).toHaveBeenCalledTimes(1);
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not overwrite a token the visitor already holds', () => {
+    const existing = generateCsrfToken();
+    const { req, res, next, setCookie } = fakeCookieExchange({ sg_csrf: existing });
+
+    issueCsrfCookie(req, res, next);
+
+    expect(setCookie).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('replaces a token the visitor holds that fails validation', () => {
+    const { req, res, next, setCookie } = fakeCookieExchange({ sg_csrf: 'forged.signature' });
+
+    issueCsrfCookie(req, res, next);
+
+    expect(setCookie).toHaveBeenCalledTimes(1);
+    expect(next).toHaveBeenCalledTimes(1);
   });
 });

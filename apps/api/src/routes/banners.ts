@@ -1,12 +1,12 @@
-import { Router, Request, Response } from 'express';
-import {
+import { Request, Response } from 'express';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';import {
   HERO_MAX_BANNER_SLIDES,
   bannerOrder,
   campaignCreativeToSlide,
   type BannerSlide,
 } from '../services/banner-mapping.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 router.get('/', async (req: Request, res: Response) => {
   const regionKey =

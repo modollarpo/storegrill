@@ -1,4 +1,4 @@
-import { Router, Response, Request } from 'express';
+import { Response, Request } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma.js';
 import { resolveProductPricing } from '../utils/pricing.js';
@@ -7,10 +7,10 @@ import { isSearchConfigured, searchProducts, reindexProducts, ensureSearchIndex 
 import { enqueueReindexTask } from '../services/reindex-queue.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import { createChildLogger } from '../lib/logger.js';
-
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 const log = createChildLogger('search');
 
-const router = Router();
+const router = createAsyncRouter();
 
 const QUERY_SCHEMA = z.object({
   q: z.string().min(1),

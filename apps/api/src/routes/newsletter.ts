@@ -1,7 +1,7 @@
-﻿import { Router } from 'express';
-import { prisma } from '../db/prisma.js';
+﻿import { prisma } from '../db/prisma.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-export const newsletterRouter = Router();
+export const newsletterRouter = createAsyncRouter();
 
 // POST /api/v1/newsletter/subscribe
 newsletterRouter.post('/subscribe', async (req, res) => {

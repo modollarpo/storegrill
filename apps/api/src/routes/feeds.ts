@@ -1,12 +1,13 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { AuthRequest } from '../middleware/auth.js';
 import { buildFeed, FeedChannel } from '../services/feed-builder.js';
 import { DEFAULT_REGIONS } from '@Storegrill/shared';
 import { getLatestFeeds } from '../services/feed-log.js';
 import { cache, TTL } from '../lib/cache.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 const ChannelSchema = z.enum(['google-merchant', 'facebook', 'tiktok', 'pinterest']);
 

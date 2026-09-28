@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
@@ -7,7 +7,7 @@ import { requireMerchantPermission } from '../services/merchant-rbac.js';
 import { getVendorStorefront } from '../services/vendor-storefront.js';
 import { UpdateVendorSchema, VendorApplicationPatchSchema, CarrierShipmentStatus, normalizeCarrierProvider, MerchantPermission } from '@Storegrill/shared';
 import { slugify } from '../utils/slugify.js';
-
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 const KYC_CONTAINER = process.env.AZURE_STORAGE_KYC_CONTAINER || 'kyc-docs';
 const MAX_DOCUMENT_BYTES = 5 * 1024 * 1024;
 
@@ -28,7 +28,7 @@ function parseDocuments(json: string | null): StoredDocument[] {
   }
 }
 
-const router = Router();
+const router = createAsyncRouter();
 
 router.get('/', async (req: AuthRequest, res: Response) => {
   const query = z.object({

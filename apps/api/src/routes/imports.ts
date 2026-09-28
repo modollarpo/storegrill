@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import multer from 'multer';
 import { tmpdir } from 'node:os';
@@ -7,7 +7,7 @@ import { mkdir } from 'node:fs/promises';
 import { prisma } from '../db/prisma.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import { queueImportJob } from '../services/job-queue.js';
-
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 export const uploadDir = join(tmpdir(), 'storegrill-imports');
 void mkdir(uploadDir, { recursive: true }).catch(err => {
   console.error('[imports] failed to create upload dir', err);
@@ -21,7 +21,7 @@ const upload = multer({
   limits: { fileSize: 100 * 1024 * 1024 },
 });
 
-const router = Router();
+const router = createAsyncRouter();
 const ModeSchema = z.enum(['APPLY', 'DRY_RUN']).default('APPLY');
 
 async function requireVendor(req: AuthRequest) {

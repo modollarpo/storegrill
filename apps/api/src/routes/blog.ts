@@ -1,8 +1,8 @@
-import { Router } from 'express';
 import { prisma } from '../db/prisma.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-export const blogRouter = Router();
+export const blogRouter = createAsyncRouter();
 
 // GET /api/v1/blog — list published posts
 blogRouter.get('/', async (req, res) => {

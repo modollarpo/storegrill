@@ -1,10 +1,11 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import { trackEvent, trackBatch, getSummary, getTopEntities, getUserEvents } from '../services/analytics.js';
 import { sendPinterestCapiEvent } from '../services/pinterest-capi.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 const eventSchema = z.object({
   eventType: z.string().min(1),

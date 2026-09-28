@@ -22,6 +22,7 @@ export * from './utils/geo';
 export * from './utils/string-list';
 export * from './domain/postal-rules';
 export * from './domain/address';
+export * from './domain/checkout-payload';
 export * from './domain/merchant';
 export * from './domain/commission';
 export * from './domain/marketing';

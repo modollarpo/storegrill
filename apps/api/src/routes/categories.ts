@@ -1,9 +1,10 @@
-import { Router, Response, Request } from 'express';
+import { Response, Request } from 'express';
 import { prisma } from '../db/prisma.js';
 import { getCategoryTree, getRecentCategoryPage, buildTree, CategoryNode } from '../services/categories.js';
 import { cache, TTL } from '../lib/cache.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 const MAX_RECENT_OFFSET = 1000;
 

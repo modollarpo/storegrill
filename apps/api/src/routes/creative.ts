@@ -1,12 +1,13 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import { generateBannerImage, enhanceProductImage, generateAdCopy } from '../services/image-generation.js';
 import { generateDealCopy, type DealFacts } from '../services/deal-copy.js';
 import { resolveMerchantContext } from '../services/merchant-rbac.js';
 import { persistBannerImage } from '../services/banner-storage.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 const BANNER_STATUSES = ['DRAFT', 'ACTIVE', 'PAUSED', 'ARCHIVED'] as const;
 

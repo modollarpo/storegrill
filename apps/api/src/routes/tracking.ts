@@ -1,9 +1,10 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../db/prisma.js';
 import { statusLabel } from '../services/carriers.js';
 import { carrierDisplayName, normalizeCarrierProvider, type CarrierShipmentStatusValue } from '@Storegrill/shared';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 router.get('/:id', async (req: Request, res: Response) => {
   const shipment = await prisma.shipment.findUnique({

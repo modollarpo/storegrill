@@ -7,12 +7,12 @@ import { useCart, CartItemLine } from '@/components/providers/CartContext';
 import { useRegion } from '@/components/providers/RegionContext';
 import { useAnalytics } from '@/components/providers/AnalyticsProvider';
 import { useToast } from '@/components/feedback/Toast';
-import { api, ApiError, API_BASE, csrfHeaders } from '@/lib/api';
+import { api, ApiError, API_BASE, csrfHeaders, isNetworkError } from '@/lib/api';
 import { t } from '@/i18n';
 import {
   DEFAULT_REGIONS,
-  PAYMENT_METHOD_PROVIDER,
   addressIssuesByField,
+  buildCheckoutPayload,
   minorToMajorUnits,
   isPaymentMethodSupported,
   validateAddress,
@@ -54,7 +54,7 @@ export default function CheckoutPage() {
   const [accountName, setAccountName] = useState('');
   const [accountPassword, setAccountPassword] = useState('');
   const [address, setAddress] = useState<AddressFormValue>(EMPTY_ADDRESS);
-  const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId | ''>('');
   const [notes, setNotes] = useState('');
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -241,7 +241,6 @@ export default function CheckoutPage() {
       }
 
       const selected = options.find(o => o.id === activePayment);
-      const provider = PAYMENT_METHOD_PROVIDER[activePayment as PaymentMethodId] ?? 'stripe';
       const flow = selected?.flow ?? paymentFlow(activePayment as PaymentMethodId);
 
       const result = await api<{
@@ -251,25 +250,21 @@ export default function CheckoutPage() {
         payment?: { redirectUrl?: string | null; mode?: 'live' | 'sandbox' } | null;
       }>('/api/v1/orders/checkout', {
         method: 'POST',
-        body: JSON.stringify({
-          shippingAddress: {
-            street: addressDraft.street,
-            line2: addressDraft.line2,
-            city: addressDraft.city,
-            state: addressDraft.state,
-            zip: addressDraft.zip,
-            country: addressDraft.country,
-          },
-          paymentMethod: provider,
-          regionKey,
-          couponCode: cart.appliedCoupon?.code,
-          email,
-          createAccount: createAccount || undefined,
-          name: accountName || undefined,
-          password: accountPassword || undefined,
-          saveAddress: saveAddress || undefined,
-          notes: `language=${language};displayMethod=${activePayment};notes=${notes}`,
-        }),
+        body: JSON.stringify(
+          buildCheckoutPayload({
+            address: addressDraft,
+            paymentMethod: activePayment,
+            regionKey,
+            language,
+            email,
+            createAccount,
+            accountName,
+            accountPassword,
+            saveAddress,
+            notes,
+            couponCode: cart.appliedCoupon?.code,
+          })
+        ),
       });
 
       if (result.payment?.redirectUrl) {
@@ -308,12 +303,19 @@ export default function CheckoutPage() {
       cart.clear();
       router.push(`/checkout/confirmation?order=${encodeURIComponent(orderNumber)}`);
     } catch (e) {
-      if (e instanceof ApiError) {
-        setError(mapPaymentError(language, e.code, e.message));
-      } else {
-        setError(t(language, 'checkoutGenericError'));
+      const message = checkoutErrorMessage(language, e);
+      if (!(e instanceof ApiError)) {
+        // A non-API failure is the class of bug that produced an undiagnosable
+        // "something went wrong" for shoppers and no clue for us. Keep the
+        // original error in the console so the cause is recoverable.
+        console.error('[checkout] order failed', e);
       }
-        toast({ variant: 'error', title: t(language, 'checkoutReviewStep'), description: e instanceof ApiError ? e.message : t(language, 'checkoutGenericError') });
+      setError(message);
+      toast({
+        variant: 'error',
+        title: t(language, 'checkoutReviewStep'),
+        description: message,
+      });
     } finally {
       setPlacing(false);
     }
@@ -579,7 +581,23 @@ function mapPaymentError(locale: string, code: string, message: string): string 
     PAYMENT_PROVIDER_ERROR: 'checkoutErrorProvider',
     VALIDATION_ERROR: 'checkoutErrorValidation',
     OUT_OF_STOCK: 'checkoutErrorOutOfStock',
+    EMPTY_CART: 'checkoutErrorEmptyCart',
+    INVALID_ADDRESS: 'checkoutErrorAddress',
+    PAYMENT_METHOD_UNAVAILABLE: 'checkoutErrorPaymentUnavailable',
   };
   const key = map[code];
   return key ? t(locale, key) : message;
+}
+
+/**
+ * Turns a checkout failure into shopper-facing text.
+ *
+ * A transport failure is called out separately from a rejected order: the
+ * shopper did nothing wrong in the first case and retrying is the sensible
+ * next step, whereas the second may need an input change.
+ */
+export function checkoutErrorMessage(locale: string, error: unknown): string {
+  if (isNetworkError(error)) return t(locale, 'checkoutErrorUnreachable');
+  if (error instanceof ApiError) return mapPaymentError(locale, error.code, error.message);
+  return t(locale, 'checkoutGenericError');
 }

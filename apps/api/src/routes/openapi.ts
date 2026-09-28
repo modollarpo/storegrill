@@ -1,6 +1,7 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response } from 'express';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 router.get('/', (_req: Request, res: Response) => {
   res.type('html').send(`<!DOCTYPE html>

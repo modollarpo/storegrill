@@ -1,8 +1,9 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { prisma } from '../db/prisma.js';
 import { optionalAuth, AuthRequest } from '../middleware/auth.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
   const { regionKey, limit = '12' } = req.query;

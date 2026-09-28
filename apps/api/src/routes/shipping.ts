@@ -1,10 +1,11 @@
-import { Router, Response, Request } from 'express';
+import { Response, Request } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma.js';
 import { calculateGroupedShipping, VendorShippingPolicy, ShippingZone } from '@Storegrill/shared';
 import { DEFAULT_REGIONS } from '@Storegrill/shared';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 router.post('/rates', async (req: Request, res: Response) => {
   const body = z.object({

@@ -1,12 +1,13 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { randomBytes } from 'node:crypto';
 import { prisma } from '../db/prisma.js';
 import { generateTokens } from '../middleware/auth.js';
 import { PROVIDER_CONFIGS, buildAuthorizeUrl, fetchToken, fetchProfile } from '../auth/oauth/config.js';
 import { setAuthCookies, COOKIE_DOMAIN } from '../lib/auth-cookies.js';
 import { setCsrfCookie } from '../middleware/csrf.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 const API_BASE_URL = process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
 const WEB_BASE_URL = process.env.WEB_BASE_URL || 'http://localhost:3000';
@@ -72,7 +73,7 @@ router.get('/:provider/callback', async (req: Request, res: Response) => {
 
   console.log(
     `oauth callback: provider=${provider} codeLen=${code?.length ?? 0} ` +
-      `code=${code ? `${code.slice(0, 4)}…` : 'missing'} ` +
+      `code=${code ? `${code.slice(0, 4)}ï¿½` : 'missing'} ` +
       `state=${state ? (expectedState && state === expectedState ? 'match' : 'mismatch') : 'missing'} ` +
       `host=${req.get('host')}`
   );

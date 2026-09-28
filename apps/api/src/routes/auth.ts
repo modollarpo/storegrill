@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { z } from 'zod';
@@ -9,8 +9,9 @@ import { RegisterSchema, LoginSchema, ForgotPasswordSchema, ResetPasswordSchema 
 import { sendMail } from '../lib/mailer.js';
 import { setAuthCookies, setAccessCookie, clearAuthCookies } from '../lib/auth-cookies.js';
 import { setCsrfCookie, clearCsrfCookie } from '../middleware/csrf.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 const WEB_BASE = process.env.WEB_BASE_URL || 'http://localhost:3000';
 const VERIFY_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;

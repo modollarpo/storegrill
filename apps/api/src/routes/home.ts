@@ -1,9 +1,10 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../db/prisma.js';
 import { getCategoryTree } from '../services/categories.js';
 import { dealPriceFor, resolveListPrice } from '../services/deal-pricing.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 const DEFAULT_PAGE_SIZE = 3;
 const DEAL_IMAGE_TYPES = new Set(['PERCENTAGE_OFF', 'FIXED_AMOUNT', 'FLASH_SALE']);
 

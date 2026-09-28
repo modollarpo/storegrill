@@ -34,7 +34,18 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     if (token) headers[CSRF_HEADER] = token;
   }
 
-  const res = await fetch(`${API_BASE}${path}`, { ...init, headers, credentials: 'include' });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, { ...init, headers, credentials: 'include' });
+  } catch (cause) {
+    // A rejected fetch means the response never reached us: DNS failure, an
+    // offline client, a gateway 502/504 without CORS headers, or a CORS block.
+    // It is a transport fault, not a validation error, so it gets its own type
+    // and keeps the original cause for the console instead of collapsing into
+    // an undiagnosable generic failure.
+    throw new NetworkError(`Could not reach the store (${method} ${path})`, 0, 'NETWORK_ERROR', cause);
+  }
+
   if (!res.ok) {
     let code = 'REQUEST_FAILED';
     let message = `Request failed with status ${res.status}`;
@@ -53,7 +64,16 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new ApiError(message, res.status, code);
   }
   if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
+  try {
+    return (await res.json()) as T;
+  } catch (cause) {
+    throw new NetworkError(
+      `Malformed response from the store (${method} ${path}, status ${res.status})`,
+      res.status,
+      'MALFORMED_RESPONSE',
+      cause
+    );
+  }
 }
 
 export async function csrfHeaders(): Promise<Record<string, string>> {
@@ -67,4 +87,33 @@ export class ApiError extends Error {
     super(message);
     this.name = 'ApiError';
   }
+}
+
+/**
+ * A transport-level failure: the request never produced a readable response.
+ *
+ * Distinct from ApiError because the server may or may not have seen the
+ * request. Retrying is safe for idempotent reads, and the caller must not
+ * present it as a validation problem the shopper can fix.
+ */
+export class NetworkError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+    public code: string,
+    override readonly cause?: unknown
+  ) {
+    super(message);
+    this.name = 'NetworkError';
+  }
+}
+
+/** True when the failure was transport-level rather than a server response. */
+export function isNetworkError(error: unknown): error is NetworkError {
+  return error instanceof NetworkError;
+}
+
+/** True when the server answered with an error status. */
+export function isApiError(error: unknown): error is ApiError {
+  return error instanceof ApiError;
 }

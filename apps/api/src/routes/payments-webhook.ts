@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../db/prisma.js';
 import {
   verifyStripeSignature,
@@ -8,8 +8,9 @@ import {
   type PaypalWebhookHeaders,
 } from '../payments/providers.js';
 import { markCaptured, recordRefund } from '../payments/settlement.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 // ─── Stripe ───────────────────────────────────────────────────────────────────
 

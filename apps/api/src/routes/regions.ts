@@ -1,9 +1,10 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { prisma } from '../db/prisma.js';
 import { optionalAuth, AuthRequest } from '../middleware/auth.js';
 import { DEFAULT_REGIONS, parseStringList } from '@Storegrill/shared';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 router.get('/', async (_req: AuthRequest, res: Response) => {
   const regions = await prisma.region.findMany({

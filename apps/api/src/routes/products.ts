@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
@@ -10,8 +10,9 @@ import { resolveProductPricing } from '../utils/pricing.js';
 import { loadActiveDeals } from '../services/deal-eval.js';
 import { getCompanions } from '../lib/companions.js';
 import { syncProductToIndex } from '../services/ai-search.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 router.get('/', optionalAuth, async (req: AuthRequest, res: Response) => {
   const query = ProductFilterSchema.parse(req.query);

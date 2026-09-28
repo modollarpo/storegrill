@@ -65,7 +65,7 @@ export function CheckoutPaymentMethod({
   locale: string;
   options: PaymentOption[];
   selectedId: string;
-  onSelect: (id: string) => void;
+  onSelect: (id: PaymentMethodId) => void;
   amount: number;
   currency: string;
 }) {

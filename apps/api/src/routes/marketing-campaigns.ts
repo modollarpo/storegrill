@@ -1,9 +1,10 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 const CreateCampaignSchema = z.object({
   name: z.string().min(2).max(150),

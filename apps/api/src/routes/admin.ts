@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
@@ -10,8 +10,9 @@ import { getLatestFeeds, getFeedHistory } from '../services/feed-log.js';
 import { FeedChannel } from '../services/feed-builder.js';
 import { getEventVolumes } from '../services/analytics.js';
 import { recordPayoutPaid, recordPayoutPaidReversal } from '../services/ledger-entries.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 const dateOrIso = z.union([z.date(), z.string()]).transform(v => (typeof v === 'string' ? new Date(v) : v));
 
@@ -698,7 +699,7 @@ router.get('/analytics', async (_req: AuthRequest, res: Response) => {
 
     const prodAgg = byProductId.get(item.productId) ?? {
       name: item.product.name,
-      category: item.product.category?.name ?? '—',
+      category: item.product.category?.name ?? 'ï¿½',
       revenue: 0,
       units: 0,
     };

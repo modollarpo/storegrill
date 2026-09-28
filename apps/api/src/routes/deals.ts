@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma.js';
 import { optionalAuth, authenticate, authorize, AuthRequest } from '../middleware/auth.js';
@@ -11,8 +11,9 @@ import { evaluateDealEconomics } from '../services/deal-valuation.js';
 import { dealPriceFor, resolveListPrice } from '../services/deal-pricing.js';
 import { mapCommissionRulesToShared } from '../services/commission-rule-mapper.js';
 import { cache, TTL } from '../lib/cache.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 function getProductSelect(regionKey: string) {
   return {

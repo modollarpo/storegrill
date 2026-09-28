@@ -1,10 +1,10 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma.js';
 import { authenticate, authorize, AuthRequest, requireVerifiedEmail } from '../middleware/auth.js';
 import { dualAuth, type DualAuthRequest } from '../middleware/dual-auth.js';
 import { generateTokens } from '../middleware/auth.js';
-import { CheckoutSchema, DEFAULT_REGIONS, isPaymentMethodSupported, validateAddress } from '@Storegrill/shared';
+import { CheckoutSchema, GuestCheckoutSchema, DEFAULT_REGIONS, isPaymentMethodSupported, validateAddress } from '@Storegrill/shared';
 import { calculateTax, TaxRule } from '@Storegrill/shared';
 import { ShippingZone, VendorShippingPolicy, calculateGroupedShipping, planFulfillment } from '@Storegrill/shared';
 import { createMoney, convertMoney } from '@Storegrill/shared';
@@ -15,8 +15,9 @@ import { saveAddressForOrder } from '../lib/addresses.js';
 import { notifyOrderCancelled, notifyOrderConfirmed } from '../lib/emails.js';
 import { loadCommissionRules, resolveCommissionFromRules, snapshotToJson } from '../services/commission-snapshot.js';
 import { recordOrderSale, recordOrderRefund } from '../services/ledger-entries.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 router.use(dualAuth);
 
@@ -213,13 +214,6 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 });
 
 router.post('/checkout', async (req: DualAuthRequest, res: Response) => {
-  const GuestCheckoutSchema = CheckoutSchema.extend({
-    email: z.string().email(),
-    createAccount: z.boolean().default(false),
-    password: z.string().min(8).optional(),
-    name: z.string().min(1).max(100).optional(),
-  });
-
   let body: any;
   if (req.user) {
     body = CheckoutSchema.parse(req.body);
@@ -258,6 +252,15 @@ router.post('/checkout', async (req: DualAuthRequest, res: Response) => {
         },
       });
     }
+  }
+
+  if (!isPaymentMethodSupported(body.paymentMethod)) {
+    return res.status(400).json({
+      error: {
+        code: 'PAYMENT_METHOD_UNAVAILABLE',
+        message: `${body.paymentMethod} is not available for this region yet`,
+      },
+    });
   }
 
   const cartWhere: any = req.user
@@ -486,15 +489,6 @@ router.post('/checkout', async (req: DualAuthRequest, res: Response) => {
   );
 
   const orderNumber = `SG-${Date.now().toString(36).toUpperCase()}-${uuid().slice(0, 4).toUpperCase()}`;
-
-  if (!isPaymentMethodSupported(body.paymentMethod)) {
-    return res.status(400).json({
-      error: {
-        code: 'PAYMENT_METHOD_UNAVAILABLE',
-        message: `${body.paymentMethod} is not available for this region yet`,
-      },
-    });
-  }
 
   const provider = body.paymentMethod === 'cod' ? 'cod' : body.paymentMethod === 'paypal' ? 'paypal' : 'stripe';
   const needsRedirectFlow = provider !== 'cod';

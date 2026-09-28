@@ -124,3 +124,11 @@ export const CheckoutSchema = z.object({
   saveAddress: z.boolean().default(false),
   couponCode: z.string().max(64).optional(),
 });
+
+/** The wire contract the storefront hits as a guest. */
+export const GuestCheckoutSchema = CheckoutSchema.extend({
+  email: z.string().email(),
+  createAccount: z.boolean().default(false),
+  password: z.string().min(8).optional(),
+  name: z.string().min(1).max(100).optional(),
+});

@@ -1,11 +1,12 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma.js';
 import { dualAuth, type DualAuthRequest } from '../middleware/dual-auth.js';
 import { evaluateDeals, type CartItem } from '../services/deal-engine.js';
 import { loadActiveDeals } from '../services/deal-eval.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 router.use(dualAuth);
 

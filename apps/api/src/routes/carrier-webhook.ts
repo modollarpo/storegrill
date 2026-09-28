@@ -1,12 +1,13 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma.js';
 import { parseCarrierEvents, applyTrackingEvents } from '../services/carriers.js';
 import { normalizeCarrierProvider } from '@Storegrill/shared';
 import { sendShipmentStatusEmail } from '../lib/emails.js';
 import type { Request } from 'express';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 function webhookSecret(): string {
   const configured = process.env.TRACKING_WEBHOOK_SECRET;

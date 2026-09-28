@@ -1,10 +1,11 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma.js';
 import { authenticate, AuthRequest, optionalAuth } from '../middleware/auth.js';
 import { sendPushBroadcast, sendPushToRegion, sendPushToUser, pushConfigured } from '../services/push.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 const subscriptionSchema = z.object({
   endpoint: z.string().url(),

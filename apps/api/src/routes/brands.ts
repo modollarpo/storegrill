@@ -1,7 +1,8 @@
-import { Router, Response, Request } from 'express';
+import { Response, Request } from 'express';
 import { prisma } from '../db/prisma.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 router.get('/', async (req: Request, res: Response) => {
   const brands = await prisma.brand.findMany({

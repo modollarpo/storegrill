@@ -1,12 +1,12 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
-import {
+import { createAsyncRouter } from '../middleware/asyncRouter.js';import {
   createExperiment, startExperiment, pauseExperiment, completeExperiment,
   getExperimentResults, listExperiments, assignVariant, trackExperimentEvent,
 } from '../services/experiments.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 router.get('/', authenticate, authorize('ADMIN'), async (_req: AuthRequest, res: Response) => {
   const { prisma } = await import('../index.js');

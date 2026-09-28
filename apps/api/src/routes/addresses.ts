@@ -1,9 +1,9 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { NotFoundError } from '../middleware/errorHandler.js';
 import { AddressSchema } from '@Storegrill/shared';
-import {
+import { createAsyncRouter } from '../middleware/asyncRouter.js';import {
   MAX_SAVED_ADDRESSES,
   assertValidAddress,
   loadAddresses,
@@ -14,7 +14,7 @@ import {
   type AddressDraft,
 } from '../lib/addresses.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 const AddressBodySchema = AddressSchema.omit({ id: true, isDefault: true });
 

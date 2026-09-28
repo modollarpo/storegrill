@@ -1,8 +1,9 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { translateBatch } from '../services/translate.js';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 const BodySchema = z.object({
   texts: z.array(z.string().max(5000)).min(1).max(100),

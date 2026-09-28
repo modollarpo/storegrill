@@ -1,10 +1,11 @@
-import { Router, Response } from 'express';
+import { Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db/prisma.js';
 import { authenticate, optionalAuth, authorize, AuthRequest, requireVerifiedEmail } from '../middleware/auth.js';
 import { CreateReviewSchema } from '@Storegrill/shared';
+import { createAsyncRouter } from '../middleware/asyncRouter.js';
 
-const router = Router();
+const router = createAsyncRouter();
 
 router.get('/product/:productId', optionalAuth, async (req: AuthRequest, res: Response) => {
   const { productId } = req.params;

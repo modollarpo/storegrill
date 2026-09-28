@@ -62,6 +62,10 @@ export function setCsrfCookie(_req: Request, res: Response): void {
     path: '/',
     maxAge: 60 * 60 * 1000,
   });
+  const after = res.getHeader('set-cookie');
+  res.once('finish', () => {
+    console.log('DIAG-SET atFinish url', _req.originalUrl, 'nodeEnv', process.env.NODE_ENV, 'afterCookie', JSON.stringify(after), 'atFinishHeader', JSON.stringify(res.getHeaders()['set-cookie']));
+  });
 }
 
 export function issueCsrfCookie(req: Request, res: Response, next: NextFunction): void {

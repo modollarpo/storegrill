@@ -7,7 +7,7 @@ import { useCart, CartItemLine } from '@/components/providers/CartContext';
 import { useRegion } from '@/components/providers/RegionContext';
 import { useAnalytics } from '@/components/providers/AnalyticsProvider';
 import { useToast } from '@/components/feedback/Toast';
-import { api, ApiError, API_BASE } from '@/lib/api';
+import { api, ApiError, API_BASE, csrfHeaders } from '@/lib/api';
 import { DEFAULT_REGIONS, PAYMENT_METHOD_PROVIDER, PaymentMethodId } from '@Storegrill/shared';
 import { cn } from '@/lib/utils';
 import { CheckoutOrderSummary } from '@/components/checkout/CheckoutOrderSummary';
@@ -109,7 +109,7 @@ export default function CheckoutPage() {
     try {
       const res = await fetch(`${API_BASE}/api/v1/deals/apply-coupon`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await csrfHeaders()) },
         body: JSON.stringify({
           code,
           regionKey,

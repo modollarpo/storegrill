@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { readConsent, CookieConsent } from '@/lib/consent';
-import { API_BASE } from '@/lib/api';
+import { API_BASE, csrfHeaders } from '@/lib/api';
 
 export interface EcommerceItem {
   item_id: string;
@@ -400,12 +400,14 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
 
     const EVENT_TYPES_TO_INTERNAL = new Set(['page_view', 'searchhit', 'detail', 'view_item', 'add_to_cart', 'begin_checkout', 'purchase']);
     if (EVENT_TYPES_TO_INTERNAL.has(event.event)) {
-      fetch(`${API_BASE}/api/v1/analytics/event`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(toInternalEvent(event, eventId)),
-        keepalive: true,
-      }).catch(() => {});
+      csrfHeaders()
+        .then(csrf => fetch(`${API_BASE}/api/v1/analytics/event`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...csrf },
+          body: JSON.stringify(toInternalEvent(event, eventId)),
+          keepalive: true,
+        }))
+        .catch(() => {});
     }
 
     if (process.env.NODE_ENV === 'development') {

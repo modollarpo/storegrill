@@ -7,7 +7,7 @@ import { useCart } from '@/components/providers/CartContext';
 import { useRegion } from '@/components/providers/RegionContext';
 import { PriceDisplay } from '@/components/commerce/PriceDisplay';
 import { DEFAULT_REGIONS } from '@Storegrill/shared';
-import { API_BASE } from '@/lib/api';
+import { API_BASE, csrfHeaders } from '@/lib/api';
 import { storefrontImage } from '@/lib/images';
 import { cn } from '@/lib/utils';
 
@@ -40,7 +40,7 @@ export default function CartPage() {
     try {
       const res = await fetch(`${API_BASE}/api/v1/deals/apply-coupon`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await csrfHeaders()) },
         body: JSON.stringify({
           code: coupon,
           regionKey,

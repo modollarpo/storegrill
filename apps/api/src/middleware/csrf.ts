@@ -25,7 +25,10 @@ export function generateCsrfToken(): string {
 export function validateCsrfToken(token: string): boolean {
   const [raw, sig] = token.split('.');
   if (!raw || !sig) return false;
-  return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(signToken(raw)));
+  const expected = Buffer.from(signToken(raw));
+  const provided = Buffer.from(sig);
+  if (provided.length !== expected.length) return false;
+  return crypto.timingSafeEqual(provided, expected);
 }
 
 export function csrfProtection(req: Request, res: Response, next: NextFunction): void {
@@ -59,4 +62,11 @@ export function setCsrfCookie(_req: Request, res: Response): void {
     path: '/',
     maxAge: 60 * 60 * 1000,
   });
+}
+
+export function issueCsrfCookie(req: Request, res: Response, next: NextFunction): void {
+  if (!req.cookies?.[CSRF_COOKIE]) {
+    setCsrfCookie(req, res);
+  }
+  next();
 }

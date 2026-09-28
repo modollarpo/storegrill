@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { API_BASE } from "@/lib/api";
+import { API_BASE, csrfHeaders } from "@/lib/api";
 
 export function Newsletter() {
   const [email, setEmail] = useState<string>("");
@@ -16,7 +16,7 @@ export function Newsletter() {
     try {
       const res = await fetch(`${API_BASE}/api/v1/newsletter/subscribe`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(await csrfHeaders()) },
         body: JSON.stringify({ email }),
       });
       if (!res.ok) throw new Error("Failed");
@@ -77,7 +77,7 @@ export function NewsletterSection() {
     try {
       const res = await fetch(`${API_BASE}/api/v1/newsletter/subscribe`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(await csrfHeaders()) },
         body: JSON.stringify({ email }),
       });
       if (!res.ok) throw new Error("Failed");

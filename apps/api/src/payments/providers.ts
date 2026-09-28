@@ -6,6 +6,15 @@ export interface PaymentOrderContext {
   currencyCode: string;
   totalMinorUnits: number;
   items: Array<{ name: string; unitPriceMinorUnits: number; quantity: number }>;
+  /**
+   * Components of totalMinorUnits that are not part of the line items. PayPal
+   * requires item_total to equal the sum of unit_amount * quantity, so anything
+   * else in the total has to be declared in the breakdown or the order is
+   * rejected with ITEM_TOTAL_MISMATCH.
+   */
+  shippingMinorUnits?: number;
+  taxMinorUnits?: number;
+  discountMinorUnits?: number;
   customerEmail?: string;
   paymentMethod?: string;
 }
@@ -88,6 +97,53 @@ export function paypalUnitAmount(minorUnits: number, currencyCode: string): { cu
     currency_code: currencyCode,
     value: (minorUnits / divisor).toFixed(decimals),
   };
+}
+
+/**
+ * Builds the PayPal `breakdown` for a purchase unit.
+ *
+ * PayPal enforces two invariants:
+ *   1. item_total == sum(unit_amount * quantity)
+ *   2. amount.value == item_total + shipping + tax_total + handling - discount
+ *
+ * item_total is therefore always derived from the line items rather than from
+ * the order total, and shipping/tax/discount are declared explicitly. Discounts
+ * must be sent as a negative amount.
+ *
+ * Throws if the declared components do not reconcile to the order total, so a
+ * miscomputed order fails locally instead of coming back as a 422.
+ */
+export function buildPaypalBreakdown(
+  ctx: PaymentOrderContext
+): Record<string, { currency_code: string; value: string }> {
+  const itemTotal = ctx.items.reduce(
+    (sum, item) => sum + item.unitPriceMinorUnits * item.quantity,
+    0
+  );
+  const shipping = ctx.shippingMinorUnits ?? 0;
+  const tax = ctx.taxMinorUnits ?? 0;
+  const discount = ctx.discountMinorUnits ?? 0;
+
+  const money = (minorUnits: number) =>
+    paypalMoney({ currencyCode: ctx.currencyCode, totalMinorUnits: minorUnits });
+
+  const breakdown: Record<string, { currency_code: string; value: string }> = {
+    item_total: money(itemTotal),
+  };
+  if (shipping > 0) breakdown.shipping = money(shipping);
+  if (tax > 0) breakdown.tax_total = money(tax);
+  if (discount > 0) breakdown.discount = money(-discount);
+
+  const reconciled = itemTotal + shipping + tax - discount;
+  if (reconciled !== ctx.totalMinorUnits) {
+    throw new Error(
+      'PayPal amount breakdown does not reconcile to the order total: ' +
+        `item_total ${itemTotal} + shipping ${shipping} + tax ${tax} - discount ${discount} ` +
+        `= ${reconciled}, but totalMinorUnits is ${ctx.totalMinorUnits}`
+    );
+  }
+
+  return breakdown;
 }
 
 export async function initiateStripePayment(ctx: PaymentOrderContext): Promise<PaymentInitResult> {
@@ -179,7 +235,7 @@ export async function initiatePaypalPayment(ctx: PaymentOrderContext): Promise<P
           custom_id: ctx.orderNumber,
           amount: {
             ...paypalMoney(ctx),
-            breakdown: { item_total: paypalMoney(ctx) },
+            breakdown: buildPaypalBreakdown(ctx),
           },
           items: ctx.items.map(item => ({
             name: item.name.slice(0, 127),

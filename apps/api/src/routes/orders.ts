@@ -497,6 +497,12 @@ router.post('/checkout', async (req: DualAuthRequest, res: Response) => {
     orderNumber,
     currencyCode,
     totalMinorUnits: total,
+    // total is discountedSubtotal + tax + shipping, while the PayPal/Stripe line
+    // items only carry the pre-discount subtotal. Declare the difference so the
+    // provider can reconcile it instead of assuming item_total == total.
+    shippingMinorUnits: shipping,
+    taxMinorUnits: tax,
+    discountMinorUnits: discount,
     items: orderItems.map((item: any) => ({
       name: item.name,
       unitPriceMinorUnits: item.unitPriceMinorUnits,

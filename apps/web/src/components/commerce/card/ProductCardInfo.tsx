@@ -6,6 +6,7 @@ import { ProductCardData } from '../ProductCard';
 import { PriceDisplay } from '../PriceDisplay';
 import { VerifiedBadge } from '../trust/VerifiedBadge';
 import { StockIndicator } from '../trust/StockIndicator';
+import { t } from '@/i18n';
 
 interface ProductCardInfoProps {
   product: ProductCardData;
@@ -13,6 +14,10 @@ interface ProductCardInfoProps {
   locale: string;
 }
 
+/**
+ * Stays free of region context: it already receives the locale, and a presentational
+ * leaf that needs a provider is no longer testable in isolation.
+ */
 export function ProductCardInfo({ product, href, locale }: ProductCardInfoProps) {
   const savingMinorUnits = product.listPrice && product.listPrice > product.price ? product.listPrice - product.price : 0;
   const discountPct = savingMinorUnits > 0 && product.listPrice ? Math.round((savingMinorUnits / product.listPrice) * 100) : 0;
@@ -21,7 +26,10 @@ export function ProductCardInfo({ product, href, locale }: ProductCardInfoProps)
     <div className="flex flex-col flex-grow">
       {product.rating > 0 && (
         <div className="flex items-center gap-1 mb-1">
-          <div className="flex items-center" aria-label={`${product.rating} out of 5 stars`}>
+          <div
+            className="flex items-center"
+            aria-label={t(locale, 'productRatingLabel', product.rating)}
+          >
             {[1, 2, 3, 4, 5].map(star => (
               <svg
                 key={star}
@@ -36,7 +44,9 @@ export function ProductCardInfo({ product, href, locale }: ProductCardInfoProps)
               </svg>
             ))}
           </div>
-          <span className="text-[11px] text-text-tertiary">({product.reviewCount})</span>
+          <span className="text-[11px] text-text-tertiary">
+            {t(locale, 'productReviewsLabel', product.reviewCount)}
+          </span>
         </div>
       )}
 

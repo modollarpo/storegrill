@@ -13,10 +13,11 @@ import { ProductCardInfo } from './card/ProductCardInfo';
 import { ProductCardActions } from './card/ProductCardActions';
 import { AddToCartInline } from './card/AddToCartInline';
 import { WishlistButton } from './card/WishlistButton';
-import { VerifiedBadge } from './trust/VerifiedBadge';
-import { StockIndicator } from './trust/StockIndicator';
+import { badgeLabel, badgeStyle } from './card/badge';
+import { useRegion } from '@/components/providers/RegionContext';
+import { t } from '@/i18n';
 
-export type ProductCardVariant = 'grid' | 'list' | 'wide' | 'compact';
+export type ProductCardVariant = 'grid' | 'list' | 'compact';
 
 export interface ProductCardData {
   id: string;
@@ -44,16 +45,8 @@ export interface ProductCardProps {
   locale?: string;
 }
 
-
-const BADGE_LABELS: Record<string, string> = {
-  sale: 'Sale',
-  new: 'New',
-  deal: 'Deal',
-  sponsored: 'Sponsored',
-  bestseller: 'Best Seller',
-};
-
 export function ProductCard({ product, variant = 'grid', locale = 'en-US' }: ProductCardProps) {
+  const { language } = useRegion();
   const images = (product.images && product.images.length > 0 ? product.images : product.thumbnail ? [product.thumbnail] : [])
     .map(storefrontImage)
     .filter((image): image is string => Boolean(image));
@@ -76,23 +69,50 @@ export function ProductCard({ product, variant = 'grid', locale = 'en-US' }: Pro
   }
 
   if (variant === 'list') {
-    return (
-      <ListCard product={product} images={images} href={href} locale={locale} />
-    );
+    return <ListCard product={product} images={images} href={href} locale={locale} language={language} />;
   }
 
-  return (
-    <GridCard product={product} images={images} href={href} locale={locale} />
-  );
+  return <GridCard product={product} images={images} href={href} locale={locale} language={language} />;
 }
 
-function GridCard({ product, images, href, locale }: { product: ProductCardData; images: string[]; href: string; locale: string }) {
+function GridCard({
+  product,
+  images,
+  href,
+  locale,
+  language,
+}: {
+  product: ProductCardData;
+  images: string[];
+  href: string;
+  locale: string;
+  language: string;
+}) {
   const [showQuickView, setShowQuickView] = useState(false);
+  const soldOut = product.inventoryCount != null && product.inventoryCount <= 0;
 
   return (
-    <article aria-label={product.name} className="group h-full flex flex-col border border-border rounded-lg">
-      <ProductCardImage product={product} images={images} href={href} />
-      
+    <article aria-label={product.name} className="group relative h-full flex flex-col border border-border rounded-lg">
+      <ProductCardImage product={product} images={images} href={href} language={language} />
+
+      {/*
+        The quick view is the only way to see a variant or a fuller description
+        without leaving the grid. It is revealed on hover for pointers and always
+        for keyboards, so it never becomes a mouse-only affordance.
+      */}
+      {!soldOut && (
+        <button
+          type="button"
+          onClick={() => setShowQuickView(true)}
+          className={cn(
+            'absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border bg-surface/95 px-4 py-2 text-xs font-bold text-text-primary shadow-card backdrop-blur transition-opacity',
+            'opacity-0 focus-visible:opacity-100 group-hover:opacity-100 hover:bg-surface'
+          )}
+        >
+          {t(language, 'productQuickView')}
+        </button>
+      )}
+
       <ProductCardInfo product={product} href={href} locale={locale} />
 
       <ProductCardActions product={product} />
@@ -102,9 +122,23 @@ function GridCard({ product, images, href, locale }: { product: ProductCardData;
   );
 }
 
-function ListCard({ product, images, href, locale }: { product: ProductCardData; images: string[]; href: string; locale: string }) {
+function ListCard({
+  product,
+  images,
+  href,
+  locale,
+  language,
+}: {
+  product: ProductCardData;
+  images: string[];
+  href: string;
+  locale: string;
+  language: string;
+}) {
   const savingMinorUnits = product.listPrice && product.listPrice > product.price ? product.listPrice - product.price : 0;
   const discountPct = savingMinorUnits > 0 && product.listPrice ? Math.round((savingMinorUnits / product.listPrice) * 100) : 0;
+  const soldOut = product.inventoryCount != null && product.inventoryCount <= 0;
+  const label = product.dealLabel || (product.badge ? badgeLabel(language, product.badge) : undefined);
 
   return (
     <article aria-label={product.name} className="group flex flex-col sm:flex-row gap-5 p-4 rounded-lg bg-surface border border-border shadow-card hover:shadow-md transition-shadow">
@@ -124,19 +158,26 @@ function ListCard({ product, images, href, locale }: { product: ProductCardData;
               {product.name.slice(0, 1)}
             </div>
           )}
-          {product.badge && (
-            <span className="absolute top-2.5 left-2.5 z-10 inline-flex items-center rounded-xs px-3 py-1 text-xs font-medium bg-ember text-white">
-              {BADGE_LABELS[product.badge]}
+          {label && (
+            <span
+              className={cn(
+                'absolute top-2.5 left-2.5 z-10 inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+                product.dealLabel ? 'bg-deal text-white' : product.badge ? badgeStyle(product.badge) : 'bg-ember text-white'
+              )}
+            >
+              {label}
             </span>
           )}
         </div>
       </Link>
 
       <div className="flex-1 min-w-0 flex flex-col">
-        {/* Star rating */}
         {product.rating > 0 && (
           <div className="flex items-center gap-1 mb-1.5">
-            <div className="flex items-center" aria-label={`${product.rating} out of 5 stars`}>
+            <div
+              className="flex items-center"
+              aria-label={t(language, 'productRatingLabel', product.rating)}
+            >
               {[1, 2, 3, 4, 5].map(star => (
                 <svg
                   key={star}
@@ -151,7 +192,9 @@ function ListCard({ product, images, href, locale }: { product: ProductCardData;
                 </svg>
               ))}
             </div>
-            <span className="text-xs text-text-tertiary">({product.reviewCount})</span>
+            <span className="text-xs text-text-tertiary">
+              {t(language, 'productReviewsLabel', product.reviewCount)}
+            </span>
           </div>
         )}
 
@@ -177,8 +220,8 @@ function ListCard({ product, images, href, locale }: { product: ProductCardData;
           )}
         </div>
 
-        {product.inventoryCount !== undefined && product.inventoryCount <= 0 && (
-          <p className="text-xs text-feedback-danger font-medium mt-1">Out of stock</p>
+        {soldOut && (
+          <p className="text-xs text-feedback-danger font-medium mt-1">{t(language, 'productOutOfStock')}</p>
         )}
 
         <div className="mt-auto pt-3">

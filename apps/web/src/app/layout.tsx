@@ -8,6 +8,7 @@ import { RegionProvider } from '@/components/providers/RegionContext';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { MobileBottomNavWrapper } from '@/components/navigation/MobileBottomNavWrapper';
+import { CompareTray } from '@/components/commerce/CompareTray';
 import { getRequestContext } from '@/lib/server-context';
 import { getCategories } from '@/lib/api-client';
 import { CookieBanner } from '@/components/layout/CookieBanner';
@@ -103,6 +104,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                       <MobileBottomNavWrapper categories={categories} />
                       <CookieBanner />
                       <ScrollToTop />
+                      <CompareTray />
                       <PWAProvider />
                     </div>
                   </RegionProvider>

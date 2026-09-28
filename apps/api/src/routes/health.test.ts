@@ -32,6 +32,13 @@ function csrfServer(): Promise<{ port: number; close: () => void }> {
   });
 }
 
+function readIssuedToken(res: Response): string {
+  const raw = res.headers.get('set-cookie') || '';
+  const match = /sg_csrf=([^;]+)/.exec(raw);
+  if (!match) throw new Error(`no sg_csrf cookie issued; set-cookie was ${JSON.stringify(raw)}`);
+  return decodeURIComponent(match[1]);
+}
+
 describe('Health endpoint', () => {
   it('GET /api/health returns ok', async () => {
     const { port, close } = await listen();
@@ -92,10 +99,9 @@ describe('CSRF protection', () => {
     const { port, close } = await listen();
     try {
       const res = await fetch(`http://localhost:${port}/api/health`);
-      const csrf = res.headers.getSetCookie().find(c => c.startsWith('sg_csrf='));
-      expect(csrf).toBeDefined();
-      expect(csrf).not.toContain('HttpOnly');
-      expect(validateCsrfToken(decodeURIComponent(csrf!.split(';')[0].slice('sg_csrf='.length)))).toBe(true);
+      expect(res.status).toBe(200);
+      expect(res.headers.get('set-cookie')).not.toContain('HttpOnly');
+      expect(validateCsrfToken(readIssuedToken(res))).toBe(true);
     } finally {
       close();
     }
@@ -104,10 +110,7 @@ describe('CSRF protection', () => {
   it('accepts a mutating request that echoes the issued cookie as x-csrf-token', async () => {
     const { port, close } = await csrfServer();
     try {
-      const boot = await fetch(`http://localhost:${port}/api/health`);
-      const csrf = decodeURIComponent(
-        boot.headers.getSetCookie().find(c => c.startsWith('sg_csrf='))!.split(';')[0].slice('sg_csrf='.length),
-      );
+      const csrf = readIssuedToken(await fetch(`http://localhost:${port}/api/health`));
       const res = await fetch(`http://localhost:${port}/api/v1/cart/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf, cookie: `sg_csrf=${csrf}` },
@@ -122,10 +125,7 @@ describe('CSRF protection', () => {
   it('rejects a mutating request whose header does not match the cookie', async () => {
     const { port, close } = await csrfServer();
     try {
-      const boot = await fetch(`http://localhost:${port}/api/health`);
-      const csrf = decodeURIComponent(
-        boot.headers.getSetCookie().find(c => c.startsWith('sg_csrf='))!.split(';')[0].slice('sg_csrf='.length),
-      );
+      const csrf = readIssuedToken(await fetch(`http://localhost:${port}/api/health`));
       const res = await fetch(`http://localhost:${port}/api/v1/cart/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-csrf-token': generateCsrfToken(), cookie: `sg_csrf=${csrf}` },

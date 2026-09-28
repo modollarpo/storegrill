@@ -100,22 +100,16 @@ export function paypalUnitAmount(minorUnits: number, currencyCode: string): { cu
 }
 
 /**
- * Builds the PayPal `breakdown` for a purchase unit.
+ * Validates that the parts of an order add up to its total and returns them.
  *
- * PayPal enforces two invariants:
- *   1. item_total == sum(unit_amount * quantity)
- *   2. amount.value == item_total + shipping + tax_total + handling - discount
- *
- * item_total is therefore always derived from the line items rather than from
- * the order total, and shipping/tax/discount are declared explicitly. Discounts
- * must be sent as a negative amount.
- *
- * Throws if the declared components do not reconcile to the order total, so a
- * miscomputed order fails locally instead of coming back as a 422.
+ * The provider line items only carry the pre-discount subtotal while the order
+ * total also includes shipping and tax and is reduced by discounts. Both
+ * providers have to reconstruct the total from these parts, so the check is
+ * shared here and throws before any provider call.
  */
-export function buildPaypalBreakdown(
+export function reconcileOrderTotal(
   ctx: PaymentOrderContext
-): Record<string, { currency_code: string; value: string }> {
+): { itemTotal: number; shipping: number; tax: number; discount: number } {
   const itemTotal = ctx.items.reduce(
     (sum, item) => sum + item.unitPriceMinorUnits * item.quantity,
     0
@@ -123,6 +117,29 @@ export function buildPaypalBreakdown(
   const shipping = ctx.shippingMinorUnits ?? 0;
   const tax = ctx.taxMinorUnits ?? 0;
   const discount = ctx.discountMinorUnits ?? 0;
+  const reconciled = itemTotal + shipping + tax - discount;
+  if (reconciled !== ctx.totalMinorUnits) {
+    throw new Error(
+      'Order amount does not reconcile to the total: ' +
+        `items ${itemTotal} + shipping ${shipping} + tax ${tax} - discount ${discount} ` +
+        `= ${reconciled}, but totalMinorUnits is ${ctx.totalMinorUnits}`
+    );
+  }
+  return { itemTotal, shipping, tax, discount };
+}
+
+/**
+ * Builds the PayPal `breakdown` for a purchase unit.
+ *
+ * PayPal requires item_total to equal the sum of unit_amount * quantity and the
+ * parts of the breakdown to add up to amount.value, so item_total is always
+ * derived from the line items and shipping/tax/discount are declared explicitly
+ * (discounts must be sent as a negative amount).
+ */
+export function buildPaypalBreakdown(
+  ctx: PaymentOrderContext
+): Record<string, { currency_code: string; value: string }> {
+  const { itemTotal, shipping, tax, discount } = reconcileOrderTotal(ctx);
 
   const money = (minorUnits: number) =>
     paypalMoney({ currencyCode: ctx.currencyCode, totalMinorUnits: minorUnits });
@@ -134,16 +151,61 @@ export function buildPaypalBreakdown(
   if (tax > 0) breakdown.tax_total = money(tax);
   if (discount > 0) breakdown.discount = money(-discount);
 
-  const reconciled = itemTotal + shipping + tax - discount;
-  if (reconciled !== ctx.totalMinorUnits) {
-    throw new Error(
-      'PayPal amount breakdown does not reconcile to the order total: ' +
-        `item_total ${itemTotal} + shipping ${shipping} + tax ${tax} - discount ${discount} ` +
-        `= ${reconciled}, but totalMinorUnits is ${ctx.totalMinorUnits}`
-    );
+  return breakdown;
+}
+
+function stripeCurrencyCode(currencyCode: string): string {
+  return currencyCode.toLowerCase();
+}
+
+/**
+ * Builds the Stripe Checkout Session body for an order.
+ *
+ * Stripe prices a session from the line items it is given, so unlike PayPal it
+ * does not reject a mismatch — it just charges the wrong amount. Shipping is
+ * declared as a fixed-amount shipping option, tax as an extra line item, and the
+ * shared reconcile guard ensures the session amount equals the order total.
+ * Discounts are applied via a coupon created by the caller.
+ */
+export function buildStripeCheckoutBody(ctx: PaymentOrderContext): Record<string, string | number> {
+  const stripeType = stripePaymentMethodType(ctx.paymentMethod ?? 'card');
+  if (!stripeType) {
+    throw new Error(`Payment method "${ctx.paymentMethod}" is not supported by the card processor`);
+  }
+  const { shipping, tax } = reconcileOrderTotal(ctx);
+
+  const body: Record<string, string | number> = {
+    mode: 'payment',
+    success_url: `${webBaseUrl()}/checkout/confirmation?order=${encodeURIComponent(ctx.orderNumber)}&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${webBaseUrl()}/checkout?cancelled=1`,
+    'payment_method_types[0]': stripeType,
+    client_reference_id: ctx.orderNumber,
+  };
+  if (ctx.customerEmail) body.customer_email = ctx.customerEmail;
+
+  ctx.items.forEach((item, i) => {
+    body[`line_items[${i}][price_data][currency]`] = stripeCurrencyCode(ctx.currencyCode);
+    body[`line_items[${i}][price_data][unit_amount]`] = item.unitPriceMinorUnits;
+    body[`line_items[${i}][quantity]`] = item.quantity;
+    body[`line_items[${i}][price_data][product_data][name]`] = item.name.slice(0, 120);
+  });
+
+  if (tax > 0) {
+    const i = ctx.items.length;
+    body[`line_items[${i}][price_data][currency]`] = stripeCurrencyCode(ctx.currencyCode);
+    body[`line_items[${i}][price_data][unit_amount]`] = tax;
+    body[`line_items[${i}][quantity]`] = 1;
+    body[`line_items[${i}][price_data][product_data][name]`] = 'Tax';
   }
 
-  return breakdown;
+  if (shipping > 0) {
+    body['shipping_options[0][shipping_rate_data][type]'] = 'fixed_amount';
+    body['shipping_options[0][shipping_rate_data][fixed_amount][amount]'] = shipping;
+    body['shipping_options[0][shipping_rate_data][fixed_amount][currency]'] = stripeCurrencyCode(ctx.currencyCode);
+    body['shipping_options[0][shipping_rate_data][display_name]'] = 'Shipping';
+  }
+
+  return body;
 }
 
 export async function initiateStripePayment(ctx: PaymentOrderContext): Promise<PaymentInitResult> {
@@ -161,20 +223,23 @@ export async function initiateStripePayment(ctx: PaymentOrderContext): Promise<P
     };
   }
 
-  const body: Record<string, string | number> = {
-    mode: 'payment',
-    success_url: `${webBaseUrl()}/checkout/confirmation?order=${encodeURIComponent(ctx.orderNumber)}&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${webBaseUrl()}/checkout?cancelled=1`,
-    'payment_method_types[0]': stripeType,
-    client_reference_id: ctx.orderNumber,
-  };
-  if (ctx.customerEmail) body.customer_email = ctx.customerEmail;
-  ctx.items.forEach((item, i) => {
-    body[`line_items[${i}][price_data][currency]`] = ctx.currencyCode.toLowerCase();
-    body[`line_items[${i}][price_data][unit_amount]`] = item.unitPriceMinorUnits;
-    body[`line_items[${i}][quantity]`] = item.quantity;
-    body[`line_items[${i}][price_data][product_data][name]`] = item.name.slice(0, 120);
-  });
+  const body = buildStripeCheckoutBody(ctx);
+
+  const discount = ctx.discountMinorUnits ?? 0;
+  if (discount > 0) {
+    const coupon = await stripeRequest(
+      '/coupons',
+      'POST',
+      formEncode({
+        amount_off: discount,
+        currency: stripeCurrencyCode(ctx.currencyCode),
+        duration: 'once',
+        name: 'Store discount',
+      })
+    );
+    if (!coupon.id) throw new Error('Stripe coupon creation returned no id');
+    body['discounts[0][coupon]'] = String(coupon.id);
+  }
 
   const session = await stripeRequest('/checkout/sessions', 'POST', formEncode(body));
   return {

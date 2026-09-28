@@ -103,9 +103,11 @@ describe('CSRF protection', () => {
     const { port, close } = await listen();
     try {
       const res = await getNoKeepAlive(port, '/api/health');
+      console.log('DIAG status', res.status, 'DIAG headers', JSON.stringify([...res.headers.entries()]));
+      const token = readIssuedToken(res);
       expect(res.status).toBe(200);
       expect(res.headers.get('set-cookie')).not.toContain('HttpOnly');
-      expect(validateCsrfToken(readIssuedToken(res))).toBe(true);
+      expect(validateCsrfToken(token)).toBe(true);
     } finally {
       close();
     }

@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { authRouter } from './routes/auth.js';
 import oauthRouter from './routes/auth-oauth.js';
+import { addressesRouter } from './routes/addresses.js';
 import { productsRouter } from './routes/products.js';
 import { cartRouter } from './routes/cart.js';
 import { ordersRouter } from './routes/orders.js';
@@ -114,6 +115,7 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/v1/auth', authLimiter, authRouter);
 app.use('/api/v1/auth/oauth', oauthRouter);
+app.use('/api/v1/users/me/addresses', addressesRouter);
 app.use('/api/v1/products', productsRouter);
 app.use('/api/v1/categories', categoriesRouter);
 app.use('/api/v1/home', homeRouter);

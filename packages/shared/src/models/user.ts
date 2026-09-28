@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SavedAddressSchema } from '../domain/address.js';
 
 export const Role = z.enum(['CUSTOMER', 'VENDOR', 'ADMIN']);
 
@@ -19,16 +20,7 @@ export const CustomerProfileSchema = z.object({
   preferredRegionKey: z.string().default('US'),
   defaultCurrency: z.string().length(3).default('USD'),
   defaultLanguage: z.string().default('en'),
-  shippingAddresses: z.array(z.object({
-    id: z.string(),
-    label: z.string().default('Home'),
-    street: z.string(),
-    city: z.string(),
-    state: z.string(),
-    zip: z.string(),
-    country: z.string().length(2),
-    isDefault: z.boolean().default(false),
-  })).default([]),
+  shippingAddresses: z.array(SavedAddressSchema).default([]),
 });
 
 export const VendorProfileSchema = z.object({

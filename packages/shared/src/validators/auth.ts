@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { AddressSchema } from '../domain/address.js';
+
+export { AddressSchema };
 
 export const RegisterSchema = z.object({
   email: z.string().email(),
@@ -43,16 +46,6 @@ export const UpdateProfileSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   phone: z.string().max(20).optional(),
   avatar: z.string().url().optional(),
-});
-
-export const AddressSchema = z.object({
-  label: z.string().max(50).default('Home'),
-  street: z.string().min(1).max(200),
-  city: z.string().min(1).max(100),
-  state: z.string().min(1).max(100),
-  zip: z.string().min(1).max(20),
-  country: z.string().length(2),
-  isDefault: z.boolean().default(false),
 });
 
 export const CustomerProfileUpdateSchema = z.object({

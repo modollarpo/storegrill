@@ -20,6 +20,8 @@ export { RegisterSchema, LoginSchema, RefreshTokenSchema, ForgotPasswordSchema, 
 export { CheckoutSchema as CheckoutInputSchema, OrderFilterSchema, RefundRequestSchema, ShipmentCreateSchema, ShipmentUpdateSchema } from './validators/order';
 export * from './utils/geo';
 export * from './utils/string-list';
+export * from './domain/postal-rules';
+export * from './domain/address';
 export * from './domain/merchant';
 export * from './domain/commission';
 export * from './domain/marketing';

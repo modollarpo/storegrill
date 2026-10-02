@@ -38,6 +38,7 @@ env:
   FB_PIXEL_ID: '1143986500227216'
   PINTEREST_PIXEL_ID: '2614298179740'
   PINTEREST_AD_ACCOUNT_ID: '549765436316'
+  ADMIN_EMAIL: 'storegrillonline@gmail.com'
 
 jobs:
   build:
@@ -173,7 +174,7 @@ jobs:
             --resource-group ${{ matrix.rg }} \
             --name ${{ matrix.api_app }} \
             --image ${{ env.ACR }}/api:${{ env.API_TAG }} \
-            --set-env-vars PINTEREST_AD_ACCOUNT_ID=${{ env.PINTEREST_AD_ACCOUNT_ID }} PINTEREST_ACCESS_TOKEN=${{ secrets.PINTEREST_ACCESS_TOKEN }} \
+            --set-env-vars PINTEREST_AD_ACCOUNT_ID=${{ env.PINTEREST_AD_ACCOUNT_ID }} PINTEREST_ACCESS_TOKEN=${{ secrets.PINTEREST_ACCESS_TOKEN }} MAIL_PROVIDER=acs ACS_CONNECTION_STRING=${{ secrets.ACS_CONNECTION_STRING }} ADMIN_EMAIL=${{ env.ADMIN_EMAIL }} \
             --output none
 
       - name: Deploy Web to Container App

@@ -18,6 +18,7 @@ import {
 export { escapeHtml, formatPrice, formatAddress } from './email-templates.js';
 
 const WEB_BASE = process.env.WEB_BASE_URL || 'http://localhost:3000';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
 
 const SHIPMENT_EMAIL_STATUSES = new Set<CarrierShipmentStatusValue>([
   CarrierShipmentStatus.SHIPPED,
@@ -269,6 +270,33 @@ export async function notifyOrderConfirmed(orderId: string): Promise<void> {
       `vendor alert sent to ${vendor.email}`,
     );
   }
+
+  // Admin order notification
+  if (ADMIN_EMAIL) {
+    const adminSubtotal = order.items.reduce((sum, item) => sum + item.totalMinorUnits, 0);
+    bestEffort(
+      sendMail({
+        to: ADMIN_EMAIL,
+        subject: `New order ${snapshot.orderNumber} received`,
+        text: `Storegrill received order ${snapshot.orderNumber} from ${snapshot.customerName} (${snapshot.customerEmail}). Total: ${formatPrice(adminSubtotal, snapshot.currencyCode)}. ${WEB_BASE}/account/orders/${order.id}`,
+        html: renderVendorAlertHtml({
+          storeName: 'Storegrill Admin',
+          orderNumber: snapshot.orderNumber,
+          orderUrl: `${WEB_BASE}/account/orders/${order.id}`,
+          currencyCode: snapshot.currencyCode,
+          items: order.items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            unitPriceMinorUnits: item.unitPriceMinorUnits,
+            totalMinorUnits: item.totalMinorUnits,
+            image: item.image,
+          })),
+          subtotalMinorUnits: adminSubtotal,
+        }),
+      }),
+      `admin order notification sent to ${ADMIN_EMAIL}`,
+    );
+  }
 }
 
 export async function notifyOrderCancelled(orderId: string): Promise<void> {
@@ -286,6 +314,18 @@ export async function notifyOrderCancelled(orderId: string): Promise<void> {
     }),
     `cancellation sent to ${snapshot.customerEmail}`,
   );
+
+  if (ADMIN_EMAIL) {
+    bestEffort(
+      sendMail({
+        to: ADMIN_EMAIL,
+        subject: `Order ${snapshot.orderNumber} cancelled`,
+        text: `Order ${snapshot.orderNumber} was cancelled by ${snapshot.customerName} (${snapshot.customerEmail}). ${WEB_BASE}/account/orders/${order.id}`,
+        html: renderOrderCancelledHtml(snapshot),
+      }),
+      `admin cancellation notification sent to ${ADMIN_EMAIL}`,
+    );
+  }
 }
 
 export async function sendShipmentStatusEmail(shipmentId: string, status: CarrierShipmentStatusValue): Promise<void> {
@@ -332,4 +372,24 @@ export async function sendShipmentStatusEmail(shipmentId: string, status: Carrie
     }),
     `shipment update sent for shipment ${shipmentId}`,
   );
+
+  if (ADMIN_EMAIL) {
+    bestEffort(
+      sendMail({
+        to: ADMIN_EMAIL,
+        subject: `Shipment update: ${statusLabel(status)} for order ${order.orderNumber}`,
+        text: `${statusLabel(status)} for order ${order.orderNumber} via ${shipment.carrier}. Track: ${WEB_BASE}/account/orders/${order.id}`,
+        html: renderShipmentUpdateHtml({
+          customerName: order.user!.name || 'valued customer',
+          orderNumber: order.orderNumber,
+          status,
+          carrier: shipment.carrier,
+          trackingNumber: shipment.trackingNumber,
+          location: events[0]?.location ?? null,
+          orderUrl: `${WEB_BASE}/account/orders/${order.id}`,
+        }),
+      }),
+      `admin shipment notification sent to ${ADMIN_EMAIL}`,
+    );
+  }
 }

@@ -3,10 +3,20 @@ import { act, render } from '@testing-library/react';
 import { writeConsent, CONSENT_COOKIE } from '@/lib/consent';
 
 const PIXEL_ID = '1143986500227216';
-const PINTEREST_PIXEL_ID = '2613190259169';
+const PINTEREST_PIXEL_ID = '2614298179740';
 
 type FbqCall = [string, ...unknown[]];
 type PintrkCall = [string, ...unknown[]];
+
+function sha256Hex(value: string): Promise<string> {
+  return crypto.subtle
+    .digest('SHA-256', new TextEncoder().encode(value))
+    .then(buf => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join(''));
+}
+
+function flush(): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, 0));
+}
 
 function stubPixel() {
   const calls: FbqCall[] = [];
@@ -158,6 +168,16 @@ describe('Pinterest Tag', () => {
     clearCookie();
     window.pintrk = undefined;
     window._pintrk = undefined;
+    if (!window.crypto?.subtle) {
+      try {
+        Object.defineProperty(window, 'crypto', {
+          value: globalThis.crypto,
+          configurable: true,
+        });
+      } catch {
+        // jsdom already exposes a working crypto.subtle
+      }
+    }
   });
 
   afterEach(() => {
@@ -207,9 +227,34 @@ describe('Pinterest Tag', () => {
     const [view, purchase] = pintrkEvents(calls);
     expect(view[1]).toMatchObject({ content_ids: ['p1'], content_type: 'product', currency: 'GBP' });
     expect(purchase[1]).toMatchObject({ order_id: 'ORD-1', currency: 'GBP', value: 49.98 });
+    expect(purchase[1]).not.toHaveProperty('em');
     expect((purchase[1] as { contents: unknown[] }).contents).toEqual([
       { id: 'p1', quantity: 2, item_price: 24.99 },
     ]);
+  });
+
+  it('passes SHA-256 hashed email as `em` on purchase for Enhanced Match', async () => {
+    vi.stubEnv('NEXT_PUBLIC_PINTEREST_PIXEL_ID', PINTEREST_PIXEL_ID);
+    const calls = stubPintrk();
+    grantMarketing();
+    const getTrack = await renderProvider();
+    const track = getTrack();
+
+    act(() => {
+      track({
+        event: 'purchase',
+        transaction_id: 'ORD-1',
+        value: 49.98,
+        currency: 'GBP',
+        items: [{ item_id: 'p1', item_name: 'Desk Lamp', price: 24.99, quantity: 2 }],
+        email: '  Buyer@Example.COM  ',
+      });
+    });
+    await flush();
+
+    const [purchase] = pintrkEvents(calls);
+    expect(purchase[1]).toMatchObject({ order_id: 'ORD-1' });
+    expect((purchase[1] as { em?: string }).em).toBe(await sha256Hex('buyer@example.com'));
   });
 
   it('does not load or fire the pixel when marketing consent is denied', async () => {

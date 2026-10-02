@@ -157,6 +157,7 @@ export default function CheckoutPage() {
       event: 'begin_checkout',
       value: totalMajor,
       currency,
+      email: email.trim() || undefined,
       items: cart.items.map(i => ({
         item_id: i.variantId || i.productId,
         item_name: i.name,
@@ -291,6 +292,7 @@ export default function CheckoutPage() {
           transaction_id: orderNumber,
           value: totalMajor,
           currency,
+          email: email.trim() || undefined,
           items: cart.items.map(i => ({
             item_id: i.variantId || i.productId,
             item_name: i.name,

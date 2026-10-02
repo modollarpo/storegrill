@@ -248,7 +248,11 @@ The Pinterest Tag is loaded via `s.pinimg.com/ct/core.js`, config-driven, and mi
 |--------------------------------|----------|------------------------------------------|
 | `NEXT_PUBLIC_PINTEREST_PIXEL_ID` | No     | Pinterest Tag ID (15-18 digits)         |
 
-Set it as a Docker build arg in the deploy workflows (`PINTEREST_PIXEL_ID` in `deploy-api-web-aca.yml` and `deploy-web-aca.yml`). The same ID is currently used for every region; give each region its own ID by making `PINTEREST_PIXEL_ID` matrix-scoped if you split the dataset.
+Set it as a Docker build arg in the deploy workflows (`PINTEREST_PIXEL_ID` in `deploy-api-web-aca.yml` and `deploy-web-aca.yml`). The same ID is currently used for every region; give each region its own ID by making `PINTEREST_PIXEL_ID` matrix-scoped if you split the dataset. The tag is loaded on every page via `AnalyticsProvider` (mounted in the root layout), so retargeting audiences are built site-wide.
+
+### Enhanced Match
+
+Pinterest Enhanced Match is enabled: when an email is known on a `check_out` event (checkout page passes the shopper's email — typed during checkout or pulled from `/api/v1/auth/me` for signed-in users), the tag sends `em` = the **SHA-256 hash of the trimmed, lowercased email** alongside the event. The raw address is never sent to Pinterest. The hash improves conversion attribution; without a valid email the `em` parameter is omitted.
 
 ### Consent
 

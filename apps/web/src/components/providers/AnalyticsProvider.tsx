@@ -28,6 +28,7 @@ export interface DataLayerEvent {
   items?: EcommerceItem[];
   ecommerce?: any;
   eventId?: string;
+  email?: string;
 }
 
 type GtagArgs = [string, ...unknown[]];
@@ -120,6 +121,19 @@ function loadGtag() {
 
 function marketingGranted(consent: CookieConsent | null) {
   return Boolean(consent?.marketing);
+}
+
+// Pinterest Enhanced Match: Pinterest accepts the SHA-256 hash of a trimmed
+// lowercase email. Hashing keeps the raw address out of the pixel request.
+async function enhancedMatchEm(value: string | undefined): Promise<string | null> {
+  if (!value || !value.includes('@')) return null;
+  try {
+    const normalized = value.trim().toLowerCase();
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(normalized));
+    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return null;
+  }
 }
 
 function loadFbq() {
@@ -393,9 +407,21 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       if (fbqEvent) window.fbq(fbqEvent.name, { ...fbqEvent.params, event_id: eventId });
     }
 
-    if (pintrkEnabled && window.pintrk && marketingGranted(readConsent())) {
+    const dispatchPintrk = (em: string | null) => {
+      if (!(pintrkEnabled && window.pintrk && marketingGranted(readConsent()))) return;
       const pintrkEvent = toPintrkEvent(event);
-      if (pintrkEvent) window.pintrk('track', pintrkEvent.name, { ...pintrkEvent.params, event_id: eventId });
+      if (!pintrkEvent) return;
+      window.pintrk('track', pintrkEvent.name, {
+        ...pintrkEvent.params,
+        ...(em ? { em } : {}),
+        event_id: eventId,
+      });
+    };
+
+    if (event.email) {
+      enhancedMatchEm(event.email).then(dispatchPintrk).catch(() => dispatchPintrk(null));
+    } else {
+      dispatchPintrk(null);
     }
 
     const EVENT_TYPES_TO_INTERNAL = new Set(['page_view', 'searchhit', 'detail', 'view_item', 'add_to_cart', 'begin_checkout', 'purchase']);

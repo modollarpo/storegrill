@@ -90,9 +90,4 @@ jobs:
       - name: Deploy to Container App
         run: |
           az account set -s "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          az containerapp update \
-            --resource-group ${{ matrix.rg }} \
-            --name ${{ matrix.app }} \
-            --image ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.VERSION }} \
-            --set-env-vars NEXT_PUBLIC_API_URL=${{ matrix.api }} \
-            --output none
+          az containerapp update --resource-group ${{ matrix.rg }} --name ${{ matrix.app }} --image ${{ env.ACR }}/web-${{ matrix.region_lc }}:${{ env.VERSION }} --set-env-vars NEXT_PUBLIC_API_URL=${{ matrix.api }} --output none

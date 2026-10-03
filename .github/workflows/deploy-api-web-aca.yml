@@ -39,7 +39,7 @@ env:
   PINTEREST_PIXEL_ID: '2614298179740'
   PINTEREST_AD_ACCOUNT_ID: '549765436316'
   ADMIN_EMAIL: 'storegrillonline@gmail.com'
-  MAIL_FROM: 'DoNotReply@ac629911-d88b-4f70-88b5-87586340ca9f.azurecomm.net'
+  MAIL_FROM: 'DoNotReply@mail.storegrill.net'
 
 jobs:
   build:

@@ -171,8 +171,7 @@ jobs:
         if: contains(env.DEPLOY_REGIONS, matrix.region)
         run: |
           az account set -s "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-          ENV_VARS="PINTEREST_AD_ACCOUNT_ID=${{ env.PINTEREST_AD_ACCOUNT_ID }} PINTEREST_ACCESS_TOKEN=${{ secrets.PINTEREST_ACCESS_TOKEN }} MAIL_PROVIDER=acs ACS_CONNECTION_STRING=${{ secrets.ACS_CONNECTION_STRING }} ADMIN_EMAIL=${{ env.ADMIN_EMAIL }} MAIL_FROM=${{ env.MAIL_FROM }}"
-          az containerapp update --resource-group ${{ matrix.rg }} --name ${{ matrix.api_app }} --image ${{ env.ACR }}/api:${{ env.API_TAG }} --set-env-vars "$ENV_VARS" --output none
+          az containerapp update --resource-group ${{ matrix.rg }} --name ${{ matrix.api_app }} --image ${{ env.ACR }}/api:${{ env.API_TAG }} --set-env-vars PINTEREST_AD_ACCOUNT_ID=${{ env.PINTEREST_AD_ACCOUNT_ID }} PINTEREST_ACCESS_TOKEN=${{ secrets.PINTEREST_ACCESS_TOKEN }} MAIL_PROVIDER=acs ACS_CONNECTION_STRING="${{ secrets.ACS_CONNECTION_STRING }}" ADMIN_EMAIL=${{ env.ADMIN_EMAIL }} MAIL_FROM=${{ env.MAIL_FROM }} --output none
 
       - name: Deploy Web to Container App
         if: contains(env.DEPLOY_REGIONS, matrix.region)

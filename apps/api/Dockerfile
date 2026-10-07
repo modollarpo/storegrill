@@ -26,7 +26,10 @@ RUN npm run build -w apps/api
 FROM node:24-slim AS runner
 ENV NODE_ENV=production PORT=80
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends openssl curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends openssl curl \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/package.json                    ./package.json
 COPY --from=builder /app/node_modules                    ./node_modules

@@ -13,6 +13,20 @@ function bestEffort(promise: Promise<unknown>, label: string): void {
   promise.catch(err => console.error(`[customer-journey] ${label} failed:`, err instanceof Error ? err.message : err));
 }
 
+function journeysEnabled(): boolean {
+  return process.env.CUSTOMER_JOURNEY_ENABLED !== 'false';
+}
+
+function abandonedCartDelayHours(): number {
+  const hours = Number(process.env.ABANDONED_CART_DELAY_HOURS ?? 24);
+  return Number.isFinite(hours) && hours > 0 ? hours : 24;
+}
+
+function reviewRequestDelayHours(): number {
+  const hours = Number(process.env.REVIEW_REQUEST_DELAY_HOURS ?? 72);
+  return Number.isFinite(hours) && hours > 0 ? hours : 72;
+}
+
 export async function sendWelcomeJourney(userId: string): Promise<void> {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } });
   if (!user || !user.email) return;
@@ -24,10 +38,12 @@ export async function sendWelcomeJourney(userId: string): Promise<void> {
 }
 
 export async function checkAndSendAbandonedCarts(prismaClient: typeof prisma = prisma): Promise<number> {
-  const cutoff = new Date(Date.now() - 4 * 60 * 60 * 1000); // abandoned for 4 hours
+  if (!journeysEnabled()) return 0;
+  const cutoff = new Date(Date.now() - abandonedCartDelayHours() * 60 * 60 * 1000);
   const carts = await prismaClient.cart.findMany({
     where: {
       updatedAt: { lte: cutoff },
+      reminderSentAt: null,
       items: { some: {} },
     },
     include: {
@@ -69,6 +85,7 @@ export async function checkAndSendAbandonedCarts(prismaClient: typeof prisma = p
       cartUrl: `${WEB_BASE}/cart`,
     });
 
+    await prismaClient.cart.update({ where: { id: cart.id }, data: { reminderSentAt: new Date() } });
     bestEffort(sendMail({ to: cart.user.email, subject: email.subject, text: email.text, html: email.html }), `abandoned cart to ${cart.user.email}`);
     sent++;
   }
@@ -76,13 +93,16 @@ export async function checkAndSendAbandonedCarts(prismaClient: typeof prisma = p
 }
 
 export async function checkAndSendReviewRequests(prismaClient: typeof prisma = prisma): Promise<number> {
-  const threeDaysAgoStart = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-  const threeDaysAgoEnd = new Date(Date.now() - 2.9 * 24 * 60 * 60 * 1000);
+  if (!journeysEnabled()) return 0;
+  const delayMs = reviewRequestDelayHours() * 60 * 60 * 1000;
+  const reviewWindowStart = new Date(Date.now() - delayMs);
+  const reviewWindowEnd = new Date(reviewWindowStart.getTime() + 0.1 * 24 * 60 * 60 * 1000);
 
   const orders = await prismaClient.order.findMany({
     where: {
       status: 'DELIVERED',
-      updatedAt: { gte: threeDaysAgoStart, lte: threeDaysAgoEnd },
+      reviewRequestSentAt: null,
+      updatedAt: { gte: reviewWindowStart, lte: reviewWindowEnd },
     },
     include: {
       user: { select: { name: true, email: true } },
@@ -102,6 +122,7 @@ export async function checkAndSendReviewRequests(prismaClient: typeof prisma = p
         reviewUrl: `${WEB_BASE}/products/${item.productId}#reviews`,
       })),
     });
+    await prismaClient.order.update({ where: { id: order.id }, data: { reviewRequestSentAt: new Date() } });
     bestEffort(sendMail({ to: order.user.email, subject: email.subject, text: email.text, html: email.html }), `review request to ${order.user.email}`);
     sent++;
   }

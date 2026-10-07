@@ -362,14 +362,17 @@ model ShippingZone {
 }
 
 model Cart {
-  id        String     @id @default(cuid())
-  userId    String?    @unique
-  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sessionId String?    @unique
-  items     CartItem[]
-  updatedAt DateTime   @updatedAt
+  id              String     @id @default(cuid())
+  userId          String?    @unique
+  user            User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId       String?    @unique
+  items           CartItem[]
+  reminderSentAt  DateTime?
+  updatedAt       DateTime   @updatedAt
 
   @@index([sessionId])
+  @@index([updatedAt])
+  @@index([reminderSentAt])
 }
 
 model CartItem {
@@ -405,6 +408,7 @@ model Order {
   paymentStatus      String    @default("PENDING")
   notes              String?
   confirmationSentAt DateTime?
+  reviewRequestSentAt DateTime?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 

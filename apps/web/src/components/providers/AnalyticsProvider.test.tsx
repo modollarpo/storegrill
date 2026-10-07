@@ -250,7 +250,9 @@ describe('Pinterest Tag', () => {
         email: '  Buyer@Example.COM  ',
       });
     });
-    await flush();
+
+    // Enhanced Match hashing is async; wait for it to resolve
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     const [purchase] = pintrkEvents(calls);
     expect(purchase[1]).toMatchObject({ order_id: 'ORD-1' });

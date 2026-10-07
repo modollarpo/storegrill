@@ -9,6 +9,7 @@ export * from './models/homepage';
 export * from './models/cart';
 export * from './models/review';
 export * from './models/import';
+export * from './models/cities';
 export * from './utils/money';
 export * from './utils/currency';
 export * from './utils/tax';

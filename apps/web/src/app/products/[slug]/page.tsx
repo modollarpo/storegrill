@@ -86,7 +86,7 @@ export default async function ProductPage({ params }: PdpProps) {
 
   const companionsRes = await fetch(`${API_BASE}/api/v1/products/${encodeURIComponent(product.slug || product.id)}/companions?regionKey=${regionKey}&limit=8`, { next: { revalidate: 300 } }).catch(() => null);
   const companionsData = companionsRes && companionsRes.ok ? await companionsRes.json().catch(() => ({ companions: [] })) : { companions: [] };
-  interface CompanionItem { id: string; slug: string; name: string; priceMinorUnits: number; currencyCode: string; thumbnail: string | null; rating: number; reviewCount: number; inStock: boolean; reason: string; vendorName?: string | null; vendorSlug?: string | null; }
+  interface CompanionItem { id: string; slug: string; name: string; priceMinorUnits: number; currencyCode: string; thumbnail: string | null; rating: number; reviewCount: number; inStock: boolean; reason: string; vendorName?: string | null; vendorSlug?: string | null; categoryName?: string | null; categorySlug?: string | null; }
   const companions: CompanionItem[] = (companionsData.companions || []) as CompanionItem[];
 
   const relatedRes = await fetch(`${API_BASE}/api/v1/products?regionKey=${regionKey}&category=${product.category?.slug ?? ''}&limit=8`, { next: { revalidate: 300 } }).catch(() => null);
@@ -132,6 +132,7 @@ export default async function ProductPage({ params }: PdpProps) {
         reviewCount: 0,
         inventoryCount: c.inStock ? 1 : 0,
         vendor: c.vendorName && c.vendorSlug ? { storeName: c.vendorName, slug: c.vendorSlug } : null,
+        category: c.categoryName ? { name: c.categoryName, slug: c.categorySlug ?? undefined } : null,
       }))
     : relatedBase;
 

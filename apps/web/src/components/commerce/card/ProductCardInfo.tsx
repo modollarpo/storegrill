@@ -50,6 +50,15 @@ export function ProductCardInfo({ product, href, locale }: ProductCardInfoProps)
         </div>
       )}
 
+      {product.category?.name && product.category.slug && (
+        <Link
+          href={`/categories/${encodeURIComponent(product.category.slug)}`}
+          className="text-[11px] font-semibold uppercase tracking-wider text-text-tertiary hover:text-ember transition-colors mb-1 line-clamp-1"
+        >
+          {product.category.name}
+        </Link>
+      )}
+
       <h3 className="text-sm text-text-primary leading-snug line-clamp-2 mb-1.5">
         <Link href={href} className="hover:text-ember transition-colors">{product.name}</Link>
       </h3>

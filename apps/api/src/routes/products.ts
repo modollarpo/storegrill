@@ -297,6 +297,7 @@ router.get('/:identifier/companions', optionalAuth, async (req: AuthRequest, res
         vendorSlug: p.vendor?.slug ?? null,
         vendorName: p.vendor?.storeName ?? null,
         categorySlug: p.category?.slug ?? null,
+        categoryName: p.category?.name ?? null,
         reason: c.reason,
         weight: c.weight,
       };

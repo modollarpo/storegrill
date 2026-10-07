@@ -37,6 +37,7 @@ export interface ProductCardData {
   vendor?: { storeName: string; slug: string; verified?: boolean } | null;
   badge?: 'sale' | 'new' | 'deal' | 'sponsored' | 'bestseller' | 'trending';
   categoryId?: string;
+  category?: { name?: string; slug?: string } | null;
 }
 
 export interface ProductCardProps {
@@ -113,9 +114,11 @@ function GridCard({
         </button>
       )}
 
-      <ProductCardInfo product={product} href={href} locale={locale} />
+      <div className="flex flex-col flex-grow px-3 pb-3">
+        <ProductCardInfo product={product} href={href} locale={locale} />
 
-      <ProductCardActions product={product} />
+        <ProductCardActions product={product} />
+      </div>
 
       {showQuickView && <QuickViewModal product={product} onClose={() => setShowQuickView(false)} />}
     </article>

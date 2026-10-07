@@ -1,6 +1,7 @@
 'use client';
 
-import { postalRuleFor, type AddressField, type AddressIssueCode } from '@Storegrill/shared';
+import { useState } from 'react';
+import { citiesForCountry, postalRuleFor, type AddressField, type AddressIssueCode } from '@Storegrill/shared';
 import { t } from '@/i18n';
 
 export interface AddressFormValue {
@@ -66,6 +67,10 @@ export function CheckoutAddressFields({
   const countryLabel = countryName(value.country);
   const stateRequired = rule.stateRequired;
   const zipRequired = Boolean(rule.pattern) && !rule.zipOptional;
+  const cityOptions = citiesForCountry(value.country);
+  const [customCity, setCustomCity] = useState(false);
+  const cityKnown = value.city === '' || cityOptions.includes(value.city);
+  const showCitySelect = cityOptions.length > 0 && !customCity && cityKnown;
 
   const errorFor = (field: AddressField) =>
     fieldError(locale, field, issues[field], countryLabel);
@@ -132,16 +137,45 @@ export function CheckoutAddressFields({
           <span className="block text-xs font-semibold mb-1.5 text-text-primary">
             {t(locale, 'checkoutAddressCity')}
           </span>
-          <input
-            id={`${idPrefix}-city`}
-            autoComplete="address-level2"
-            value={value.city}
-            onChange={e => set({ city: e.target.value })}
-            placeholder={t(locale, 'checkoutAddressCityPlaceholder')}
-            aria-invalid={Boolean(issues.city)}
-            aria-describedby={issues.city ? errId('city') : undefined}
-            className="input"
-          />
+          {showCitySelect ? (
+            <select
+              id={`${idPrefix}-city`}
+              autoComplete="address-level2"
+              value={cityOptions.includes(value.city) ? value.city : ''}
+              onChange={e => {
+                if (e.target.value === '__other__') {
+                  setCustomCity(true);
+                  set({ city: '' });
+                } else {
+                  set({ city: e.target.value });
+                }
+              }}
+              aria-invalid={Boolean(issues.city)}
+              aria-describedby={issues.city ? errId('city') : undefined}
+              className="input"
+            >
+              <option value="" disabled>
+                {t(locale, 'checkoutAddressCitySelectPlaceholder')}
+              </option>
+              {cityOptions.map(city => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+              <option value="__other__">{t(locale, 'checkoutAddressCityOther')}</option>
+            </select>
+          ) : (
+            <input
+              id={`${idPrefix}-city`}
+              autoComplete="address-level2"
+              value={value.city}
+              onChange={e => set({ city: e.target.value })}
+              placeholder={t(locale, 'checkoutAddressCityPlaceholder')}
+              aria-invalid={Boolean(issues.city)}
+              aria-describedby={issues.city ? errId('city') : undefined}
+              className="input"
+            />
+          )}
           {errorFor('city') && (
             <span id={errId('city')} role="alert" className="mt-1 block text-xs text-red-600">
               {errorFor('city')}
@@ -206,7 +240,12 @@ export function CheckoutAddressFields({
             value={value.country}
             onChange={e => {
               const nextCountry = e.target.value;
-              set({ country: nextCountry, state: postalRuleFor(nextCountry).stateRequired ? value.state : '' });
+              setCustomCity(citiesForCountry(nextCountry).length === 0);
+              set({
+                country: nextCountry,
+                state: postalRuleFor(nextCountry).stateRequired ? value.state : '',
+                city: '',
+              });
             }}
             aria-invalid={Boolean(issues.country)}
             aria-describedby={issues.country ? errId('country') : undefined}

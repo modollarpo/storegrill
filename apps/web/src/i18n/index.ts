@@ -98,6 +98,8 @@ const en: Dict = {
   checkoutAddressLine2Placeholder: 'Apartment 4B',
   checkoutAddressCity: 'City',
   checkoutAddressCityPlaceholder: 'City',
+  checkoutAddressCitySelectPlaceholder: 'Select a city',
+  checkoutAddressCityOther: 'Other…',
   checkoutAddressState: 'State / Province',
   checkoutAddressStatePlaceholder: 'State or province',
   checkoutAddressZip: 'Postcode',

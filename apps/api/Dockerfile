@@ -33,7 +33,6 @@ RUN apt-get update \
 
 COPY --from=builder /app/package.json                    ./package.json
 COPY --from=builder /app/node_modules                    ./node_modules
-RUN npm prune --production
 COPY --from=builder /app/apps/api/dist                   ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma                 ./apps/api/prisma
 COPY --from=builder /app/apps/api/package.json           ./apps/api/package.json

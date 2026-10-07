@@ -109,7 +109,7 @@ jobs:
           exit-code: '1'
           severity: 'CRITICAL'
           ignore-unfixed: true
-          ignorefile: .trivyignore
+          trivyignores: .trivyignore
 
       - name: Trivy scan - Web image
         uses: aquasecurity/trivy-action@v0.36.0
@@ -119,7 +119,7 @@ jobs:
           exit-code: '1'
           severity: 'CRITICAL'
           ignore-unfixed: true
-          ignorefile: .trivyignore
+          trivyignores: .trivyignore
 
   deploy:
     name: Deploy ${{ matrix.region }}

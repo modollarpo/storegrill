@@ -470,7 +470,11 @@ async function main() {
 
   const brandMap = new Map<string, string>();
   for (const brand of BRANDS) {
-    const b = await prisma.brand.create({ data: { name: brand.name, slug: brand.slug } });
+    const b = await prisma.brand.upsert({
+      where: { slug: brand.slug },
+      update: { name: brand.name },
+      create: { name: brand.name, slug: brand.slug }
+    });
     brandMap.set(brand.slug, b.id);
   }
 

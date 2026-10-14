@@ -51,15 +51,21 @@ describe('fetchToken', () => {
     expect(body.get('redirect_uri')).toBe('https://api.storegrill.net/api/v1/auth/oauth/google/callback');
   });
 
-  it('uses GET for Facebook and does not send Content-Type', async () => {
+  it('uses GET for Facebook and passes the token fields as query params', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ access_token: 'at' }) });
     vi.stubGlobal('fetch', fetchMock);
 
     await fetchToken('facebook', 'code123', 'uri', 'cid', 'csecret');
 
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('https://graph.facebook.com/v19.0/oauth/access_token');
+    const parsed = new URL(url);
+    expect(parsed.origin + parsed.pathname).toBe('https://graph.facebook.com/v19.0/oauth/access_token');
+    expect(parsed.searchParams.get('client_id')).toBe('cid');
+    expect(parsed.searchParams.get('client_secret')).toBe('csecret');
+    expect(parsed.searchParams.get('code')).toBe('code123');
+    expect(parsed.searchParams.get('redirect_uri')).toBe('uri');
     expect(init.method).toBe('GET');
+    expect(init.body).toBeUndefined();
     expect(init.headers['Content-Type']).toBeUndefined();
   });
 

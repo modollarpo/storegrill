@@ -97,7 +97,8 @@ export const fetchToken = async (
   }
 
   const method: 'GET' | 'POST' = cfg.tokenMethod
-  const url = cfg.tokenUrl
+  const params = new URLSearchParams(fields).toString()
+  const url = method === 'POST' ? cfg.tokenUrl : `${cfg.tokenUrl}?${params}`
 
   const headers: Record<string, string> = {}
   if (method === 'POST') {
@@ -107,7 +108,7 @@ export const fetchToken = async (
     headers['Authorization'] = `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`
   }
 
-  const body = method === 'POST' ? new URLSearchParams(fields).toString() : undefined
+  const body = method === 'POST' ? params : undefined
 
   const init: RequestInit = {
     method,
